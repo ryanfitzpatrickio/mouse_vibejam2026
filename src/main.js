@@ -1,8 +1,8 @@
-import { createKitchenRoomScene } from './demo/kitchenRoomScene.js';
+import { createMouseAnimationScene } from './demo/mouseAnimationScene.js';
 
 const canvas = document.getElementById('canvas');
 
-const demo = await createKitchenRoomScene({ canvas });
+const demo = await createMouseAnimationScene({ canvas });
 
 demo.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio);
 
