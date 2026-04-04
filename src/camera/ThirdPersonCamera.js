@@ -126,7 +126,8 @@ export class ThirdPersonCamera {
    */
   getCameraRelativeMovement(inputState) {
     const x = (inputState.right ? 1 : 0) - (inputState.left ? 1 : 0);
-    const z = (inputState.back ? 1 : 0) - (inputState.forward ? 1 : 0);
+    const back = inputState.back ?? inputState.backward ?? false;
+    const z = (back ? 1 : 0) - (inputState.forward ? 1 : 0);
 
     if (x === 0 && z === 0) {
       return new THREE.Vector3();

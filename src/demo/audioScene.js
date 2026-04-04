@@ -49,6 +49,7 @@ export async function createAudioScene({ canvas, forceWebGL = false } = {}) {
     width: 8,
     depth: 8,
     height: 4,
+    scale: 4,
   });
   scene.add(room.getGroup());
 
@@ -57,8 +58,9 @@ export async function createAudioScene({ canvas, forceWebGL = false } = {}) {
     furColor: '#f5a962',
     bellyColor: '#f8d4b0',
   });
-  mouse.position.set(-1, 0.5, 0);
   scene.add(mouse);
+  await mouse.ready;
+  mouse.position.set(-1, mouse.groundOffset, 0);
 
   // Audio manager
   const audioManager = getAudioManager();

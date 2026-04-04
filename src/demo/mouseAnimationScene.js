@@ -51,6 +51,7 @@ export async function createMouseAnimationScene({ canvas, forceWebGL = false } =
     width: 8,
     depth: 8,
     height: 4,
+    scale: 4,
   });
   scene.add(room.getGroup());
 
@@ -59,12 +60,13 @@ export async function createMouseAnimationScene({ canvas, forceWebGL = false } =
     furColor: '#f5a962',
     bellyColor: '#f8d4b0',
   });
-  mouse.position.set(-1, 0.5, 0);
   scene.add(mouse);
+  await mouse.ready;
+  mouse.position.set(-1, mouse.groundOffset, 0);
 
   // Animation state cycling
   let animationIndex = 0;
-  const animationStates = ['idle', 'run', 'chew', 'jump', 'carry', 'death'];
+  const animationStates = ['idle', 'walk', 'run', 'chew', 'jump', 'carry', 'death'];
   let stateTimer = 0;
   const stateDuration = 3; // seconds per state
 

@@ -45,6 +45,8 @@ export class Room {
     this.width = options.width ?? 8;
     this.depth = options.depth ?? 8;
     this.height = options.height ?? 4;
+    this.scaleFactor = options.scale ?? 1;
+    this.group.scale.setScalar(this.scaleFactor);
 
     // Materials
     this.floorColor = options.floorColor ?? '#d4a574'; // Wood
@@ -52,6 +54,14 @@ export class Room {
     this.furnitureColor = options.furnitureColor ?? '#8b6f47'; // Wood furniture
 
     this.buildRoom();
+  }
+
+  refreshColliders() {
+    this.group.updateMatrixWorld(true);
+    this.colliders.forEach((collider) => {
+      collider.aabb = AABB.fromMesh(collider.mesh);
+    });
+    return this.colliders;
   }
 
   buildRoom() {
@@ -337,7 +347,12 @@ export class Room {
    * Check collision between a player AABB and room colliders
    */
   checkCollision(playerAABB) {
+    this.refreshColliders();
     return this.colliders.filter((col) => playerAABB.intersects(col.aabb));
+  }
+
+  getCollisionColliders() {
+    return this.refreshColliders();
   }
 
   /**

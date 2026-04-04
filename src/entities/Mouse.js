@@ -1,5 +1,7 @@
 import * as THREE from 'three/webgpu';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createKeyCelMaterial } from '../materials/index.js';
+import { MouseAnimationManager } from '../animation/MouseAnimationManager.js';
 
 /**
  * Mouse character: procedural mesh + animation system
@@ -16,6 +18,7 @@ export class Mouse extends THREE.Group {
     this.eyeColor = options.eyeColor ?? '#000000';
     this.noseColor = options.noseColor ?? '#ff8866';
     this.scale.set(0.6, 0.6, 0.6); // Small relative to room
+    this.groundOffset = options.groundOffset ?? 0.35;
 
     // Animation state
     this.animationState = 'idle';
@@ -31,8 +34,50 @@ export class Mouse extends THREE.Group {
     this.animationSpeed = 1.0;
     this.blendFactor = 0.0; // For smooth transitions
 
-    // Create mesh
-    this.buildMouse();
+    this.avatar = null;
+    this.animationManager = new MouseAnimationManager({
+      fadeDuration: options.fadeDuration,
+    });
+    this._usingModel = false;
+    this._ready = false;
+
+    this.ready = this._loadAvatar();
+  }
+
+  async _loadAvatar() {
+    const loader = new GLTFLoader();
+
+    try {
+      const gltf = await loader.loadAsync('/mouse.glb');
+      this._attachAvatar(gltf);
+      this._ready = true;
+      return this;
+    } catch {
+      this._usingModel = false;
+      this.buildMouse();
+      this._ready = true;
+      return this;
+    }
+  }
+
+  _attachAvatar(gltf) {
+    this._usingModel = true;
+    this.groundOffset = 0.02;
+    this.avatar = gltf.scene;
+    this.avatar.name = 'MouseAvatar';
+    this.avatar.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    const box = new THREE.Box3().setFromObject(this.avatar);
+    this.avatar.position.y = -box.min.y;
+    this.add(this.avatar);
+
+    this.animationManager.attach(this.avatar, gltf.animations);
+    this.animationManager.setState(this.animationState, { immediate: true });
   }
 
   buildMouse() {
@@ -191,6 +236,9 @@ export class Mouse extends THREE.Group {
       this.animationState = newState;
       this.animationTime = 0;
       this.blendFactor = 0;
+      if (this._usingModel) {
+        this.animationManager?.setState(newState);
+      }
     }
   }
 
@@ -205,28 +253,32 @@ export class Mouse extends THREE.Group {
    * Update animation based on state and time
    */
   update(deltaTime = 0.016) {
-    this.animationTime += deltaTime * this.animationSpeed;
+    if (this._usingModel) {
+      this.animationManager?.update(deltaTime);
+    } else {
+      this.animationTime += deltaTime * this.animationSpeed;
 
-    // Update animation based on current state
-    switch (this.animationState) {
-      case 'idle':
-        this.animateIdle();
-        break;
-      case 'run':
-        this.animateRun();
-        break;
-      case 'jump':
-        this.animateJump();
-        break;
-      case 'chew':
-        this.animateChew();
-        break;
-      case 'carry':
-        this.animateCarry();
-        break;
-      case 'death':
-        this.animateDeath(deltaTime);
-        break;
+      // Update animation based on current state
+      switch (this.animationState) {
+        case 'idle':
+          this.animateIdle();
+          break;
+        case 'run':
+          this.animateRun();
+          break;
+        case 'jump':
+          this.animateJump();
+          break;
+        case 'chew':
+          this.animateChew();
+          break;
+        case 'carry':
+          this.animateCarry();
+          break;
+        case 'death':
+          this.animateDeath(deltaTime);
+          break;
+      }
     }
 
     // Update carried item position if present
@@ -466,5 +518,9 @@ export class Mouse extends THREE.Group {
       const angle = Math.atan2(direction.x, direction.z);
       this.rotation.y = angle;
     }
+  }
+
+  dispose() {
+    this.animationManager?.dispose();
   }
 }

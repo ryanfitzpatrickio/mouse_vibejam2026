@@ -50,6 +50,7 @@ export async function createKitchenRoomScene({ canvas, forceWebGL = false } = {}
     width: 8,
     depth: 8,
     height: 4,
+    scale: 4,
     floorColor: '#d4a574',
     wallColor: '#e8dcc8',
     furnitureColor: '#8b6f47',

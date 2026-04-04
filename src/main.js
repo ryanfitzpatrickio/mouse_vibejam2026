@@ -31,12 +31,13 @@ const fillLight = new THREE.DirectionalLight('#6699ff', 0.4);
 fillLight.position.set(-2, 2, -3);
 scene.add(ambientLight, keyLight, fillLight);
 
-const room = new Room({ width: 8, depth: 8, height: 4 });
+const room = new Room({ width: 8, depth: 8, height: 4, scale: 4 });
 scene.add(room.getGroup());
 
 const mouse = new Mouse({ furColor: '#f5a962', bellyColor: '#f8d4b0' });
-mouse.position.set(0, 0.35, 0);
 scene.add(mouse);
+await mouse.ready;
+mouse.position.set(0, mouse.groundOffset, 0);
 
 const thirdPersonCamera = new ThirdPersonCamera({
   camera,
@@ -47,6 +48,7 @@ const thirdPersonCamera = new ThirdPersonCamera({
 const controller = new CharacterController({
   mouse,
   thirdPersonCamera,
+  collisionQuery: () => room.getCollisionColliders(),
 });
 
 const hud = new HUD();

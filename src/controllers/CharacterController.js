@@ -1,4 +1,5 @@
 import * as THREE from 'three/webgpu';
+import { UprightCapsuleCollider } from '../physics/UprightCapsuleCollider.js';
 
 const DEFAULT_KEY_BINDINGS = Object.freeze({
   forward: 'KeyW',
@@ -23,6 +24,9 @@ const CONFIG = Object.freeze({
   doubleJumpForce: 5.1,
   gravity: -20.0,
   groundOffset: 0.35,
+  playerRadius: 0.22,
+  playerHeight: 0.78,
+  groundSnapDistance: 0.18,
   turnSmooth: 12,
 
   maxStamina: 100,
@@ -41,13 +45,23 @@ export class CharacterController {
   constructor({
     mouse,
     thirdPersonCamera = null,
+    collisionQuery = null,
     keyBindings = {},
     groundOffset = CONFIG.groundOffset,
+    playerRadius = CONFIG.playerRadius,
+    playerHeight = CONFIG.playerHeight,
+    groundSnapDistance = CONFIG.groundSnapDistance,
   } = {}) {
     this.mouse = mouse;
     this.thirdPersonCamera = thirdPersonCamera;
+    this.collisionQuery = collisionQuery;
     this.keyBindings = { ...DEFAULT_KEY_BINDINGS, ...keyBindings };
     this.groundOffset = groundOffset;
+    this.collider = new UprightCapsuleCollider({
+      radius: playerRadius,
+      height: playerHeight,
+      groundSnapDistance,
+    });
 
     this.velocity = new THREE.Vector3();
     this.grounded = false;
@@ -107,6 +121,7 @@ export class CharacterController {
       return this.thirdPersonCamera.getCameraRelativeMovement({
         forward: !!this.keys[this.keyBindings.forward],
         backward: !!this.keys[this.keyBindings.backward],
+        back: !!this.keys[this.keyBindings.backward],
         left: !!this.keys[this.keyBindings.left],
         right: !!this.keys[this.keyBindings.right],
       });
@@ -195,7 +210,11 @@ export class CharacterController {
     this.mouse.position.y += this.velocity.y * dt;
     this.mouse.position.z += this.velocity.z * dt;
 
-    const groundLevel = groundY + this.groundOffset;
+    this._resolveCollisions(groundY);
+
+    const colliders = this._getCollisionCandidates();
+    const supportY = this.collider.getSupportHeight(colliders, groundY);
+    const groundLevel = supportY + (this.mouse?.groundOffset ?? this.groundOffset);
     if (this.mouse.position.y <= groundLevel) {
       this.mouse.position.y = groundLevel;
       this.velocity.y = 0;
@@ -212,6 +231,37 @@ export class CharacterController {
       if (diff > Math.PI) diff -= Math.PI * 2;
       if (diff < -Math.PI) diff += Math.PI * 2;
       this.mouse.rotation.y += diff * Math.min(1, dt * CONFIG.turnSmooth);
+    }
+  }
+
+  _getCollisionCandidates() {
+    if (typeof this.collisionQuery === 'function') {
+      return this.collisionQuery() ?? [];
+    }
+
+    return [];
+  }
+
+  _resolveCollisions(groundY) {
+    const colliders = this._getCollisionCandidates();
+    if (!colliders.length) {
+      return;
+    }
+
+    this.collider.setPosition(this.mouse.position);
+
+    for (const collider of colliders) {
+      const box = collider?.aabb;
+      if (!box) continue;
+
+      const isGroundSurface = (collider.type === 'surface' || collider.metadata?.runnable)
+        && Math.abs(box.max.y - groundY) <= 0.05;
+      if (isGroundSurface) {
+        continue;
+      }
+
+      this.collider.resolveAgainstBox(box, this.velocity);
+      this.mouse.position.copy(this.collider.position);
     }
   }
 
@@ -271,7 +321,7 @@ export class CharacterController {
       state = 'run';
     } else {
       const hSpeed = Math.sqrt(this.velocity.x ** 2 + this.velocity.z ** 2);
-      if (hSpeed > 0.5) state = 'run';
+      if (hSpeed > 0.5) state = 'walk';
       else if (this.carriedItem) state = 'carry';
     }
 
