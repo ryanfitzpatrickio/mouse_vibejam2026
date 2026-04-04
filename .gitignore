@@ -104,6 +104,8 @@ Thumbs.db
 *.sublime-workspace
 
 # Modern Tooling
+.claude/
+.partykit/
 .wrangler
 .turbo/
 .vercel/
@@ -139,3 +141,4 @@ tmp/
 target/
 src-tauri/target/
 src-tauri/gen/
+.env.production

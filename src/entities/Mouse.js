@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { createKeyCelMaterial, createThreeBandGradientTexture } from '../materials/index.js';
 import { MouseAnimationManager } from '../animation/MouseAnimationManager.js';
 import { MouseEyeAtlasAnimator } from '../animation/MouseEyeAtlasAnimator.js';
@@ -107,12 +108,23 @@ export class Mouse extends THREE.Group {
 
   async _loadAvatar() {
     const loader = new GLTFLoader();
+    loader.setMeshoptDecoder(MeshoptDecoder);
 
-    try {
-      const gltf = await loader.loadAsync(assetUrl('mouse-skinned.glb'));
-      this._attachAvatar(gltf);
-    } catch {
-      this._usingModel = false;
+    const modelUrls = import.meta.env.PROD
+      ? [assetUrl('mouse-skinned.optimized.glb'), assetUrl('mouse-skinned.glb')]
+      : [assetUrl('mouse-skinned.glb')];
+
+    for (const modelUrl of modelUrls) {
+      try {
+        const gltf = await loader.loadAsync(modelUrl);
+        this._attachAvatar(gltf);
+        break;
+      } catch {
+        continue;
+      }
+    }
+
+    if (!this._usingModel) {
       this.buildMouse();
     }
 

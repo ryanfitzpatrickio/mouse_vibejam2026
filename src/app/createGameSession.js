@@ -5,6 +5,9 @@ import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
 import { HUD } from '../hud/HUD.js';
 import { attachEdgeOutlines } from '../materials/index.js';
+import { NetworkClient } from '../net/NetworkClient.js';
+import { RemotePlayerManager } from '../net/RemotePlayerManager.js';
+import { simulateTick, createPlayerState } from '../../shared/physics.js';
 
 function createLightMarker(color) {
   return new THREE.Mesh(
@@ -91,7 +94,7 @@ async function createWebGPURenderer(canvas) {
   return { renderer, RenderPipeline, toonOutlinePass, MeshToonNodeMaterial };
 }
 
-export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
+export async function createGameSession({ canvas, mode = 'webgl', roomId = 'default' } = {}) {
   const scene = new THREE.Scene();
   applyAtmosphere(scene);
 
@@ -157,6 +160,11 @@ export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
 
   const hud = new HUD();
 
+  // --- Multiplayer ---
+  const net = new NetworkClient(roomId);
+  const remotePlayerManager = new RemotePlayerManager({ scene, rendererMode: mode });
+  net.connect();
+
   function resize(width, height, pixelRatio = window.devicePixelRatio || 1) {
     const safeWidth = Math.max(1, Math.floor(width));
     const safeHeight = Math.max(1, Math.floor(height));
@@ -166,12 +174,147 @@ export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
     camera.updateProjectionMatrix();
   }
 
+  // --- Server reconciliation ---
+  // Correction stored as a decaying offset so it doesn't fight CharacterController.
+  const RECONCILE_SNAP_THRESHOLD = 3.0;
+  const RECONCILE_IGNORE_THRESHOLD = 0.1;
+  const CORRECTION_DECAY = 8; // how fast offset drains per second
+  let lastReconciledSeq = -1;
+  let correctionX = 0;
+  let correctionY = 0;
+  let correctionZ = 0;
+
+  function reconcileWithServer() {
+    if (net.serverSeq <= lastReconciledSeq) return;
+    lastReconciledSeq = net.serverSeq;
+
+    const serverState = net.serverState;
+    if (!serverState) return;
+
+    // Replay unacked inputs from server-confirmed state
+    const replayState = createPlayerState(net.localId);
+    replayState.position = { ...serverState.position };
+    replayState.velocity = { ...serverState.velocity };
+    replayState.grounded = serverState.grounded;
+    replayState.stamina = serverState.stamina;
+    replayState.rotation = serverState.rotation;
+    replayState.sprinting = serverState.sprinting;
+    replayState.crouching = serverState.crouching;
+    replayState.sliding = serverState.sliding;
+    replayState.slideTimer = serverState.slideTimer;
+    replayState.slideCooldownTimer = serverState.slideCooldownTimer;
+    replayState.slideDirX = serverState.slideDirX;
+    replayState.slideDirZ = serverState.slideDirZ;
+    replayState.canDoubleJump = serverState.canDoubleJump;
+    replayState.hasDoubleJumped = serverState.hasDoubleJumped;
+
+    const dt = 1 / 30;
+    const colliders = room.getCollisionColliders();
+    for (const input of net.pendingInputs) {
+      simulateTick(replayState, input, dt, null, colliders);
+    }
+
+    // Compute error between where client thinks it is vs where server+replay says
+    const targetX = replayState.position.x;
+    const targetY = replayState.position.y + mouse.groundOffset;
+    const targetZ = replayState.position.z;
+    const errX = targetX - (mouse.position.x - correctionX);
+    const errY = targetY - (mouse.position.y - correctionY);
+    const errZ = targetZ - (mouse.position.z - correctionZ);
+    const dist = Math.sqrt(errX * errX + errY * errY + errZ * errZ);
+
+    if (dist < RECONCILE_IGNORE_THRESHOLD) return;
+
+    if (dist > RECONCILE_SNAP_THRESHOLD) {
+      // Teleport
+      mouse.position.set(targetX, targetY, targetZ);
+      controller.velocity.set(replayState.velocity.x, replayState.velocity.y, replayState.velocity.z);
+      correctionX = 0;
+      correctionY = 0;
+      correctionZ = 0;
+    } else {
+      // Add error to correction offset — it will drain smoothly in update()
+      correctionX += errX;
+      correctionY += errY;
+      correctionZ += errZ;
+    }
+
+    controller.stamina = replayState.stamina;
+  }
+
+  // Throttle input sends to ~30Hz to match server tick rate
+  const PHYSICS_STEP = 1 / 30;
+  const MAX_PHYSICS_STEPS = 4;
+  let physicsAccum = 0;
+  let jumpLatch = false; // latches jump until next send
+
   function update(timeMs = 0, deltaSeconds = 1 / 60) {
-    controller.update(deltaSeconds, 0);
+    physicsAccum += deltaSeconds;
+
+    let steps = 0;
+    while (physicsAccum >= PHYSICS_STEP && steps < MAX_PHYSICS_STEPS) {
+      physicsAccum -= PHYSICS_STEP;
+      steps += 1;
+
+      // Local prediction — CharacterController owns movement feel
+      controller.update(PHYSICS_STEP, 0);
+
+      // Apply decaying correction offset (doesn't fight controller)
+      const decay = Math.min(1, PHYSICS_STEP * CORRECTION_DECAY);
+      const applyX = correctionX * decay;
+      const applyY = correctionY * decay;
+      const applyZ = correctionZ * decay;
+      mouse.position.x += applyX;
+      mouse.position.y += applyY;
+      mouse.position.z += applyZ;
+      correctionX -= applyX;
+      correctionY -= applyY;
+      correctionZ -= applyZ;
+
+      if (net.connected) {
+        // Latch one-shot inputs between sends
+        if (controller.jumpRequested) {
+          jumpLatch = true;
+          controller.jumpRequested = false;
+        }
+
+        const inputDir = thirdPersonCamera.getCameraRelativeMovement({
+          forward: !!controller.keys[controller.keyBindings.forward],
+          backward: !!controller.keys[controller.keyBindings.backward],
+          back: !!controller.keys[controller.keyBindings.backward],
+          left: !!controller.keys[controller.keyBindings.left],
+          right: !!controller.keys[controller.keyBindings.right],
+        });
+
+        net.sendInput({
+          moveX: inputDir.x,
+          moveZ: inputDir.z,
+          sprint: !!controller.keys[controller.keyBindings.sprint],
+          jump: jumpLatch,
+          crouch: !!controller.keys[controller.keyBindings.crouch],
+          rotation: mouse.rotation.y,
+        });
+        jumpLatch = false;
+
+        reconcileWithServer();
+      }
+    }
+
+    if (steps >= MAX_PHYSICS_STEPS) {
+      physicsAccum = 0;
+    }
+
     room.updateLoot(timeMs);
+
+    if (net.connected) {
+      remotePlayerManager.sync(net.remotePlayers);
+      remotePlayerManager.update(deltaSeconds);
+    }
+
     hud.update({
       stamina: controller.staminaPercent,
       health: controller.healthPercent,
+      ping: net.ping,
     });
     render();
     return {
@@ -180,6 +323,8 @@ export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
   }
 
   function dispose() {
+    net.disconnect();
+    remotePlayerManager.dispose();
     hud.dispose();
     renderer.dispose();
   }
@@ -194,6 +339,7 @@ export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
     thirdPersonCamera,
     controller,
     hud,
+    net,
     resize,
     update,
     dispose,

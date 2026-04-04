@@ -90,6 +90,8 @@ export class CharacterController {
     this.keys = {};
     this.mouseButtons = { left: false, right: false };
     this.inputEnabled = true;
+    /** Set to true on jump keydown, cleared after network reads it */
+    this.jumpRequested = false;
 
     this._prevAnimState = 'idle';
 
@@ -201,6 +203,7 @@ export class CharacterController {
     }
 
     if (this.keys[this.keyBindings.jump]) {
+      this.jumpRequested = true;
       if (this.grounded) {
         this.velocity.y = CONFIG.jumpForce;
         this.grounded = false;

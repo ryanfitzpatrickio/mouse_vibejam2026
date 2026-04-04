@@ -19,6 +19,17 @@ export class HUD {
 
     this.healthBar = this._createBar('HEALTH', '#ff4444', '#661111');
     this.staminaBar = this._createBar('STAMINA', '#44ff88', '#116633');
+
+    this.pingLabel = document.createElement('div');
+    this.pingLabel.textContent = '-- ms';
+    Object.assign(this.pingLabel.style, {
+      color: '#fff',
+      fontSize: '10px',
+      marginTop: '4px',
+      textShadow: '1px 1px 2px #000',
+    });
+    this.element.appendChild(this.pingLabel);
+
     this.container.appendChild(this.element);
   }
 
@@ -61,12 +72,15 @@ export class HUD {
     return fg;
   }
 
-  update({ stamina, health } = {}) {
+  update({ stamina, health, ping } = {}) {
     if (stamina !== undefined) {
       this.staminaBar.style.width = `${Math.max(0, Math.min(1, stamina)) * 100}%`;
     }
     if (health !== undefined) {
       this.healthBar.style.width = `${Math.max(0, Math.min(1, health)) * 100}%`;
+    }
+    if (ping !== undefined) {
+      this.pingLabel.textContent = `${Math.round(ping)} ms`;
     }
   }
 
