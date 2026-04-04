@@ -1,4 +1,4 @@
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 
 import {
   createKeyCelMaterial,
@@ -8,11 +8,7 @@ import {
 import { createOutlineMesh } from '../materials/OutlineMaterial.js';
 
 function createRenderer({ canvas, forceWebGL = false } = {}) {
-  const renderer = new THREE.WebGPURenderer({
-    antialias: true,
-    canvas,
-    forceWebGL,
-  });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -24,14 +20,12 @@ export async function createCelShadingDemoScene({ canvas, forceWebGL = false } =
 
   try {
     renderer = createRenderer({ canvas, forceWebGL });
-    await renderer.init();
   } catch (error) {
     if (forceWebGL) {
       throw error;
     }
 
     renderer = createRenderer({ canvas, forceWebGL: true });
-    await renderer.init();
   }
 
   const scene = new THREE.Scene();

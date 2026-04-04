@@ -18,3 +18,6 @@ If you want to use Wrangler instead, the repo is already configured for Workers 
 - Deploy: `npm run deploy:cf`
 
 The Wrangler config lives in [wrangler.jsonc](/Users/personal/source/vibejam2026/wrangler.jsonc) and serves the built `dist` directory with SPA fallback.
+
+Credits:
+Outline Material [https://codepen.io/prisoner849/pen/xxwXyQo]

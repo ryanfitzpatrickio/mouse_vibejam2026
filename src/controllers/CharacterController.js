@@ -1,4 +1,4 @@
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 import { UprightCapsuleCollider } from '../physics/UprightCapsuleCollider.js';
 
 const DEFAULT_KEY_BINDINGS = Object.freeze({

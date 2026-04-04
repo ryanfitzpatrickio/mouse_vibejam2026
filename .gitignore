@@ -103,6 +103,38 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 
+# Modern Tooling
+.wrangler
+.turbo/
+.vercel/
+.netlify/
+.serverless/
+.pnpm-store/
+.yarn/
+!.yarn/releases/
+!.yarn/plugins/
+!.yarn/sdks/
+!.yarn/versions/
+.history/
+.vscode-test/
+
+# Secrets and Certificates
+*.key
+*.pem
+*.crt
+*.pfx
+*.p12
+*.jks
+secrets.json
+auth.json
+
+# General local overrides and temp
+*.local
+.temp/
+.tmp/
+temp/
+tmp/
+
 # Rust/Tauri
 target/
 src-tauri/target/

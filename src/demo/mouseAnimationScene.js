@@ -1,13 +1,9 @@
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 import { Mouse } from '../entities/Mouse.js';
 import { Room } from '../world/Room.js';
 
 function createRenderer({ canvas, forceWebGL = false } = {}) {
-  const renderer = new THREE.WebGPURenderer({
-    antialias: true,
-    canvas,
-    forceWebGL,
-  });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -19,14 +15,12 @@ export async function createMouseAnimationScene({ canvas, forceWebGL = false } =
 
   try {
     renderer = createRenderer({ canvas, forceWebGL });
-    await renderer.init();
   } catch (error) {
     if (forceWebGL) {
       throw error;
     }
 
     renderer = createRenderer({ canvas, forceWebGL: true });
-    await renderer.init();
   }
 
   const scene = new THREE.Scene();
@@ -54,6 +48,7 @@ export async function createMouseAnimationScene({ canvas, forceWebGL = false } =
     scale: 4,
   });
   scene.add(room.getGroup());
+  await room.ready;
 
   // Create mouse
   const mouse = new Mouse({

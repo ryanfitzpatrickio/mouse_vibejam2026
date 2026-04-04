@@ -1,7 +1,52 @@
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { createKeyCelMaterial } from '../materials/index.js';
+import { createKeyCelMaterial, createThreeBandGradientTexture } from '../materials/index.js';
 import { MouseAnimationManager } from '../animation/MouseAnimationManager.js';
+import { MouseEyeAtlasAnimator } from '../animation/MouseEyeAtlasAnimator.js';
+
+function createToonAvatarMaterial(sourceMaterial) {
+  const baseColor = sourceMaterial?.color?.getStyle?.() ?? sourceMaterial?.color ?? '#ffffff';
+  const material = createKeyCelMaterial({ baseColor });
+
+  material.map = sourceMaterial?.map ?? null;
+  material.alphaMap = sourceMaterial?.alphaMap ?? null;
+  material.alphaTest = sourceMaterial?.alphaTest ?? material.alphaTest;
+  material.transparent = sourceMaterial?.transparent ?? material.transparent;
+  material.opacity = sourceMaterial?.opacity ?? material.opacity;
+  material.side = sourceMaterial?.side ?? material.side;
+  material.skinning = sourceMaterial?.skinning ?? false;
+  material.morphTargets = sourceMaterial?.morphTargets ?? false;
+  material.morphNormals = sourceMaterial?.morphNormals ?? false;
+  material.depthTest = sourceMaterial?.depthTest ?? material.depthTest;
+  material.depthWrite = sourceMaterial?.depthWrite ?? material.depthWrite;
+  material.fog = sourceMaterial?.fog ?? material.fog;
+  material.needsUpdate = true;
+
+  return material;
+}
+
+function createWebGPUToonAvatarMaterial(sourceMaterial, MeshToonNodeMaterial) {
+  const material = new MeshToonNodeMaterial({
+    color: sourceMaterial?.color?.clone?.() ?? new THREE.Color(sourceMaterial?.color ?? '#ffffff'),
+    gradientMap: createThreeBandGradientTexture(),
+    flatShading: true,
+  });
+
+  material.map = sourceMaterial?.map ?? null;
+  material.alphaMap = sourceMaterial?.alphaMap ?? null;
+  material.alphaTest = sourceMaterial?.alphaTest ?? material.alphaTest;
+  material.transparent = sourceMaterial?.transparent ?? material.transparent;
+  material.opacity = sourceMaterial?.opacity ?? material.opacity;
+  material.side = sourceMaterial?.side ?? material.side;
+  material.skinning = sourceMaterial?.skinning ?? false;
+  material.morphTargets = sourceMaterial?.morphTargets ?? false;
+  material.morphNormals = sourceMaterial?.morphNormals ?? false;
+  material.depthTest = sourceMaterial?.depthTest ?? material.depthTest;
+  material.depthWrite = sourceMaterial?.depthWrite ?? material.depthWrite;
+  material.fog = sourceMaterial?.fog ?? material.fog;
+
+  return material;
+}
 
 /**
  * Mouse character: procedural mesh + animation system
@@ -38,8 +83,14 @@ export class Mouse extends THREE.Group {
     this.animationManager = new MouseAnimationManager({
       fadeDuration: options.fadeDuration,
     });
+    this.eyeAnimator = new MouseEyeAtlasAnimator({
+      atlasUrl: options.eyeAtlasUrl ?? '/eyeset1.jpg',
+    });
+    this.rendererMode = options.rendererMode ?? 'webgl';
+    this.rendererToolkit = options.rendererToolkit ?? null;
     this._usingModel = false;
     this._ready = false;
+    this.viewCamera = null;
 
     this.ready = this._loadAvatar();
   }
@@ -48,16 +99,22 @@ export class Mouse extends THREE.Group {
     const loader = new GLTFLoader();
 
     try {
-      const gltf = await loader.loadAsync('/mouse.glb');
+      const gltf = await loader.loadAsync('/mouse-skinned.glb');
       this._attachAvatar(gltf);
-      this._ready = true;
-      return this;
     } catch {
       this._usingModel = false;
       this.buildMouse();
-      this._ready = true;
-      return this;
     }
+
+    try {
+      await this.eyeAnimator.load();
+      this._attachEyeAtlas();
+    } catch {
+      // Keep the fallback eye meshes if the atlas is unavailable.
+    }
+
+    this._ready = true;
+    return this;
   }
 
   _attachAvatar(gltf) {
@@ -77,7 +134,69 @@ export class Mouse extends THREE.Group {
     this.add(this.avatar);
 
     this.animationManager.attach(this.avatar, gltf.animations);
+      this._applyRendererModeToAvatar();
     this.animationManager.setState(this.animationState, { immediate: true });
+  }
+
+  setRendererMode(mode, rendererToolkit = null) {
+    this.rendererMode = mode ?? 'webgl';
+    this.rendererToolkit = rendererToolkit ?? this.rendererToolkit;
+    this._applyRendererModeToAvatar();
+  }
+
+  _applyRendererModeToAvatar() {
+    if (!this._usingModel || !this.avatar) return;
+    if (this.rendererMode !== 'webgpu') return;
+
+    const MeshToonNodeMaterial = this.rendererToolkit?.MeshToonNodeMaterial;
+    if (!MeshToonNodeMaterial) return;
+
+    const materialCache = new Map();
+    this.avatar.traverse((child) => {
+      if (!child.isMesh || !child.material) return;
+
+      const sourceMaterials = Array.isArray(child.material) ? child.material : [child.material];
+      const converted = sourceMaterials.map((material) => {
+        if (!material) return material;
+        if (materialCache.has(material)) return materialCache.get(material);
+
+        const toonMaterial = createWebGPUToonAvatarMaterial(material, MeshToonNodeMaterial);
+        materialCache.set(material, toonMaterial);
+        return toonMaterial;
+      });
+
+      child.material = Array.isArray(child.material) ? converted : converted[0];
+    });
+  }
+
+  _attachEyeAtlas() {
+    if (!this.eyeAnimator?.loaded) return;
+    this.eyeAnimator.setViewCamera(this.viewCamera);
+
+    const anchor = this._usingModel
+      ? (this.avatar?.getObjectByName('Head') ?? this.avatar)
+      : (this.parts.head ?? this);
+
+    if (!anchor) return;
+
+    const hideTargets = this._usingModel
+      ? []
+      : [this.parts.eyeLeft, this.parts.eyeRight, this.parts.pupilLeft, this.parts.pupilRight];
+
+    this.eyeAnimator.attach(anchor, {
+      localOffset: this._usingModel
+        ? new THREE.Vector3(0, 0.18, -0.04)
+        : new THREE.Vector3(0, 0.03, 0.14),
+      eyeSpacing: this._usingModel ? 0.06 : 0.16,
+      eyeSize: this._usingModel ? 0.11 : 0.14,
+      hideTargets,
+    });
+    this.eyeAnimator.setState(this.animationState, { immediate: true });
+  }
+
+  setViewCamera(camera) {
+    this.viewCamera = camera ?? null;
+    this.eyeAnimator?.setViewCamera(this.viewCamera);
   }
 
   buildMouse() {
@@ -240,6 +359,8 @@ export class Mouse extends THREE.Group {
         this.animationManager?.setState(newState);
       }
     }
+
+    this.eyeAnimator?.setState(newState);
   }
 
   /**
@@ -280,6 +401,8 @@ export class Mouse extends THREE.Group {
           break;
       }
     }
+
+    this.eyeAnimator?.update(deltaTime);
 
     // Update carried item position if present
     if (this.carryingItem) {

@@ -1,12 +1,8 @@
-import * as THREE from 'three/webgpu';
+import * as THREE from 'three';
 import { Room } from '../world/Room.js';
 
 function createRenderer({ canvas, forceWebGL = false } = {}) {
-  const renderer = new THREE.WebGPURenderer({
-    antialias: true,
-    canvas,
-    forceWebGL,
-  });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
 
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -18,14 +14,12 @@ export async function createKitchenRoomScene({ canvas, forceWebGL = false } = {}
 
   try {
     renderer = createRenderer({ canvas, forceWebGL });
-    await renderer.init();
   } catch (error) {
     if (forceWebGL) {
       throw error;
     }
 
     renderer = createRenderer({ canvas, forceWebGL: true });
-    await renderer.init();
   }
 
   const scene = new THREE.Scene();
@@ -57,6 +51,7 @@ export async function createKitchenRoomScene({ canvas, forceWebGL = false } = {}
   });
 
   scene.add(room.getGroup());
+  await room.ready;
 
   function resize(width, height, pixelRatio = window.devicePixelRatio || 1) {
     const safeWidth = Math.max(1, Math.floor(width));

@@ -1,69 +1,45 @@
-import * as THREE from 'three/webgpu';
-import { Mouse } from './entities/Mouse.js';
-import { Room } from './world/Room.js';
-import { ThirdPersonCamera } from './camera/ThirdPersonCamera.js';
-import { CharacterController } from './controllers/CharacterController.js';
-import { HUD } from './hud/HUD.js';
+import { createGameSession } from './app/createGameSession.js';
+import { EyePlacementPanel } from './hud/EyePlacementPanel.js';
+import { RendererModePanel, readRendererMode, writeRendererMode } from './hud/RendererModePanel.js';
 
 const canvas = document.getElementById('canvas');
+const mode = readRendererMode();
+const webgpuAvailable = typeof navigator !== 'undefined' && navigator.gpu && window.isSecureContext;
+const webgpuReason = !window.isSecureContext
+  ? 'WebGPU requires a secure context. Use https:// or localhost.'
+  : (!navigator.gpu ? 'navigator.gpu is not available in this browser.' : '');
 
-let renderer;
+const modePanel = new RendererModePanel({
+  mode,
+  webgpuAvailable,
+  webgpuReason,
+  onApply: () => window.location.reload(),
+});
+
+let app;
+
 try {
-  renderer = new THREE.WebGPURenderer({ antialias: true, canvas });
-  await renderer.init();
-} catch {
-  renderer = new THREE.WebGPURenderer({ antialias: true, canvas, forceWebGL: true });
-  await renderer.init();
+  app = await createGameSession({ canvas, mode });
+} catch (error) {
+  if (mode === 'webgpu') {
+    writeRendererMode('webgl');
+    const reason = error instanceof Error ? error.message : String(error);
+    modePanel.setRuntimeMessage(`WebGPU failed: ${reason}\nUsing WebGL.`);
+    app = await createGameSession({ canvas, mode: 'webgl' });
+  } else {
+    throw error;
+  }
 }
-
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color('#87ceeb');
-
-const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-
-const ambientLight = new THREE.AmbientLight('#ffffff', 0.7);
-const keyLight = new THREE.DirectionalLight('#fff3dd', 1.2);
-keyLight.position.set(3, 4, 3);
-const fillLight = new THREE.DirectionalLight('#6699ff', 0.4);
-fillLight.position.set(-2, 2, -3);
-scene.add(ambientLight, keyLight, fillLight);
-
-const room = new Room({ width: 8, depth: 8, height: 4, scale: 4 });
-scene.add(room.getGroup());
-
-const mouse = new Mouse({ furColor: '#f5a962', bellyColor: '#f8d4b0' });
-scene.add(mouse);
-await mouse.ready;
-mouse.position.set(0, mouse.groundOffset, 0);
-
-const thirdPersonCamera = new ThirdPersonCamera({
-  camera,
-  domElement: canvas,
-  armLength: 3.5,
-});
-
-const controller = new CharacterController({
-  mouse,
-  thirdPersonCamera,
-  collisionQuery: () => room.getCollisionColliders(),
-});
-
-const hud = new HUD();
+const eyePanel = new EyePlacementPanel({ mouse: app.mouse });
 
 canvas.addEventListener('click', () => {
-  thirdPersonCamera.requestPointerLock();
+  app.thirdPersonCamera.requestPointerLock();
 });
 
 function resize() {
   const w = Math.max(1, Math.floor(window.innerWidth));
   const h = Math.max(1, Math.floor(window.innerHeight));
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
+  app.resize(w, h, window.devicePixelRatio);
 }
 
 resize();
@@ -74,15 +50,12 @@ let lastTime = 0;
 function animate(timeMs) {
   const dt = lastTime ? (timeMs - lastTime) * 0.001 : 1 / 60;
   lastTime = timeMs;
-
-  controller.update(dt, 0);
-  room.updateLoot(timeMs);
-  hud.update({
-    stamina: controller.staminaPercent,
-    health: controller.healthPercent,
+  const perf = app.update(timeMs, dt);
+  modePanel.updatePerformance({
+    timeMs,
+    deltaSeconds: dt,
+    drawCalls: perf?.drawCalls ?? 0,
   });
-
-  renderer.render(scene, camera);
 }
 
-renderer.setAnimationLoop(animate);
+app.renderer.setAnimationLoop(animate);

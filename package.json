@@ -8,6 +8,7 @@
     "build": "vite build",
     "deploy:cf": "npm run build && wrangler deploy",
     "mouse:skin": "node scripts/apply-mouse-skin.mjs",
+    "textures:analyze": "node scripts/analyze-texture-atlas.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
