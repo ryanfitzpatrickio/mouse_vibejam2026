@@ -12,7 +12,7 @@ export class Mouse extends THREE.Group {
 
     // Customization
     this.furColor = options.furColor ?? '#f5a962';
-    this.bellieColor = options.bellyColor ?? '#f8d4b0';
+    this.bellyColor = options.bellyColor ?? '#f8d4b0';
     this.eyeColor = options.eyeColor ?? '#000000';
     this.noseColor = options.noseColor ?? '#ff8866';
     this.scale.set(0.6, 0.6, 0.6); // Small relative to room
@@ -45,7 +45,7 @@ export class Mouse extends THREE.Group {
     });
 
     const bellyMat = createKeyCelMaterial({
-      baseColor: this.bellieColor,
+      baseColor: this.bellyColor,
       toonBands: 3,
     });
 
@@ -62,119 +62,121 @@ export class Mouse extends THREE.Group {
       roughness: 0.3,
     });
 
-    // BODY: elongated sphere
-    const bodyGeo = new THREE.CapsuleGeometry(0.3, 0.8, 8, 8);
+    // BODY: elongated torso aligned forward (+Z)
+    const bodyGeo = new THREE.CapsuleGeometry(0.26, 0.9, 10, 12);
     const body = new THREE.Mesh(bodyGeo, furMat);
-    body.position.z = 0;
+    body.position.y = -0.03;
+    body.rotation.x = Math.PI * 0.5;
     body.name = 'Body';
     this.add(body);
     this.parts.body = body;
 
-    // BELLY: lighter colored underbelly
-    const bellyGeo = new THREE.CapsuleGeometry(0.25, 0.7, 8, 6);
+    // BELLY: lighter underbelly panel
+    const bellyGeo = new THREE.CapsuleGeometry(0.2, 0.65, 8, 8);
     const belly = new THREE.Mesh(bellyGeo, bellyMat);
-    belly.position.z = 0.15; // In front of body
-    belly.scale.z = 0.7;
+    belly.position.set(0, -0.1, 0.14);
+    belly.rotation.x = Math.PI * 0.5;
+    belly.scale.z = 0.62;
     belly.name = 'Belly';
     this.add(belly);
     this.parts.belly = belly;
 
-    // HEAD: rounded sphere on front
-    const headGeo = new THREE.SphereGeometry(0.35, 16, 12);
+    // HEAD: compact forward head
+    const headGeo = new THREE.SphereGeometry(0.29, 16, 12);
     const head = new THREE.Mesh(headGeo, furMat);
-    head.position.set(0, 0, 0.65);
+    head.position.set(0, 0.02, 0.73);
     head.name = 'Head';
     this.add(head);
     this.parts.head = head;
 
-    // EARS: tall expressive ears
-    const earGeo = new THREE.ConeGeometry(0.15, 0.5, 8);
+    // EARS: smaller and less exaggerated
+    const earGeo = new THREE.ConeGeometry(0.12, 0.35, 10);
     const earLeft = new THREE.Mesh(earGeo, furMat);
-    earLeft.position.set(-0.2, 0.25, 0.75);
-    earLeft.rotation.z = 0.3;
+    earLeft.position.set(-0.16, 0.23, 0.72);
+    earLeft.rotation.set(0.18, 0, 0.22);
     earLeft.name = 'EarLeft';
     this.add(earLeft);
     this.parts.earLeft = earLeft;
 
     const earRight = new THREE.Mesh(earGeo, furMat);
-    earRight.position.set(0.2, 0.25, 0.75);
-    earRight.rotation.z = -0.3;
+    earRight.position.set(0.16, 0.23, 0.72);
+    earRight.rotation.set(0.18, 0, -0.22);
     earRight.name = 'EarRight';
     this.add(earRight);
     this.parts.earRight = earRight;
 
-    // EYES: big expressive eyes
-    const eyeGeo = new THREE.SphereGeometry(0.12, 12, 8);
+    // EYES: smaller and placed on the front half of the head
+    const eyeGeo = new THREE.SphereGeometry(0.08, 12, 8);
     const eyeLeft = new THREE.Mesh(eyeGeo, eyeMat);
-    eyeLeft.position.set(-0.15, 0.15, 0.88);
+    eyeLeft.position.set(-0.12, 0.08, 0.95);
     eyeLeft.name = 'EyeLeft';
     this.add(eyeLeft);
     this.parts.eyeLeft = eyeLeft;
 
     const eyeRight = new THREE.Mesh(eyeGeo, eyeMat);
-    eyeRight.position.set(0.15, 0.15, 0.88);
+    eyeRight.position.set(0.12, 0.08, 0.95);
     eyeRight.name = 'EyeRight';
     this.add(eyeRight);
     this.parts.eyeRight = eyeRight;
 
     // PUPILS: glossy highlights for expression
-    const pupilGeo = new THREE.SphereGeometry(0.055, 8, 6);
+    const pupilGeo = new THREE.SphereGeometry(0.035, 8, 6);
     const pupilMat = new THREE.MeshStandardMaterial({
       color: '#ffffff',
       metalness: 0.8,
       roughness: 0.1,
       emissive: '#ffffff',
       emissiveIntensity: 0.3,
+      transparent: true,
     });
 
     const pupilLeft = new THREE.Mesh(pupilGeo, pupilMat);
-    pupilLeft.position.set(-0.17, 0.13, 0.96);
+    pupilLeft.position.set(-0.12, 0.08, 1.01);
     pupilLeft.name = 'PupilLeft';
     this.add(pupilLeft);
     this.parts.pupilLeft = pupilLeft;
 
     const pupilRight = new THREE.Mesh(pupilGeo, pupilMat);
-    pupilRight.position.set(0.17, 0.13, 0.96);
+    pupilRight.position.set(0.12, 0.08, 1.01);
     pupilRight.name = 'PupilRight';
     this.add(pupilRight);
     this.parts.pupilRight = pupilRight;
 
-    // NOSE: small rounded
+    // NOSE: more compact front tip
     const noseGeo = new THREE.SphereGeometry(0.08, 8, 6);
     const nose = new THREE.Mesh(noseGeo, noseMat);
-    nose.position.set(0, 0, 1.0);
+    nose.position.set(0, 0.01, 1.07);
     nose.name = 'Nose';
     this.add(nose);
     this.parts.nose = nose;
 
-    // TAIL: long flowing tail
+    // TAIL: slender and attached to rear of body
     const tailGeo = new THREE.TubeGeometry(
       new THREE.LineCurve3(
-        new THREE.Vector3(0, -0.2, -0.5),
-        new THREE.Vector3(0.2, -0.3, -1.2),
+        new THREE.Vector3(0, -0.12, -0.6),
+        new THREE.Vector3(0.18, -0.2, -1.25),
       ),
       8,
-      0.08,
-      6,
+      0.055,
+      8,
     );
     const tail = new THREE.Mesh(tailGeo, furMat);
     tail.name = 'Tail';
     this.add(tail);
     this.parts.tail = tail;
 
-    // LEGS: 4 small legs
-    const legGeo = new THREE.CapsuleGeometry(0.08, 0.35, 6, 4);
+    // LEGS: four short vertical legs
+    const legGeo = new THREE.CapsuleGeometry(0.065, 0.24, 6, 6);
     const legPositions = [
-      { x: -0.2, z: 0.1 }, // front left
-      { x: 0.2, z: 0.1 }, // front right
-      { x: -0.15, z: -0.3 }, // back left
-      { x: 0.15, z: -0.3 }, // back right
+      { x: -0.17, z: 0.35 }, // front left
+      { x: 0.17, z: 0.35 }, // front right
+      { x: -0.19, z: -0.34 }, // back left
+      { x: 0.19, z: -0.34 }, // back right
     ];
 
     legPositions.forEach((pos, i) => {
       const leg = new THREE.Mesh(legGeo, furMat);
-      leg.position.set(pos.x, -0.35, pos.z);
-      leg.rotation.z = Math.PI * 0.5;
+      leg.position.set(pos.x, -0.34, pos.z);
       leg.name = `Leg${i}`;
       this.add(leg);
       this.parts[`leg${i}`] = leg;
@@ -405,7 +407,7 @@ export class Mouse extends THREE.Group {
     this.parts.tail.rotation.y = Math.sin(t * 3) * 0.8;
 
     // Falling
-    this.position.y -= 0.1 * deltaTime;
+    this.position.y -= 0.02;
   }
 
   /**
