@@ -24,6 +24,7 @@ const CONFIG = Object.freeze({
   doubleJumpForce: 5.1,
   gravity: -20.0,
   groundOffset: 0.35,
+  playerHeightOffset: -0.035,
   playerRadius: 0.22,
   playerHeight: 0.78,
   groundSnapDistance: 0.18,
@@ -48,6 +49,7 @@ export class CharacterController {
     collisionQuery = null,
     keyBindings = {},
     groundOffset = CONFIG.groundOffset,
+    playerHeightOffset = CONFIG.playerHeightOffset,
     playerRadius = CONFIG.playerRadius,
     playerHeight = CONFIG.playerHeight,
     groundSnapDistance = CONFIG.groundSnapDistance,
@@ -57,6 +59,7 @@ export class CharacterController {
     this.collisionQuery = collisionQuery;
     this.keyBindings = { ...DEFAULT_KEY_BINDINGS, ...keyBindings };
     this.groundOffset = groundOffset;
+    this.playerHeightOffset = playerHeightOffset;
     this.collider = new UprightCapsuleCollider({
       radius: playerRadius,
       height: playerHeight,
@@ -235,7 +238,9 @@ export class CharacterController {
 
     const colliders = this._getCollisionCandidates();
     const supportY = this.collider.getSupportHeight(colliders, groundY);
-    const groundLevel = supportY + (this.mouse?.groundOffset ?? this.groundOffset);
+    const groundLevel = supportY
+      + (this.mouse?.groundOffset ?? this.groundOffset)
+      + this.playerHeightOffset;
     if (this.mouse.position.y <= groundLevel) {
       this.mouse.position.y = groundLevel;
       this.velocity.y = 0;

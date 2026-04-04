@@ -205,6 +205,7 @@ export class Mouse extends THREE.Group {
           opacity: material.opacity ?? 1,
           transparent: material.transparent ?? false,
           depthWrite: material.depthWrite ?? true,
+          alphaHash: material.alphaHash ?? false,
         });
       });
     });
@@ -226,14 +227,24 @@ export class Mouse extends THREE.Group {
     }
 
     this._fadeMaterials.forEach((state, material) => {
-      material.opacity = state.opacity * this._occlusionOpacity;
-      material.transparent = useStableWebGLFade
-        ? (state.transparent || this._occlusionFadeActive)
+      const nextAlphaHash = useStableWebGLFade ? this._occlusionFadeActive : state.alphaHash;
+      const nextTransparent = useStableWebGLFade
+        ? state.transparent
         : (state.transparent || this._occlusionOpacity < 0.985);
-      material.depthWrite = useStableWebGLFade
-        ? (this._occlusionFadeActive ? false : state.depthWrite)
+      const nextDepthWrite = useStableWebGLFade
+        ? state.depthWrite
         : (this._occlusionOpacity >= 0.985 ? state.depthWrite : false);
-      material.needsUpdate = true;
+      const renderStateChanged = material.alphaHash !== nextAlphaHash
+        || material.transparent !== nextTransparent
+        || material.depthWrite !== nextDepthWrite;
+
+      material.opacity = state.opacity * this._occlusionOpacity;
+      material.alphaHash = nextAlphaHash;
+      material.transparent = nextTransparent;
+      material.depthWrite = nextDepthWrite;
+      if (renderStateChanged) {
+        material.needsUpdate = true;
+      }
     });
 
     this.eyeAnimator?.setOpacity(this._occlusionOpacity);

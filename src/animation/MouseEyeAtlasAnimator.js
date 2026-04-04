@@ -154,10 +154,17 @@ export class MouseEyeAtlasAnimator {
     this.opacity = clamp(opacity, 0, 1);
     if (!this.material) return;
 
+    const nextTransparent = this.opacity < 0.999;
+    const nextDepthWrite = this.opacity >= 0.999;
+    const renderStateChanged = this.material.transparent !== nextTransparent
+      || this.material.depthWrite !== nextDepthWrite;
+
     this.material.opacity = this.opacity;
-    this.material.transparent = this.opacity < 0.999;
-    this.material.depthWrite = this.opacity >= 0.999;
-    this.material.needsUpdate = true;
+    this.material.transparent = nextTransparent;
+    this.material.depthWrite = nextDepthWrite;
+    if (renderStateChanged) {
+      this.material.needsUpdate = true;
+    }
   }
 
   attach(parent, {
@@ -264,7 +271,6 @@ export class MouseEyeAtlasAnimator {
     const v = 1 - ((this.currentRow + 1) * vScale) + vInset;
     this.texture.repeat.set(uScale - uInset * 2, vScale - vInset * 2);
     this.texture.offset.set(u, v);
-    this.texture.needsUpdate = true;
   }
 
   _updateVisibility() {

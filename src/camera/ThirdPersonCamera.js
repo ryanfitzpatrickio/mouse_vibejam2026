@@ -22,6 +22,8 @@ export class ThirdPersonCamera {
     minPitch = -1.2,
     maxPitch = 1.2,
     mouseSensitivity = 0.0024,
+    cameraCollisionRadius = 0.42,
+    cameraCollisionHeight = 0.24,
     fov = null,
   } = {}) {
     if (!camera) {
@@ -46,6 +48,8 @@ export class ThirdPersonCamera {
     this.minPitch = minPitch;
     this.maxPitch = maxPitch;
     this.mouseSensitivity = mouseSensitivity;
+    this.cameraCollisionRadius = cameraCollisionRadius;
+    this.cameraCollisionHeight = cameraCollisionHeight;
     this.enabled = true;
 
     this.pointerLocked = false;
@@ -67,9 +71,16 @@ export class ThirdPersonCamera {
     this._actualArmLength = this.armLength;
     this._desiredArmLength = this.armLength;
     this._collisionArmLength = this.armLength;
+    this._collisionCorrection = new THREE.Vector3();
 
     this._tempVectorA = new THREE.Vector3();
     this._tempVectorB = new THREE.Vector3();
+    this._tempVectorC = new THREE.Vector3();
+    this._tempVectorD = new THREE.Vector3();
+    this._tempVectorE = new THREE.Vector3();
+    this._tempVectorF = new THREE.Vector3();
+    this._tempVectorG = new THREE.Vector3();
+    this._tempMatrix3 = new THREE.Matrix3();
 
     this._onMouseMove = this._onMouseMove.bind(this);
     this._onPointerLockChange = this._onPointerLockChange.bind(this);
@@ -134,7 +145,14 @@ export class ThirdPersonCamera {
     const actual = Math.max(this.minArmLength, this._collisionArmLength || desired);
     const fadeRange = Math.max(0.0001, desired - this.minArmLength);
     const compression = THREE.MathUtils.clamp((desired - actual) / fadeRange, 0, 1);
-    return THREE.MathUtils.lerp(1, minOpacity, compression);
+    const fadeStartCompression = 0.18;
+    const bufferedCompression = compression <= fadeStartCompression
+      ? 0
+      : (compression - fadeStartCompression) / Math.max(0.0001, 1 - fadeStartCompression);
+    const aggressiveCompression = bufferedCompression <= 0
+      ? 0
+      : THREE.MathUtils.clamp(Math.pow(bufferedCompression, 0.5), 0, 1);
+    return THREE.MathUtils.lerp(1, minOpacity, aggressiveCompression);
   }
 
   syncFromCamera(targetPosition) {
@@ -209,11 +227,14 @@ export class ThirdPersonCamera {
     this._lookDirection.set(0, 0, 1).applyQuaternion(this._smoothedQuaternion).normalize();
 
     const unclampedArm = THREE.MathUtils.clamp(this.armLength, this.minArmLength, this.maxArmLength);
-    const collisionSafeArm = this._resolveCollisionArmLength(this._smoothedPivot, this._lookDirection, unclampedArm);
+    const collisionResult = this._resolveCollisionArmLength(this._smoothedPivot, this._lookDirection, unclampedArm);
     this._desiredArmLength = unclampedArm;
-    this._collisionArmLength = collisionSafeArm;
+    this._collisionArmLength = collisionResult.armLength;
+    this._collisionCorrection.copy(collisionResult.correction);
 
-    this._targetPosition.copy(this._smoothedPivot).addScaledVector(this._lookDirection, collisionSafeArm);
+    this._targetPosition.copy(this._smoothedPivot)
+      .addScaledVector(this._lookDirection, collisionResult.armLength)
+      .add(this._collisionCorrection);
 
     const alpha = 1 - Math.exp(-this.stiffness * dt);
     this._currentPosition.lerp(this._targetPosition, alpha);
@@ -233,7 +254,7 @@ export class ThirdPersonCamera {
       typeof this.collisionQuery === 'function' ? this.collisionQuery() : this.collisionObjects;
 
     if (!rawObjects || rawObjects.length === 0) {
-      return desiredArm;
+      return { armLength: desiredArm, correction: this._collisionCorrection.set(0, 0, 0) };
     }
 
     const objects = rawObjects
@@ -241,22 +262,78 @@ export class ThirdPersonCamera {
       .filter((entry) => entry?.isObject3D && entry.visible !== false);
 
     if (!objects.length) {
-      return desiredArm;
+      return { armLength: desiredArm, correction: this._collisionCorrection.set(0, 0, 0) };
     }
 
-    const directionFromPivot = this._tempVectorB.copy(lookDirection).normalize();
+    const forward = this._tempVectorB.copy(lookDirection).normalize();
+    const right = this._tempVectorC.crossVectors(forward, UP);
+    if (right.lengthSq() <= 0.000001) {
+      right.set(1, 0, 0);
+    }
+    right.normalize();
+    const up = this._tempVectorD.crossVectors(right, forward).normalize();
+    const sampleOffsets = [
+      [0, 0],
+      [1, 0],
+      [-1, 0],
+      [0, 0.8],
+      [0, -0.8],
+      [0.85, 0.55],
+      [-0.85, 0.55],
+      [0.85, -0.55],
+      [-0.85, -0.55],
+    ];
 
-    this._raycaster.set(pivot, directionFromPivot);
-    this._raycaster.far = desiredArm;
+    let safeArm = desiredArm;
+    let bestHit = null;
 
-    const intersections = this._raycaster.intersectObjects(objects, true);
+    for (const [xOffset, yOffset] of sampleOffsets) {
+      const sampleTarget = this._tempVectorA.copy(pivot)
+        .addScaledVector(forward, desiredArm)
+        .addScaledVector(right, this.cameraCollisionRadius * xOffset)
+        .addScaledVector(up, this.cameraCollisionHeight * yOffset);
 
-    if (!intersections.length) {
-      return desiredArm;
+      const sampleDirection = this._tempVectorE.copy(sampleTarget).sub(pivot);
+      const sampleDistance = sampleDirection.length();
+      if (sampleDistance <= 0.0001) continue;
+
+      sampleDirection.divideScalar(sampleDistance);
+      this._raycaster.set(pivot, sampleDirection);
+      this._raycaster.far = sampleDistance;
+
+      const intersections = this._raycaster.intersectObjects(objects, true);
+      if (!intersections.length) continue;
+      const hit = intersections[0];
+
+      const projectedDistance = Math.max(
+        0,
+        this._tempVectorA.copy(hit.point).sub(pivot).dot(forward),
+      );
+      const collisionDistance = Math.max(this.minArmLength, projectedDistance - 0.32);
+      safeArm = Math.min(safeArm, collisionDistance);
+
+      if (!bestHit || projectedDistance < bestHit.projectedDistance) {
+        bestHit = { hit, projectedDistance };
+      }
     }
 
-    const collisionDistance = Math.max(this.minArmLength, intersections[0].distance - 0.08);
-    return Math.min(desiredArm, collisionDistance);
+    const correction = this._collisionCorrection.set(0, 0, 0);
+    if (bestHit?.hit?.face && bestHit.hit.object) {
+      const candidateCamera = this._tempVectorA.copy(pivot).addScaledVector(forward, safeArm);
+      this._tempMatrix3.getNormalMatrix(bestHit.hit.object.matrixWorld);
+      const wallNormal = this._tempVectorB.copy(bestHit.hit.face.normal)
+        .applyMatrix3(this._tempMatrix3)
+        .normalize();
+      const wallPoint = this._tempVectorC.copy(bestHit.hit.point);
+      const signedDistance = wallNormal.dot(this._tempVectorD.copy(candidateCamera).sub(wallPoint));
+      const wallClearance = 0.18;
+
+      if (signedDistance < wallClearance) {
+        correction.copy(wallNormal).multiplyScalar(wallClearance - signedDistance);
+      }
+    }
+
+    return { armLength: safeArm, correction };
   }
 
   _onMouseMove(event) {

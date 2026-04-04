@@ -286,11 +286,12 @@ export class RendererModePanel {
       : 0.001;
     const avgFps = this.samples.reduce((sum, sample) => sum + sample.fps, 0) / this.samples.length;
     const drawCallsPerSecond = this.samples.reduce((sum, sample) => sum + sample.drawCalls, 0) / totalTime;
+    const avgDrawCalls = this.samples.reduce((sum, sample) => sum + sample.drawCalls, 0) / this.samples.length;
 
-    this._renderPerformance(avgFps, drawCallsPerSecond);
+    this._renderPerformance(avgFps, avgDrawCalls, drawCallsPerSecond);
   }
 
-  _renderPerformance(avgFps, drawCallsPerSecond) {
+  _renderPerformance(avgFps, avgDrawCalls, drawCallsPerSecond) {
     if (!this.chartCtx) return;
 
     const ctx = this.chartCtx;
@@ -347,6 +348,7 @@ export class RendererModePanel {
 
     this.metrics.innerHTML = `
       <div>Avg FPS: <span style="color:#9ee8b2">${avgFps.toFixed(1)}</span></div>
+      <div>Draw calls/frame: <span style="color:#ffd97a">${avgDrawCalls.toFixed(1)}</span></div>
       <div>Draw calls/sec: <span style="color:#ffd97a">${drawCallsPerSecond.toFixed(1)}</span></div>
     `;
   }
