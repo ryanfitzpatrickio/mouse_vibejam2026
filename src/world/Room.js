@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { createKeyCelMaterial, createToonFallbackMaterial } from '../materials/index.js';
+import { createKeyCelMaterial } from '../materials/index.js';
 
 /**
  * AABB (Axis-Aligned Bounding Box) for collision detection
@@ -305,6 +305,7 @@ export class Room {
     cheese.name = 'CheeseLoot';
     cheese.castShadow = true;
     cheese.receiveShadow = true;
+    cheese.userData.baseY = cheese.position.y;
     this.group.add(cheese);
 
     this.lootItems.push(cheese);
@@ -360,8 +361,10 @@ export class Room {
     const t = timeMs * 0.001;
 
     this.lootItems.forEach((item) => {
-      // Gentle bobbing
-      item.position.y += Math.sin(t * 2) * 0.001;
+      const baseY = item.userData.baseY ?? item.position.y;
+
+      // Gentle bobbing (absolute position, no drift)
+      item.position.y = baseY + Math.sin(t * 2) * 0.1;
 
       // Slow rotation
       item.rotation.x += 0.005;
@@ -371,6 +374,7 @@ export class Room {
       if (item.userData.sparkle) {
         const scale = 1 + Math.sin(t * 3) * 0.15;
         item.userData.sparkle.scale.set(scale, scale, scale);
+        item.userData.sparkle.position.y = item.position.y;
       }
     });
   }

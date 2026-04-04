@@ -1,5 +1,5 @@
 import * as THREE from 'three/webgpu';
-import { createKeyCelMaterial, createToonFallbackMaterial } from '../materials/index.js';
+import { createKeyCelMaterial } from '../materials/index.js';
 
 /**
  * Mouse character: procedural mesh + animation system
@@ -225,7 +225,7 @@ export class Mouse extends THREE.Group {
         this.animateCarry();
         break;
       case 'death':
-        this.animateDeath();
+        this.animateDeath(deltaTime);
         break;
     }
 
@@ -386,13 +386,13 @@ export class Mouse extends THREE.Group {
   /**
    * DEATH: Ragdoll tumble
    */
-  animateDeath() {
+  animateDeath(deltaTime = 0.016) {
     const t = this.animationTime;
 
     // Spin and tumble
-    this.rotation.x += 0.1;
-    this.rotation.y += 0.15;
-    this.rotation.z += 0.08;
+    this.rotation.x += 6.0 * deltaTime;
+    this.rotation.y += 9.0 * deltaTime;
+    this.rotation.z += 4.8 * deltaTime;
 
     // Limbs flail
     [0, 1, 2, 3].forEach((i) => {
@@ -407,7 +407,7 @@ export class Mouse extends THREE.Group {
     this.parts.tail.rotation.y = Math.sin(t * 3) * 0.8;
 
     // Falling
-    this.position.y -= 0.02;
+    this.position.y -= 1.2 * deltaTime;
   }
 
   /**
