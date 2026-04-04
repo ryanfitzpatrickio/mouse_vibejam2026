@@ -74,6 +74,7 @@ export function createKeyCelMaterial({
   lightDirection = DEFAULT_LIGHT_DIRECTION,
 } = {}) {
   const material = new THREE.MeshStandardNodeMaterial();
+  material.lights = false;
 
   const baseColorUniform = uniform(new THREE.Color(baseColor));
   const lightDirectionUniform = uniform(lightDirection.clone().normalize());
