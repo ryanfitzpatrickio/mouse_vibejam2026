@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { PrefabEditorDialog } from './PrefabEditorDialog.js';
+import { DEFAULT_PREFAB_LIBRARY, normalizePrefabLibrary } from './prefabRegistry.js';
+import { assetUrl } from '../utils/assetUrl.js';
 
 const RAD_TO_DEG = 180 / Math.PI;
 const DEG_TO_RAD = Math.PI / 180;
@@ -16,6 +19,7 @@ function createPrimitiveId() {
 }
 
 function createDefaultPrimitive(type, app) {
+  const grid = app.room.getBuildGridConfig();
   const forward = new THREE.Vector3();
   app.camera.getWorldDirection(forward);
   forward.y = 0;
@@ -48,6 +52,7 @@ function createDefaultPrimitive(type, app) {
       roughness: 0.88,
       metalness: 0.04,
     },
+    prefabId: null,
     collider: true,
     castShadow: true,
     receiveShadow: true,
@@ -55,14 +60,18 @@ function createDefaultPrimitive(type, app) {
 
   if (type === 'plane') {
     primitive.rotation.x = -Math.PI * 0.5;
-    primitive.scale = { x: 2, y: 2, z: 1 };
+    primitive.scale = { x: grid.cellWidth, y: grid.cellDepth, z: 1 };
   }
 
   if (type === 'cylinder') {
-    primitive.scale = { x: 1, y: 1.5, z: 1 };
+    primitive.scale = { x: grid.cellWidth, y: 1.5, z: grid.cellDepth };
   }
 
-  return primitive;
+  if (type === 'box') {
+    primitive.scale = { x: grid.cellWidth, y: 1, z: grid.cellDepth };
+  }
+
+  return app.room.snapPrimitiveToGrid(primitive, { snapY: true, snapScale: true });
 }
 
 function createAtlasButtonStyle(index, columns = 10, rows = 10) {
@@ -72,18 +81,19 @@ function createAtlasButtonStyle(index, columns = 10, rows = 10) {
   const y = rows > 1 ? (row / (rows - 1)) * 100 : 0;
 
   return {
-    backgroundImage: "url('/textures.webp')",
+    backgroundImage: `url('${assetUrl('textures.webp')}')`,
     backgroundSize: `${columns * 100}% ${rows * 100}%`,
     backgroundPosition: `${x}% ${y}%`,
   };
 }
 
 class BuildModeEditor {
-  constructor(app, manifest, OrbitControls, TransformControls) {
+  constructor(app, manifest, prefabLibrary, OrbitControls, TransformControls) {
     this.app = app;
     this.manifest = manifest;
     this.OrbitControls = OrbitControls;
     this.TransformControls = TransformControls;
+    this.prefabLibrary = normalizePrefabLibrary(prefabLibrary ?? DEFAULT_PREFAB_LIBRARY);
     this.layout = app.room.getEditableLayout();
     this.selectedId = this.layout.primitives[0]?.id ?? null;
     this.visible = false;
@@ -93,12 +103,14 @@ class BuildModeEditor {
     this.pointerInsideCanvas = false;
     this.raycaster = new THREE.Raycaster();
     this.currentHit = null;
+    this._suppressTransformSync = false;
 
     this._createUI();
     this._createProbeVisuals();
     this._createOrbitControls();
     this._createTransformControls();
     this._bindCanvasEvents();
+    this._createPrefabEditorDialog();
     this._renderPalette();
     this._refreshList();
     this._syncForm();
@@ -180,6 +192,16 @@ class BuildModeEditor {
     });
     this.panel.appendChild(note);
 
+    const grid = this.app.room.getBuildGridConfig();
+    const gridNote = document.createElement('div');
+    gridNote.textContent = `Grid: ${grid.columns}x${grid.rows} | cell ${grid.cellWidth.toFixed(3)} x ${grid.cellDepth.toFixed(3)}`;
+    Object.assign(gridNote.style, {
+      color: '#9ee8b2',
+      marginBottom: '12px',
+      fontSize: '11px',
+    });
+    this.panel.appendChild(gridNote);
+
     this.actions = document.createElement('div');
     Object.assign(this.actions.style, {
       display: 'grid',
@@ -203,6 +225,7 @@ class BuildModeEditor {
     this._createSelectionSection();
     this._createTransformSection();
     this._createMaterialSection();
+    this._createPrefabSection();
     this._createPaletteSection();
 
     this.status = document.createElement('div');
@@ -261,6 +284,23 @@ class BuildModeEditor {
     document.body.appendChild(this.hitTooltip);
   }
 
+  _createPrefabEditorDialog() {
+    this.prefabEditor = new PrefabEditorDialog({
+      room: this.app.room,
+      manifest: this.manifest,
+      OrbitControls: this.OrbitControls,
+      TransformControls: this.TransformControls,
+      onSaveLibrary: async (library) => {
+        const result = await this._savePrefabLibrary(library);
+        if (result?.ok) {
+          this.prefabLibrary = normalizePrefabLibrary(library);
+          this._syncPrefabSection();
+        }
+        return result;
+      },
+    });
+  }
+
   _createTransformControls() {
     this.transformControls = new this.TransformControls(this.app.camera, this.app.renderer.domElement);
     this.transformControls.enabled = false;
@@ -270,20 +310,53 @@ class BuildModeEditor {
     this.transformControlsHelper.userData.editorHelper = true;
     this.transformControls.addEventListener('dragging-changed', (event) => {
       this.controls.enabled = !event.value && this.visible;
+      if (!event.value) {
+        this.layout = this.app.room.getEditableLayout();
+        this._syncForm();
+        this._attachTransformControls();
+      }
     });
     this.transformControls.addEventListener('objectChange', () => {
+      if (this._suppressTransformSync) return;
       const object = this.transformControls.object;
       const primitiveId = object?.userData?.primitiveId;
       if (!primitiveId) return;
 
+      const primitive = this.layout.primitives.find((entry) => entry.id === primitiveId);
+      if (!primitive) return;
+
+      const next = this.app.room.snapPrimitiveToGrid({
+        ...deepClone(primitive),
+        position: {
+          x: object.position.x,
+          y: object.position.y,
+          z: object.position.z,
+        },
+        rotation: {
+          x: object.rotation.x,
+          y: object.rotation.y,
+          z: object.rotation.z,
+        },
+        scale: {
+          x: object.scale.x,
+          y: object.scale.y,
+          z: object.scale.z,
+        },
+      }, { snapY: true });
+
+      this._suppressTransformSync = true;
+      object.position.set(next.position.x, next.position.y, next.position.z);
+      object.rotation.set(next.rotation.x, next.rotation.y, next.rotation.z);
+      object.scale.set(next.scale.x, next.scale.y, next.scale.z);
+      this._suppressTransformSync = false;
+
       this.app.room.updateEditablePrimitiveTransform(primitiveId, {
-        position: object.position,
-        rotation: object.rotation,
-        scale: object.scale,
+        position: next.position,
+        rotation: next.rotation,
+        scale: next.scale,
       });
       this.layout = this.app.room.getEditableLayout();
       this._syncForm();
-      this._attachTransformControls();
     });
     this.app.scene.add(this.transformControlsHelper);
   }
@@ -342,11 +415,13 @@ class BuildModeEditor {
     const primitive = primitiveId
       ? this.layout.primitives.find((entry) => entry.id === primitiveId)
       : null;
+    const gridCell = this._getGridCellFromPoint(hit.point);
     this.hitTooltip.style.display = 'block';
     this.hitTooltip.style.left = `${this.pointerScreen.x + 14}px`;
     this.hitTooltip.style.top = `${this.pointerScreen.y + 14}px`;
     this.hitTooltip.textContent = [
       hit.object.name || 'unnamed',
+      gridCell ? `grid ${gridCell.col + 1}, ${gridCell.row + 1}` : '',
       primitive ? `cell ${primitive.texture.cell ?? 'none'}` : '',
       `x ${hit.point.x.toFixed(2)} y ${hit.point.y.toFixed(2)} z ${hit.point.z.toFixed(2)}`,
     ].filter(Boolean).join('\n');
@@ -511,6 +586,42 @@ class BuildModeEditor {
     });
   }
 
+  _createPrefabSection() {
+    const section = this._createSection('Prefabs');
+
+    this.prefabSelect = document.createElement('select');
+    this._styleField(this.prefabSelect);
+    this.prefabSelect.addEventListener('change', () => {
+      this._syncPrefabSection();
+    });
+
+    section.appendChild(this.prefabSelect);
+
+    const actions = document.createElement('div');
+    Object.assign(actions.style, {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+      gap: '8px',
+      marginTop: '8px',
+    });
+    section.appendChild(actions);
+
+    this._addInlineButton(actions, 'New / Edit', () => this._openPrefabEditor());
+    this._addInlineButton(actions, 'Place', () => this._placeSelectedPrefab(), '#23472d');
+    this._addInlineButton(actions, 'Delete', () => this._deleteSelectedPrefab(), '#5d221f');
+    this._addInlineButton(actions, 'Save Lib', () => this._savePrefabLibrary());
+
+    this.prefabMeta = document.createElement('div');
+    Object.assign(this.prefabMeta.style, {
+      color: '#d8c3a8',
+      marginTop: '8px',
+      fontSize: '11px',
+      lineHeight: '1.35',
+      whiteSpace: 'pre-wrap',
+    });
+    section.appendChild(this.prefabMeta);
+  }
+
   _createPaletteSection() {
     const section = this._createSection('Texture Palette');
 
@@ -586,6 +697,24 @@ class BuildModeEditor {
     });
     button.addEventListener('click', onClick);
     this.actions.appendChild(button);
+  }
+
+  _addInlineButton(parent, label, onClick, background = '#2f2c28') {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    Object.assign(button.style, {
+      padding: '8px 10px',
+      borderRadius: '8px',
+      border: '1px solid rgba(255,255,255,0.12)',
+      background,
+      color: '#fff4e8',
+      cursor: 'pointer',
+      fontFamily: 'inherit',
+      fontSize: '11px',
+    });
+    button.addEventListener('click', onClick);
+    parent.appendChild(button);
   }
 
   _createSection(title) {
@@ -794,6 +923,7 @@ class BuildModeEditor {
 
   _syncForm() {
     this._refreshList();
+    this._syncPrefabSection();
     const primitive = this._selectedPrimitive();
     const disabled = !primitive;
 
@@ -811,6 +941,7 @@ class BuildModeEditor {
       this.colliderToggle,
       this.castShadowToggle,
       this.receiveShadowToggle,
+      this.prefabSelect,
     ].forEach((field) => {
       field.disabled = disabled;
     });
@@ -842,6 +973,7 @@ class BuildModeEditor {
     this.colliderToggle.checked = primitive.collider;
     this.castShadowToggle.checked = primitive.castShadow;
     this.receiveShadowToggle.checked = primitive.receiveShadow;
+    this.prefabSelect.value = primitive.prefabId ?? '';
     this._highlightPalette();
   }
 
@@ -852,13 +984,129 @@ class BuildModeEditor {
     });
   }
 
+  _selectedPrefab() {
+    return this.prefabLibrary.prefabs.find((prefab) => prefab.id === this.prefabSelect.value) ?? null;
+  }
+
+  _syncPrefabSection() {
+    const currentValue = this.prefabSelect?.value;
+    if (this.prefabSelect) {
+      this.prefabSelect.innerHTML = '';
+      this.prefabLibrary.prefabs.forEach((prefab) => {
+        const option = document.createElement('option');
+        option.value = prefab.id;
+        option.textContent = prefab.name;
+        this.prefabSelect.appendChild(option);
+      });
+      if (currentValue && this.prefabLibrary.prefabs.some((prefab) => prefab.id === currentValue)) {
+        this.prefabSelect.value = currentValue;
+      } else if (this.prefabLibrary.prefabs[0]) {
+        this.prefabSelect.value = this.prefabLibrary.prefabs[0].id;
+      }
+    }
+
+    const prefab = this._selectedPrefab();
+    if (!this.prefabMeta) return;
+    if (!prefab) {
+      this.prefabMeta.textContent = 'No prefabs in library.';
+      return;
+    }
+
+    this.prefabMeta.textContent = [
+      `Size: ${prefab.size.x} x ${prefab.size.y} x ${prefab.size.z} cells`,
+      `Parts: ${prefab.primitives.length}`,
+    ].join('\n');
+  }
+
+  _openPrefabEditor() {
+    this.prefabEditor.open(this.prefabLibrary, this.prefabSelect.value || null);
+  }
+
+  _getFallbackGridCell(spanX = 1, spanZ = 1) {
+    const grid = this.app.room.getBuildGridConfig();
+    const point = this.app.mouse.position.clone();
+    const col = clamp(
+      Math.floor(((point.x + grid.roomWidth * 0.5) / grid.roomWidth) * grid.columns),
+      0,
+      Math.max(0, grid.columns - spanX),
+    );
+    const row = clamp(
+      Math.floor(((point.z + grid.roomDepth * 0.5) / grid.roomDepth) * grid.rows),
+      0,
+      Math.max(0, grid.rows - spanZ),
+    );
+    return { col, row };
+  }
+
+  _placeSelectedPrefab() {
+    const prefab = this._selectedPrefab();
+    if (!prefab) return;
+
+    const spanX = Math.max(1, prefab.size?.x ?? 1);
+    const spanZ = Math.max(1, prefab.size?.z ?? 1);
+    const cell = this.currentHit
+      ? this._getGridCellFromPoint(this.currentHit.point)
+      : this._getFallbackGridCell(spanX, spanZ);
+    const targetCell = cell ?? this._getFallbackGridCell(spanX, spanZ);
+    const ids = this.app.room.instantiatePrefab(prefab, {
+      col: targetCell.col,
+      row: targetCell.row,
+    });
+    this.layout = this.app.room.getEditableLayout();
+    this.selectedId = ids[0] ?? this.selectedId;
+    this._syncForm();
+    this._attachTransformControls();
+    this._setStatus(`Placed ${prefab.name}.`);
+  }
+
+  async _savePrefabLibrary(library = this.prefabLibrary) {
+    const payload = normalizePrefabLibrary(library);
+    const response = await fetch('/__dev/save-prefabs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json();
+    if (!response.ok || !result.ok) {
+      this._setStatus(`Prefab save failed: ${result.error || response.statusText}`, true);
+      return { ok: false, error: result.error || response.statusText };
+    }
+    this.prefabLibrary = payload;
+    this._syncPrefabSection();
+    this._setStatus('Saved /levels/prefabs.json');
+    return { ok: true };
+  }
+
+  _deleteSelectedPrefab() {
+    const prefab = this._selectedPrefab();
+    if (!prefab) return;
+    this.prefabLibrary.prefabs = this.prefabLibrary.prefabs.filter((entry) => entry.id !== prefab.id);
+    this._syncPrefabSection();
+    this._setStatus(`Deleted ${prefab.name}.`);
+  }
+
+  _getGridCellFromPoint(point) {
+    if (!point) return null;
+    const grid = this.app.room.getBuildGridConfig();
+    const localPoint = this.app.room.getGroup().worldToLocal(point.clone());
+    const col = Math.floor(((localPoint.x + grid.roomWidth * 0.5) / grid.roomWidth) * grid.columns);
+    const row = Math.floor(((localPoint.z + grid.roomDepth * 0.5) / grid.roomDepth) * grid.rows);
+
+    if (col < 0 || col >= grid.columns || row < 0 || row >= grid.rows) {
+      return null;
+    }
+
+    return { col, row };
+  }
+
   _updateSelected(mutator) {
     const primitive = this._selectedPrimitive();
     if (!primitive) return;
 
     const next = deepClone(primitive);
     mutator(next);
-    this.app.room.upsertEditablePrimitive(next);
+    const snapped = this.app.room.snapPrimitiveToGrid(next, { snapY: true });
+    this.app.room.upsertEditablePrimitive(snapped);
     this.layout = this.app.room.getEditableLayout();
     this._syncForm();
     this._attachTransformControls();
@@ -877,14 +1125,16 @@ class BuildModeEditor {
   _duplicateSelected() {
     const primitive = this._selectedPrimitive();
     if (!primitive) return;
+    const grid = this.app.room.getBuildGridConfig();
     const copy = deepClone(primitive);
     copy.id = createPrimitiveId();
     copy.name = `${primitive.name}-copy`;
-    copy.position.x += 0.6;
-    copy.position.z += 0.6;
-    this.app.room.upsertEditablePrimitive(copy);
+    copy.position.x += grid.cellWidth;
+    copy.position.z += grid.cellDepth;
+    const snapped = this.app.room.snapPrimitiveToGrid(copy, { snapY: true });
+    this.app.room.upsertEditablePrimitive(snapped);
     this.layout = this.app.room.getEditableLayout();
-    this.selectedId = copy.id;
+    this.selectedId = snapped.id;
     this._syncForm();
     this._attachTransformControls();
     this._setStatus(`Duplicated ${primitive.name}.`);
@@ -942,7 +1192,7 @@ class BuildModeEditor {
 
 async function loadManifest() {
   try {
-    const response = await fetch('/textures.manifest.json', { cache: 'no-store' });
+    const response = await fetch(assetUrl('textures.manifest.json'), { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return await response.json();
   } catch {
@@ -956,9 +1206,21 @@ async function loadManifest() {
   }
 }
 
+async function loadPrefabLibrary() {
+  try {
+    const response = await fetch(assetUrl('levels/prefabs.json'), { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const payload = await response.json();
+    return normalizePrefabLibrary(payload);
+  } catch {
+    return normalizePrefabLibrary(DEFAULT_PREFAB_LIBRARY);
+  }
+}
+
 export async function installBuildMode(app) {
   const manifest = await loadManifest();
+  const prefabLibrary = await loadPrefabLibrary();
   const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
   const { TransformControls } = await import('three/addons/controls/TransformControls.js');
-  return new BuildModeEditor(app, manifest, OrbitControls, TransformControls);
+  return new BuildModeEditor(app, manifest, prefabLibrary, OrbitControls, TransformControls);
 }

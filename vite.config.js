@@ -4,11 +4,12 @@ import { defineConfig } from 'vite';
 
 function devLevelSavePlugin() {
   const layoutPath = path.resolve(process.cwd(), 'public/levels/kitchen-layout.json');
+  const prefabPath = path.resolve(process.cwd(), 'public/levels/prefabs.json');
 
   return {
     name: 'dev-level-save',
     configureServer(server) {
-      server.middlewares.use('/__dev/save-level', (req, res) => {
+      const handleJsonSave = (targetPath, publicPath) => async (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;
           res.setHeader('Content-Type', 'application/json');
@@ -24,14 +25,14 @@ function devLevelSavePlugin() {
         req.on('end', async () => {
           try {
             const payload = JSON.parse(body || '{}');
-            await fs.mkdir(path.dirname(layoutPath), { recursive: true });
-            await fs.writeFile(layoutPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+            await fs.mkdir(path.dirname(targetPath), { recursive: true });
+            await fs.writeFile(targetPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
 
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({
               ok: true,
-              path: '/levels/kitchen-layout.json',
+              path: publicPath,
             }));
           } catch (error) {
             res.statusCode = 500;
@@ -42,13 +43,23 @@ function devLevelSavePlugin() {
             }));
           }
         });
-      });
+      };
+
+      server.middlewares.use(
+        '/__dev/save-level',
+        handleJsonSave(layoutPath, '/levels/kitchen-layout.json'),
+      );
+      server.middlewares.use(
+        '/__dev/save-prefabs',
+        handleJsonSave(prefabPath, '/levels/prefabs.json'),
+      );
     },
   };
 }
 
 export default defineConfig({
   plugins: [devLevelSavePlugin()],
+  base: './',
   root: '.',
   publicDir: 'public',
   build: {

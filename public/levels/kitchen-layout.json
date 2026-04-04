@@ -33,6 +33,9 @@
         "roughness": 0.98,
         "metalness": 0.02
       },
+      "faceTextures": {},
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": false,
       "receiveShadow": true,
@@ -70,6 +73,11 @@
         "roughness": 1,
         "metalness": 0
       },
+      "faceTextures": {
+        "right": 30
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -107,6 +115,11 @@
         "roughness": 1,
         "metalness": 0
       },
+      "faceTextures": {
+        "right": 30
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -144,6 +157,11 @@
         "roughness": 1,
         "metalness": 0
       },
+      "faceTextures": {
+        "right": 30
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -181,6 +199,11 @@
         "roughness": 1,
         "metalness": 0
       },
+      "faceTextures": {
+        "right": 30
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -218,6 +241,9 @@
         "roughness": 1,
         "metalness": 0
       },
+      "faceTextures": {},
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": false,
       "receiveShadow": true,
@@ -255,6 +281,11 @@
         "roughness": 0.92,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 11
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -292,6 +323,11 @@
         "roughness": 0.92,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 11
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -329,6 +365,11 @@
         "roughness": 0.92,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 11
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -366,6 +407,11 @@
         "roughness": 0.72,
         "metalness": 0.08
       },
+      "faceTextures": {
+        "right": 31
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -403,6 +449,11 @@
         "roughness": 0.8,
         "metalness": 0.05
       },
+      "faceTextures": {
+        "right": 33
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -440,6 +491,11 @@
         "roughness": 0.95,
         "metalness": 0.03
       },
+      "faceTextures": {
+        "right": 28
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -477,6 +533,11 @@
         "roughness": 0.95,
         "metalness": 0.03
       },
+      "faceTextures": {
+        "right": 28
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -514,6 +575,11 @@
         "roughness": 0.95,
         "metalness": 0.03
       },
+      "faceTextures": {
+        "right": 28
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -551,6 +617,11 @@
         "roughness": 0.52,
         "metalness": 0.33
       },
+      "faceTextures": {
+        "right": 44
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -588,6 +659,11 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": null
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -625,6 +701,11 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": null
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -662,6 +743,11 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": null
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -699,6 +785,11 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": null
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -736,6 +827,11 @@
         "roughness": 0.52,
         "metalness": 0.33
       },
+      "faceTextures": {
+        "right": 44
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -773,6 +869,11 @@
         "roughness": 0.52,
         "metalness": 0.33
       },
+      "faceTextures": {
+        "right": 44
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -810,6 +911,11 @@
         "roughness": 0.52,
         "metalness": 0.33
       },
+      "faceTextures": {
+        "right": 44
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -847,6 +953,11 @@
         "roughness": 0.48,
         "metalness": 0.14
       },
+      "faceTextures": {
+        "right": 40
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -884,6 +995,11 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": null
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -921,6 +1037,11 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": null
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -958,6 +1079,11 @@
         "roughness": 0.92,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 11
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -995,6 +1121,11 @@
         "roughness": 0.92,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 11
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1032,6 +1163,11 @@
         "roughness": 0.92,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 11
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1069,6 +1205,11 @@
         "roughness": 0.92,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 11
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1106,6 +1247,11 @@
         "roughness": 0.92,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 11
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1143,6 +1289,11 @@
         "roughness": 1,
         "metalness": 0
       },
+      "faceTextures": {
+        "right": 84
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1180,6 +1331,11 @@
         "roughness": 0.95,
         "metalness": 0.03
       },
+      "faceTextures": {
+        "right": 28
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1217,6 +1373,11 @@
         "roughness": 1,
         "metalness": 0
       },
+      "faceTextures": {
+        "right": 84
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1254,6 +1415,11 @@
         "roughness": 0.95,
         "metalness": 0.03
       },
+      "faceTextures": {
+        "right": 28
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1291,6 +1457,11 @@
         "roughness": 1,
         "metalness": 0
       },
+      "faceTextures": {
+        "right": 84
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1328,6 +1499,11 @@
         "roughness": 0.95,
         "metalness": 0.03
       },
+      "faceTextures": {
+        "right": 28
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1365,6 +1541,11 @@
         "roughness": 1,
         "metalness": 0
       },
+      "faceTextures": {
+        "right": 84
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1402,6 +1583,11 @@
         "roughness": 0.95,
         "metalness": 0.03
       },
+      "faceTextures": {
+        "right": 28
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1439,6 +1625,11 @@
         "roughness": 0.92,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 11
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1476,6 +1667,11 @@
         "roughness": 0.92,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 11
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1513,6 +1709,11 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": null
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -1550,6 +1751,11 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": null
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -1587,6 +1793,11 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "faceTextures": {
+        "right": 76
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -1624,10 +1835,55 @@
         "roughness": 1,
         "metalness": 0
       },
+      "faceTextures": {
+        "right": 84
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": true
+    },
+    {
+      "id": "primitive-mnkln2bx-c71r6",
+      "name": "box-7dr",
+      "type": "box",
+      "position": {
+        "x": -2,
+        "y": 0.5,
+        "z": -0.6667
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1.3333,
+        "y": 1,
+        "z": 1.3333
+      },
+      "texture": {
+        "cell": 0,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
     }
   ]
 }

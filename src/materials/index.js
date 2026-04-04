@@ -4,4 +4,9 @@ export {
   createThreeBandGradientTexture,
   createToonFallbackMaterial,
 } from './CelMaterial.js';
-export { createOutlineMaterial, createOutlineMesh, createOutlineGroup } from './OutlineMaterial.js';
+export {
+  createOutlineMaterial,
+  createOutlineMesh,
+  createOutlineGroup,
+  attachEdgeOutlines,
+} from './OutlineMaterial.js';

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { assetUrl } from '../utils/assetUrl.js';
 
 const STATE_TO_ROW = Object.freeze({
   idle: 0,
@@ -46,7 +47,7 @@ const EYE_WORLD_QUATERNION = new THREE.Quaternion();
 
 export class MouseEyeAtlasAnimator {
   constructor({
-    atlasUrl = '/eyeset1.jpg',
+    atlasUrl = assetUrl('eyeset1.jpg'),
     columns = 5,
     rows = 5,
     fps = 10,

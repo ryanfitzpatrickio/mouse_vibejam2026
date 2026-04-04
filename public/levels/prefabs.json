@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "prefabs": [
+    {
+      "id": "counter-module",
+      "name": "Counter Module",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "prefab-part-mnkk2y5m-6z0fc",
+          "name": "box-part",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.625,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.3333,
+            "y": 1.25,
+            "z": 1.3333
+          },
+          "texture": {
+            "cell": 41,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {
+            "right": 37,
+            "left": 37,
+            "top": 45,
+            "back": 37
+          },
+          "material": {
+            "color": "#ffffff",
+            "roughness": 0.88,
+            "metalness": 0.04
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnkk7jwy-jr6yv",
+          "name": "box-part",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.25,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.3333,
+            "y": 0.5,
+            "z": 1.3333
+          },
+          "texture": {
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#ffffff",
+            "roughness": 0.88,
+            "metalness": 0.04
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
+    },
+    {
+      "id": "chair-module",
+      "name": "Chair Module",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": []
+    },
+    {
+      "id": "appliance-module",
+      "name": "Appliance Module",
+      "size": {
+        "x": 1,
+        "y": 2,
+        "z": 1
+      },
+      "primitives": []
+    },
+    {
+      "id": "prefab-mnkk823k-t5cz5",
+      "name": "Oven",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": []
+    },
+    {
+      "id": "prefab-mnkk872a-28e9e",
+      "name": "Prefab 5",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": []
+    }
+  ]
+}

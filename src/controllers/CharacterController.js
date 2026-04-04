@@ -361,11 +361,9 @@ export class CharacterController {
 
   _updateCamera(dt) {
     if (!this.thirdPersonCamera) {
-      this.mouse?.setOcclusionOpacity?.(1);
       return;
     }
     this.thirdPersonCamera.update(dt, this.mouse.position);
-    this.mouse?.setOcclusionOpacity?.(this.thirdPersonCamera.getCharacterOpacity(0.2));
   }
 
   _handleAbilities() {

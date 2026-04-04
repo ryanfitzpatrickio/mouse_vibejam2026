@@ -1,7 +1,12 @@
 import * as THREE from 'three';
+import { FACE_TEXTURE_SLOTS } from '../dev/prefabRegistry.js';
+import { assetUrl } from '../utils/assetUrl.js';
 
 const ATLAS_GRID = 10;
 const ATLAS_CELL_MARGIN_PX = 3;
+const BUILD_GRID_COLUMNS = 6;
+const BUILD_GRID_ROWS = 6;
+const BUILD_GRID_VERTICAL_STEP = 0.25;
 const ROOM_TEXTURE_CELLS = Object.freeze({
   floor: 0,
   wall: 3,
@@ -89,6 +94,33 @@ function cloneLayout(layout) {
   return JSON.parse(JSON.stringify(layout ?? DEFAULT_EDITABLE_LAYOUT));
 }
 
+function normalizeFaceTextures(type, value = {}) {
+  const slots = FACE_TEXTURE_SLOTS[type] ?? [];
+  const result = {};
+
+  slots.forEach((slot) => {
+    const cell = value?.[slot];
+    if (Number.isFinite(cell) || cell === null) {
+      result[slot] = cell;
+    }
+  });
+
+  return result;
+}
+
+function getFaceTextureCell(definition, slot) {
+  if (Object.prototype.hasOwnProperty.call(definition.faceTextures ?? {}, slot)) {
+    return definition.faceTextures[slot];
+  }
+
+  return definition.texture.cell;
+}
+
+function snapToStep(value, step) {
+  if (!Number.isFinite(step) || step <= 0) return value;
+  return Math.round(value / step) * step;
+}
+
 function colorToHex(color, fallback = '#ffffff') {
   if (typeof color === 'string') return color;
   if (color?.isColor) return `#${color.getHexString()}`;
@@ -151,8 +183,13 @@ export class Room {
     this.group.scale.setScalar(this.scaleFactor);
     this.rendererMode = options.rendererMode ?? 'webgl';
     this.rendererToolkit = options.rendererToolkit ?? null;
-    this.textureAtlasUrl = options.textureAtlasUrl ?? '/textures.webp';
-    this.levelLayoutUrl = options.levelLayoutUrl ?? '/levels/kitchen-layout.json';
+    this.textureAtlasUrl = options.textureAtlasUrl ?? assetUrl('textures.webp');
+    this.levelLayoutUrl = options.levelLayoutUrl ?? assetUrl('levels/kitchen-layout.json');
+    this.buildGrid = {
+      columns: options.buildGridColumns ?? BUILD_GRID_COLUMNS,
+      rows: options.buildGridRows ?? BUILD_GRID_ROWS,
+      verticalStep: options.buildGridVerticalStep ?? BUILD_GRID_VERTICAL_STEP,
+    };
     this.textureAtlasImage = null;
     this.textureCache = new Map();
     this.surfaceMaterials = new Set();
@@ -309,11 +346,14 @@ export class Room {
         },
         rotation: texture.rotation ?? 0,
       },
+      faceTextures: normalizeFaceTextures(type, entry.faceTextures),
       material: {
         color: entry.material?.color ?? '#c9b391',
         roughness: entry.material?.roughness ?? 0.88,
         metalness: entry.material?.metalness ?? 0.04,
       },
+      prefabId: entry.prefabId ?? null,
+      prefabInstanceId: entry.prefabInstanceId ?? null,
       collider: entry.collider !== false,
       castShadow: entry.castShadow !== false,
       receiveShadow: entry.receiveShadow !== false,
@@ -355,8 +395,19 @@ export class Room {
 
   _serializeBuiltInPrimitive(entry) {
     const { mesh } = entry;
-    const material = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    const material = materials[0];
     const textureRepeat = normalizeTextureSettings(material?.userData?.textureRepeat ?? 1);
+    const faceTextures = {};
+
+    (FACE_TEXTURE_SLOTS[entry.primitive.type] ?? []).forEach((slot, index) => {
+      const faceMaterial = materials[index];
+      if (!faceMaterial) return;
+      const cell = faceMaterial.userData?.textureCell;
+      if (Number.isFinite(cell) || cell === null) {
+        faceTextures[slot] = cell;
+      }
+    });
 
     return {
       id: entry.primitive.id,
@@ -386,6 +437,9 @@ export class Room {
         rotation: Number(textureRepeat.rotation.toFixed(4)),
       },
       material: materialToEditableSurface(material, entry.primitive.material.color),
+      faceTextures,
+      prefabId: entry.primitive.prefabId ?? null,
+      prefabInstanceId: entry.primitive.prefabInstanceId ?? null,
       collider: mesh.userData.colliderEnabled !== false,
       castShadow: mesh.castShadow !== false,
       receiveShadow: mesh.receiveShadow !== false,
@@ -404,7 +458,8 @@ export class Room {
     mesh.userData.colliderEnabled = primitive.collider;
 
     const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    materials.forEach((material) => {
+    const faceSlots = FACE_TEXTURE_SLOTS[primitive.type] ?? [];
+    materials.forEach((material, index) => {
       if (!material) return;
       if (material.color) {
         material.color.set(primitive.material.color);
@@ -415,7 +470,8 @@ export class Room {
       if ('metalness' in material) {
         material.metalness = primitive.material.metalness;
       }
-      material.userData.textureCell = primitive.texture.cell;
+      const slot = faceSlots[index];
+      material.userData.textureCell = slot ? getFaceTextureCell(primitive, slot) : primitive.texture.cell;
       material.userData.textureRepeat = {
         x: primitive.texture.repeat.x,
         y: primitive.texture.repeat.y,
@@ -452,8 +508,7 @@ export class Room {
   }
 
   _createEditablePrimitiveMaterial(definition) {
-    const material = this._createSurfaceMaterial(definition.material.color, {
-      textureCell: definition.texture.cell,
+    const materialOptions = {
       textureRepeat: {
         x: definition.texture.repeat.x,
         y: definition.texture.repeat.y,
@@ -461,6 +516,19 @@ export class Room {
       },
       roughness: definition.material.roughness,
       metalness: definition.material.metalness,
+    };
+    const faceSlots = FACE_TEXTURE_SLOTS[definition.type] ?? [];
+
+    if (faceSlots.length > 0) {
+      return faceSlots.map((slot) => this._createSurfaceMaterial(definition.material.color, {
+        ...materialOptions,
+        textureCell: getFaceTextureCell(definition, slot),
+      }));
+    }
+
+    const material = this._createSurfaceMaterial(definition.material.color, {
+      ...materialOptions,
+      textureCell: definition.texture.cell,
     });
 
     if (definition.type === 'plane') {
@@ -639,6 +707,144 @@ export class Room {
       active.push(collider);
     });
     return active;
+  }
+
+  getBuildGridConfig() {
+    const columns = Math.max(1, this.buildGrid.columns);
+    const rows = Math.max(1, this.buildGrid.rows);
+    return {
+      columns,
+      rows,
+      cellWidth: this.width / columns,
+      cellDepth: this.depth / rows,
+      verticalStep: this.buildGrid.verticalStep,
+      roomWidth: this.width,
+      roomDepth: this.depth,
+    };
+  }
+
+  getBuildGridAnchorPosition(col, row, spanX = 1, spanZ = 1) {
+    const grid = this.getBuildGridConfig();
+    const safeSpanX = Math.max(1, Math.round(spanX));
+    const safeSpanZ = Math.max(1, Math.round(spanZ));
+    const clampedCol = THREE.MathUtils.clamp(col, 0, grid.columns - safeSpanX);
+    const clampedRow = THREE.MathUtils.clamp(row, 0, grid.rows - safeSpanZ);
+    return new THREE.Vector3(
+      -grid.roomWidth * 0.5 + (clampedCol + safeSpanX * 0.5) * grid.cellWidth,
+      0,
+      -grid.roomDepth * 0.5 + (clampedRow + safeSpanZ * 0.5) * grid.cellDepth,
+    );
+  }
+
+  _getPrimitiveFootprint(primitive) {
+    if (primitive.type === 'plane') {
+      return {
+        width: Math.max(0.0001, primitive.scale.x),
+        depth: Math.max(0.0001, primitive.scale.y),
+      };
+    }
+
+    return {
+      width: Math.max(0.0001, primitive.scale.x),
+      depth: Math.max(0.0001, primitive.scale.z),
+    };
+  }
+
+  _snapGridScale(value, cellSize) {
+    if (!Number.isFinite(value)) return cellSize;
+    return Math.max(cellSize, Math.round(value / cellSize) * cellSize);
+  }
+
+  _snapGridAxisPosition(value, footprint, totalSize, cellSize) {
+    const halfRoom = totalSize * 0.5;
+    const clampedFootprint = Math.min(Math.max(footprint, cellSize), totalSize);
+    const min = -halfRoom + (clampedFootprint * 0.5);
+    const max = halfRoom - (clampedFootprint * 0.5);
+
+    if (max <= min) {
+      return 0;
+    }
+
+    const snapped = min + Math.round((value - min) / cellSize) * cellSize;
+    return THREE.MathUtils.clamp(snapped, min, max);
+  }
+
+  snapPrimitiveToGrid(definition, { snapY = false, snapScale = false } = {}) {
+    const primitive = this._normalizePrimitive(definition);
+    const grid = this.getBuildGridConfig();
+
+    if (snapScale) {
+      if (primitive.type === 'plane') {
+        primitive.scale.x = this._snapGridScale(primitive.scale.x, grid.cellWidth);
+        primitive.scale.y = this._snapGridScale(primitive.scale.y, grid.cellDepth);
+      } else {
+        primitive.scale.x = this._snapGridScale(primitive.scale.x, grid.cellWidth);
+        primitive.scale.z = this._snapGridScale(primitive.scale.z, grid.cellDepth);
+      }
+    }
+
+    const footprint = this._getPrimitiveFootprint(primitive);
+    primitive.position.x = this._snapGridAxisPosition(
+      primitive.position.x,
+      footprint.width,
+      grid.roomWidth,
+      grid.cellWidth,
+    );
+    primitive.position.z = this._snapGridAxisPosition(
+      primitive.position.z,
+      footprint.depth,
+      grid.roomDepth,
+      grid.cellDepth,
+    );
+
+    if (snapY) {
+      primitive.position.y = snapToStep(primitive.position.y, grid.verticalStep);
+    }
+
+    primitive.position.x = Number(primitive.position.x.toFixed(4));
+    primitive.position.y = Number(primitive.position.y.toFixed(4));
+    primitive.position.z = Number(primitive.position.z.toFixed(4));
+    primitive.scale.x = Number(primitive.scale.x.toFixed(4));
+    primitive.scale.y = Number(primitive.scale.y.toFixed(4));
+    primitive.scale.z = Number(primitive.scale.z.toFixed(4));
+    return primitive;
+  }
+
+  instantiatePrefab(prefab, {
+    col = 0,
+    row = 0,
+    instanceId = `prefab-instance-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+  } = {}) {
+    if (!prefab?.id || !Array.isArray(prefab.primitives)) {
+      return [];
+    }
+
+    const size = {
+      x: Math.max(1, Math.round(prefab.size?.x ?? 1)),
+      y: Math.max(1, Math.round(prefab.size?.y ?? 1)),
+      z: Math.max(1, Math.round(prefab.size?.z ?? 1)),
+    };
+    const anchor = this.getBuildGridAnchorPosition(col, row, size.x, size.z);
+    const created = [];
+
+    prefab.primitives.forEach((part, index) => {
+      const primitive = this._normalizePrimitive({
+        ...part,
+        id: `${instanceId}-part-${index + 1}`,
+        name: `${prefab.name}-${part.name ?? `part-${index + 1}`}`,
+        position: {
+          x: anchor.x + (part.position?.x ?? 0),
+          y: part.position?.y ?? 0,
+          z: anchor.z + (part.position?.z ?? 0),
+        },
+        prefabId: prefab.id,
+        prefabInstanceId: instanceId,
+      });
+      this.upsertEditablePrimitive(primitive);
+      created.push(primitive.id);
+    });
+
+    return created;
   }
 
   buildRoom() {

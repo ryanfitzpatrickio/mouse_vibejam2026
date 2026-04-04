@@ -4,18 +4,7 @@ import { Room } from '../world/Room.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
 import { HUD } from '../hud/HUD.js';
-
-function applyOutlineParameters(root, { thickness = 0.003, color = '#0a0a0a' } = {}) {
-  root.traverse((child) => {
-    if (!child.isMesh || !child.material || child.userData?.skipOutline) return;
-    child.material.userData.outlineParameters = {
-      thickness,
-      color: new THREE.Color(color).toArray(),
-      alpha: 1,
-      visible: true,
-    };
-  });
-}
+import { attachEdgeOutlines } from '../materials/index.js';
 
 function createLightMarker(color) {
   return new THREE.Mesh(
@@ -117,6 +106,7 @@ export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
   await mouse.ready;
   mouse.position.set(0, mouse.groundOffset, 0);
   mouse.setViewCamera(camera);
+  attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95 });
 
   let room;
   let renderer;
@@ -139,19 +129,17 @@ export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
     scene.add(room.getGroup());
     await room.ready;
     addLighting(scene, room);
+    attachEdgeOutlines(room.getGroup(), { color: '#090909', thresholdAngle: 22, opacity: 0.9 });
     mouse.setRendererMode('webgpu', gpu);
     render = () => renderPipeline.render();
   } else {
     renderer = createWebGLRenderer(canvas);
-    const { OutlineEffect } = await import('three/addons/effects/OutlineEffect.js');
-    const effect = new OutlineEffect(renderer);
-
     room = new Room({ width: 8, depth: 8, height: 4, scale: 4 });
     scene.add(room.getGroup());
     await room.ready;
     addLighting(scene, room);
-    applyOutlineParameters(room.getGroup(), { thickness: 0.004, color: '#0a0a0a' });
-    render = () => effect.render(scene, camera);
+    attachEdgeOutlines(room.getGroup(), { color: '#090909', thresholdAngle: 22, opacity: 0.9 });
+    render = () => renderer.render(scene, camera);
   }
 
   const thirdPersonCamera = new ThirdPersonCamera({

@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createKeyCelMaterial, createThreeBandGradientTexture } from '../materials/index.js';
 import { MouseAnimationManager } from '../animation/MouseAnimationManager.js';
 import { MouseEyeAtlasAnimator } from '../animation/MouseEyeAtlasAnimator.js';
+import { assetUrl } from '../utils/assetUrl.js';
 
 function createToonAvatarMaterial(sourceMaterial) {
   const baseColor = sourceMaterial?.color?.getStyle?.() ?? sourceMaterial?.color ?? '#ffffff';
@@ -91,7 +92,7 @@ export class Mouse extends THREE.Group {
       fadeDuration: options.fadeDuration,
     });
     this.eyeAnimator = new MouseEyeAtlasAnimator({
-      atlasUrl: options.eyeAtlasUrl ?? '/eyeset1.jpg',
+      atlasUrl: options.eyeAtlasUrl ?? assetUrl('eyeset1.jpg'),
     });
     this.rendererMode = options.rendererMode ?? 'webgl';
     this.rendererToolkit = options.rendererToolkit ?? null;
@@ -100,7 +101,6 @@ export class Mouse extends THREE.Group {
     this.viewCamera = null;
     this._occlusionOpacity = 1;
     this._fadeMaterials = new Map();
-    this._occlusionFadeActive = false;
 
     this.ready = this._loadAvatar();
   }
@@ -109,7 +109,7 @@ export class Mouse extends THREE.Group {
     const loader = new GLTFLoader();
 
     try {
-      const gltf = await loader.loadAsync('/mouse-skinned.glb');
+      const gltf = await loader.loadAsync(assetUrl('mouse-skinned.glb'));
       this._attachAvatar(gltf);
     } catch {
       this._usingModel = false;
@@ -150,7 +150,6 @@ export class Mouse extends THREE.Group {
     this.animationManager.attach(this.avatar, gltf.animations);
     this._applyRendererModeToAvatar();
     this._collectFadeMaterials();
-    this.setOcclusionOpacity(this._occlusionOpacity);
     this.animationManager.setState(this.animationState, { immediate: true });
   }
 
@@ -159,7 +158,6 @@ export class Mouse extends THREE.Group {
     this.rendererToolkit = rendererToolkit ?? this.rendererToolkit;
     this._applyRendererModeToAvatar();
     this._collectFadeMaterials();
-    this.setOcclusionOpacity(this._occlusionOpacity);
   }
 
   _applyRendererModeToAvatar() {
@@ -212,42 +210,22 @@ export class Mouse extends THREE.Group {
   }
 
   setOcclusionOpacity(opacity = 1) {
-    const rawOpacity = THREE.MathUtils.clamp(opacity, 0.2, 1);
-    this._occlusionOpacity = rawOpacity > 0.985 ? 1 : rawOpacity;
-    const useStableWebGLFade = this._usingModel && this.rendererMode === 'webgl';
-
-    if (useStableWebGLFade) {
-      if (!this._occlusionFadeActive && this._occlusionOpacity < 0.94) {
-        this._occlusionFadeActive = true;
-      } else if (this._occlusionFadeActive && this._occlusionOpacity > 0.985) {
-        this._occlusionFadeActive = false;
-      }
-    } else {
-      this._occlusionFadeActive = false;
-    }
-
+    this._occlusionOpacity = 1;
     this._fadeMaterials.forEach((state, material) => {
-      const nextAlphaHash = useStableWebGLFade ? this._occlusionFadeActive : state.alphaHash;
-      const nextTransparent = useStableWebGLFade
-        ? state.transparent
-        : (state.transparent || this._occlusionOpacity < 0.985);
-      const nextDepthWrite = useStableWebGLFade
-        ? state.depthWrite
-        : (this._occlusionOpacity >= 0.985 ? state.depthWrite : false);
-      const renderStateChanged = material.alphaHash !== nextAlphaHash
-        || material.transparent !== nextTransparent
-        || material.depthWrite !== nextDepthWrite;
+      const renderStateChanged = material.alphaHash !== state.alphaHash
+        || material.transparent !== state.transparent
+        || material.depthWrite !== state.depthWrite;
 
-      material.opacity = state.opacity * this._occlusionOpacity;
-      material.alphaHash = nextAlphaHash;
-      material.transparent = nextTransparent;
-      material.depthWrite = nextDepthWrite;
+      material.opacity = state.opacity;
+      material.alphaHash = state.alphaHash;
+      material.transparent = state.transparent;
+      material.depthWrite = state.depthWrite;
       if (renderStateChanged) {
         material.needsUpdate = true;
       }
     });
 
-    this.eyeAnimator?.setOpacity(this._occlusionOpacity);
+    this.eyeAnimator?.setOpacity(1);
   }
 
   _attachEyeAtlas() {
@@ -357,12 +335,14 @@ export class Mouse extends THREE.Group {
     const eyeLeft = new THREE.Mesh(eyeGeo, eyeMat);
     eyeLeft.position.set(-0.12, 0.08, 0.95);
     eyeLeft.name = 'EyeLeft';
+    eyeLeft.userData.skipOutline = true;
     this.add(eyeLeft);
     this.parts.eyeLeft = eyeLeft;
 
     const eyeRight = new THREE.Mesh(eyeGeo, eyeMat);
     eyeRight.position.set(0.12, 0.08, 0.95);
     eyeRight.name = 'EyeRight';
+    eyeRight.userData.skipOutline = true;
     this.add(eyeRight);
     this.parts.eyeRight = eyeRight;
 
@@ -380,12 +360,14 @@ export class Mouse extends THREE.Group {
     const pupilLeft = new THREE.Mesh(pupilGeo, pupilMat);
     pupilLeft.position.set(-0.12, 0.08, 1.01);
     pupilLeft.name = 'PupilLeft';
+    pupilLeft.userData.skipOutline = true;
     this.add(pupilLeft);
     this.parts.pupilLeft = pupilLeft;
 
     const pupilRight = new THREE.Mesh(pupilGeo, pupilMat);
     pupilRight.position.set(0.12, 0.08, 1.01);
     pupilRight.name = 'PupilRight';
+    pupilRight.userData.skipOutline = true;
     this.add(pupilRight);
     this.parts.pupilRight = pupilRight;
 

@@ -19,6 +19,36 @@ const modePanel = new RendererModePanel({
 let app;
 let buildMode = null;
 
+function showFatalBootError(error) {
+  const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+  console.error('Fatal boot error:', error);
+
+  const overlay = document.createElement('div');
+  Object.assign(overlay.style, {
+    position: 'fixed',
+    inset: '0',
+    zIndex: '9999',
+    display: 'grid',
+    placeItems: 'center',
+    background: 'rgba(0, 0, 0, 0.88)',
+    color: '#fff4ea',
+    fontFamily: 'monospace',
+    padding: '24px',
+  });
+
+  overlay.innerHTML = `
+    <div style="max-width:720px;width:100%;border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:18px;background:rgba(20,16,14,0.96)">
+      <div style="font-weight:700;color:#ffb089;margin-bottom:10px">APP BOOT FAILED</div>
+      <div style="margin-bottom:10px;white-space:pre-wrap">${message}</div>
+      <div style="color:#d8c3a8;font-size:12px;line-height:1.4">
+        Open the browser console for the full stack trace.
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
 try {
   app = await createGameSession({ canvas, mode });
 } catch (error) {
@@ -26,8 +56,14 @@ try {
     writeRendererMode('webgl');
     const reason = error instanceof Error ? error.message : String(error);
     modePanel.setRuntimeMessage(`WebGPU failed: ${reason}\nUsing WebGL.`);
-    app = await createGameSession({ canvas, mode: 'webgl' });
+    try {
+      app = await createGameSession({ canvas, mode: 'webgl' });
+    } catch (fallbackError) {
+      showFatalBootError(fallbackError);
+      throw fallbackError;
+    }
   } else {
+    showFatalBootError(error);
     throw error;
   }
 }

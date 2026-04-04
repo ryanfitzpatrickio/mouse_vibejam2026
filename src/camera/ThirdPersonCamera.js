@@ -141,18 +141,7 @@ export class ThirdPersonCamera {
   }
 
   getCharacterOpacity(minOpacity = 0.2) {
-    const desired = Math.max(this.minArmLength, this._desiredArmLength || this.armLength);
-    const actual = Math.max(this.minArmLength, this._collisionArmLength || desired);
-    const fadeRange = Math.max(0.0001, desired - this.minArmLength);
-    const compression = THREE.MathUtils.clamp((desired - actual) / fadeRange, 0, 1);
-    const fadeStartCompression = 0.18;
-    const bufferedCompression = compression <= fadeStartCompression
-      ? 0
-      : (compression - fadeStartCompression) / Math.max(0.0001, 1 - fadeStartCompression);
-    const aggressiveCompression = bufferedCompression <= 0
-      ? 0
-      : THREE.MathUtils.clamp(Math.pow(bufferedCompression, 0.5), 0, 1);
-    return THREE.MathUtils.lerp(1, minOpacity, aggressiveCompression);
+    return 1;
   }
 
   syncFromCamera(targetPosition) {
@@ -326,7 +315,7 @@ export class ThirdPersonCamera {
         .normalize();
       const wallPoint = this._tempVectorC.copy(bestHit.hit.point);
       const signedDistance = wallNormal.dot(this._tempVectorD.copy(candidateCamera).sub(wallPoint));
-      const wallClearance = 0.18;
+      const wallClearance = 0.06;
 
       if (signedDistance < wallClearance) {
         correction.copy(wallNormal).multiplyScalar(wallClearance - signedDistance);

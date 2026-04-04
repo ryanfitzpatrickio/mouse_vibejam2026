@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'mouse-renderer-mode';
+const STORAGE_KEY = 'mouse-renderer-mode-v2';
 const DEFAULT_MODE = 'webgl';
 
 function isValidMode(mode) {
