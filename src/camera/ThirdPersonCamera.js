@@ -46,6 +46,7 @@ export class ThirdPersonCamera {
     this.minPitch = minPitch;
     this.maxPitch = maxPitch;
     this.mouseSensitivity = mouseSensitivity;
+    this.enabled = true;
 
     this.pointerLocked = false;
 
@@ -63,6 +64,9 @@ export class ThirdPersonCamera {
     this._desiredQuaternion = new THREE.Quaternion();
     this._smoothedQuaternion = this.camera.quaternion.clone();
     this._rotationEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+    this._actualArmLength = this.armLength;
+    this._desiredArmLength = this.armLength;
+    this._collisionArmLength = this.armLength;
 
     this._tempVectorA = new THREE.Vector3();
     this._tempVectorB = new THREE.Vector3();
@@ -121,6 +125,43 @@ export class ThirdPersonCamera {
     this.armLength = THREE.MathUtils.clamp(length, this.minArmLength, this.maxArmLength);
   }
 
+  setEnabled(enabled) {
+    this.enabled = Boolean(enabled);
+  }
+
+  getCharacterOpacity(minOpacity = 0.2) {
+    const desired = Math.max(this.minArmLength, this._desiredArmLength || this.armLength);
+    const actual = Math.max(this.minArmLength, this._collisionArmLength || desired);
+    const fadeRange = Math.max(0.0001, desired - this.minArmLength);
+    const compression = THREE.MathUtils.clamp((desired - actual) / fadeRange, 0, 1);
+    return THREE.MathUtils.lerp(1, minOpacity, compression);
+  }
+
+  syncFromCamera(targetPosition) {
+    if (!targetPosition) return;
+
+    this._pivot.copy(targetPosition).add(this.shoulderOffset);
+    this._tempVectorA.copy(this.camera.position).sub(this._pivot);
+    this.armLength = THREE.MathUtils.clamp(
+      this._tempVectorA.length(),
+      this.minArmLength,
+      this.maxArmLength,
+    );
+
+    if (this.armLength <= 0.0001) return;
+
+    const offset = this._tempVectorA.normalize();
+    this.yaw = Math.atan2(offset.x, offset.z);
+    this.pitch = THREE.MathUtils.clamp(
+      Math.asin(THREE.MathUtils.clamp(offset.y, -1, 1)),
+      this.minPitch,
+      this.maxPitch,
+    );
+    this._currentPosition.copy(this.camera.position);
+    this._targetPosition.copy(this.camera.position);
+    this._smoothedPivot.copy(this._pivot);
+  }
+
   /**
    * Returns a normalized, camera-relative movement direction from WASD-like input.
    */
@@ -152,6 +193,10 @@ export class ThirdPersonCamera {
       throw new Error('ThirdPersonCamera.update(delta, targetPosition) requires targetPosition.');
     }
 
+    if (!this.enabled) {
+      return;
+    }
+
     const dt = Math.max(0.0001, delta || 0.016);
 
     this._pivot.copy(targetPosition).add(this.shoulderOffset);
@@ -165,12 +210,15 @@ export class ThirdPersonCamera {
 
     const unclampedArm = THREE.MathUtils.clamp(this.armLength, this.minArmLength, this.maxArmLength);
     const collisionSafeArm = this._resolveCollisionArmLength(this._smoothedPivot, this._lookDirection, unclampedArm);
+    this._desiredArmLength = unclampedArm;
+    this._collisionArmLength = collisionSafeArm;
 
     this._targetPosition.copy(this._smoothedPivot).addScaledVector(this._lookDirection, collisionSafeArm);
 
     const alpha = 1 - Math.exp(-this.stiffness * dt);
     this._currentPosition.lerp(this._targetPosition, alpha);
     this.camera.position.copy(this._currentPosition);
+    this._actualArmLength = this.camera.position.distanceTo(this._smoothedPivot);
 
     this._tempVectorA.copy(this._smoothedPivot);
     this.camera.lookAt(this._tempVectorA);
@@ -181,10 +229,18 @@ export class ThirdPersonCamera {
   }
 
   _resolveCollisionArmLength(pivot, lookDirection, desiredArm) {
-    const objects =
+    const rawObjects =
       typeof this.collisionQuery === 'function' ? this.collisionQuery() : this.collisionObjects;
 
-    if (!objects || objects.length === 0) {
+    if (!rawObjects || rawObjects.length === 0) {
+      return desiredArm;
+    }
+
+    const objects = rawObjects
+      .map((entry) => entry?.mesh ?? entry)
+      .filter((entry) => entry?.isObject3D && entry.visible !== false);
+
+    if (!objects.length) {
       return desiredArm;
     }
 

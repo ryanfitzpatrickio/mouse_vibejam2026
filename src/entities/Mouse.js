@@ -29,7 +29,6 @@ function createWebGPUToonAvatarMaterial(sourceMaterial, MeshToonNodeMaterial) {
   const material = new MeshToonNodeMaterial({
     color: sourceMaterial?.color?.clone?.() ?? new THREE.Color(sourceMaterial?.color ?? '#ffffff'),
     gradientMap: createThreeBandGradientTexture(),
-    flatShading: true,
   });
 
   material.map = sourceMaterial?.map ?? null;
@@ -46,6 +45,14 @@ function createWebGPUToonAvatarMaterial(sourceMaterial, MeshToonNodeMaterial) {
   material.fog = sourceMaterial?.fog ?? material.fog;
 
   return material;
+}
+
+function cloneMaterialSet(material) {
+  if (Array.isArray(material)) {
+    return material.map((entry) => entry?.clone?.() ?? entry);
+  }
+
+  return material?.clone?.() ?? material;
 }
 
 /**
@@ -91,6 +98,9 @@ export class Mouse extends THREE.Group {
     this._usingModel = false;
     this._ready = false;
     this.viewCamera = null;
+    this._occlusionOpacity = 1;
+    this._fadeMaterials = new Map();
+    this._occlusionFadeActive = false;
 
     this.ready = this._loadAvatar();
   }
@@ -124,8 +134,12 @@ export class Mouse extends THREE.Group {
     this.avatar.name = 'MouseAvatar';
     this.avatar.traverse((child) => {
       if (child.isMesh) {
+        const sourceMaterial = cloneMaterialSet(child.material);
+        child.userData.avatarSourceMaterial = sourceMaterial;
+        child.material = cloneMaterialSet(sourceMaterial);
         child.castShadow = true;
-        child.receiveShadow = true;
+        child.receiveShadow = false;
+        child.frustumCulled = false;
       }
     });
 
@@ -134,7 +148,9 @@ export class Mouse extends THREE.Group {
     this.add(this.avatar);
 
     this.animationManager.attach(this.avatar, gltf.animations);
-      this._applyRendererModeToAvatar();
+    this._applyRendererModeToAvatar();
+    this._collectFadeMaterials();
+    this.setOcclusionOpacity(this._occlusionOpacity);
     this.animationManager.setState(this.animationState, { immediate: true });
   }
 
@@ -142,31 +158,85 @@ export class Mouse extends THREE.Group {
     this.rendererMode = mode ?? 'webgl';
     this.rendererToolkit = rendererToolkit ?? this.rendererToolkit;
     this._applyRendererModeToAvatar();
+    this._collectFadeMaterials();
+    this.setOcclusionOpacity(this._occlusionOpacity);
   }
 
   _applyRendererModeToAvatar() {
     if (!this._usingModel || !this.avatar) return;
-    if (this.rendererMode !== 'webgpu') return;
-
-    const MeshToonNodeMaterial = this.rendererToolkit?.MeshToonNodeMaterial;
-    if (!MeshToonNodeMaterial) return;
 
     const materialCache = new Map();
     this.avatar.traverse((child) => {
       if (!child.isMesh || !child.material) return;
 
-      const sourceMaterials = Array.isArray(child.material) ? child.material : [child.material];
+      const sourceMaterialSet = child.userData.avatarSourceMaterial ?? child.material;
+      const sourceMaterials = Array.isArray(sourceMaterialSet) ? sourceMaterialSet : [sourceMaterialSet];
       const converted = sourceMaterials.map((material) => {
         if (!material) return material;
         if (materialCache.has(material)) return materialCache.get(material);
 
-        const toonMaterial = createWebGPUToonAvatarMaterial(material, MeshToonNodeMaterial);
-        materialCache.set(material, toonMaterial);
-        return toonMaterial;
+        let nextMaterial = material;
+        if (this.rendererMode === 'webgpu') {
+          const MeshToonNodeMaterial = this.rendererToolkit?.MeshToonNodeMaterial;
+          nextMaterial = MeshToonNodeMaterial
+            ? createWebGPUToonAvatarMaterial(material, MeshToonNodeMaterial)
+            : material.clone();
+        } else {
+          nextMaterial = createToonAvatarMaterial(material);
+        }
+
+        materialCache.set(material, nextMaterial);
+        return nextMaterial;
       });
 
-      child.material = Array.isArray(child.material) ? converted : converted[0];
+      child.material = Array.isArray(sourceMaterialSet) ? converted : converted[0];
     });
+  }
+
+  _collectFadeMaterials() {
+    this._fadeMaterials.clear();
+
+    this.traverse((child) => {
+      if (!child.isMesh || child.userData?.skipOutline) return;
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      materials.forEach((material) => {
+        if (!material || this._fadeMaterials.has(material)) return;
+        this._fadeMaterials.set(material, {
+          opacity: material.opacity ?? 1,
+          transparent: material.transparent ?? false,
+          depthWrite: material.depthWrite ?? true,
+        });
+      });
+    });
+  }
+
+  setOcclusionOpacity(opacity = 1) {
+    const rawOpacity = THREE.MathUtils.clamp(opacity, 0.2, 1);
+    this._occlusionOpacity = rawOpacity > 0.985 ? 1 : rawOpacity;
+    const useStableWebGLFade = this._usingModel && this.rendererMode === 'webgl';
+
+    if (useStableWebGLFade) {
+      if (!this._occlusionFadeActive && this._occlusionOpacity < 0.94) {
+        this._occlusionFadeActive = true;
+      } else if (this._occlusionFadeActive && this._occlusionOpacity > 0.985) {
+        this._occlusionFadeActive = false;
+      }
+    } else {
+      this._occlusionFadeActive = false;
+    }
+
+    this._fadeMaterials.forEach((state, material) => {
+      material.opacity = state.opacity * this._occlusionOpacity;
+      material.transparent = useStableWebGLFade
+        ? (state.transparent || this._occlusionFadeActive)
+        : (state.transparent || this._occlusionOpacity < 0.985);
+      material.depthWrite = useStableWebGLFade
+        ? (this._occlusionFadeActive ? false : state.depthWrite)
+        : (this._occlusionOpacity >= 0.985 ? state.depthWrite : false);
+      material.needsUpdate = true;
+    });
+
+    this.eyeAnimator?.setOpacity(this._occlusionOpacity);
   }
 
   _attachEyeAtlas() {
@@ -183,14 +253,16 @@ export class Mouse extends THREE.Group {
       ? []
       : [this.parts.eyeLeft, this.parts.eyeRight, this.parts.pupilLeft, this.parts.pupilRight];
 
-    this.eyeAnimator.attach(anchor, {
-      localOffset: this._usingModel
-        ? new THREE.Vector3(0, 0.18, -0.04)
-        : new THREE.Vector3(0, 0.03, 0.14),
-      eyeSpacing: this._usingModel ? 0.06 : 0.16,
-      eyeSize: this._usingModel ? 0.11 : 0.14,
-      hideTargets,
-    });
+    const placement = this._usingModel
+      ? { hideTargets }
+      : {
+        localOffset: new THREE.Vector3(0, 0.03, 0.14),
+        eyeSize: 0.14,
+        hideTargets,
+      };
+
+    this.eyeAnimator.attach(anchor, placement);
+    this.eyeAnimator.setOpacity(this._occlusionOpacity);
     this.eyeAnimator.setState(this.animationState, { immediate: true });
   }
 
@@ -345,6 +417,14 @@ export class Mouse extends THREE.Group {
       this.add(leg);
       this.parts[`leg${i}`] = leg;
     });
+
+    this.traverse((child) => {
+      if (!child.isMesh) return;
+      child.castShadow = true;
+      child.receiveShadow = true;
+    });
+    this._collectFadeMaterials();
+    this.setOcclusionOpacity(this._occlusionOpacity);
   }
 
   /**

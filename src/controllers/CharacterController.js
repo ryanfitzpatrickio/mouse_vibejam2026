@@ -86,6 +86,7 @@ export class CharacterController {
 
     this.keys = {};
     this.mouseButtons = { left: false, right: false };
+    this.inputEnabled = true;
 
     this._prevAnimState = 'idle';
 
@@ -97,9 +98,16 @@ export class CharacterController {
   }
 
   _bindInput() {
-    this._onKeyDown = (e) => { this.keys[e.code] = true; };
-    this._onKeyUp = (e) => { this.keys[e.code] = false; };
+    this._onKeyDown = (e) => {
+      if (!this.inputEnabled || this._isFormTarget(e.target)) return;
+      this.keys[e.code] = true;
+    };
+    this._onKeyUp = (e) => {
+      if (this._isFormTarget(e.target)) return;
+      this.keys[e.code] = false;
+    };
     this._onMouseDown = (e) => {
+      if (!this.inputEnabled || this._isFormTarget(e.target)) return;
       if (e.button === 0) this.mouseButtons.left = true;
       if (e.button === 2) this.mouseButtons.right = true;
     };
@@ -114,6 +122,19 @@ export class CharacterController {
     document.addEventListener('mousedown', this._onMouseDown);
     document.addEventListener('mouseup', this._onMouseUp);
     document.addEventListener('contextmenu', this._onContextMenu);
+  }
+
+  _isFormTarget(target) {
+    return target instanceof HTMLElement
+      && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName);
+  }
+
+  setInputEnabled(enabled) {
+    this.inputEnabled = Boolean(enabled);
+    if (!this.inputEnabled) {
+      this.keys = {};
+      this.mouseButtons = { left: false, right: false };
+    }
   }
 
   _getInputDirection() {
@@ -334,8 +355,12 @@ export class CharacterController {
   }
 
   _updateCamera(dt) {
-    if (!this.thirdPersonCamera) return;
+    if (!this.thirdPersonCamera) {
+      this.mouse?.setOcclusionOpacity?.(1);
+      return;
+    }
     this.thirdPersonCamera.update(dt, this.mouse.position);
+    this.mouse?.setOcclusionOpacity?.(this.thirdPersonCamera.getCharacterOpacity(0.2));
   }
 
   _handleAbilities() {

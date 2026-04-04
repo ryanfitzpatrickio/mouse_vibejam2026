@@ -1,5 +1,4 @@
 import { createGameSession } from './app/createGameSession.js';
-import { EyePlacementPanel } from './hud/EyePlacementPanel.js';
 import { RendererModePanel, readRendererMode, writeRendererMode } from './hud/RendererModePanel.js';
 
 const canvas = document.getElementById('canvas');
@@ -14,9 +13,11 @@ const modePanel = new RendererModePanel({
   webgpuAvailable,
   webgpuReason,
   onApply: () => window.location.reload(),
+  visible: false,
 });
 
 let app;
+let buildMode = null;
 
 try {
   app = await createGameSession({ canvas, mode });
@@ -30,10 +31,29 @@ try {
     throw error;
   }
 }
-const eyePanel = new EyePlacementPanel({ mouse: app.mouse });
+
+if (import.meta.env.DEV) {
+  const { installBuildMode } = await import('./dev/installBuildMode.js');
+  buildMode = await installBuildMode(app);
+}
 
 canvas.addEventListener('click', () => {
+  if (buildMode?.isActive?.()) return;
   app.thirdPersonCamera.requestPointerLock();
+});
+
+window.addEventListener('keydown', (event) => {
+  if (event.repeat) return;
+
+  const key = event.key?.toLowerCase();
+  if (key === 'p') {
+    modePanel.toggleVisible();
+    return;
+  }
+
+  if (key === 'b' && buildMode) {
+    buildMode.toggle();
+  }
 });
 
 function resize() {
@@ -50,6 +70,11 @@ let lastTime = 0;
 function animate(timeMs) {
   const dt = lastTime ? (timeMs - lastTime) * 0.001 : 1 / 60;
   lastTime = timeMs;
+
+  if (buildMode?.isActive?.()) {
+    buildMode.update(dt);
+  }
+
   const perf = app.update(timeMs, dt);
   modePanel.updatePerformance({
     timeMs,

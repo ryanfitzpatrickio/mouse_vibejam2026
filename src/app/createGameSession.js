@@ -17,10 +17,72 @@ function applyOutlineParameters(root, { thickness = 0.003, color = '#0a0a0a' } =
   });
 }
 
+function createLightMarker(color) {
+  return new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 12, 12),
+    new THREE.MeshBasicMaterial({
+      color: new THREE.Color(color),
+      transparent: true,
+      opacity: 0.18,
+    }),
+  );
+}
+
+function applyAtmosphere(scene) {
+  scene.background = new THREE.Color('#8e7a63');
+  scene.fog = new THREE.Fog('#8d7964', 16, 68);
+}
+
+function addLighting(scene, room) {
+  const scale = room.scaleFactor ?? 1;
+  const roomWidth = room.width * scale;
+  const roomDepth = room.depth * scale;
+  const roomHeight = room.height * scale;
+
+  const hemisphere = new THREE.HemisphereLight('#c4d6e8', '#4f3928', 1.25);
+  scene.add(hemisphere);
+
+  const sun = new THREE.DirectionalLight('#ffdcb3', 2.2);
+  sun.position.set(roomWidth * 0.2, roomHeight * 1.35, roomDepth * 0.35);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.bias = -0.0004;
+  sun.shadow.normalBias = 0.02;
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = roomHeight * 3.5;
+  sun.shadow.camera.left = -roomWidth * 0.8;
+  sun.shadow.camera.right = roomWidth * 0.8;
+  sun.shadow.camera.top = roomDepth * 0.8;
+  sun.shadow.camera.bottom = -roomDepth * 0.8;
+  sun.target.position.set(0, roomHeight * 0.25, 0);
+  scene.add(sun);
+  scene.add(sun.target);
+
+  const coolFill = new THREE.DirectionalLight('#88aee8', 0.7);
+  coolFill.position.set(-roomWidth * 0.45, roomHeight * 0.95, -roomDepth * 0.35);
+  scene.add(coolFill);
+
+  const counterPractical = new THREE.PointLight('#ffc47a', 26, roomWidth * 0.75, 2);
+  counterPractical.position.set(0, roomHeight - 2.1, -roomDepth * 0.33);
+  counterPractical.add(createLightMarker('#ffc47a'));
+  scene.add(counterPractical);
+
+  const tablePractical = new THREE.PointLight('#ffe2b0', 18, roomWidth * 0.65, 2);
+  tablePractical.position.set(-roomWidth * 0.22, roomHeight - 1.9, roomDepth * 0.14);
+  tablePractical.add(createLightMarker('#ffe2b0'));
+  scene.add(tablePractical);
+
+  const fridgeBounce = new THREE.PointLight('#9dc2ff', 7, roomWidth * 0.4, 2);
+  fridgeBounce.position.set(roomWidth * 0.36, roomHeight * 0.42, -roomDepth * 0.28);
+  scene.add(fridgeBounce);
+}
+
 function createWebGLRenderer(canvas) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 1.12;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   return renderer;
 }
 
@@ -30,7 +92,11 @@ async function createWebGPURenderer(canvas) {
 
   const renderer = new WebGPURenderer({ antialias: true, canvas });
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 1.12;
+  if ('shadowMap' in renderer && renderer.shadowMap) {
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  }
   await renderer.init();
 
   return { renderer, RenderPipeline, toonOutlinePass, MeshToonNodeMaterial };
@@ -38,16 +104,9 @@ async function createWebGPURenderer(canvas) {
 
 export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#87ceeb');
+  applyAtmosphere(scene);
 
   const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-
-  const ambientLight = new THREE.AmbientLight('#ffffff', 0.7);
-  const keyLight = new THREE.DirectionalLight('#fff3dd', 1.2);
-  keyLight.position.set(3, 4, 3);
-  const fillLight = new THREE.DirectionalLight('#6699ff', 0.4);
-  fillLight.position.set(-2, 2, -3);
-  scene.add(ambientLight, keyLight, fillLight);
 
   const mouse = new Mouse({
     furColor: '#f5a962',
@@ -79,6 +138,7 @@ export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
     });
     scene.add(room.getGroup());
     await room.ready;
+    addLighting(scene, room);
     mouse.setRendererMode('webgpu', gpu);
     render = () => renderPipeline.render();
   } else {
@@ -89,8 +149,8 @@ export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
     room = new Room({ width: 8, depth: 8, height: 4, scale: 4 });
     scene.add(room.getGroup());
     await room.ready;
+    addLighting(scene, room);
     applyOutlineParameters(room.getGroup(), { thickness: 0.004, color: '#0a0a0a' });
-    applyOutlineParameters(mouse.avatar ?? mouse, { thickness: 0.0035, color: '#0a0a0a' });
     render = () => effect.render(scene, camera);
   }
 
@@ -98,6 +158,7 @@ export async function createGameSession({ canvas, mode = 'webgl' } = {}) {
     camera,
     domElement: canvas,
     armLength: 3.5,
+    collisionQuery: () => room.getCollisionColliders(),
   });
 
   const controller = new CharacterController({

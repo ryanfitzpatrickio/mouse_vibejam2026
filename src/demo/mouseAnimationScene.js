@@ -33,12 +33,12 @@ export async function createMouseAnimationScene({ canvas, forceWebGL = false } =
 
   // Lighting
   const ambientLight = new THREE.AmbientLight('#ffffff', 0.7);
-  const keyLight = new THREE.DirectionalLight('#fff3dd', 1.2);
-  keyLight.position.set(3, 4, 3);
+  // const keyLight = new THREE.DirectionalLight('#fff3dd', 1.2);
+  // keyLight.position.set(3, 4, 3);
   const fillLight = new THREE.DirectionalLight('#6699ff', 0.4);
   fillLight.position.set(-2, 2, -3);
 
-  scene.add(ambientLight, keyLight, fillLight);
+  scene.add(fillLight);
 
   // Create room
   const room = new Room({

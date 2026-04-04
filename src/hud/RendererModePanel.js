@@ -33,6 +33,7 @@ export class RendererModePanel {
     onApply = null,
     webgpuAvailable = true,
     webgpuReason = '',
+    visible = false,
   } = {}) {
     this.container = container;
     this.mode = isValidMode(mode) ? mode : DEFAULT_MODE;
@@ -42,6 +43,7 @@ export class RendererModePanel {
     this.fpsTarget = mode === 'webgpu' ? 120 : 60;
     this.samples = [];
     this.sampleWindowMs = 5000;
+    this.visible = visible;
     this._createElements();
   }
 
@@ -64,6 +66,7 @@ export class RendererModePanel {
       boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
       border: '1px solid rgba(255, 255, 255, 0.12)',
       backdropFilter: 'blur(6px)',
+      display: this.visible ? 'block' : 'none',
     });
 
     const title = document.createElement('div');
@@ -173,6 +176,17 @@ export class RendererModePanel {
     this.element.appendChild(actions);
     this.element.appendChild(this.status);
     this.container.appendChild(this.element);
+  }
+
+  setVisible(visible) {
+    this.visible = Boolean(visible);
+    if (this.element) {
+      this.element.style.display = this.visible ? 'block' : 'none';
+    }
+  }
+
+  toggleVisible() {
+    this.setVisible(!this.visible);
   }
 
   _createPerformanceSection() {

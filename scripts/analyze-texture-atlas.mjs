@@ -3,7 +3,10 @@ import path from 'node:path';
 import sharp from 'sharp';
 
 const ROOT = process.cwd();
-const INPUT = path.join(ROOT, 'public', 'textures.jpg');
+const INPUT_CANDIDATES = [
+  path.join(ROOT, 'public', 'textures.webp'),
+  path.join(ROOT, 'public', 'textures.jpg'),
+];
 const OUTPUT_MANIFEST = path.join(ROOT, 'public', 'textures.manifest.json');
 const OUTPUT_SHEET = path.join(ROOT, 'public', 'textures-contact-sheet.png');
 
@@ -109,6 +112,7 @@ function buildDescription(index, stats, classification, score) {
 }
 
 async function main() {
+  const INPUT = await resolveInput();
   const image = sharp(INPUT, { failOn: 'none' });
   const metadata = await image.metadata();
   if (!metadata.width || !metadata.height) {
@@ -286,6 +290,19 @@ async function main() {
 
   console.log(`Wrote ${OUTPUT_MANIFEST}`);
   console.log(`Wrote ${OUTPUT_SHEET}`);
+}
+
+async function resolveInput() {
+  for (const candidate of INPUT_CANDIDATES) {
+    try {
+      await fs.access(candidate);
+      return candidate;
+    } catch {
+      // Try the next atlas candidate.
+    }
+  }
+
+  throw new Error(`No texture atlas found. Checked: ${INPUT_CANDIDATES.map((file) => path.basename(file)).join(', ')}`);
 }
 
 main().catch((error) => {

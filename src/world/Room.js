@@ -1,19 +1,37 @@
 import * as THREE from 'three';
-import { createKeyCelMaterial } from '../materials/index.js';
 
 const ATLAS_GRID = 10;
-const ROOM_TEXTURE_REPEAT_MULTIPLIER = 2;
+const ATLAS_CELL_MARGIN_PX = 3;
 const ROOM_TEXTURE_CELLS = Object.freeze({
-  floor: 46,
+  floor: 0,
   wall: 3,
-  cabinet: 21,
+  cabinet: 55,
+  cabinetDark: 21,
   counter: 89,
-  backsplash: 72,
+  backsplash: 27,
   appliance: 44,
+  fridge: 45,
   fabric: 94,
-  woodAlt: 55,
+  woodAlt: 19,
   woodDark: 21,
-  tile: 72,
+  tile: 45,
+});
+
+const DEFAULT_EDITABLE_LAYOUT = Object.freeze({
+  version: 1,
+  primitives: [],
+});
+
+const EDITABLE_TYPE_DEFAULTS = Object.freeze({
+  box: Object.freeze({
+    scale: { x: 1, y: 1, z: 1 },
+  }),
+  plane: Object.freeze({
+    scale: { x: 1, y: 1, z: 1 },
+  }),
+  cylinder: Object.freeze({
+    scale: { x: 1, y: 1, z: 1 },
+  }),
 });
 
 function loadImage(src) {
@@ -35,19 +53,54 @@ function getCellBounds(index, size) {
   };
 }
 
-function createWebGPUToonGradientTexture() {
-  const gradientTexture = new THREE.DataTexture(
-    new Uint8Array([0, 100, 255]),
-    3,
-    1,
-    THREE.RedFormat,
-  );
+function createPrimitiveGeometry(type) {
+  switch (type) {
+    case 'plane':
+      return new THREE.PlaneGeometry(1, 1);
+    case 'cylinder':
+      return new THREE.CylinderGeometry(0.5, 0.5, 1, 24, 1);
+    case 'box':
+    default:
+      return new THREE.BoxGeometry(1, 1, 1);
+  }
+}
 
-  gradientTexture.needsUpdate = true;
-  gradientTexture.magFilter = THREE.NearestFilter;
-  gradientTexture.minFilter = THREE.NearestFilter;
-  gradientTexture.generateMipmaps = false;
-  return gradientTexture;
+function normalizeTextureSettings(texture = {}) {
+  if (typeof texture === 'number') {
+    return { x: texture, y: texture, rotation: 0 };
+  }
+
+  return {
+    x: texture?.x ?? 1,
+    y: texture?.y ?? texture?.x ?? 1,
+    rotation: texture?.rotation ?? 0,
+  };
+}
+
+function cloneVectorLike(source, fallback) {
+  return {
+    x: source?.x ?? fallback.x,
+    y: source?.y ?? fallback.y,
+    z: source?.z ?? fallback.z,
+  };
+}
+
+function cloneLayout(layout) {
+  return JSON.parse(JSON.stringify(layout ?? DEFAULT_EDITABLE_LAYOUT));
+}
+
+function colorToHex(color, fallback = '#ffffff') {
+  if (typeof color === 'string') return color;
+  if (color?.isColor) return `#${color.getHexString()}`;
+  return fallback;
+}
+
+function materialToEditableSurface(material, fallbackColor = '#ffffff') {
+  return {
+    color: colorToHex(material?.color, fallbackColor),
+    roughness: material?.roughness ?? 0.88,
+    metalness: material?.metalness ?? 0.04,
+  };
 }
 
 /**
@@ -98,11 +151,27 @@ export class Room {
     this.group.scale.setScalar(this.scaleFactor);
     this.rendererMode = options.rendererMode ?? 'webgl';
     this.rendererToolkit = options.rendererToolkit ?? null;
-    this.textureAtlasUrl = options.textureAtlasUrl ?? '/textures.jpg';
+    this.textureAtlasUrl = options.textureAtlasUrl ?? '/textures.webp';
+    this.levelLayoutUrl = options.levelLayoutUrl ?? '/levels/kitchen-layout.json';
     this.textureAtlasImage = null;
     this.textureCache = new Map();
     this.surfaceMaterials = new Set();
-    this.ready = this._loadTextureAtlas().then(() => this._applyTextureAtlas()).catch(() => this);
+    this.builtInEditableMeshes = new Map();
+    this.deletedBuiltInPrimitives = new Set();
+    this.loadedEditableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
+    this.editableGroup = new THREE.Group();
+    this.editableGroup.name = 'EditableLayout';
+    this.editableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
+    this.editableMeshes = new Map();
+    this.ready = Promise.all([
+      this._loadTextureAtlas(),
+      this._loadEditableLayout(),
+    ]).then(() => {
+      this._applyLoadedEditableLayout();
+      this._applyTextureAtlas();
+      this._rebuildEditableLayout();
+      return this;
+    }).catch(() => this);
 
     // Materials
     this.floorColor = options.floorColor ?? '#d4a574'; // Wood
@@ -110,26 +179,22 @@ export class Room {
     this.furnitureColor = options.furnitureColor ?? '#8b6f47'; // Wood furniture
 
     this.buildRoom();
+    this.group.add(this.editableGroup);
   }
 
   _createSurfaceMaterial(baseColor, {
     textureCell = null,
     textureRepeat = 1,
-  } = {}) {
-    if (this.rendererMode === 'webgpu' && this.rendererToolkit?.MeshToonNodeMaterial) {
-      const material = new this.rendererToolkit.MeshToonNodeMaterial({
-        color: new THREE.Color(baseColor),
-        gradientMap: createWebGPUToonGradientTexture(),
-        flatShading: true,
-      });
+    roughness = 0.92,
+    metalness = 0.04,
+    } = {}) {
+    const material = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(baseColor),
+      roughness,
+      metalness,
+    });
 
-      material.userData.textureCell = textureCell;
-      material.userData.textureRepeat = textureRepeat;
-      this.surfaceMaterials.add(material);
-      return material;
-    }
-
-    const material = createKeyCelMaterial({ baseColor });
+    material.dithering = true;
     material.userData.textureCell = textureCell;
     material.userData.textureRepeat = textureRepeat;
     this.surfaceMaterials.add(material);
@@ -143,7 +208,8 @@ export class Room {
 
   _createAtlasTexture(cellIndex, repeat = 1) {
     if (!this.textureAtlasImage) return null;
-    const cacheKey = `${cellIndex}:${repeat}`;
+    const textureSettings = normalizeTextureSettings(repeat);
+    const cacheKey = `${cellIndex}:${textureSettings.x}:${textureSettings.y}:${textureSettings.rotation}`;
     if (this.textureCache.has(cacheKey)) return this.textureCache.get(cacheKey);
 
     const image = this.textureAtlasImage;
@@ -151,16 +217,22 @@ export class Room {
     const row = Math.floor(cellIndex / ATLAS_GRID);
     const xBounds = getCellBounds(col, image.width);
     const yBounds = getCellBounds(row, image.height);
+    const cropMarginX = Math.min(ATLAS_CELL_MARGIN_PX, Math.floor((xBounds.size - 1) * 0.25));
+    const cropMarginY = Math.min(ATLAS_CELL_MARGIN_PX, Math.floor((yBounds.size - 1) * 0.25));
+    const sourceX = xBounds.start + cropMarginX;
+    const sourceY = yBounds.start + cropMarginY;
+    const sourceWidth = Math.max(1, xBounds.size - cropMarginX * 2);
+    const sourceHeight = Math.max(1, yBounds.size - cropMarginY * 2);
     const canvas = document.createElement('canvas');
     canvas.width = xBounds.size;
     canvas.height = yBounds.size;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(
       image,
-      xBounds.start,
-      yBounds.start,
-      xBounds.size,
-      yBounds.size,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
       0,
       0,
       xBounds.size,
@@ -171,11 +243,14 @@ export class Room {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.minFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
     texture.magFilter = THREE.LinearFilter;
-    texture.generateMipmaps = false;
+    texture.generateMipmaps = true;
+    texture.anisotropy = 8;
+    texture.center.set(0.5, 0.5);
+    texture.rotation = textureSettings.rotation;
     texture.needsUpdate = true;
-    texture.repeat.set(repeat, repeat);
+    texture.repeat.set(textureSettings.x, textureSettings.y);
     this.textureCache.set(cacheKey, texture);
     return texture;
   }
@@ -185,7 +260,11 @@ export class Room {
 
     this.surfaceMaterials.forEach((material) => {
       const cellIndex = material.userData?.textureCell;
-      if (cellIndex == null) return;
+      if (cellIndex == null) {
+        material.map = null;
+        material.needsUpdate = true;
+        return;
+      }
 
       const texture = this._createAtlasTexture(cellIndex, material.userData.textureRepeat ?? 1);
       if (!texture) return;
@@ -194,12 +273,372 @@ export class Room {
     });
   }
 
+  async _loadEditableLayout() {
+    try {
+      const response = await fetch(this.levelLayoutUrl, { cache: 'no-store' });
+      if (!response.ok) return this.loadedEditableLayout;
+      const layout = await response.json();
+      this.loadedEditableLayout = {
+        version: layout?.version ?? 1,
+        primitives: Array.isArray(layout?.primitives) ? layout.primitives.map((entry) => this._normalizePrimitive(entry)) : [],
+      };
+    } catch {
+      this.loadedEditableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
+    }
+
+    return this.loadedEditableLayout;
+  }
+
+  _normalizePrimitive(entry = {}) {
+    const type = entry.type === 'plane' || entry.type === 'cylinder' ? entry.type : 'box';
+    const defaults = EDITABLE_TYPE_DEFAULTS[type] ?? EDITABLE_TYPE_DEFAULTS.box;
+    const texture = entry.texture ?? {};
+
+    return {
+      id: entry.id ?? `primitive-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      name: entry.name ?? `${type}-${(entry.id ?? 'item').slice(0, 4)}`,
+      type,
+      position: cloneVectorLike(entry.position, { x: 0, y: 0.5, z: 0 }),
+      rotation: cloneVectorLike(entry.rotation, { x: 0, y: 0, z: 0 }),
+      scale: cloneVectorLike(entry.scale, defaults.scale),
+      texture: {
+        cell: Number.isFinite(texture.cell) ? texture.cell : (texture.cell === null ? null : ROOM_TEXTURE_CELLS.tile),
+        repeat: {
+          x: texture.repeat?.x ?? 1,
+          y: texture.repeat?.y ?? 1,
+        },
+        rotation: texture.rotation ?? 0,
+      },
+      material: {
+        color: entry.material?.color ?? '#c9b391',
+        roughness: entry.material?.roughness ?? 0.88,
+        metalness: entry.material?.metalness ?? 0.04,
+      },
+      collider: entry.collider !== false,
+      castShadow: entry.castShadow !== false,
+      receiveShadow: entry.receiveShadow !== false,
+      deleted: entry.deleted === true,
+    };
+  }
+
+  _registerBuiltInPrimitive(mesh, definition, collider = null) {
+    this._ensureUniqueEditableMaterials(mesh);
+
+    const primitive = this._normalizePrimitive(definition);
+    mesh.userData.editablePrimitive = true;
+    mesh.userData.primitiveId = primitive.id;
+    mesh.userData.colliderEnabled = primitive.collider;
+
+    this.builtInEditableMeshes.set(primitive.id, {
+      mesh,
+      collider,
+      primitive,
+    });
+    return primitive;
+  }
+
+  _ensureUniqueEditableMaterials(mesh) {
+    if (!mesh?.material) return;
+
+    const sourceMaterials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    const clonedMaterials = sourceMaterials.map((material) => {
+      if (!material) return material;
+      const clone = material.clone();
+      if (clone.userData?.textureCell != null || clone.userData?.textureRepeat != null) {
+        this.surfaceMaterials.add(clone);
+      }
+      return clone;
+    });
+
+    mesh.material = Array.isArray(mesh.material) ? clonedMaterials : clonedMaterials[0];
+  }
+
+  _serializeBuiltInPrimitive(entry) {
+    const { mesh } = entry;
+    const material = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+    const textureRepeat = normalizeTextureSettings(material?.userData?.textureRepeat ?? 1);
+
+    return {
+      id: entry.primitive.id,
+      name: mesh.name || entry.primitive.name,
+      type: entry.primitive.type,
+      position: {
+        x: Number(mesh.position.x.toFixed(4)),
+        y: Number(mesh.position.y.toFixed(4)),
+        z: Number(mesh.position.z.toFixed(4)),
+      },
+      rotation: {
+        x: Number(mesh.rotation.x.toFixed(4)),
+        y: Number(mesh.rotation.y.toFixed(4)),
+        z: Number(mesh.rotation.z.toFixed(4)),
+      },
+      scale: {
+        x: Number(mesh.scale.x.toFixed(4)),
+        y: Number(mesh.scale.y.toFixed(4)),
+        z: Number(mesh.scale.z.toFixed(4)),
+      },
+      texture: {
+        cell: material?.userData?.textureCell ?? null,
+        repeat: {
+          x: Number(textureRepeat.x.toFixed(4)),
+          y: Number(textureRepeat.y.toFixed(4)),
+        },
+        rotation: Number(textureRepeat.rotation.toFixed(4)),
+      },
+      material: materialToEditableSurface(material, entry.primitive.material.color),
+      collider: mesh.userData.colliderEnabled !== false,
+      castShadow: mesh.castShadow !== false,
+      receiveShadow: mesh.receiveShadow !== false,
+      deleted: this.deletedBuiltInPrimitives.has(entry.primitive.id),
+    };
+  }
+
+  _applyPrimitiveToMesh(primitive, mesh) {
+    mesh.name = primitive.name;
+    mesh.position.set(primitive.position.x, primitive.position.y, primitive.position.z);
+    mesh.rotation.set(primitive.rotation.x, primitive.rotation.y, primitive.rotation.z);
+    mesh.scale.set(primitive.scale.x, primitive.scale.y, primitive.scale.z);
+    mesh.castShadow = primitive.castShadow;
+    mesh.receiveShadow = primitive.receiveShadow;
+    mesh.visible = !primitive.deleted;
+    mesh.userData.colliderEnabled = primitive.collider;
+
+    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    materials.forEach((material) => {
+      if (!material) return;
+      if (material.color) {
+        material.color.set(primitive.material.color);
+      }
+      if ('roughness' in material) {
+        material.roughness = primitive.material.roughness;
+      }
+      if ('metalness' in material) {
+        material.metalness = primitive.material.metalness;
+      }
+      material.userData.textureCell = primitive.texture.cell;
+      material.userData.textureRepeat = {
+        x: primitive.texture.repeat.x,
+        y: primitive.texture.repeat.y,
+        rotation: primitive.texture.rotation,
+      };
+      material.side = primitive.type === 'plane' ? THREE.DoubleSide : material.side;
+      material.needsUpdate = true;
+    });
+  }
+
+  _applyLoadedEditableLayout() {
+    const builtInIds = new Set(this.builtInEditableMeshes.keys());
+    const customPrimitives = [];
+
+    this.deletedBuiltInPrimitives.clear();
+
+    for (const primitive of this.loadedEditableLayout.primitives) {
+      if (builtInIds.has(primitive.id)) {
+        const entry = this.builtInEditableMeshes.get(primitive.id);
+        if (!entry) continue;
+        this._applyPrimitiveToMesh(primitive, entry.mesh);
+        if (primitive.deleted) {
+          this.deletedBuiltInPrimitives.add(primitive.id);
+        }
+      } else if (!primitive.deleted) {
+        customPrimitives.push(primitive);
+      }
+    }
+
+    this.editableLayout = {
+      version: this.loadedEditableLayout.version ?? 1,
+      primitives: customPrimitives,
+    };
+  }
+
+  _createEditablePrimitiveMaterial(definition) {
+    const material = this._createSurfaceMaterial(definition.material.color, {
+      textureCell: definition.texture.cell,
+      textureRepeat: {
+        x: definition.texture.repeat.x,
+        y: definition.texture.repeat.y,
+        rotation: definition.texture.rotation,
+      },
+      roughness: definition.material.roughness,
+      metalness: definition.material.metalness,
+    });
+
+    if (definition.type === 'plane') {
+      material.side = THREE.DoubleSide;
+    }
+
+    return material;
+  }
+
+  _removeEditableColliders() {
+    this.colliders = this.colliders.filter((entry) => entry.metadata?.source !== 'editable');
+    this.runnables = this.runnables.filter((mesh) => mesh.userData?.editablePrimitive !== true);
+    this.climbables = this.climbables.filter((mesh) => mesh.userData?.editablePrimitive !== true);
+  }
+
+  _rebuildEditableLayout() {
+    this._removeEditableColliders();
+
+    this.editableGroup.traverse((child) => {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+    });
+    this.editableGroup.clear();
+    this.editableMeshes.clear();
+
+    for (const primitive of this.editableLayout.primitives) {
+      const geometry = createPrimitiveGeometry(primitive.type);
+      const material = this._createEditablePrimitiveMaterial(primitive);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = primitive.name;
+      mesh.position.set(primitive.position.x, primitive.position.y, primitive.position.z);
+      mesh.rotation.set(primitive.rotation.x, primitive.rotation.y, primitive.rotation.z);
+      mesh.scale.set(primitive.scale.x, primitive.scale.y, primitive.scale.z);
+      mesh.castShadow = primitive.castShadow;
+      mesh.receiveShadow = primitive.receiveShadow;
+      mesh.visible = !primitive.deleted;
+      mesh.userData.editablePrimitive = true;
+      mesh.userData.primitiveId = primitive.id;
+      mesh.userData.colliderEnabled = primitive.collider;
+      this.editableGroup.add(mesh);
+      this.editableMeshes.set(primitive.id, mesh);
+
+      if (primitive.collider) {
+        this.colliders.push({
+          mesh,
+          aabb: AABB.fromMesh(mesh),
+          type: primitive.type === 'plane' ? 'surface' : 'furniture',
+          metadata: {
+            source: 'editable',
+            primitiveId: primitive.id,
+          },
+        });
+      }
+    }
+
+    this._applyTextureAtlas();
+    this.refreshColliders();
+  }
+
+  getEditableLayout() {
+    const builtIns = Array.from(this.builtInEditableMeshes.values()).map((entry) => this._serializeBuiltInPrimitive(entry));
+    const customs = this.editableLayout.primitives.map((entry) => this._normalizePrimitive(entry));
+    return {
+      version: Math.max(this.loadedEditableLayout.version ?? 1, this.editableLayout.version ?? 1, 1),
+      primitives: [...builtIns, ...customs],
+    };
+  }
+
+  setEditableLayout(layout) {
+    this.loadedEditableLayout = {
+      version: layout?.version ?? 1,
+      primitives: Array.isArray(layout?.primitives) ? layout.primitives.map((entry) => this._normalizePrimitive(entry)) : [],
+    };
+    this._applyLoadedEditableLayout();
+    this._rebuildEditableLayout();
+    return this.getEditableLayout();
+  }
+
+  upsertEditablePrimitive(definition) {
+    const primitive = this._normalizePrimitive(definition);
+    if (this.builtInEditableMeshes.has(primitive.id)) {
+      const entry = this.builtInEditableMeshes.get(primitive.id);
+      this.deletedBuiltInPrimitives.delete(primitive.id);
+      primitive.deleted = false;
+      entry.primitive = primitive;
+      this._applyPrimitiveToMesh(primitive, entry.mesh);
+      this.refreshColliders();
+      this._applyTextureAtlas();
+      return primitive;
+    }
+    const index = this.editableLayout.primitives.findIndex((entry) => entry.id === primitive.id);
+    if (index >= 0) {
+      this.editableLayout.primitives[index] = primitive;
+    } else {
+      this.editableLayout.primitives.push(primitive);
+    }
+    this._rebuildEditableLayout();
+    return primitive;
+  }
+
+  removeEditablePrimitive(id) {
+    if (this.builtInEditableMeshes.has(id)) {
+      const entry = this.builtInEditableMeshes.get(id);
+      this.deletedBuiltInPrimitives.add(id);
+      entry.mesh.visible = false;
+      entry.mesh.userData.colliderEnabled = false;
+      this.refreshColliders();
+      return;
+    }
+    this.editableLayout.primitives = this.editableLayout.primitives.filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
+  getEditableMesh(id) {
+    if (this.builtInEditableMeshes.has(id)) {
+      return this.builtInEditableMeshes.get(id)?.mesh ?? null;
+    }
+
+    return this.editableMeshes.get(id) ?? null;
+  }
+
+  updateEditablePrimitiveTransform(id, transform = {}) {
+    if (!id) return null;
+
+    if (this.builtInEditableMeshes.has(id)) {
+      const entry = this.builtInEditableMeshes.get(id);
+      const next = this._serializeBuiltInPrimitive(entry);
+
+      if (transform.position) {
+        next.position = cloneVectorLike(transform.position, next.position);
+      }
+      if (transform.rotation) {
+        next.rotation = cloneVectorLike(transform.rotation, next.rotation);
+      }
+      if (transform.scale) {
+        next.scale = cloneVectorLike(transform.scale, next.scale);
+      }
+
+      return this.upsertEditablePrimitive(next);
+    }
+
+    const index = this.editableLayout.primitives.findIndex((entry) => entry.id === id);
+    if (index < 0) return null;
+
+    const primitive = this._normalizePrimitive(this.editableLayout.primitives[index]);
+    if (transform.position) {
+      primitive.position = cloneVectorLike(transform.position, primitive.position);
+    }
+    if (transform.rotation) {
+      primitive.rotation = cloneVectorLike(transform.rotation, primitive.rotation);
+    }
+    if (transform.scale) {
+      primitive.scale = cloneVectorLike(transform.scale, primitive.scale);
+    }
+
+    this.editableLayout.primitives[index] = primitive;
+    const mesh = this.editableMeshes.get(id);
+    if (mesh) {
+      mesh.position.set(primitive.position.x, primitive.position.y, primitive.position.z);
+      mesh.rotation.set(primitive.rotation.x, primitive.rotation.y, primitive.rotation.z);
+      mesh.scale.set(primitive.scale.x, primitive.scale.y, primitive.scale.z);
+      mesh.updateMatrixWorld(true);
+    }
+    this.refreshColliders();
+    return primitive;
+  }
+
   refreshColliders() {
     this.group.updateMatrixWorld(true);
+    const active = [];
     this.colliders.forEach((collider) => {
+      if (!collider.mesh?.visible || collider.mesh?.userData?.colliderEnabled === false) {
+        return;
+      }
       collider.aabb = AABB.fromMesh(collider.mesh);
+      active.push(collider);
     });
-    return this.colliders;
+    return active;
   }
 
   buildRoom() {
@@ -211,11 +650,15 @@ export class Room {
   buildFloorAndWalls() {
     const floorMat = this._createSurfaceMaterial(this.floorColor, {
       textureCell: ROOM_TEXTURE_CELLS.floor,
-      textureRepeat: 4 * ROOM_TEXTURE_REPEAT_MULTIPLIER,
+      textureRepeat: 6,
+      roughness: 0.98,
+      metalness: 0.02,
     });
     const wallMat = this._createSurfaceMaterial(this.wallColor, {
       textureCell: ROOM_TEXTURE_CELLS.wall,
-      textureRepeat: 2 * ROOM_TEXTURE_REPEAT_MULTIPLIER,
+      textureRepeat: 1,
+      roughness: 1,
+      metalness: 0,
     });
 
     // Floor
@@ -224,14 +667,33 @@ export class Room {
     floor.rotation.x = -Math.PI * 0.5;
     floor.position.y = 0;
     floor.name = 'Floor';
+    floor.receiveShadow = true;
     this.group.add(floor);
-    this.colliders.push({
+    const floorCollider = {
       mesh: floor,
       aabb: AABB.fromMesh(floor),
       type: 'surface',
       metadata: { runnable: true }, // Can run on floor
-    });
+    };
+    this.colliders.push(floorCollider);
     this.runnables.push(floor);
+    this._registerBuiltInPrimitive(floor, {
+      id: 'builtin-floor',
+      name: floor.name,
+      type: 'plane',
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: floor.rotation.x, y: floor.rotation.y, z: floor.rotation.z },
+      scale: { x: this.width, y: this.depth, z: 1 },
+      texture: {
+        cell: floorMat.userData.textureCell,
+        repeat: normalizeTextureSettings(floorMat.userData.textureRepeat),
+        rotation: 0,
+      },
+      material: materialToEditableSurface(floorMat, this.floorColor),
+      collider: true,
+      castShadow: false,
+      receiveShadow: true,
+    }, floorCollider);
 
     // Walls: back, front, left, right
     const wallThickness = 0.2;
@@ -241,46 +703,118 @@ export class Room {
     const backWall = new THREE.Mesh(backWallGeo, wallMat);
     backWall.position.set(0, this.height * 0.5, -this.depth * 0.5);
     backWall.name = 'BackWall';
+    backWall.castShadow = true;
+    backWall.receiveShadow = true;
     this.group.add(backWall);
-    this.colliders.push({
+    const backWallCollider = {
       mesh: backWall,
       aabb: AABB.fromMesh(backWall),
       type: 'wall',
-    });
+    };
+    this.colliders.push(backWallCollider);
+    this._registerBuiltInPrimitive(backWall, {
+      id: 'builtin-back-wall',
+      name: backWall.name,
+      type: 'box',
+      position: { x: 0, y: this.height * 0.5, z: -this.depth * 0.5 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: { x: this.width, y: this.height, z: wallThickness },
+      texture: {
+        cell: wallMat.userData.textureCell,
+        repeat: normalizeTextureSettings(wallMat.userData.textureRepeat),
+        rotation: 0,
+      },
+      material: materialToEditableSurface(wallMat, this.wallColor),
+      collider: true,
+    }, backWallCollider);
 
     // Front wall
     const frontWall = new THREE.Mesh(backWallGeo, wallMat);
     frontWall.position.set(0, this.height * 0.5, this.depth * 0.5);
     frontWall.name = 'FrontWall';
+    frontWall.castShadow = true;
+    frontWall.receiveShadow = true;
     this.group.add(frontWall);
-    this.colliders.push({
+    const frontWallCollider = {
       mesh: frontWall,
       aabb: AABB.fromMesh(frontWall),
       type: 'wall',
-    });
+    };
+    this.colliders.push(frontWallCollider);
+    this._registerBuiltInPrimitive(frontWall, {
+      id: 'builtin-front-wall',
+      name: frontWall.name,
+      type: 'box',
+      position: { x: 0, y: this.height * 0.5, z: this.depth * 0.5 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: { x: this.width, y: this.height, z: wallThickness },
+      texture: {
+        cell: wallMat.userData.textureCell,
+        repeat: normalizeTextureSettings(wallMat.userData.textureRepeat),
+        rotation: 0,
+      },
+      material: materialToEditableSurface(wallMat, this.wallColor),
+      collider: true,
+    }, frontWallCollider);
 
     // Left wall
     const sideWallGeo = new THREE.BoxGeometry(wallThickness, this.height, this.depth);
     const leftWall = new THREE.Mesh(sideWallGeo, wallMat);
     leftWall.position.set(-this.width * 0.5, this.height * 0.5, 0);
     leftWall.name = 'LeftWall';
+    leftWall.castShadow = true;
+    leftWall.receiveShadow = true;
     this.group.add(leftWall);
-    this.colliders.push({
+    const leftWallCollider = {
       mesh: leftWall,
       aabb: AABB.fromMesh(leftWall),
       type: 'wall',
-    });
+    };
+    this.colliders.push(leftWallCollider);
+    this._registerBuiltInPrimitive(leftWall, {
+      id: 'builtin-left-wall',
+      name: leftWall.name,
+      type: 'box',
+      position: { x: -this.width * 0.5, y: this.height * 0.5, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: { x: wallThickness, y: this.height, z: this.depth },
+      texture: {
+        cell: wallMat.userData.textureCell,
+        repeat: normalizeTextureSettings(wallMat.userData.textureRepeat),
+        rotation: 0,
+      },
+      material: materialToEditableSurface(wallMat, this.wallColor),
+      collider: true,
+    }, leftWallCollider);
 
     // Right wall
     const rightWall = new THREE.Mesh(sideWallGeo, wallMat);
     rightWall.position.set(this.width * 0.5, this.height * 0.5, 0);
     rightWall.name = 'RightWall';
+    rightWall.castShadow = true;
+    rightWall.receiveShadow = true;
     this.group.add(rightWall);
-    this.colliders.push({
+    const rightWallCollider = {
       mesh: rightWall,
       aabb: AABB.fromMesh(rightWall),
       type: 'wall',
-    });
+    };
+    this.colliders.push(rightWallCollider);
+    this._registerBuiltInPrimitive(rightWall, {
+      id: 'builtin-right-wall',
+      name: rightWall.name,
+      type: 'box',
+      position: { x: this.width * 0.5, y: this.height * 0.5, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: { x: wallThickness, y: this.height, z: this.depth },
+      texture: {
+        cell: wallMat.userData.textureCell,
+        repeat: normalizeTextureSettings(wallMat.userData.textureRepeat),
+        rotation: 0,
+      },
+      material: materialToEditableSurface(wallMat, this.wallColor),
+      collider: true,
+    }, rightWallCollider);
 
     // Ceiling
     const ceilingGeo = new THREE.PlaneGeometry(this.width, this.depth);
@@ -288,12 +822,31 @@ export class Room {
     ceiling.rotation.x = Math.PI * 0.5;
     ceiling.position.y = this.height;
     ceiling.name = 'Ceiling';
+    ceiling.receiveShadow = true;
     this.group.add(ceiling);
-    this.colliders.push({
+    const ceilingCollider = {
       mesh: ceiling,
       aabb: AABB.fromMesh(ceiling),
       type: 'surface',
-    });
+    };
+    this.colliders.push(ceilingCollider);
+    this._registerBuiltInPrimitive(ceiling, {
+      id: 'builtin-ceiling',
+      name: ceiling.name,
+      type: 'plane',
+      position: { x: 0, y: this.height, z: 0 },
+      rotation: { x: ceiling.rotation.x, y: ceiling.rotation.y, z: ceiling.rotation.z },
+      scale: { x: this.width, y: this.depth, z: 1 },
+      texture: {
+        cell: wallMat.userData.textureCell,
+        repeat: normalizeTextureSettings(wallMat.userData.textureRepeat),
+        rotation: 0,
+      },
+      material: materialToEditableSurface(wallMat, this.wallColor),
+      collider: true,
+      castShadow: false,
+      receiveShadow: true,
+    }, ceilingCollider);
   }
 
   buildFurniture() {
@@ -321,43 +874,80 @@ export class Room {
       Object.assign(mesh.userData, userData);
       parent.add(mesh);
 
+      let colliderEntry = null;
       if (collider) {
-        this.colliders.push({
+        colliderEntry = {
           mesh,
           aabb: AABB.fromMesh(mesh),
           type,
           metadata: { runnable, climbable, ...userData },
-        });
+        };
+        this.colliders.push(colliderEntry);
       }
 
       if (runnable) this.runnables.push(mesh);
       if (climbable) this.climbables.push(mesh);
+      this._registerBuiltInPrimitive(mesh, {
+        id: `builtin-${name}`,
+        name,
+        type: 'box',
+        position: { x: position[0], y: position[1], z: position[2] },
+        rotation: { x: rotation[0], y: rotation[1], z: rotation[2] },
+        scale: { x: width, y: height, z: depth },
+        texture: {
+          cell: mesh.material?.userData?.textureCell ?? null,
+          repeat: normalizeTextureSettings(mesh.material?.userData?.textureRepeat ?? 1),
+          rotation: 0,
+        },
+        material: materialToEditableSurface(mesh.material, '#ffffff'),
+        collider,
+        castShadow: mesh.castShadow,
+        receiveShadow: mesh.receiveShadow,
+      }, colliderEntry);
       return mesh;
     };
 
     const woodMat = this._createSurfaceMaterial(this.furnitureColor, {
       textureCell: ROOM_TEXTURE_CELLS.cabinet,
-      textureRepeat: 2 * ROOM_TEXTURE_REPEAT_MULTIPLIER,
+      textureRepeat: 1.5,
+      roughness: 0.92,
+      metalness: 0.04,
     });
     const woodAltMat = this._createSurfaceMaterial(this.furnitureColor, {
-      textureCell: ROOM_TEXTURE_CELLS.woodAlt,
-      textureRepeat: 2 * ROOM_TEXTURE_REPEAT_MULTIPLIER,
+      textureCell: ROOM_TEXTURE_CELLS.cabinetDark,
+      textureRepeat: 1,
+      roughness: 0.95,
+      metalness: 0.03,
     });
     const counterMat = this._createSurfaceMaterial('#d7c6af', {
       textureCell: ROOM_TEXTURE_CELLS.counter,
-      textureRepeat: 2 * ROOM_TEXTURE_REPEAT_MULTIPLIER,
+      textureRepeat: 1.25,
+      roughness: 0.72,
+      metalness: 0.08,
     });
     const backsplashMat = this._createSurfaceMaterial('#dfeaf4', {
       textureCell: ROOM_TEXTURE_CELLS.tile,
-      textureRepeat: 2 * ROOM_TEXTURE_REPEAT_MULTIPLIER,
+      textureRepeat: 2,
+      roughness: 0.8,
+      metalness: 0.05,
     });
     const applianceMat = this._createSurfaceMaterial('#d8d8d8', {
       textureCell: ROOM_TEXTURE_CELLS.appliance,
-      textureRepeat: 1 * ROOM_TEXTURE_REPEAT_MULTIPLIER,
+      textureRepeat: 1,
+      roughness: 0.52,
+      metalness: 0.18,
+    });
+    const fridgeMat = this._createSurfaceMaterial('#d8d8d8', {
+      textureCell: ROOM_TEXTURE_CELLS.fridge,
+      textureRepeat: 1,
+      roughness: 0.48,
+      metalness: 0.14,
     });
     const fabricMat = this._createSurfaceMaterial('#eadfbc', {
       textureCell: ROOM_TEXTURE_CELLS.fabric,
-      textureRepeat: 2 * ROOM_TEXTURE_REPEAT_MULTIPLIER,
+      textureRepeat: 1.5,
+      roughness: 1,
+      metalness: 0,
     });
 
     // Back-wall counter run with stove, sink, and cabinets.
@@ -509,7 +1099,7 @@ export class Room {
       width: 1.0,
       height: 2.05,
       depth: 0.8,
-      material: applianceMat,
+      material: fridgeMat,
       position: [2.95, 1.025, -2.55],
       type: 'wall',
     });
@@ -740,14 +1330,14 @@ export class Room {
    * Get all climbable surfaces
    */
   getClimbables() {
-    return this.climbables;
+    return this.climbables.filter((mesh) => mesh.visible !== false && mesh.userData?.colliderEnabled !== false);
   }
 
   /**
    * Get all runnable surfaces
    */
   getRunnables() {
-    return this.runnables;
+    return this.runnables.filter((mesh) => mesh.visible !== false && mesh.userData?.colliderEnabled !== false);
   }
 
   /**

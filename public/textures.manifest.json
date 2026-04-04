@@ -1,12 +1,12 @@
 {
-  "source": "textures.jpg",
+  "source": "textures.webp",
   "grid": {
     "columns": 10,
     "rows": 10,
-    "width": 2048,
-    "height": 2048,
-    "nominalCellWidth": 204.8,
-    "nominalCellHeight": 204.8
+    "width": 4096,
+    "height": 4096,
+    "nominalCellWidth": 409.6,
+    "nominalCellHeight": 409.6
   },
   "cells": [
     {
@@ -16,10 +16,10 @@
       "bounds": {
         "x0": 0,
         "y0": 0,
-        "x1": 205,
-        "y1": 205,
-        "width": 205,
-        "height": 205
+        "x1": 410,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0,
@@ -29,31 +29,31 @@
       },
       "stats": {
         "averageColor": {
-          "r": 173,
-          "g": 205,
-          "b": 214
+          "r": 168,
+          "g": 206,
+          "b": 186
         },
-        "hue": 193.4,
-        "saturation": 0.329,
-        "lightness": 0.759,
-        "brightness": 0.779,
-        "contrast": 0.113,
-        "edgeDensity": 0.051
+        "hue": 147.7,
+        "saturation": 0.282,
+        "lightness": 0.734,
+        "brightness": 0.771,
+        "contrast": 0.091,
+        "edgeDensity": 0.016
       },
       "classification": {
-        "category": "tile",
+        "category": "fabric",
         "tags": [
-          "tile",
-          "cool-surface",
-          "ceramic"
+          "fabric",
+          "cloth",
+          "soft-surface"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 0: tile with cyan bias, 78% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.6,
+      "description": "Cell 0: fabric with green bias, 77% brightness, kitchen fit 60%.",
       "tags": [
-        "tile",
-        "cool-surface",
-        "ceramic"
+        "fabric",
+        "cloth",
+        "soft-surface"
       ]
     },
     {
@@ -61,46 +61,46 @@
       "row": 0,
       "col": 1,
       "bounds": {
-        "x0": 205,
+        "x0": 410,
         "y0": 0,
-        "x1": 410,
-        "y1": 205,
-        "width": 205,
-        "height": 205
+        "x1": 819,
+        "y1": 410,
+        "width": 409,
+        "height": 410
       },
       "uv": {
         "u0": 0.1001,
         "v0": 0,
-        "u1": 0.2002,
+        "u1": 0.2,
         "v1": 0.1001
       },
       "stats": {
         "averageColor": {
-          "r": 175,
-          "g": 130,
-          "b": 86
+          "r": 162,
+          "g": 197,
+          "b": 174
         },
-        "hue": 29.5,
-        "saturation": 0.356,
-        "lightness": 0.511,
-        "brightness": 0.534,
-        "contrast": 0.098,
-        "edgeDensity": 0.05
+        "hue": 141.5,
+        "saturation": 0.229,
+        "lightness": 0.704,
+        "brightness": 0.736,
+        "contrast": 0.108,
+        "edgeDensity": 0.02
       },
       "classification": {
-        "category": "tile",
+        "category": "fabric",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "fabric",
+          "cloth",
+          "soft-surface"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 1: tile with orange bias, 53% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.6,
+      "description": "Cell 1: fabric with green bias, 74% brightness, kitchen fit 60%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "fabric",
+        "cloth",
+        "soft-surface"
       ]
     },
     {
@@ -108,31 +108,78 @@
       "row": 0,
       "col": 2,
       "bounds": {
-        "x0": 410,
+        "x0": 819,
         "y0": 0,
-        "x1": 614,
-        "y1": 205,
-        "width": 204,
-        "height": 205
+        "x1": 1229,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.2002,
+        "u0": 0.2,
         "v0": 0,
-        "u1": 0.2998,
+        "u1": 0.3,
         "v1": 0.1001
       },
       "stats": {
         "averageColor": {
-          "r": 202,
-          "g": 137,
-          "b": 125
+          "r": 241,
+          "g": 216,
+          "b": 140
         },
-        "hue": 9.7,
-        "saturation": 0.419,
-        "lightness": 0.641,
-        "brightness": 0.589,
-        "contrast": 0.134,
-        "edgeDensity": 0.049
+        "hue": 45.1,
+        "saturation": 0.785,
+        "lightness": 0.747,
+        "brightness": 0.846,
+        "contrast": 0.045,
+        "edgeDensity": 0.002
+      },
+      "classification": {
+        "category": "wood",
+        "tags": [
+          "wood",
+          "warm",
+          "floor"
+        ]
+      },
+      "kitchenFit": 0.8,
+      "description": "Cell 2: wood with yellow bias, 85% brightness, kitchen fit 80%.",
+      "tags": [
+        "wood",
+        "warm",
+        "floor"
+      ]
+    },
+    {
+      "index": 3,
+      "row": 0,
+      "col": 3,
+      "bounds": {
+        "x0": 1229,
+        "y0": 0,
+        "x1": 1638,
+        "y1": 410,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.3,
+        "v0": 0,
+        "u1": 0.3999,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 242,
+          "g": 197,
+          "b": 99
+        },
+        "hue": 41.1,
+        "saturation": 0.841,
+        "lightness": 0.667,
+        "brightness": 0.78,
+        "contrast": 0.086,
+        "edgeDensity": 0.001
       },
       "classification": {
         "category": "tile",
@@ -143,7 +190,7 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 2: tile with red bias, 59% brightness, kitchen fit 75%.",
+      "description": "Cell 3: tile with orange bias, 78% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -151,63 +198,16 @@
       ]
     },
     {
-      "index": 3,
-      "row": 0,
-      "col": 3,
-      "bounds": {
-        "x0": 614,
-        "y0": 0,
-        "x1": 819,
-        "y1": 205,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.2998,
-        "v0": 0,
-        "u1": 0.3999,
-        "v1": 0.1001
-      },
-      "stats": {
-        "averageColor": {
-          "r": 208,
-          "g": 208,
-          "b": 207
-        },
-        "hue": 65.6,
-        "saturation": 0.017,
-        "lightness": 0.813,
-        "brightness": 0.816,
-        "contrast": 0.175,
-        "edgeDensity": 0.119
-      },
-      "classification": {
-        "category": "plaster",
-        "tags": [
-          "wall",
-          "paint",
-          "light-surface"
-        ]
-      },
-      "kitchenFit": 0.78,
-      "description": "Cell 3: plaster with yellow bias, 82% brightness, kitchen fit 78%.",
-      "tags": [
-        "wall",
-        "paint",
-        "light-surface"
-      ]
-    },
-    {
       "index": 4,
       "row": 0,
       "col": 4,
       "bounds": {
-        "x0": 819,
+        "x0": 1638,
         "y0": 0,
-        "x1": 1024,
-        "y1": 205,
-        "width": 205,
-        "height": 205
+        "x1": 2048,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.3999,
@@ -217,16 +217,16 @@
       },
       "stats": {
         "averageColor": {
-          "r": 212,
-          "g": 208,
-          "b": 192
+          "r": 190,
+          "g": 172,
+          "b": 203
         },
-        "hue": 46.8,
-        "saturation": 0.194,
-        "lightness": 0.792,
-        "brightness": 0.813,
-        "contrast": 0.059,
-        "edgeDensity": 0
+        "hue": 274.1,
+        "saturation": 0.235,
+        "lightness": 0.736,
+        "brightness": 0.698,
+        "contrast": 0.089,
+        "edgeDensity": 0.013
       },
       "classification": {
         "category": "generic",
@@ -235,8 +235,8 @@
           "unclassified"
         ]
       },
-      "kitchenFit": 0.5,
-      "description": "Cell 4: generic with yellow bias, 81% brightness, kitchen fit 50%.",
+      "kitchenFit": 0.6,
+      "description": "Cell 4: generic with purple bias, 70% brightness, kitchen fit 60%.",
       "tags": [
         "generic-surface",
         "unclassified"
@@ -247,12 +247,12 @@
       "row": 0,
       "col": 5,
       "bounds": {
-        "x0": 1024,
+        "x0": 2048,
         "y0": 0,
-        "x1": 1229,
-        "y1": 205,
-        "width": 205,
-        "height": 205
+        "x1": 2458,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.5,
@@ -262,16 +262,16 @@
       },
       "stats": {
         "averageColor": {
-          "r": 224,
-          "g": 206,
-          "b": 185
+          "r": 223,
+          "g": 207,
+          "b": 177
         },
-        "hue": 32.9,
-        "saturation": 0.385,
-        "lightness": 0.801,
-        "brightness": 0.817,
-        "contrast": 0.079,
-        "edgeDensity": 0.052
+        "hue": 39.1,
+        "saturation": 0.41,
+        "lightness": 0.784,
+        "brightness": 0.816,
+        "contrast": 0.168,
+        "edgeDensity": 0.008
       },
       "classification": {
         "category": "tile",
@@ -294,46 +294,46 @@
       "row": 0,
       "col": 6,
       "bounds": {
-        "x0": 1229,
+        "x0": 2458,
         "y0": 0,
-        "x1": 1434,
-        "y1": 205,
-        "width": 205,
-        "height": 205
+        "x1": 2867,
+        "y1": 410,
+        "width": 409,
+        "height": 410
       },
       "uv": {
         "u0": 0.6001,
         "v0": 0,
-        "u1": 0.7002,
+        "u1": 0.7,
         "v1": 0.1001
       },
       "stats": {
         "averageColor": {
-          "r": 221,
-          "g": 203,
-          "b": 178
+          "r": 115,
+          "g": 183,
+          "b": 183
         },
-        "hue": 35.6,
-        "saturation": 0.384,
-        "lightness": 0.781,
-        "brightness": 0.804,
-        "contrast": 0.118,
-        "edgeDensity": 0.021
+        "hue": 179.8,
+        "saturation": 0.323,
+        "lightness": 0.585,
+        "brightness": 0.662,
+        "contrast": 0.071,
+        "edgeDensity": 0.005
       },
       "classification": {
         "category": "tile",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "tile",
+          "cool-surface",
+          "ceramic"
         ]
       },
-      "kitchenFit": 0.65,
-      "description": "Cell 6: tile with orange bias, 80% brightness, kitchen fit 65%.",
+      "kitchenFit": 0.75,
+      "description": "Cell 6: tile with cyan bias, 66% brightness, kitchen fit 75%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "tile",
+        "cool-surface",
+        "ceramic"
       ]
     },
     {
@@ -341,78 +341,31 @@
       "row": 0,
       "col": 7,
       "bounds": {
-        "x0": 1434,
+        "x0": 2867,
         "y0": 0,
-        "x1": 1638,
-        "y1": 205,
-        "width": 204,
-        "height": 205
+        "x1": 3277,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.7002,
+        "u0": 0.7,
         "v0": 0,
-        "u1": 0.7998,
+        "u1": 0.8,
         "v1": 0.1001
       },
       "stats": {
         "averageColor": {
-          "r": 240,
-          "g": 217,
-          "b": 109
+          "r": 205,
+          "g": 172,
+          "b": 162
         },
-        "hue": 49.3,
-        "saturation": 0.815,
-        "lightness": 0.684,
-        "brightness": 0.839,
-        "contrast": 0.018,
-        "edgeDensity": 0
-      },
-      "classification": {
-        "category": "wood",
-        "tags": [
-          "wood",
-          "warm",
-          "floor"
-        ]
-      },
-      "kitchenFit": 0.8,
-      "description": "Cell 7: wood with yellow bias, 84% brightness, kitchen fit 80%.",
-      "tags": [
-        "wood",
-        "warm",
-        "floor"
-      ]
-    },
-    {
-      "index": 8,
-      "row": 0,
-      "col": 8,
-      "bounds": {
-        "x0": 1638,
-        "y0": 0,
-        "x1": 1843,
-        "y1": 205,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.7998,
-        "v0": 0,
-        "u1": 0.8999,
-        "v1": 0.1001
-      },
-      "stats": {
-        "averageColor": {
-          "r": 129,
-          "g": 88,
-          "b": 58
-        },
-        "hue": 25.8,
-        "saturation": 0.38,
-        "lightness": 0.366,
-        "brightness": 0.372,
-        "contrast": 0.128,
-        "edgeDensity": 0.113
+        "hue": 14.8,
+        "saturation": 0.301,
+        "lightness": 0.719,
+        "brightness": 0.7,
+        "contrast": 0.111,
+        "edgeDensity": 0.015
       },
       "classification": {
         "category": "tile",
@@ -423,7 +376,54 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 8: tile with orange bias, 37% brightness, kitchen fit 75%.",
+      "description": "Cell 7: tile with red bias, 70% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 8,
+      "row": 0,
+      "col": 8,
+      "bounds": {
+        "x0": 3277,
+        "y0": 0,
+        "x1": 3686,
+        "y1": 410,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.8,
+        "v0": 0,
+        "u1": 0.8999,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 216,
+          "g": 215,
+          "b": 213
+        },
+        "hue": 25.3,
+        "saturation": 0.032,
+        "lightness": 0.842,
+        "brightness": 0.842,
+        "contrast": 0.121,
+        "edgeDensity": 0.018
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.73,
+      "description": "Cell 8: tile with orange bias, 84% brightness, kitchen fit 73%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -435,12 +435,12 @@
       "row": 0,
       "col": 9,
       "bounds": {
-        "x0": 1843,
+        "x0": 3686,
         "y0": 0,
-        "x1": 2048,
-        "y1": 205,
-        "width": 205,
-        "height": 205
+        "x1": 4096,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.8999,
@@ -450,31 +450,31 @@
       },
       "stats": {
         "averageColor": {
-          "r": 165,
-          "g": 185,
-          "b": 144
+          "r": 207,
+          "g": 204,
+          "b": 201
         },
-        "hue": 89.9,
-        "saturation": 0.224,
-        "lightness": 0.646,
-        "brightness": 0.697,
-        "contrast": 0.205,
-        "edgeDensity": 0.101
+        "hue": 29.1,
+        "saturation": 0.068,
+        "lightness": 0.8,
+        "brightness": 0.802,
+        "contrast": 0.127,
+        "edgeDensity": 0.016
       },
       "classification": {
-        "category": "fabric",
+        "category": "tile",
         "tags": [
-          "fabric",
-          "cloth",
-          "soft-surface"
+          "warm-surface",
+          "ceramic",
+          "paint"
         ]
       },
-      "kitchenFit": 0.65,
-      "description": "Cell 9: fabric with green bias, 70% brightness, kitchen fit 65%.",
+      "kitchenFit": 0.73,
+      "description": "Cell 9: tile with orange bias, 80% brightness, kitchen fit 73%.",
       "tags": [
-        "fabric",
-        "cloth",
-        "soft-surface"
+        "warm-surface",
+        "ceramic",
+        "paint"
       ]
     },
     {
@@ -483,45 +483,45 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 205,
-        "x1": 205,
-        "y1": 410,
-        "width": 205,
-        "height": 205
+        "y0": 410,
+        "x1": 410,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0,
         "v0": 0.1001,
         "u1": 0.1001,
-        "v1": 0.2002
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
-          "r": 206,
+          "r": 176,
           "g": 194,
-          "b": 163
+          "b": 192
         },
-        "hue": 43,
-        "saturation": 0.308,
-        "lightness": 0.724,
-        "brightness": 0.763,
-        "contrast": 0.22,
-        "edgeDensity": 0.131
+        "hue": 173,
+        "saturation": 0.124,
+        "lightness": 0.725,
+        "brightness": 0.744,
+        "contrast": 0.141,
+        "edgeDensity": 0.001
       },
       "classification": {
         "category": "tile",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "tile",
+          "cool-surface",
+          "ceramic"
         ]
       },
-      "kitchenFit": 0.8,
-      "description": "Cell 10: tile with orange bias, 76% brightness, kitchen fit 80%.",
+      "kitchenFit": 0.75,
+      "description": "Cell 10: tile with cyan bias, 74% brightness, kitchen fit 75%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "tile",
+        "cool-surface",
+        "ceramic"
       ]
     },
     {
@@ -529,31 +529,31 @@
       "row": 1,
       "col": 1,
       "bounds": {
-        "x0": 205,
-        "y0": 205,
-        "x1": 410,
-        "y1": 410,
-        "width": 205,
-        "height": 205
+        "x0": 410,
+        "y0": 410,
+        "x1": 819,
+        "y1": 819,
+        "width": 409,
+        "height": 409
       },
       "uv": {
         "u0": 0.1001,
         "v0": 0.1001,
-        "u1": 0.2002,
-        "v1": 0.2002
+        "u1": 0.2,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
-          "r": 206,
-          "g": 178,
-          "b": 143
+          "r": 120,
+          "g": 88,
+          "b": 64
         },
-        "hue": 33.4,
-        "saturation": 0.391,
-        "lightness": 0.684,
-        "brightness": 0.711,
-        "contrast": 0.19,
-        "edgeDensity": 0.097
+        "hue": 26.3,
+        "saturation": 0.305,
+        "lightness": 0.36,
+        "brightness": 0.366,
+        "contrast": 0.074,
+        "edgeDensity": 0.002
       },
       "classification": {
         "category": "tile",
@@ -563,8 +563,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.8,
-      "description": "Cell 11: tile with orange bias, 71% brightness, kitchen fit 80%.",
+      "kitchenFit": 0.75,
+      "description": "Cell 11: tile with orange bias, 37% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -576,78 +576,31 @@
       "row": 1,
       "col": 2,
       "bounds": {
-        "x0": 410,
-        "y0": 205,
-        "x1": 614,
-        "y1": 410,
-        "width": 204,
-        "height": 205
+        "x0": 819,
+        "y0": 410,
+        "x1": 1229,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.2002,
+        "u0": 0.2,
         "v0": 0.1001,
-        "u1": 0.2998,
-        "v1": 0.2002
+        "u1": 0.3,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
-          "r": 176,
-          "g": 177,
-          "b": 145
+          "r": 210,
+          "g": 185,
+          "b": 159
         },
-        "hue": 62.3,
-        "saturation": 0.171,
-        "lightness": 0.631,
-        "brightness": 0.684,
-        "contrast": 0.236,
-        "edgeDensity": 0.209
-      },
-      "classification": {
-        "category": "patterned",
-        "tags": [
-          "patterned",
-          "decorative",
-          "busy"
-        ]
-      },
-      "kitchenFit": 0.35,
-      "description": "Cell 12: patterned with yellow bias, 68% brightness, kitchen fit 35%.",
-      "tags": [
-        "patterned",
-        "decorative",
-        "busy"
-      ]
-    },
-    {
-      "index": 13,
-      "row": 1,
-      "col": 3,
-      "bounds": {
-        "x0": 614,
-        "y0": 205,
-        "x1": 819,
-        "y1": 410,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.2998,
-        "v0": 0.1001,
-        "u1": 0.3999,
-        "v1": 0.2002
-      },
-      "stats": {
-        "averageColor": {
-          "r": 187,
-          "g": 113,
-          "b": 129
-        },
-        "hue": 347.4,
-        "saturation": 0.349,
-        "lightness": 0.589,
-        "brightness": 0.51,
-        "contrast": 0.284,
-        "edgeDensity": 0.067
+        "hue": 30.7,
+        "saturation": 0.365,
+        "lightness": 0.725,
+        "brightness": 0.741,
+        "contrast": 0.102,
+        "edgeDensity": 0.016
       },
       "classification": {
         "category": "tile",
@@ -657,8 +610,55 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.8,
-      "description": "Cell 13: tile with red bias, 51% brightness, kitchen fit 80%.",
+      "kitchenFit": 0.75,
+      "description": "Cell 12: tile with orange bias, 74% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 13,
+      "row": 1,
+      "col": 3,
+      "bounds": {
+        "x0": 1229,
+        "y0": 410,
+        "x1": 1638,
+        "y1": 819,
+        "width": 409,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.3,
+        "v0": 0.1001,
+        "u1": 0.3999,
+        "v1": 0.2
+      },
+      "stats": {
+        "averageColor": {
+          "r": 200,
+          "g": 180,
+          "b": 179
+        },
+        "hue": 2.5,
+        "saturation": 0.158,
+        "lightness": 0.744,
+        "brightness": 0.723,
+        "contrast": 0.137,
+        "edgeDensity": 0.032
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 13: tile with red bias, 72% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -670,31 +670,31 @@
       "row": 1,
       "col": 4,
       "bounds": {
-        "x0": 819,
-        "y0": 205,
-        "x1": 1024,
-        "y1": 410,
-        "width": 205,
-        "height": 205
+        "x0": 1638,
+        "y0": 410,
+        "x1": 2048,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.3999,
         "v0": 0.1001,
         "u1": 0.5,
-        "v1": 0.2002
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
-          "r": 202,
-          "g": 172,
-          "b": 125
+          "r": 165,
+          "g": 163,
+          "b": 163
         },
-        "hue": 36.9,
-        "saturation": 0.422,
-        "lightness": 0.64,
-        "brightness": 0.687,
-        "contrast": 0.058,
-        "edgeDensity": 0.007
+        "hue": 15.3,
+        "saturation": 0.01,
+        "lightness": 0.642,
+        "brightness": 0.642,
+        "contrast": 0.037,
+        "edgeDensity": 0
       },
       "classification": {
         "category": "tile",
@@ -704,8 +704,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 14: tile with orange bias, 69% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.83,
+      "description": "Cell 14: tile with red bias, 64% brightness, kitchen fit 83%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -717,31 +717,31 @@
       "row": 1,
       "col": 5,
       "bounds": {
-        "x0": 1024,
-        "y0": 205,
-        "x1": 1229,
-        "y1": 410,
-        "width": 205,
-        "height": 205
+        "x0": 2048,
+        "y0": 410,
+        "x1": 2458,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.5,
         "v0": 0.1001,
         "u1": 0.6001,
-        "v1": 0.2002
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
-          "r": 237,
-          "g": 191,
-          "b": 106
+          "r": 227,
+          "g": 160,
+          "b": 133
         },
-        "hue": 38.9,
-        "saturation": 0.786,
-        "lightness": 0.674,
-        "brightness": 0.764,
-        "contrast": 0.085,
-        "edgeDensity": 0.022
+        "hue": 17.2,
+        "saturation": 0.627,
+        "lightness": 0.706,
+        "brightness": 0.676,
+        "contrast": 0.081,
+        "edgeDensity": 0.009
       },
       "classification": {
         "category": "tile",
@@ -752,7 +752,7 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 15: tile with orange bias, 76% brightness, kitchen fit 75%.",
+      "description": "Cell 15: tile with red bias, 68% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -764,31 +764,31 @@
       "row": 1,
       "col": 6,
       "bounds": {
-        "x0": 1229,
-        "y0": 205,
-        "x1": 1434,
-        "y1": 410,
-        "width": 205,
-        "height": 205
+        "x0": 2458,
+        "y0": 410,
+        "x1": 2867,
+        "y1": 819,
+        "width": 409,
+        "height": 409
       },
       "uv": {
         "u0": 0.6001,
         "v0": 0.1001,
-        "u1": 0.7002,
-        "v1": 0.2002
+        "u1": 0.7,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
-          "r": 137,
-          "g": 126,
-          "b": 110
+          "r": 226,
+          "g": 209,
+          "b": 191
         },
-        "hue": 35.7,
-        "saturation": 0.111,
-        "lightness": 0.485,
-        "brightness": 0.5,
-        "contrast": 0.192,
-        "edgeDensity": 0.26
+        "hue": 30.1,
+        "saturation": 0.384,
+        "lightness": 0.818,
+        "brightness": 0.828,
+        "contrast": 0.074,
+        "edgeDensity": 0.015
       },
       "classification": {
         "category": "tile",
@@ -798,8 +798,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.78,
-      "description": "Cell 16: tile with orange bias, 50% brightness, kitchen fit 78%.",
+      "kitchenFit": 0.65,
+      "description": "Cell 16: tile with orange bias, 83% brightness, kitchen fit 65%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -811,31 +811,31 @@
       "row": 1,
       "col": 7,
       "bounds": {
-        "x0": 1434,
-        "y0": 205,
-        "x1": 1638,
-        "y1": 410,
-        "width": 204,
-        "height": 205
+        "x0": 2867,
+        "y0": 410,
+        "x1": 3277,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.7002,
+        "u0": 0.7,
         "v0": 0.1001,
-        "u1": 0.7998,
-        "v1": 0.2002
+        "u1": 0.8,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
-          "r": 204,
-          "g": 180,
-          "b": 150
+          "r": 184,
+          "g": 159,
+          "b": 124
         },
-        "hue": 33,
-        "saturation": 0.346,
-        "lightness": 0.694,
-        "brightness": 0.716,
-        "contrast": 0.111,
-        "edgeDensity": 0.062
+        "hue": 34.7,
+        "saturation": 0.293,
+        "lightness": 0.604,
+        "brightness": 0.633,
+        "contrast": 0.126,
+        "edgeDensity": 0.023
       },
       "classification": {
         "category": "tile",
@@ -846,7 +846,7 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 17: tile with orange bias, 72% brightness, kitchen fit 75%.",
+      "description": "Cell 17: tile with orange bias, 63% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -858,31 +858,31 @@
       "row": 1,
       "col": 8,
       "bounds": {
-        "x0": 1638,
-        "y0": 205,
-        "x1": 1843,
-        "y1": 410,
-        "width": 205,
-        "height": 205
+        "x0": 3277,
+        "y0": 410,
+        "x1": 3686,
+        "y1": 819,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.7998,
+        "u0": 0.8,
         "v0": 0.1001,
         "u1": 0.8999,
-        "v1": 0.2002
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
-          "r": 222,
-          "g": 183,
-          "b": 111
+          "r": 182,
+          "g": 160,
+          "b": 138
         },
-        "hue": 38.6,
-        "saturation": 0.63,
-        "lightness": 0.654,
-        "brightness": 0.729,
-        "contrast": 0.168,
-        "edgeDensity": 0.101
+        "hue": 30.9,
+        "saturation": 0.233,
+        "lightness": 0.627,
+        "brightness": 0.641,
+        "contrast": 0.096,
+        "edgeDensity": 0.015
       },
       "classification": {
         "category": "tile",
@@ -893,7 +893,7 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 18: tile with orange bias, 73% brightness, kitchen fit 75%.",
+      "description": "Cell 18: tile with orange bias, 64% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -905,1301 +905,30 @@
       "row": 1,
       "col": 9,
       "bounds": {
-        "x0": 1843,
-        "y0": 205,
-        "x1": 2048,
-        "y1": 410,
-        "width": 205,
-        "height": 205
+        "x0": 3686,
+        "y0": 410,
+        "x1": 4096,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.8999,
         "v0": 0.1001,
         "u1": 1,
-        "v1": 0.2002
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
-          "r": 93,
-          "g": 87,
-          "b": 80
-        },
-        "hue": 31.5,
-        "saturation": 0.075,
-        "lightness": 0.341,
-        "brightness": 0.345,
-        "contrast": 0.226,
-        "edgeDensity": 0.154
-      },
-      "classification": {
-        "category": "wood",
-        "tags": [
-          "wood",
-          "warm",
-          "furniture"
-        ]
-      },
-      "kitchenFit": 1,
-      "description": "Cell 19: wood with orange bias, 35% brightness, kitchen fit 100%.",
-      "tags": [
-        "wood",
-        "warm",
-        "furniture"
-      ]
-    },
-    {
-      "index": 20,
-      "row": 2,
-      "col": 0,
-      "bounds": {
-        "x0": 0,
-        "y0": 410,
-        "x1": 205,
-        "y1": 614,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0,
-        "v0": 0.2002,
-        "u1": 0.1001,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 127,
-          "g": 164,
-          "b": 195
-        },
-        "hue": 207.1,
-        "saturation": 0.36,
-        "lightness": 0.631,
-        "brightness": 0.621,
-        "contrast": 0.123,
-        "edgeDensity": 0.119
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "tile",
-          "cool-surface",
-          "ceramic"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 20: tile with cyan bias, 62% brightness, kitchen fit 75%.",
-      "tags": [
-        "tile",
-        "cool-surface",
-        "ceramic"
-      ]
-    },
-    {
-      "index": 21,
-      "row": 2,
-      "col": 1,
-      "bounds": {
-        "x0": 205,
-        "y0": 410,
-        "x1": 410,
-        "y1": 614,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.1001,
-        "v0": 0.2002,
-        "u1": 0.2002,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 86,
-          "g": 61,
-          "b": 44
-        },
-        "hue": 25,
-        "saturation": 0.326,
-        "lightness": 0.254,
-        "brightness": 0.255,
-        "contrast": 0.057,
-        "edgeDensity": 0.011
-      },
-      "classification": {
-        "category": "wood",
-        "tags": [
-          "wood",
-          "warm",
-          "furniture"
-        ]
-      },
-      "kitchenFit": 0.9,
-      "description": "Cell 21: wood with orange bias, 26% brightness, kitchen fit 90%.",
-      "tags": [
-        "wood",
-        "warm",
-        "furniture"
-      ]
-    },
-    {
-      "index": 22,
-      "row": 2,
-      "col": 2,
-      "bounds": {
-        "x0": 410,
-        "y0": 410,
-        "x1": 614,
-        "y1": 614,
-        "width": 204,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.2002,
-        "v0": 0.2002,
-        "u1": 0.2998,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 171,
-          "g": 143,
-          "b": 112
-        },
-        "hue": 32.1,
-        "saturation": 0.258,
-        "lightness": 0.554,
-        "brightness": 0.576,
-        "contrast": 0.259,
-        "edgeDensity": 0.166
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.7,
-      "description": "Cell 22: tile with orange bias, 58% brightness, kitchen fit 70%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-    {
-      "index": 23,
-      "row": 2,
-      "col": 3,
-      "bounds": {
-        "x0": 614,
-        "y0": 410,
-        "x1": 819,
-        "y1": 614,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.2998,
-        "v0": 0.2002,
-        "u1": 0.3999,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 199,
-          "g": 188,
-          "b": 168
-        },
-        "hue": 40.3,
-        "saturation": 0.216,
-        "lightness": 0.718,
-        "brightness": 0.741,
-        "contrast": 0.12,
-        "edgeDensity": 0.118
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.75,
-      "description": "Cell 23: tile with orange bias, 74% brightness, kitchen fit 75%. Suitable for kitchen floors and bathroom walls.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "wall-tile"
-      ]
-    },
-{
-      "index": 24,
-      "row": 2,
-      "col": 4,
-      "bounds": {
-        "x0": 819,
-        "y0": 410,
-        "x1": 1024,
-        "y1": 614,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.3999,
-        "v0": 0.2002,
-        "u1": 0.4999,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 196,
-          "g": 189,
-          "b": 174
-        },
-        "hue": 40.5,
-        "saturation": 0.152,
-        "lightness": 0.725,
-        "brightness": 0.741,
-        "contrast": 0.107,
-        "edgeDensity": 0.1
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.75,
-      "description": "Cell 24: tile with orange bias, 74% brightness, kitchen fit 75%. Good for kitchen floors and accent walls.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "accent-wall"
-      ]
-    },
-      "uv": {
-        "u0": 0.3999,
-        "v0": 0.2002,
-        "u1": 0.5,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 196,
-          "g": 189,
-          "b": 175
-        },
-        "hue": 41.1,
-        "saturation": 0.147,
-        "lightness": 0.727,
-        "brightness": 0.743,
-        "contrast": 0.107,
-        "edgeDensity": 0.098
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 24: tile with orange bias, 74% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 25,
-      "row": 2,
-      "col": 5,
-      "bounds": {
-        "x0": 1024,
-        "y0": 410,
-        "x1": 1229,
-        "y1": 614,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.4999,
-        "v0": 0.2002,
-        "u1": 0.5999,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 170,
+          "r": 230,
           "g": 183,
-          "b": 161
+          "b": 96
         },
-        "hue": 96.2,
-        "saturation": 0.136,
-        "lightness": 0.675,
-        "brightness": 0.701,
-        "contrast": 0.131,
-        "edgeDensity": 0.113
-      },
-      "classification": {
-        "category": "fabric",
-        "tags": [
-          "fabric",
-          "cloth",
-          "soft-surface"
-        ]
-      },
-      "surfaceUse": ["furniture", "wall", "decorative"],
-      "materialType": "soft-matte",
-      "kitchenFit": 0.6,
-      "description": "Cell 25: fabric with green bias, 70% brightness, kitchen fit 60%. Ideal for curtains, upholstery, and decorative elements.",
-      "tags": [
-        "fabric",
-        "cloth",
-        "soft-surface",
-        "upholstery",
-        "curtains"
-      ]
-    },
-      "uv": {
-        "u0": 0.5,
-        "v0": 0.2002,
-        "u1": 0.6001,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 169,
-          "g": 183,
-          "b": 161
-        },
-        "hue": 97.4,
-        "saturation": 0.135,
-        "lightness": 0.675,
-        "brightness": 0.701,
-        "contrast": 0.131,
-        "edgeDensity": 0.113
-      },
-      "classification": {
-        "category": "fabric",
-        "tags": [
-          "fabric",
-          "cloth",
-          "soft-surface"
-        ]
-      },
-      "kitchenFit": 0.6,
-      "description": "Cell 25: fabric with green bias, 70% brightness, kitchen fit 60%.",
-      "tags": [
-        "fabric",
-        "cloth",
-        "soft-surface"
-      ]
-    },
-{
-      "index": 26,
-      "row": 2,
-      "col": 6,
-      "bounds": {
-        "x0": 1229,
-        "y0": 410,
-        "x1": 1434,
-        "y1": 614,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.5999,
-        "v0": 0.2002,
-        "u1": 0.6999,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 210,
-          "g": 168,
-          "b": 143
-        },
-        "hue": 22.3,
-        "saturation": 0.43,
-        "lightness": 0.692,
-        "brightness": 0.686,
-        "contrast": 0.206,
-        "edgeDensity": 0.154
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.8,
-      "description": "Cell 26: tile with orange bias, 69% brightness, kitchen fit 80%. Excellent for kitchen floors and backsplashes.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "backsplash"
-      ]
-    },
-      "uv": {
-        "u0": 0.6001,
-        "v0": 0.2002,
-        "u1": 0.7002,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 212,
-          "g": 168,
-          "b": 143
-        },
-        "hue": 21.9,
-        "saturation": 0.449,
-        "lightness": 0.697,
-        "brightness": 0.69,
-        "contrast": 0.205,
-        "edgeDensity": 0.149
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.8,
-      "description": "Cell 26: tile with orange bias, 69% brightness, kitchen fit 80%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 27,
-      "row": 2,
-      "col": 7,
-      "bounds": {
-        "x0": 1434,
-        "y0": 410,
-        "x1": 1639,
-        "y1": 614,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.6999,
-        "v0": 0.2002,
-        "u1": 0.7999,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 137,
-          "g": 125,
-          "b": 112
-        },
-        "hue": 32.5,
-        "saturation": 0.102,
-        "lightness": 0.487,
-        "brightness": 0.497,
-        "contrast": 0.185,
-        "edgeDensity": 0.127
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["wall", "floor"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.88,
-      "description": "Cell 27: tile with orange bias, 50% brightness, kitchen fit 88%. Good for kitchen accent walls and floors.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "accent-wall",
-        "floor-tile"
-      ]
-    },
-      "uv": {
-        "u0": 0.7002,
-        "v0": 0.2002,
-        "u1": 0.7998,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 134,
-          "g": 123,
-          "b": 110
-        },
-        "hue": 33.5,
-        "saturation": 0.098,
-        "lightness": 0.477,
-        "brightness": 0.487,
-        "contrast": 0.181,
-        "edgeDensity": 0.123
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.88,
-      "description": "Cell 27: tile with orange bias, 49% brightness, kitchen fit 88%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 28,
-      "row": 2,
-      "col": 8,
-      "bounds": {
-        "x0": 1639,
-        "y0": 410,
-        "x1": 1844,
-        "y1": 614,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.7999,
-        "v0": 0.2002,
-        "u1": 0.8999,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 170,
-          "g": 151,
-          "b": 133
-        },
-        "hue": 29.7,
-        "saturation": 0.178,
-        "lightness": 0.594,
-        "brightness": 0.604,
-        "contrast": 0.18,
-        "edgeDensity": 0.135
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.75,
-      "description": "Cell 28: tile with orange bias, 60% brightness, kitchen fit 75%. Suitable for kitchen floors and accent walls.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "accent-wall"
-      ]
-    },
-      "uv": {
-        "u0": 0.7998,
-        "v0": 0.2002,
-        "u1": 0.8999,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 170,
-          "g": 151,
-          "b": 134
-        },
-        "hue": 29.6,
-        "saturation": 0.174,
-        "lightness": 0.595,
-        "brightness": 0.604,
-        "contrast": 0.18,
-        "edgeDensity": 0.133
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 28: tile with orange bias, 60% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 29,
-      "row": 2,
-      "col": 9,
-      "bounds": {
-        "x0": 1844,
-        "y0": 410,
-        "x1": 2049,
-        "y1": 614,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.8999,
-        "v0": 0.2002,
-        "u1": 0.9999,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 120,
-          "g": 119,
-          "b": 117
-        },
-        "hue": 40.5,
-        "saturation": 0.016,
-        "lightness": 0.464,
-        "brightness": 0.467,
-        "contrast": 0.233,
-        "edgeDensity": 0.445
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["wall", "floor"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.78,
-      "description": "Cell 29: tile with orange bias, 47% brightness, kitchen fit 78%. Good for kitchen accent walls and floors.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "accent-wall",
-        "floor-tile"
-      ]
-    },
-      "uv": {
-        "u0": 0.8999,
-        "v0": 0.2002,
-        "u1": 1,
-        "v1": 0.2998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 118,
-          "g": 117,
-          "b": 115
-        },
-        "hue": 43.5,
-        "saturation": 0.014,
-        "lightness": 0.458,
-        "brightness": 0.461,
-        "contrast": 0.236,
-        "edgeDensity": 0.44
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.78,
-      "description": "Cell 29: tile with orange bias, 46% brightness, kitchen fit 78%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 30,
-      "row": 3,
-      "col": 0,
-      "bounds": {
-        "x0": 0,
-        "y0": 614,
-        "x1": 205,
-        "y1": 819,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0,
-        "v0": 0.2998,
-        "u1": 0.1001,
-        "v1": 0.3997
-      },
-      "stats": {
-        "averageColor": {
-          "r": 231,
-          "g": 148,
-          "b": 90
-        },
-        "hue": 24.6,
-        "saturation": 0.748,
-        "lightness": 0.63,
-        "brightness": 0.634,
-        "contrast": 0.055,
-        "edgeDensity": 0.007
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.75,
-      "description": "Cell 30: tile with orange bias, 63% brightness, kitchen fit 75%. Suitable for kitchen floors and accent walls.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "accent-wall"
-      ]
-    },
-      "uv": {
-        "u0": 0,
-        "v0": 0.2998,
-        "u1": 0.1001,
-        "v1": 0.3999
-      },
-      "stats": {
-        "averageColor": {
-          "r": 232,
-          "g": 149,
-          "b": 90
-        },
-        "hue": 24.7,
-        "saturation": 0.76,
-        "lightness": 0.632,
-        "brightness": 0.636,
-        "contrast": 0.051,
-        "edgeDensity": 0.001
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 30: tile with orange bias, 64% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 31,
-      "row": 3,
-      "col": 1,
-      "bounds": {
-        "x0": 205,
-        "y0": 614,
-        "x1": 410,
-        "y1": 819,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.1001,
-        "v0": 0.2998,
-        "u1": 0.2002,
-        "v1": 0.3997
-      },
-      "stats": {
-        "averageColor": {
-          "r": 204,
-          "g": 160,
-          "b": 105
-        },
-        "hue": 33.4,
-        "saturation": 0.491,
-        "lightness": 0.606,
-        "brightness": 0.649,
-        "contrast": 0.13,
-        "edgeDensity": 0.037
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.75,
-      "description": "Cell 31: tile with orange bias, 65% brightness, kitchen fit 75%. Good for kitchen floors and backsplashes.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "backsplash"
-      ]
-    },
-      "uv": {
-        "u0": 0.1001,
-        "v0": 0.2998,
-        "u1": 0.2002,
-        "v1": 0.3999
-      },
-      "stats": {
-        "averageColor": {
-          "r": 205,
-          "g": 161,
-          "b": 105
-        },
-        "hue": 33.4,
-        "saturation": 0.496,
-        "lightness": 0.608,
-        "brightness": 0.651,
-        "contrast": 0.125,
-        "edgeDensity": 0.037
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 31: tile with orange bias, 65% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 32,
-      "row": 3,
-      "col": 2,
-      "bounds": {
-        "x0": 410,
-        "y0": 614,
-        "x1": 614,
-        "y1": 819,
-        "width": 204,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.2002,
-        "v0": 0.2998,
-        "u1": 0.2998,
-        "v1": 0.3997
-      },
-      "stats": {
-        "averageColor": {
-          "r": 162,
-          "g": 127,
-          "b": 76
-        },
-        "hue": 35.5,
-        "saturation": 0.363,
-        "lightness": 0.467,
-        "brightness": 0.514,
-        "contrast": 0.24,
-        "edgeDensity": 0.475
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["wall", "floor"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.7,
-      "description": "Cell 32: tile with orange bias, 51% brightness, kitchen fit 70%. Suitable for kitchen accent walls and floors.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "accent-wall",
-        "floor-tile"
-      ]
-    },
-      "uv": {
-        "u0": 0.2002,
-        "v0": 0.2998,
-        "u1": 0.2998,
-        "v1": 0.3999
-      },
-      "stats": {
-        "averageColor": {
-          "r": 161,
-          "g": 126,
-          "b": 75
-        },
-        "hue": 35.6,
-        "saturation": 0.365,
-        "lightness": 0.464,
-        "brightness": 0.51,
-        "contrast": 0.24,
-        "edgeDensity": 0.479
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.7,
-      "description": "Cell 32: tile with orange bias, 51% brightness, kitchen fit 70%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 33,
-      "row": 3,
-      "col": 3,
-      "bounds": {
-        "x0": 614,
-        "y0": 614,
-        "x1": 819,
-        "y1": 819,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.2998,
-        "v0": 0.2998,
-        "u1": 0.3999,
-        "v1": 0.3997
-      },
-      "stats": {
-        "averageColor": {
-          "r": 184,
-          "g": 174,
-          "b": 160
-        },
-        "hue": 35.3,
-        "saturation": 0.145,
-        "lightness": 0.674,
-        "brightness": 0.687,
-        "contrast": 0.119,
-        "edgeDensity": 0.079
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.75,
-      "description": "Cell 33: tile with orange bias, 69% brightness, kitchen fit 75%. Good for kitchen floors and bathroom walls.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "wall-tile"
-      ]
-    },
-      "uv": {
-        "u0": 0.2998,
-        "v0": 0.2998,
-        "u1": 0.3999,
-        "v1": 0.3999
-      },
-      "stats": {
-        "averageColor": {
-          "r": 182,
-          "g": 173,
-          "b": 159
-        },
-        "hue": 35.4,
-        "saturation": 0.139,
-        "lightness": 0.668,
-        "brightness": 0.681,
-        "contrast": 0.122,
-        "edgeDensity": 0.075
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 33: tile with orange bias, 68% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 34,
-      "row": 3,
-      "col": 4,
-      "bounds": {
-        "x0": 819,
-        "y0": 614,
-        "x1": 1024,
-        "y1": 819,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.3999,
-        "v0": 0.2998,
-        "u1": 0.4999,
-        "v1": 0.3997
-      },
-      "stats": {
-        "averageColor": {
-          "r": 205,
-          "g": 183,
-          "b": 154
-        },
-        "hue": 33.5,
-        "saturation": 0.335,
-        "lightness": 0.705,
-        "brightness": 0.727,
-        "contrast": 0.182,
-        "edgeDensity": 0.049
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.8,
-      "description": "Cell 34: tile with orange bias, 73% brightness, kitchen fit 80%. Excellent for kitchen floors and backsplashes.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "backsplash"
-      ]
-    },
-      "uv": {
-        "u0": 0.3999,
-        "v0": 0.2998,
-        "u1": 0.5,
-        "v1": 0.3999
-      },
-      "stats": {
-        "averageColor": {
-          "r": 207,
-          "g": 184,
-          "b": 156
-        },
-        "hue": 33.3,
-        "saturation": 0.349,
-        "lightness": 0.711,
-        "brightness": 0.733,
-        "contrast": 0.177,
-        "edgeDensity": 0.043
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 34: tile with orange bias, 73% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 35,
-      "row": 3,
-      "col": 5,
-      "bounds": {
-        "x0": 1024,
-        "y0": 614,
-        "x1": 1229,
-        "y1": 819,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.4999,
-        "v0": 0.2998,
-        "u1": 0.5999,
-        "v1": 0.3997
-      },
-      "stats": {
-        "averageColor": {
-          "r": 167,
-          "g": 134,
-          "b": 101
-        },
-        "hue": 30.2,
-        "saturation": 0.273,
-        "lightness": 0.526,
-        "brightness": 0.545,
-        "contrast": 0.172,
-        "edgeDensity": 0.127
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["wall", "floor"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.75,
-      "description": "Cell 35: tile with orange bias, 55% brightness, kitchen fit 75%. Good for kitchen accent walls and floors.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "accent-wall",
-        "floor-tile"
-      ]
-    },
-      "uv": {
-        "u0": 0.5,
-        "v0": 0.2998,
-        "u1": 0.6001,
-        "v1": 0.3999
-      },
-      "stats": {
-        "averageColor": {
-          "r": 167,
-          "g": 133,
-          "b": 100
-        },
-        "hue": 30,
-        "saturation": 0.276,
-        "lightness": 0.523,
-        "brightness": 0.542,
-        "contrast": 0.168,
-        "edgeDensity": 0.125
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 35: tile with orange bias, 54% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 36,
-      "row": 3,
-      "col": 6,
-      "bounds": {
-        "x0": 1229,
-        "y0": 614,
-        "x1": 1434,
-        "y1": 819,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.5999,
-        "v0": 0.2998,
-        "u1": 0.6999,
-        "v1": 0.3997
-      },
-      "stats": {
-        "averageColor": {
-          "r": 198,
-          "g": 193,
-          "b": 188
-        },
-        "hue": 31.6,
-        "saturation": 0.085,
-        "lightness": 0.756,
-        "brightness": 0.76,
-        "contrast": 0.109,
+        "hue": 38.9,
+        "saturation": 0.732,
+        "lightness": 0.641,
+        "brightness": 0.734,
+        "contrast": 0.094,
         "edgeDensity": 0.006
       },
       "classification": {
@@ -2210,294 +939,514 @@
           "paint"
         ]
       },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.83,
-      "description": "Cell 36: tile with orange bias, 76% brightness, kitchen fit 83%. Excellent for kitchen floors and walls.",
+      "kitchenFit": 0.75,
+      "description": "Cell 19: tile with orange bias, 73% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
-        "paint",
-        "floor-tile",
-        "wall-tile"
+        "paint"
       ]
     },
+    {
+      "index": 20,
+      "row": 2,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 819,
+        "x1": 410,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
+      },
       "uv": {
-        "u0": 0.6001,
-        "v0": 0.2998,
-        "u1": 0.7002,
-        "v1": 0.3999
+        "u0": 0,
+        "v0": 0.2,
+        "u1": 0.1001,
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
-          "r": 195,
-          "g": 191,
-          "b": 187
+          "r": 187,
+          "g": 140,
+          "b": 95
         },
-        "hue": 32.9,
-        "saturation": 0.064,
-        "lightness": 0.748,
-        "brightness": 0.751,
-        "contrast": 0.12,
+        "hue": 29.3,
+        "saturation": 0.4,
+        "lightness": 0.553,
+        "brightness": 0.575,
+        "contrast": 0.127,
+        "edgeDensity": 0.019
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 20: tile with orange bias, 57% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 21,
+      "row": 2,
+      "col": 1,
+      "bounds": {
+        "x0": 410,
+        "y0": 819,
+        "x1": 819,
+        "y1": 1229,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.2,
+        "u1": 0.2,
+        "v1": 0.3
+      },
+      "stats": {
+        "averageColor": {
+          "r": 178,
+          "g": 131,
+          "b": 89
+        },
+        "hue": 28.6,
+        "saturation": 0.366,
+        "lightness": 0.523,
+        "brightness": 0.542,
+        "contrast": 0.113,
+        "edgeDensity": 0.007
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 21: tile with orange bias, 54% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 22,
+      "row": 2,
+      "col": 2,
+      "bounds": {
+        "x0": 819,
+        "y0": 819,
+        "x1": 1229,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.2,
+        "v0": 0.2,
+        "u1": 0.3,
+        "v1": 0.3
+      },
+      "stats": {
+        "averageColor": {
+          "r": 212,
+          "g": 191,
+          "b": 125
+        },
+        "hue": 45.5,
+        "saturation": 0.5,
+        "lightness": 0.661,
+        "brightness": 0.747,
+        "contrast": 0.129,
+        "edgeDensity": 0.025
+      },
+      "classification": {
+        "category": "wood",
+        "tags": [
+          "wood",
+          "warm",
+          "floor"
+        ]
+      },
+      "kitchenFit": 0.9,
+      "description": "Cell 22: wood with yellow bias, 75% brightness, kitchen fit 90%.",
+      "tags": [
+        "wood",
+        "warm",
+        "floor"
+      ]
+    },
+    {
+      "index": 23,
+      "row": 2,
+      "col": 3,
+      "bounds": {
+        "x0": 1229,
+        "y0": 819,
+        "x1": 1638,
+        "y1": 1229,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.3,
+        "v0": 0.2,
+        "u1": 0.3999,
+        "v1": 0.3
+      },
+      "stats": {
+        "averageColor": {
+          "r": 129,
+          "g": 74,
+          "b": 35
+        },
+        "hue": 24.3,
+        "saturation": 0.57,
+        "lightness": 0.323,
+        "brightness": 0.324,
+        "contrast": 0.063,
         "edgeDensity": 0.001
       },
       "classification": {
-        "category": "tile",
+        "category": "wood",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "wood",
+          "warm",
+          "furniture"
         ]
       },
-      "kitchenFit": 0.83,
-      "description": "Cell 36: tile with orange bias, 75% brightness, kitchen fit 83%.",
+      "kitchenFit": 0.9,
+      "description": "Cell 23: wood with orange bias, 32% brightness, kitchen fit 90%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "wood",
+        "warm",
+        "furniture"
       ]
     },
-{
-      "index": 37,
-      "row": 3,
-      "col": 7,
+    {
+      "index": 24,
+      "row": 2,
+      "col": 4,
       "bounds": {
-        "x0": 1434,
-        "y0": 614,
-        "x1": 1639,
-        "y1": 819,
-        "width": 205,
-        "height": 205
+        "x0": 1638,
+        "y0": 819,
+        "x1": 2048,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6999,
-        "v0": 0.2998,
-        "u1": 0.7999,
-        "v1": 0.3997
-      },
-      "stats": {
-        "averageColor": {
-          "r": 132,
-          "g": 116,
-          "b": 105
-        },
-        "hue": 24.1,
-        "saturation": 0.115,
-        "lightness": 0.464,
-        "brightness": 0.464,
-        "contrast": 0.178,
-        "edgeDensity": 0.068
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["wall", "floor"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.83,
-      "description": "Cell 37: tile with orange bias, 46% brightness, kitchen fit 83%. Good for kitchen accent walls and floors.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "accent-wall",
-        "floor-tile"
-      ]
-    },
-      "uv": {
-        "u0": 0.7002,
-        "v0": 0.2998,
-        "u1": 0.7998,
-        "v1": 0.3999
-      },
-      "stats": {
-        "averageColor": {
-          "r": 132,
-          "g": 116,
-          "b": 105
-        },
-        "hue": 24.1,
-        "saturation": 0.116,
-        "lightness": 0.465,
-        "brightness": 0.465,
-        "contrast": 0.18,
-        "edgeDensity": 0.068
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.83,
-      "description": "Cell 37: tile with orange bias, 47% brightness, kitchen fit 83%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 38,
-      "row": 3,
-      "col": 8,
-      "bounds": {
-        "x0": 1639,
-        "y0": 614,
-        "x1": 1844,
-        "y1": 819,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.7999,
-        "v0": 0.2998,
-        "u1": 0.8999,
-        "v1": 0.3997
-      },
-      "stats": {
-        "averageColor": {
-          "r": 147,
-          "g": 134,
-          "b": 106
-        },
-        "hue": 41.2,
-        "saturation": 0.161,
-        "lightness": 0.496,
-        "brightness": 0.528,
-        "contrast": 0.212,
-        "edgeDensity": 0.176
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["wall", "floor"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.7,
-      "description": "Cell 38: tile with orange bias, 53% brightness, kitchen fit 70%. Suitable for kitchen accent walls and floors.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "accent-wall",
-        "floor-tile"
-      ]
-    },
-      "uv": {
-        "u0": 0.7998,
-        "v0": 0.2998,
-        "u1": 0.8999,
-        "v1": 0.3999
-      },
-      "stats": {
-        "averageColor": {
-          "r": 147,
-          "g": 135,
-          "b": 106
-        },
-        "hue": 42.1,
-        "saturation": 0.161,
-        "lightness": 0.497,
-        "brightness": 0.532,
-        "contrast": 0.209,
-        "edgeDensity": 0.169
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.7,
-      "description": "Cell 38: tile with orange bias, 53% brightness, kitchen fit 70%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 39,
-      "row": 3,
-      "col": 9,
-      "bounds": {
-        "x0": 1844,
-        "y0": 614,
-        "x1": 2049,
-        "y1": 819,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.8999,
-        "v0": 0.2998,
-        "u1": 0.9999,
-        "v1": 0.3997
-      },
-      "stats": {
-        "averageColor": {
-          "r": 153,
-          "g": 184,
-          "b": 176
-        },
-        "hue": 165.8,
-        "saturation": 0.177,
-        "lightness": 0.66,
-        "brightness": 0.692,
-        "contrast": 0.174,
-        "edgeDensity": 0.136
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "tile",
-          "cool-surface",
-          "ceramic"
-        ]
-      },
-      "surfaceUse": ["floor", "wall", "bathroom"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.75,
-      "description": "Cell 39: tile with cyan bias, 69% brightness, kitchen fit 75%. Perfect for bathroom floors and kitchen walls.",
-      "tags": [
-        "tile",
-        "cool-surface",
-        "ceramic",
-        "floor-tile",
-        "bathroom-tile"
-      ]
-    },
-      "uv": {
-        "u0": 0.8999,
-        "v0": 0.2998,
-        "u1": 1,
-        "v1": 0.3999
+        "u0": 0.3999,
+        "v0": 0.2,
+        "u1": 0.5,
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
           "r": 156,
-          "g": 186,
-          "b": 179
+          "g": 132,
+          "b": 112
         },
-        "hue": 165,
-        "saturation": 0.182,
+        "hue": 27.3,
+        "saturation": 0.183,
+        "lightness": 0.525,
+        "brightness": 0.532,
+        "contrast": 0.168,
+        "edgeDensity": 0.023
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 24: tile with orange bias, 53% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 25,
+      "row": 2,
+      "col": 5,
+      "bounds": {
+        "x0": 2048,
+        "y0": 819,
+        "x1": 2458,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.2,
+        "u1": 0.6001,
+        "v1": 0.3
+      },
+      "stats": {
+        "averageColor": {
+          "r": 136,
+          "g": 95,
+          "b": 61
+        },
+        "hue": 27.6,
+        "saturation": 0.384,
+        "lightness": 0.386,
+        "brightness": 0.398,
+        "contrast": 0.176,
+        "edgeDensity": 0.038
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 25: tile with orange bias, 40% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 26,
+      "row": 2,
+      "col": 6,
+      "bounds": {
+        "x0": 2458,
+        "y0": 819,
+        "x1": 2867,
+        "y1": 1229,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.2,
+        "u1": 0.7,
+        "v1": 0.3
+      },
+      "stats": {
+        "averageColor": {
+          "r": 147,
+          "g": 107,
+          "b": 62
+        },
+        "hue": 31.3,
+        "saturation": 0.408,
+        "lightness": 0.41,
+        "brightness": 0.439,
+        "contrast": 0.14,
+        "edgeDensity": 0.012
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 26: tile with orange bias, 44% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 27,
+      "row": 2,
+      "col": 7,
+      "bounds": {
+        "x0": 2867,
+        "y0": 819,
+        "x1": 3277,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.7,
+        "v0": 0.2,
+        "u1": 0.8,
+        "v1": 0.3
+      },
+      "stats": {
+        "averageColor": {
+          "r": 180,
+          "g": 173,
+          "b": 162
+        },
+        "hue": 35.8,
+        "saturation": 0.112,
         "lightness": 0.671,
-        "brightness": 0.704,
-        "contrast": 0.167,
-        "edgeDensity": 0.137
+        "brightness": 0.681,
+        "contrast": 0.161,
+        "edgeDensity": 0.057
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.83,
+      "description": "Cell 27: tile with orange bias, 68% brightness, kitchen fit 83%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 28,
+      "row": 2,
+      "col": 8,
+      "bounds": {
+        "x0": 3277,
+        "y0": 819,
+        "x1": 3686,
+        "y1": 1229,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.8,
+        "v0": 0.2,
+        "u1": 0.8999,
+        "v1": 0.3
+      },
+      "stats": {
+        "averageColor": {
+          "r": 138,
+          "g": 100,
+          "b": 68
+        },
+        "hue": 27.2,
+        "saturation": 0.339,
+        "lightness": 0.405,
+        "brightness": 0.415,
+        "contrast": 0.202,
+        "edgeDensity": 0.055
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.8,
+      "description": "Cell 28: tile with orange bias, 42% brightness, kitchen fit 80%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 29,
+      "row": 2,
+      "col": 9,
+      "bounds": {
+        "x0": 3686,
+        "y0": 819,
+        "x1": 4096,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.2,
+        "u1": 1,
+        "v1": 0.3
+      },
+      "stats": {
+        "averageColor": {
+          "r": 61,
+          "g": 48,
+          "b": 36
+        },
+        "hue": 28.9,
+        "saturation": 0.256,
+        "lightness": 0.189,
+        "brightness": 0.195,
+        "contrast": 0.095,
+        "edgeDensity": 0.001
+      },
+      "classification": {
+        "category": "wood",
+        "tags": [
+          "wood",
+          "warm",
+          "furniture"
+        ]
+      },
+      "kitchenFit": 0.8,
+      "description": "Cell 29: wood with orange bias, 20% brightness, kitchen fit 80%.",
+      "tags": [
+        "wood",
+        "warm",
+        "furniture"
+      ]
+    },
+    {
+      "index": 30,
+      "row": 3,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 1229,
+        "x1": 410,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0.3,
+        "u1": 0.1001,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 176,
+          "g": 201,
+          "b": 193
+        },
+        "hue": 160.6,
+        "saturation": 0.19,
+        "lightness": 0.738,
+        "brightness": 0.765,
+        "contrast": 0.162,
+        "edgeDensity": 0.009
       },
       "classification": {
         "category": "tile",
@@ -2508,64 +1457,448 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 39: tile with cyan bias, 70% brightness, kitchen fit 75%.",
+      "description": "Cell 30: tile with cyan bias, 77% brightness, kitchen fit 75%.",
       "tags": [
         "tile",
         "cool-surface",
         "ceramic"
       ]
     },
-{
+    {
+      "index": 31,
+      "row": 3,
+      "col": 1,
+      "bounds": {
+        "x0": 410,
+        "y0": 1229,
+        "x1": 819,
+        "y1": 1638,
+        "width": 409,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.3,
+        "u1": 0.2,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 193,
+          "g": 140,
+          "b": 90
+        },
+        "hue": 29.1,
+        "saturation": 0.451,
+        "lightness": 0.554,
+        "brightness": 0.578,
+        "contrast": 0.094,
+        "edgeDensity": 0.014
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 31: tile with orange bias, 58% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 32,
+      "row": 3,
+      "col": 2,
+      "bounds": {
+        "x0": 819,
+        "y0": 1229,
+        "x1": 1229,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.2,
+        "v0": 0.3,
+        "u1": 0.3,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 191,
+          "g": 171,
+          "b": 153
+        },
+        "hue": 27.5,
+        "saturation": 0.229,
+        "lightness": 0.676,
+        "brightness": 0.682,
+        "contrast": 0.187,
+        "edgeDensity": 0.028
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.8,
+      "description": "Cell 32: tile with orange bias, 68% brightness, kitchen fit 80%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 33,
+      "row": 3,
+      "col": 3,
+      "bounds": {
+        "x0": 1229,
+        "y0": 1229,
+        "x1": 1638,
+        "y1": 1638,
+        "width": 409,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.3,
+        "v0": 0.3,
+        "u1": 0.3999,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 189,
+          "g": 168,
+          "b": 148
+        },
+        "hue": 28.5,
+        "saturation": 0.236,
+        "lightness": 0.661,
+        "brightness": 0.669,
+        "contrast": 0.17,
+        "edgeDensity": 0.03
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 33: tile with orange bias, 67% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 34,
+      "row": 3,
+      "col": 4,
+      "bounds": {
+        "x0": 1638,
+        "y0": 1229,
+        "x1": 2048,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0.3,
+        "u1": 0.5,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 222,
+          "g": 161,
+          "b": 70
+        },
+        "hue": 36.1,
+        "saturation": 0.697,
+        "lightness": 0.573,
+        "brightness": 0.658,
+        "contrast": 0.121,
+        "edgeDensity": 0.023
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 34: tile with orange bias, 66% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 35,
+      "row": 3,
+      "col": 5,
+      "bounds": {
+        "x0": 2048,
+        "y0": 1229,
+        "x1": 2458,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.3,
+        "u1": 0.6001,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 219,
+          "g": 196,
+          "b": 173
+        },
+        "hue": 30.5,
+        "saturation": 0.393,
+        "lightness": 0.768,
+        "brightness": 0.782,
+        "contrast": 0.111,
+        "edgeDensity": 0.004
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 35: tile with orange bias, 78% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 36,
+      "row": 3,
+      "col": 6,
+      "bounds": {
+        "x0": 2458,
+        "y0": 1229,
+        "x1": 2867,
+        "y1": 1638,
+        "width": 409,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.3,
+        "u1": 0.7,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 156,
+          "g": 172,
+          "b": 160
+        },
+        "hue": 134.8,
+        "saturation": 0.085,
+        "lightness": 0.643,
+        "brightness": 0.657,
+        "contrast": 0.18,
+        "edgeDensity": 0.065
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.68,
+      "description": "Cell 36: fabric with green bias, 66% brightness, kitchen fit 68%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 37,
+      "row": 3,
+      "col": 7,
+      "bounds": {
+        "x0": 2867,
+        "y0": 1229,
+        "x1": 3277,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.7,
+        "v0": 0.3,
+        "u1": 0.8,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 171,
+          "g": 171,
+          "b": 171
+        },
+        "hue": 358.5,
+        "saturation": 0.003,
+        "lightness": 0.671,
+        "brightness": 0.671,
+        "contrast": 0.152,
+        "edgeDensity": 0.007
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.83,
+      "description": "Cell 37: tile with red bias, 67% brightness, kitchen fit 83%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 38,
+      "row": 3,
+      "col": 8,
+      "bounds": {
+        "x0": 3277,
+        "y0": 1229,
+        "x1": 3686,
+        "y1": 1638,
+        "width": 409,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.8,
+        "v0": 0.3,
+        "u1": 0.8999,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 199,
+          "g": 154,
+          "b": 110
+        },
+        "hue": 29.8,
+        "saturation": 0.441,
+        "lightness": 0.605,
+        "brightness": 0.629,
+        "contrast": 0.167,
+        "edgeDensity": 0.012
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 38: tile with orange bias, 63% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 39,
+      "row": 3,
+      "col": 9,
+      "bounds": {
+        "x0": 3686,
+        "y0": 1229,
+        "x1": 4096,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.3,
+        "u1": 1,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 180,
+          "g": 154,
+          "b": 132
+        },
+        "hue": 27.2,
+        "saturation": 0.238,
+        "lightness": 0.612,
+        "brightness": 0.619,
+        "contrast": 0.217,
+        "edgeDensity": 0.119
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.8,
+      "description": "Cell 39: tile with orange bias, 62% brightness, kitchen fit 80%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
       "index": 40,
       "row": 4,
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 819,
-        "x1": 205,
-        "y1": 1024,
-        "width": 205,
-        "height": 205
+        "y0": 1638,
+        "x1": 410,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
-      "uv": {
-        "u0": 0,
-        "v0": 0.3997,
-        "u1": 0.1001,
-        "v1": 0.4996
-      },
-      "stats": {
-        "averageColor": {
-          "r": 202,
-          "g": 180,
-          "b": 162
-        },
-        "hue": 26.7,
-        "saturation": 0.27,
-        "lightness": 0.713,
-        "brightness": 0.718,
-        "contrast": 0.139,
-        "edgeDensity": 0.05
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.75,
-      "description": "Cell 40: tile with orange bias, 72% brightness, kitchen fit 75%. Good for kitchen floors and accent walls.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "accent-wall"
-      ]
-    },
       "uv": {
         "u0": 0,
         "v0": 0.3999,
@@ -2574,321 +1907,110 @@
       },
       "stats": {
         "averageColor": {
-          "r": 201,
-          "g": 180,
-          "b": 163
+          "r": 153,
+          "g": 169,
+          "b": 194
         },
-        "hue": 26.7,
-        "saturation": 0.263,
-        "lightness": 0.714,
-        "brightness": 0.719,
-        "contrast": 0.14,
-        "edgeDensity": 0.051
+        "hue": 216.4,
+        "saturation": 0.247,
+        "lightness": 0.68,
+        "brightness": 0.657,
+        "contrast": 0.207,
+        "edgeDensity": 0.088
       },
       "classification": {
         "category": "tile",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "tile",
+          "cool-surface",
+          "ceramic"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 40: tile with orange bias, 72% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 40: tile with blue bias, 66% brightness, kitchen fit 80%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "tile",
+        "cool-surface",
+        "ceramic"
       ]
     },
-{
+    {
       "index": 41,
       "row": 4,
       "col": 1,
       "bounds": {
-        "x0": 205,
-        "y0": 819,
-        "x1": 410,
-        "y1": 1024,
-        "width": 205,
-        "height": 205
+        "x0": 410,
+        "y0": 1638,
+        "x1": 819,
+        "y1": 2048,
+        "width": 409,
+        "height": 410
       },
-      "uv": {
-        "u0": 0.1001,
-        "v0": 0.3997,
-        "u1": 0.2002,
-        "v1": 0.4996
-      },
-      "stats": {
-        "averageColor": {
-          "r": 167,
-          "g": 123,
-          "b": 71
-        },
-        "hue": 32.3,
-        "saturation": 0.406,
-        "lightness": 0.466,
-        "brightness": 0.503,
-        "contrast": 0.199,
-        "edgeDensity": 0.228
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["wall", "floor"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.7,
-      "description": "Cell 41: tile with orange bias, 50% brightness, kitchen fit 70%. Suitable for kitchen accent walls and floors.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "accent-wall",
-        "floor-tile"
-      ]
-    },
       "uv": {
         "u0": 0.1001,
         "v0": 0.3999,
-        "u1": 0.2002,
+        "u1": 0.2,
         "v1": 0.5
       },
       "stats": {
         "averageColor": {
-          "r": 167,
-          "g": 123,
-          "b": 71
+          "r": 113,
+          "g": 125,
+          "b": 129
         },
-        "hue": 32.4,
-        "saturation": 0.406,
-        "lightness": 0.466,
-        "brightness": 0.503,
-        "contrast": 0.199,
-        "edgeDensity": 0.227
+        "hue": 196.5,
+        "saturation": 0.066,
+        "lightness": 0.476,
+        "brightness": 0.482,
+        "contrast": 0.238,
+        "edgeDensity": 0.068
       },
       "classification": {
         "category": "tile",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "tile",
+          "cool-surface",
+          "ceramic"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 41: tile with orange bias, 50% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 41: tile with cyan bias, 48% brightness, kitchen fit 88%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "tile",
+        "cool-surface",
+        "ceramic"
       ]
     },
-{
+    {
       "index": 42,
       "row": 4,
       "col": 2,
       "bounds": {
-        "x0": 410,
-        "y0": 819,
-        "x1": 614,
-        "y1": 1024,
-        "width": 204,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.2002,
-        "v0": 0.3997,
-        "u1": 0.2998,
-        "v1": 0.4996
-      },
-      "stats": {
-        "averageColor": {
-          "r": 225,
-          "g": 191,
-          "b": 137
-        },
-        "hue": 37.1,
-        "saturation": 0.59,
-        "lightness": 0.71,
-        "brightness": 0.763,
-        "contrast": 0.166,
-        "edgeDensity": 0.129
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.75,
-      "description": "Cell 42: tile with orange bias, 76% brightness, kitchen fit 75%. Excellent for kitchen floors and backsplashes.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "backsplash"
-      ]
-    },
-      "uv": {
-        "u0": 0.2002,
-        "v0": 0.3999,
-        "u1": 0.2998,
-        "v1": 0.5
-      },
-      "stats": {
-        "averageColor": {
-          "r": 226,
-          "g": 193,
-          "b": 139
-        },
-        "hue": 37.1,
-        "saturation": 0.603,
-        "lightness": 0.717,
-        "brightness": 0.77,
-        "contrast": 0.159,
-        "edgeDensity": 0.117
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 42: tile with orange bias, 77% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 43,
-      "row": 4,
-      "col": 3,
-      "bounds": {
-        "x0": 614,
-        "y0": 819,
-        "x1": 819,
-        "y1": 1024,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.2998,
-        "v0": 0.3997,
-        "u1": 0.3999,
-        "v1": 0.4996
-      },
-      "stats": {
-        "averageColor": {
-          "r": 195,
-          "g": 174,
-          "b": 138
-        },
-        "hue": 38.1,
-        "saturation": 0.322,
-        "lightness": 0.654,
-        "brightness": 0.691,
-        "contrast": 0.215,
-        "edgeDensity": 0.254
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.7,
-      "description": "Cell 43: tile with orange bias, 69% brightness, kitchen fit 70%. Good for kitchen floors and accent walls.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "accent-wall"
-      ]
-    },
-      "uv": {
-        "u0": 0.2998,
-        "v0": 0.3999,
-        "u1": 0.3999,
-        "v1": 0.5
-      },
-      "stats": {
-        "averageColor": {
-          "r": 197,
-          "g": 176,
-          "b": 140
-        },
-        "hue": 38.1,
-        "saturation": 0.329,
-        "lightness": 0.66,
-        "brightness": 0.697,
-        "contrast": 0.212,
-        "edgeDensity": 0.246
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.7,
-      "description": "Cell 43: tile with orange bias, 70% brightness, kitchen fit 70%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-{
-      "index": 44,
-      "row": 4,
-      "col": 4,
-      "bounds": {
         "x0": 819,
-        "y0": 819,
-        "x1": 1024,
-        "y1": 1024,
-        "width": 205,
-        "height": 205
+        "y0": 1638,
+        "x1": 1229,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3999,
-        "v0": 0.3997,
-        "u1": 0.4999,
-        "v1": 0.4996
+        "u0": 0.2,
+        "v0": 0.3999,
+        "u1": 0.3,
+        "v1": 0.5
       },
       "stats": {
         "averageColor": {
-          "r": 174,
-          "g": 166,
-          "b": 180
+          "r": 129,
+          "g": 129,
+          "b": 127
         },
-        "hue": 275.1,
-        "saturation": 0.084,
-        "lightness": 0.679,
-        "brightness": 0.663,
-        "contrast": 0.207,
-        "edgeDensity": 0.169
+        "hue": 60.2,
+        "saturation": 0.008,
+        "lightness": 0.501,
+        "brightness": 0.505,
+        "contrast": 0.258,
+        "edgeDensity": 0.086
       },
       "classification": {
         "category": "concrete",
@@ -2898,18 +2020,73 @@
           "neutral-surface"
         ]
       },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "rough-matte",
-      "kitchenFit": 0.63,
-      "description": "Cell 44: concrete with purple bias, 66% brightness, kitchen fit 63%. Suitable for industrial floors and walls.",
+      "kitchenFit": 0.73,
+      "description": "Cell 42: concrete with yellow bias, 51% brightness, kitchen fit 73%.",
       "tags": [
         "concrete",
         "stone",
-        "neutral-surface",
-        "industrial",
-        "floor"
+        "neutral-surface"
       ]
     },
+    {
+      "index": 43,
+      "row": 4,
+      "col": 3,
+      "bounds": {
+        "x0": 1229,
+        "y0": 1638,
+        "x1": 1638,
+        "y1": 2048,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.3,
+        "v0": 0.3999,
+        "u1": 0.3999,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 153,
+          "g": 173,
+          "b": 170
+        },
+        "hue": 168.6,
+        "saturation": 0.109,
+        "lightness": 0.641,
+        "brightness": 0.662,
+        "contrast": 0.18,
+        "edgeDensity": 0.051
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "tile",
+          "cool-surface",
+          "ceramic"
+        ]
+      },
+      "kitchenFit": 0.83,
+      "description": "Cell 43: tile with cyan bias, 66% brightness, kitchen fit 83%.",
+      "tags": [
+        "tile",
+        "cool-surface",
+        "ceramic"
+      ]
+    },
+    {
+      "index": 44,
+      "row": 4,
+      "col": 4,
+      "bounds": {
+        "x0": 1638,
+        "y0": 1638,
+        "x1": 2048,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
+      },
       "uv": {
         "u0": 0.3999,
         "v0": 0.3999,
@@ -2918,84 +2095,45 @@
       },
       "stats": {
         "averageColor": {
-          "r": 174,
-          "g": 166,
-          "b": 181
+          "r": 153,
+          "g": 175,
+          "b": 154
         },
-        "hue": 270.7,
-        "saturation": 0.091,
-        "lightness": 0.682,
-        "brightness": 0.663,
-        "contrast": 0.206,
-        "edgeDensity": 0.167
+        "hue": 123.8,
+        "saturation": 0.122,
+        "lightness": 0.642,
+        "brightness": 0.661,
+        "contrast": 0.207,
+        "edgeDensity": 0.06
       },
       "classification": {
-        "category": "concrete",
+        "category": "fabric",
         "tags": [
-          "concrete",
-          "stone",
-          "neutral-surface"
+          "fabric",
+          "cloth",
+          "soft-surface"
         ]
       },
-      "kitchenFit": 0.63,
-      "description": "Cell 44: concrete with purple bias, 66% brightness, kitchen fit 63%.",
+      "kitchenFit": 0.65,
+      "description": "Cell 44: fabric with green bias, 66% brightness, kitchen fit 65%.",
       "tags": [
-        "concrete",
-        "stone",
-        "neutral-surface"
+        "fabric",
+        "cloth",
+        "soft-surface"
       ]
     },
-{
+    {
       "index": 45,
       "row": 4,
       "col": 5,
       "bounds": {
-        "x0": 1024,
-        "y0": 819,
-        "x1": 1229,
-        "y1": 1024,
-        "width": 205,
-        "height": 205
+        "x0": 2048,
+        "y0": 1638,
+        "x1": 2458,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
-      "uv": {
-        "u0": 0.4999,
-        "v0": 0.3997,
-        "u1": 0.5999,
-        "v1": 0.4996
-      },
-      "stats": {
-        "averageColor": {
-          "r": 200,
-          "g": 191,
-          "b": 191
-        },
-        "hue": 1.5,
-        "saturation": 0.08,
-        "lightness": 0.766,
-        "brightness": 0.756,
-        "contrast": 0.232,
-        "edgeDensity": 0.098
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "surfaceUse": ["floor", "wall"],
-      "materialType": "smooth-matte",
-      "kitchenFit": 0.88,
-      "description": "Cell 45: tile with red bias, 76% brightness, kitchen fit 88%. Excellent for kitchen floors and walls.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint",
-        "floor-tile",
-        "wall-tile"
-      ]
-    },
       "uv": {
         "u0": 0.5,
         "v0": 0.3999,
@@ -3004,16 +2142,16 @@
       },
       "stats": {
         "averageColor": {
-          "r": 201,
-          "g": 192,
-          "b": 191
+          "r": 145,
+          "g": 144,
+          "b": 143
         },
-        "hue": 1.8,
-        "saturation": 0.084,
-        "lightness": 0.769,
-        "brightness": 0.759,
-        "contrast": 0.232,
-        "edgeDensity": 0.099
+        "hue": 25.3,
+        "saturation": 0.01,
+        "lightness": 0.566,
+        "brightness": 0.566,
+        "contrast": 0.305,
+        "edgeDensity": 0.095
       },
       "classification": {
         "category": "tile",
@@ -3024,7 +2162,7 @@
         ]
       },
       "kitchenFit": 0.88,
-      "description": "Cell 45: tile with red bias, 76% brightness, kitchen fit 88%.",
+      "description": "Cell 45: tile with orange bias, 57% brightness, kitchen fit 88%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3036,46 +2174,46 @@
       "row": 4,
       "col": 6,
       "bounds": {
-        "x0": 1229,
-        "y0": 819,
-        "x1": 1434,
-        "y1": 1024,
-        "width": 205,
-        "height": 205
+        "x0": 2458,
+        "y0": 1638,
+        "x1": 2867,
+        "y1": 2048,
+        "width": 409,
+        "height": 410
       },
       "uv": {
         "u0": 0.6001,
         "v0": 0.3999,
-        "u1": 0.7002,
+        "u1": 0.7,
         "v1": 0.5
       },
       "stats": {
         "averageColor": {
-          "r": 98,
-          "g": 69,
-          "b": 49
+          "r": 139,
+          "g": 150,
+          "b": 156
         },
-        "hue": 24.6,
-        "saturation": 0.337,
-        "lightness": 0.288,
-        "brightness": 0.289,
-        "contrast": 0.07,
-        "edgeDensity": 0.007
+        "hue": 203.2,
+        "saturation": 0.08,
+        "lightness": 0.579,
+        "brightness": 0.58,
+        "contrast": 0.203,
+        "edgeDensity": 0.057
       },
       "classification": {
-        "category": "wood",
+        "category": "tile",
         "tags": [
-          "wood",
-          "warm",
-          "furniture"
+          "tile",
+          "cool-surface",
+          "ceramic"
         ]
       },
-      "kitchenFit": 0.9,
-      "description": "Cell 46: wood with orange bias, 29% brightness, kitchen fit 90%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 46: tile with cyan bias, 58% brightness, kitchen fit 88%.",
       "tags": [
-        "wood",
-        "warm",
-        "furniture"
+        "tile",
+        "cool-surface",
+        "ceramic"
       ]
     },
     {
@@ -3083,31 +2221,31 @@
       "row": 4,
       "col": 7,
       "bounds": {
-        "x0": 1434,
-        "y0": 819,
-        "x1": 1638,
-        "y1": 1024,
-        "width": 204,
-        "height": 205
+        "x0": 2867,
+        "y0": 1638,
+        "x1": 3277,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.7002,
+        "u0": 0.7,
         "v0": 0.3999,
-        "u1": 0.7998,
+        "u1": 0.8,
         "v1": 0.5
       },
       "stats": {
         "averageColor": {
-          "r": 197,
-          "g": 143,
-          "b": 97
+          "r": 141,
+          "g": 136,
+          "b": 134
         },
-        "hue": 27.4,
-        "saturation": 0.465,
-        "lightness": 0.578,
-        "brightness": 0.593,
-        "contrast": 0.077,
-        "edgeDensity": 0.047
+        "hue": 20.9,
+        "saturation": 0.029,
+        "lightness": 0.539,
+        "brightness": 0.538,
+        "contrast": 0.211,
+        "edgeDensity": 0.108
       },
       "classification": {
         "category": "tile",
@@ -3117,8 +2255,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 47: tile with orange bias, 59% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 47: tile with orange bias, 54% brightness, kitchen fit 88%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3130,46 +2268,46 @@
       "row": 4,
       "col": 8,
       "bounds": {
-        "x0": 1638,
-        "y0": 819,
-        "x1": 1843,
-        "y1": 1024,
-        "width": 205,
-        "height": 205
+        "x0": 3277,
+        "y0": 1638,
+        "x1": 3686,
+        "y1": 2048,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.7998,
+        "u0": 0.8,
         "v0": 0.3999,
         "u1": 0.8999,
         "v1": 0.5
       },
       "stats": {
         "averageColor": {
-          "r": 160,
-          "g": 133,
-          "b": 108
+          "r": 145,
+          "g": 161,
+          "b": 146
         },
-        "hue": 28.3,
-        "saturation": 0.216,
-        "lightness": 0.526,
-        "brightness": 0.536,
-        "contrast": 0.312,
-        "edgeDensity": 0.164
+        "hue": 122.8,
+        "saturation": 0.076,
+        "lightness": 0.6,
+        "brightness": 0.613,
+        "contrast": 0.219,
+        "edgeDensity": 0.095
       },
       "classification": {
-        "category": "tile",
+        "category": "fabric",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "fabric",
+          "cloth",
+          "soft-surface"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 48: tile with orange bias, 54% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.73,
+      "description": "Cell 48: fabric with green bias, 61% brightness, kitchen fit 73%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "fabric",
+        "cloth",
+        "soft-surface"
       ]
     },
     {
@@ -3177,12 +2315,12 @@
       "row": 4,
       "col": 9,
       "bounds": {
-        "x0": 1843,
-        "y0": 819,
-        "x1": 2048,
-        "y1": 1024,
-        "width": 205,
-        "height": 205
+        "x0": 3686,
+        "y0": 1638,
+        "x1": 4096,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.8999,
@@ -3192,31 +2330,31 @@
       },
       "stats": {
         "averageColor": {
-          "r": 171,
-          "g": 149,
-          "b": 119
+          "r": 153,
+          "g": 153,
+          "b": 152
         },
-        "hue": 35,
-        "saturation": 0.235,
-        "lightness": 0.569,
-        "brightness": 0.595,
-        "contrast": 0.192,
-        "edgeDensity": 0.103
+        "hue": 64.9,
+        "saturation": 0.005,
+        "lightness": 0.6,
+        "brightness": 0.601,
+        "contrast": 0.294,
+        "edgeDensity": 0.143
       },
       "classification": {
-        "category": "tile",
+        "category": "concrete",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "concrete",
+          "stone",
+          "neutral-surface"
         ]
       },
-      "kitchenFit": 0.8,
-      "description": "Cell 49: tile with orange bias, 60% brightness, kitchen fit 80%.",
+      "kitchenFit": 0.73,
+      "description": "Cell 49: concrete with yellow bias, 60% brightness, kitchen fit 73%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "concrete",
+        "stone",
+        "neutral-surface"
       ]
     },
     {
@@ -3225,11 +2363,11 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 1024,
-        "x1": 205,
-        "y1": 1229,
-        "width": 205,
-        "height": 205
+        "y0": 2048,
+        "x1": 410,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0,
@@ -3239,16 +2377,16 @@
       },
       "stats": {
         "averageColor": {
-          "r": 203,
-          "g": 149,
-          "b": 139
+          "r": 242,
+          "g": 198,
+          "b": 99
         },
-        "hue": 9.9,
-        "saturation": 0.38,
-        "lightness": 0.669,
-        "brightness": 0.627,
-        "contrast": 0.105,
-        "edgeDensity": 0.042
+        "hue": 41.5,
+        "saturation": 0.846,
+        "lightness": 0.67,
+        "brightness": 0.786,
+        "contrast": 0.104,
+        "edgeDensity": 0.007
       },
       "classification": {
         "category": "tile",
@@ -3259,7 +2397,7 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 50: tile with red bias, 63% brightness, kitchen fit 75%.",
+      "description": "Cell 50: tile with orange bias, 79% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3271,31 +2409,31 @@
       "row": 5,
       "col": 1,
       "bounds": {
-        "x0": 205,
-        "y0": 1024,
-        "x1": 410,
-        "y1": 1229,
-        "width": 205,
-        "height": 205
+        "x0": 410,
+        "y0": 2048,
+        "x1": 819,
+        "y1": 2458,
+        "width": 409,
+        "height": 410
       },
       "uv": {
         "u0": 0.1001,
         "v0": 0.5,
-        "u1": 0.2002,
+        "u1": 0.2,
         "v1": 0.6001
       },
       "stats": {
         "averageColor": {
           "r": 197,
-          "g": 171,
-          "b": 146
+          "g": 169,
+          "b": 150
         },
-        "hue": 29.2,
-        "saturation": 0.305,
-        "lightness": 0.672,
-        "brightness": 0.684,
-        "contrast": 0.214,
-        "edgeDensity": 0.126
+        "hue": 25.1,
+        "saturation": 0.287,
+        "lightness": 0.679,
+        "brightness": 0.681,
+        "contrast": 0.188,
+        "edgeDensity": 0.061
       },
       "classification": {
         "category": "tile",
@@ -3318,31 +2456,76 @@
       "row": 5,
       "col": 2,
       "bounds": {
-        "x0": 410,
-        "y0": 1024,
-        "x1": 614,
-        "y1": 1229,
-        "width": 204,
-        "height": 205
+        "x0": 819,
+        "y0": 2048,
+        "x1": 1229,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.2002,
+        "u0": 0.2,
         "v0": 0.5,
-        "u1": 0.2998,
+        "u1": 0.3,
         "v1": 0.6001
       },
       "stats": {
         "averageColor": {
-          "r": 157,
-          "g": 113,
-          "b": 104
+          "r": 188,
+          "g": 162,
+          "b": 176
         },
-        "hue": 9.8,
-        "saturation": 0.21,
-        "lightness": 0.511,
-        "brightness": 0.476,
-        "contrast": 0.244,
-        "edgeDensity": 0.061
+        "hue": 327.6,
+        "saturation": 0.166,
+        "lightness": 0.686,
+        "brightness": 0.66,
+        "contrast": 0.177,
+        "edgeDensity": 0.087
+      },
+      "classification": {
+        "category": "generic",
+        "tags": [
+          "generic-surface",
+          "unclassified"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 52: generic with magenta bias, 66% brightness, kitchen fit 60%.",
+      "tags": [
+        "generic-surface",
+        "unclassified"
+      ]
+    },
+    {
+      "index": 53,
+      "row": 5,
+      "col": 3,
+      "bounds": {
+        "x0": 1229,
+        "y0": 2048,
+        "x1": 1638,
+        "y1": 2458,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.3,
+        "v0": 0.5,
+        "u1": 0.3999,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 208,
+          "g": 158,
+          "b": 137
+        },
+        "hue": 17.4,
+        "saturation": 0.428,
+        "lightness": 0.677,
+        "brightness": 0.655,
+        "contrast": 0.286,
+        "edgeDensity": 0.039
       },
       "classification": {
         "category": "tile",
@@ -3353,54 +2536,7 @@
         ]
       },
       "kitchenFit": 0.8,
-      "description": "Cell 52: tile with red bias, 48% brightness, kitchen fit 80%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-    {
-      "index": 53,
-      "row": 5,
-      "col": 3,
-      "bounds": {
-        "x0": 614,
-        "y0": 1024,
-        "x1": 819,
-        "y1": 1229,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.2998,
-        "v0": 0.5,
-        "u1": 0.3999,
-        "v1": 0.6001
-      },
-      "stats": {
-        "averageColor": {
-          "r": 177,
-          "g": 138,
-          "b": 107
-        },
-        "hue": 26.6,
-        "saturation": 0.313,
-        "lightness": 0.558,
-        "brightness": 0.566,
-        "contrast": 0.238,
-        "edgeDensity": 0.271
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.7,
-      "description": "Cell 53: tile with orange bias, 57% brightness, kitchen fit 70%.",
+      "description": "Cell 53: tile with red bias, 66% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3412,12 +2548,12 @@
       "row": 5,
       "col": 4,
       "bounds": {
-        "x0": 819,
-        "y0": 1024,
-        "x1": 1024,
-        "y1": 1229,
-        "width": 205,
-        "height": 205
+        "x0": 1638,
+        "y0": 2048,
+        "x1": 2048,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.3999,
@@ -3427,16 +2563,16 @@
       },
       "stats": {
         "averageColor": {
-          "r": 236,
-          "g": 190,
-          "b": 102
+          "r": 198,
+          "g": 178,
+          "b": 154
         },
-        "hue": 39.5,
-        "saturation": 0.774,
-        "lightness": 0.662,
-        "brightness": 0.758,
-        "contrast": 0.128,
-        "edgeDensity": 0.047
+        "hue": 33.3,
+        "saturation": 0.282,
+        "lightness": 0.69,
+        "brightness": 0.709,
+        "contrast": 0.185,
+        "edgeDensity": 0.049
       },
       "classification": {
         "category": "tile",
@@ -3446,8 +2582,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 54: tile with orange bias, 76% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 54: tile with orange bias, 71% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3459,12 +2595,12 @@
       "row": 5,
       "col": 5,
       "bounds": {
-        "x0": 1024,
-        "y0": 1024,
-        "x1": 1229,
-        "y1": 1229,
-        "width": 205,
-        "height": 205
+        "x0": 2048,
+        "y0": 2048,
+        "x1": 2458,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.5,
@@ -3474,110 +2610,16 @@
       },
       "stats": {
         "averageColor": {
-          "r": 182,
-          "g": 169,
-          "b": 121
+          "r": 166,
+          "g": 120,
+          "b": 83
         },
-        "hue": 47.2,
-        "saturation": 0.295,
-        "lightness": 0.594,
-        "brightness": 0.66,
-        "contrast": 0.292,
-        "edgeDensity": 0.194
-      },
-      "classification": {
-        "category": "wood",
-        "tags": [
-          "wood",
-          "warm",
-          "floor"
-        ]
-      },
-      "kitchenFit": 0.85,
-      "description": "Cell 55: wood with yellow bias, 66% brightness, kitchen fit 85%.",
-      "tags": [
-        "wood",
-        "warm",
-        "floor"
-      ]
-    },
-    {
-      "index": 56,
-      "row": 5,
-      "col": 6,
-      "bounds": {
-        "x0": 1229,
-        "y0": 1024,
-        "x1": 1434,
-        "y1": 1229,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.6001,
-        "v0": 0.5,
-        "u1": 0.7002,
-        "v1": 0.6001
-      },
-      "stats": {
-        "averageColor": {
-          "r": 164,
-          "g": 170,
-          "b": 155
-        },
-        "hue": 83.7,
-        "saturation": 0.078,
-        "lightness": 0.637,
-        "brightness": 0.657,
-        "contrast": 0.126,
-        "edgeDensity": 0.052
-      },
-      "classification": {
-        "category": "fabric",
-        "tags": [
-          "fabric",
-          "cloth",
-          "soft-surface"
-        ]
-      },
-      "kitchenFit": 0.68,
-      "description": "Cell 56: fabric with green bias, 66% brightness, kitchen fit 68%.",
-      "tags": [
-        "fabric",
-        "cloth",
-        "soft-surface"
-      ]
-    },
-    {
-      "index": 57,
-      "row": 5,
-      "col": 7,
-      "bounds": {
-        "x0": 1434,
-        "y0": 1024,
-        "x1": 1638,
-        "y1": 1229,
-        "width": 204,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.7002,
-        "v0": 0.5,
-        "u1": 0.7998,
-        "v1": 0.6001
-      },
-      "stats": {
-        "averageColor": {
-          "r": 217,
-          "g": 198,
-          "b": 157
-        },
-        "hue": 40.5,
-        "saturation": 0.445,
-        "lightness": 0.734,
-        "brightness": 0.781,
-        "contrast": 0.097,
-        "edgeDensity": 0.032
+        "hue": 26.7,
+        "saturation": 0.333,
+        "lightness": 0.488,
+        "brightness": 0.498,
+        "contrast": 0.193,
+        "edgeDensity": 0.061
       },
       "classification": {
         "category": "tile",
@@ -3587,8 +2629,102 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 57: tile with orange bias, 78% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 55: tile with orange bias, 50% brightness, kitchen fit 80%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 56,
+      "row": 5,
+      "col": 6,
+      "bounds": {
+        "x0": 2458,
+        "y0": 2048,
+        "x1": 2867,
+        "y1": 2458,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.5,
+        "u1": 0.7,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 199,
+          "g": 163,
+          "b": 116
+        },
+        "hue": 33.7,
+        "saturation": 0.428,
+        "lightness": 0.619,
+        "brightness": 0.656,
+        "contrast": 0.22,
+        "edgeDensity": 0.065
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.8,
+      "description": "Cell 56: tile with orange bias, 66% brightness, kitchen fit 80%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 57,
+      "row": 5,
+      "col": 7,
+      "bounds": {
+        "x0": 2867,
+        "y0": 2048,
+        "x1": 3277,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.7,
+        "v0": 0.5,
+        "u1": 0.8,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 192,
+          "g": 177,
+          "b": 155
+        },
+        "hue": 36,
+        "saturation": 0.231,
+        "lightness": 0.68,
+        "brightness": 0.701,
+        "contrast": 0.228,
+        "edgeDensity": 0.116
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.8,
+      "description": "Cell 57: tile with orange bias, 70% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3600,31 +2736,31 @@
       "row": 5,
       "col": 8,
       "bounds": {
-        "x0": 1638,
-        "y0": 1024,
-        "x1": 1843,
-        "y1": 1229,
-        "width": 205,
-        "height": 205
+        "x0": 3277,
+        "y0": 2048,
+        "x1": 3686,
+        "y1": 2458,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.7998,
+        "u0": 0.8,
         "v0": 0.5,
         "u1": 0.8999,
         "v1": 0.6001
       },
       "stats": {
         "averageColor": {
-          "r": 215,
-          "g": 170,
-          "b": 144
+          "r": 230,
+          "g": 206,
+          "b": 163
         },
-        "hue": 21.7,
-        "saturation": 0.476,
-        "lightness": 0.704,
-        "brightness": 0.696,
-        "contrast": 0.189,
-        "edgeDensity": 0.13
+        "hue": 38.4,
+        "saturation": 0.578,
+        "lightness": 0.77,
+        "brightness": 0.816,
+        "contrast": 0.156,
+        "edgeDensity": 0.052
       },
       "classification": {
         "category": "tile",
@@ -3634,8 +2770,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.8,
-      "description": "Cell 58: tile with orange bias, 70% brightness, kitchen fit 80%.",
+      "kitchenFit": 0.65,
+      "description": "Cell 58: tile with orange bias, 82% brightness, kitchen fit 65%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3647,12 +2783,12 @@
       "row": 5,
       "col": 9,
       "bounds": {
-        "x0": 1843,
-        "y0": 1024,
-        "x1": 2048,
-        "y1": 1229,
-        "width": 205,
-        "height": 205
+        "x0": 3686,
+        "y0": 2048,
+        "x1": 4096,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.8999,
@@ -3662,16 +2798,16 @@
       },
       "stats": {
         "averageColor": {
-          "r": 184,
-          "g": 171,
-          "b": 175
+          "r": 205,
+          "g": 150,
+          "b": 105
         },
-        "hue": 341.6,
-        "saturation": 0.083,
-        "lightness": 0.695,
-        "brightness": 0.682,
-        "contrast": 0.199,
-        "edgeDensity": 0.11
+        "hue": 26.9,
+        "saturation": 0.504,
+        "lightness": 0.608,
+        "brightness": 0.621,
+        "contrast": 0.197,
+        "edgeDensity": 0.09
       },
       "classification": {
         "category": "tile",
@@ -3681,8 +2817,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.88,
-      "description": "Cell 59: tile with red bias, 68% brightness, kitchen fit 88%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 59: tile with orange bias, 62% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3695,75 +2831,30 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 1229,
-        "x1": 205,
-        "y1": 1434,
-        "width": 205,
-        "height": 205
+        "y0": 2458,
+        "x1": 410,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0,
         "v0": 0.6001,
         "u1": 0.1001,
-        "v1": 0.7002
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
-          "r": 203,
-          "g": 188,
-          "b": 215
+          "r": 164,
+          "g": 147,
+          "b": 132
         },
-        "hue": 272.8,
-        "saturation": 0.256,
-        "lightness": 0.79,
-        "brightness": 0.757,
-        "contrast": 0.104,
-        "edgeDensity": 0.049
-      },
-      "classification": {
-        "category": "generic",
-        "tags": [
-          "generic-surface",
-          "unclassified"
-        ]
-      },
-      "kitchenFit": 0.6,
-      "description": "Cell 60: generic with purple bias, 76% brightness, kitchen fit 60%.",
-      "tags": [
-        "generic-surface",
-        "unclassified"
-      ]
-    },
-    {
-      "index": 61,
-      "row": 6,
-      "col": 1,
-      "bounds": {
-        "x0": 205,
-        "y0": 1229,
-        "x1": 410,
-        "y1": 1434,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.1001,
-        "v0": 0.6001,
-        "u1": 0.2002,
-        "v1": 0.7002
-      },
-      "stats": {
-        "averageColor": {
-          "r": 141,
-          "g": 130,
-          "b": 117
-        },
-        "hue": 33.5,
-        "saturation": 0.095,
-        "lightness": 0.505,
-        "brightness": 0.516,
-        "contrast": 0.154,
-        "edgeDensity": 0.106
+        "hue": 29.2,
+        "saturation": 0.15,
+        "lightness": 0.58,
+        "brightness": 0.588,
+        "contrast": 0.227,
+        "edgeDensity": 0.114
       },
       "classification": {
         "category": "tile",
@@ -3773,8 +2864,55 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.83,
-      "description": "Cell 61: tile with orange bias, 52% brightness, kitchen fit 83%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 60: tile with orange bias, 59% brightness, kitchen fit 80%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 61,
+      "row": 6,
+      "col": 1,
+      "bounds": {
+        "x0": 410,
+        "y0": 2458,
+        "x1": 819,
+        "y1": 2867,
+        "width": 409,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.6001,
+        "u1": 0.2,
+        "v1": 0.7
+      },
+      "stats": {
+        "averageColor": {
+          "r": 181,
+          "g": 150,
+          "b": 116
+        },
+        "hue": 31.7,
+        "saturation": 0.309,
+        "lightness": 0.582,
+        "brightness": 0.606,
+        "contrast": 0.17,
+        "edgeDensity": 0.057
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.75,
+      "description": "Cell 61: tile with orange bias, 61% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3786,31 +2924,31 @@
       "row": 6,
       "col": 2,
       "bounds": {
-        "x0": 410,
-        "y0": 1229,
-        "x1": 614,
-        "y1": 1434,
-        "width": 204,
-        "height": 205
+        "x0": 819,
+        "y0": 2458,
+        "x1": 1229,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.2002,
+        "u0": 0.2,
         "v0": 0.6001,
-        "u1": 0.2998,
-        "v1": 0.7002
+        "u1": 0.3,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
-          "r": 178,
-          "g": 150,
-          "b": 126
+          "r": 150,
+          "g": 110,
+          "b": 68
         },
-        "hue": 27.3,
-        "saturation": 0.253,
-        "lightness": 0.597,
-        "brightness": 0.604,
-        "contrast": 0.219,
-        "edgeDensity": 0.05
+        "hue": 30.5,
+        "saturation": 0.377,
+        "lightness": 0.428,
+        "brightness": 0.452,
+        "contrast": 0.204,
+        "edgeDensity": 0.136
       },
       "classification": {
         "category": "tile",
@@ -3821,7 +2959,7 @@
         ]
       },
       "kitchenFit": 0.8,
-      "description": "Cell 62: tile with orange bias, 60% brightness, kitchen fit 80%.",
+      "description": "Cell 62: tile with orange bias, 45% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3833,46 +2971,44 @@
       "row": 6,
       "col": 3,
       "bounds": {
-        "x0": 614,
-        "y0": 1229,
-        "x1": 819,
-        "y1": 1434,
-        "width": 205,
-        "height": 205
+        "x0": 1229,
+        "y0": 2458,
+        "x1": 1638,
+        "y1": 2867,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.2998,
+        "u0": 0.3,
         "v0": 0.6001,
         "u1": 0.3999,
-        "v1": 0.7002
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
-          "r": 199,
-          "g": 178,
-          "b": 164
+          "r": 191,
+          "g": 159,
+          "b": 173
         },
-        "hue": 24.3,
-        "saturation": 0.234,
-        "lightness": 0.711,
-        "brightness": 0.711,
-        "contrast": 0.116,
-        "edgeDensity": 0.046
+        "hue": 333.7,
+        "saturation": 0.194,
+        "lightness": 0.686,
+        "brightness": 0.655,
+        "contrast": 0.163,
+        "edgeDensity": 0.058
       },
       "classification": {
-        "category": "tile",
+        "category": "generic",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "generic-surface",
+          "unclassified"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 63: tile with orange bias, 71% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.6,
+      "description": "Cell 63: generic with magenta bias, 66% brightness, kitchen fit 60%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "generic-surface",
+        "unclassified"
       ]
     },
     {
@@ -3880,31 +3016,31 @@
       "row": 6,
       "col": 4,
       "bounds": {
-        "x0": 819,
-        "y0": 1229,
-        "x1": 1024,
-        "y1": 1434,
-        "width": 205,
-        "height": 205
+        "x0": 1638,
+        "y0": 2458,
+        "x1": 2048,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.3999,
         "v0": 0.6001,
         "u1": 0.5,
-        "v1": 0.7002
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
-          "r": 187,
-          "g": 170,
-          "b": 153
+          "r": 196,
+          "g": 164,
+          "b": 116
         },
-        "hue": 29.8,
-        "saturation": 0.2,
-        "lightness": 0.665,
-        "brightness": 0.674,
-        "contrast": 0.141,
-        "edgeDensity": 0.049
+        "hue": 35.8,
+        "saturation": 0.405,
+        "lightness": 0.613,
+        "brightness": 0.657,
+        "contrast": 0.176,
+        "edgeDensity": 0.085
       },
       "classification": {
         "category": "tile",
@@ -3915,7 +3051,7 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 64: tile with orange bias, 67% brightness, kitchen fit 75%.",
+      "description": "Cell 64: tile with orange bias, 66% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3927,31 +3063,31 @@
       "row": 6,
       "col": 5,
       "bounds": {
-        "x0": 1024,
-        "y0": 1229,
-        "x1": 1229,
-        "y1": 1434,
-        "width": 205,
-        "height": 205
+        "x0": 2048,
+        "y0": 2458,
+        "x1": 2458,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.5,
         "v0": 0.6001,
         "u1": 0.6001,
-        "v1": 0.7002
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
-          "r": 218,
-          "g": 206,
-          "b": 190
+          "r": 140,
+          "g": 108,
+          "b": 81
         },
-        "hue": 34.8,
-        "saturation": 0.275,
-        "lightness": 0.8,
-        "brightness": 0.814,
-        "contrast": 0.102,
-        "edgeDensity": 0.051
+        "hue": 27.4,
+        "saturation": 0.265,
+        "lightness": 0.435,
+        "brightness": 0.444,
+        "contrast": 0.219,
+        "edgeDensity": 0.075
       },
       "classification": {
         "category": "tile",
@@ -3961,8 +3097,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.65,
-      "description": "Cell 65: tile with orange bias, 81% brightness, kitchen fit 65%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 65: tile with orange bias, 44% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3974,31 +3110,31 @@
       "row": 6,
       "col": 6,
       "bounds": {
-        "x0": 1229,
-        "y0": 1229,
-        "x1": 1434,
-        "y1": 1434,
-        "width": 205,
-        "height": 205
+        "x0": 2458,
+        "y0": 2458,
+        "x1": 2867,
+        "y1": 2867,
+        "width": 409,
+        "height": 409
       },
       "uv": {
         "u0": 0.6001,
         "v0": 0.6001,
-        "u1": 0.7002,
-        "v1": 0.7002
+        "u1": 0.7,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
-          "r": 126,
-          "g": 111,
-          "b": 95
+          "r": 190,
+          "g": 154,
+          "b": 148
         },
-        "hue": 30.4,
-        "saturation": 0.143,
-        "lightness": 0.434,
-        "brightness": 0.443,
-        "contrast": 0.185,
-        "edgeDensity": 0.128
+        "hue": 7.9,
+        "saturation": 0.241,
+        "lightness": 0.662,
+        "brightness": 0.631,
+        "contrast": 0.203,
+        "edgeDensity": 0.08
       },
       "classification": {
         "category": "tile",
@@ -4009,7 +3145,7 @@
         ]
       },
       "kitchenFit": 0.8,
-      "description": "Cell 66: tile with orange bias, 44% brightness, kitchen fit 80%.",
+      "description": "Cell 66: tile with red bias, 63% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4021,31 +3157,76 @@
       "row": 6,
       "col": 7,
       "bounds": {
-        "x0": 1434,
-        "y0": 1229,
-        "x1": 1638,
-        "y1": 1434,
-        "width": 204,
-        "height": 205
+        "x0": 2867,
+        "y0": 2458,
+        "x1": 3277,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.7002,
+        "u0": 0.7,
         "v0": 0.6001,
-        "u1": 0.7998,
-        "v1": 0.7002
+        "u1": 0.8,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
-          "r": 174,
-          "g": 137,
-          "b": 103
+          "r": 161,
+          "g": 161,
+          "b": 133
         },
-        "hue": 29.4,
-        "saturation": 0.304,
-        "lightness": 0.542,
-        "brightness": 0.559,
-        "contrast": 0.274,
-        "edgeDensity": 0.106
+        "hue": 60.2,
+        "saturation": 0.127,
+        "lightness": 0.576,
+        "brightness": 0.622,
+        "contrast": 0.179,
+        "edgeDensity": 0.05
+      },
+      "classification": {
+        "category": "generic",
+        "tags": [
+          "generic-surface",
+          "unclassified"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 67: generic with yellow bias, 62% brightness, kitchen fit 60%.",
+      "tags": [
+        "generic-surface",
+        "unclassified"
+      ]
+    },
+    {
+      "index": 68,
+      "row": 6,
+      "col": 8,
+      "bounds": {
+        "x0": 3277,
+        "y0": 2458,
+        "x1": 3686,
+        "y1": 2867,
+        "width": 409,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.8,
+        "v0": 0.6001,
+        "u1": 0.8999,
+        "v1": 0.7
+      },
+      "stats": {
+        "averageColor": {
+          "r": 203,
+          "g": 193,
+          "b": 178
+        },
+        "hue": 36.7,
+        "saturation": 0.197,
+        "lightness": 0.747,
+        "brightness": 0.762,
+        "contrast": 0.182,
+        "edgeDensity": 0.026
       },
       "classification": {
         "category": "tile",
@@ -4056,54 +3237,7 @@
         ]
       },
       "kitchenFit": 0.8,
-      "description": "Cell 67: tile with orange bias, 56% brightness, kitchen fit 80%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-    {
-      "index": 68,
-      "row": 6,
-      "col": 8,
-      "bounds": {
-        "x0": 1638,
-        "y0": 1229,
-        "x1": 1843,
-        "y1": 1434,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.7998,
-        "v0": 0.6001,
-        "u1": 0.8999,
-        "v1": 0.7002
-      },
-      "stats": {
-        "averageColor": {
-          "r": 141,
-          "g": 129,
-          "b": 112
-        },
-        "hue": 35.7,
-        "saturation": 0.113,
-        "lightness": 0.497,
-        "brightness": 0.513,
-        "contrast": 0.209,
-        "edgeDensity": 0.359
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.78,
-      "description": "Cell 68: tile with orange bias, 51% brightness, kitchen fit 78%.",
+      "description": "Cell 68: tile with orange bias, 76% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4115,31 +3249,31 @@
       "row": 6,
       "col": 9,
       "bounds": {
-        "x0": 1843,
-        "y0": 1229,
-        "x1": 2048,
-        "y1": 1434,
-        "width": 205,
-        "height": 205
+        "x0": 3686,
+        "y0": 2458,
+        "x1": 4096,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.8999,
         "v0": 0.6001,
         "u1": 1,
-        "v1": 0.7002
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
-          "r": 144,
-          "g": 130,
-          "b": 113
+          "r": 167,
+          "g": 141,
+          "b": 115
         },
-        "hue": 33.6,
-        "saturation": 0.125,
-        "lightness": 0.504,
-        "brightness": 0.518,
-        "contrast": 0.174,
-        "edgeDensity": 0.102
+        "hue": 30.4,
+        "saturation": 0.227,
+        "lightness": 0.552,
+        "brightness": 0.567,
+        "contrast": 0.222,
+        "edgeDensity": 0.096
       },
       "classification": {
         "category": "tile",
@@ -4149,8 +3283,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 69: tile with orange bias, 52% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 69: tile with orange bias, 57% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4163,30 +3297,30 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 1434,
-        "x1": 205,
-        "y1": 1638,
-        "width": 205,
-        "height": 204
+        "y0": 2867,
+        "x1": 410,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0,
-        "v0": 0.7002,
+        "v0": 0.7,
         "u1": 0.1001,
-        "v1": 0.7998
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
-          "r": 217,
-          "g": 173,
-          "b": 118
+          "r": 144,
+          "g": 131,
+          "b": 128
         },
-        "hue": 33.3,
-        "saturation": 0.568,
-        "lightness": 0.656,
-        "brightness": 0.699,
-        "contrast": 0.195,
-        "edgeDensity": 0.135
+        "hue": 13.8,
+        "saturation": 0.066,
+        "lightness": 0.532,
+        "brightness": 0.524,
+        "contrast": 0.25,
+        "edgeDensity": 0.132
       },
       "classification": {
         "category": "tile",
@@ -4196,8 +3330,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.8,
-      "description": "Cell 70: tile with orange bias, 70% brightness, kitchen fit 80%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 70: tile with red bias, 52% brightness, kitchen fit 88%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4209,46 +3343,46 @@
       "row": 7,
       "col": 1,
       "bounds": {
-        "x0": 205,
-        "y0": 1434,
-        "x1": 410,
-        "y1": 1638,
-        "width": 205,
-        "height": 204
+        "x0": 410,
+        "y0": 2867,
+        "x1": 819,
+        "y1": 3277,
+        "width": 409,
+        "height": 410
       },
       "uv": {
         "u0": 0.1001,
-        "v0": 0.7002,
-        "u1": 0.2002,
-        "v1": 0.7998
+        "v0": 0.7,
+        "u1": 0.2,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
-          "r": 221,
-          "g": 185,
-          "b": 108
+          "r": 161,
+          "g": 174,
+          "b": 161
         },
-        "hue": 40.7,
-        "saturation": 0.625,
-        "lightness": 0.645,
-        "brightness": 0.733,
-        "contrast": 0.186,
-        "edgeDensity": 0.151
+        "hue": 118.9,
+        "saturation": 0.075,
+        "lightness": 0.657,
+        "brightness": 0.668,
+        "contrast": 0.229,
+        "edgeDensity": 0.08
       },
       "classification": {
-        "category": "tile",
+        "category": "fabric",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "fabric",
+          "cloth",
+          "soft-surface"
         ]
       },
-      "kitchenFit": 0.8,
-      "description": "Cell 71: tile with orange bias, 73% brightness, kitchen fit 80%.",
+      "kitchenFit": 0.73,
+      "description": "Cell 71: fabric with green bias, 67% brightness, kitchen fit 73%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "fabric",
+        "cloth",
+        "soft-surface"
       ]
     },
     {
@@ -4256,78 +3390,31 @@
       "row": 7,
       "col": 2,
       "bounds": {
-        "x0": 410,
-        "y0": 1434,
-        "x1": 614,
-        "y1": 1638,
-        "width": 204,
-        "height": 204
+        "x0": 819,
+        "y0": 2867,
+        "x1": 1229,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.2002,
-        "v0": 0.7002,
-        "u1": 0.2998,
-        "v1": 0.7998
+        "u0": 0.2,
+        "v0": 0.7,
+        "u1": 0.3,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
-          "r": 200,
-          "g": 203,
-          "b": 207
+          "r": 198,
+          "g": 165,
+          "b": 126
         },
-        "hue": 215.7,
-        "saturation": 0.068,
-        "lightness": 0.799,
-        "brightness": 0.795,
-        "contrast": 0.164,
-        "edgeDensity": 0.023
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "tile",
-          "cool-surface",
-          "ceramic"
-        ]
-      },
-      "kitchenFit": 0.83,
-      "description": "Cell 72: tile with blue bias, 80% brightness, kitchen fit 83%.",
-      "tags": [
-        "tile",
-        "cool-surface",
-        "ceramic"
-      ]
-    },
-    {
-      "index": 73,
-      "row": 7,
-      "col": 3,
-      "bounds": {
-        "x0": 614,
-        "y0": 1434,
-        "x1": 819,
-        "y1": 1638,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.2998,
-        "v0": 0.7002,
-        "u1": 0.3999,
-        "v1": 0.7998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 162,
-          "g": 125,
-          "b": 98
-        },
-        "hue": 25.2,
-        "saturation": 0.259,
-        "lightness": 0.51,
-        "brightness": 0.513,
-        "contrast": 0.12,
-        "edgeDensity": 0.046
+        "hue": 33,
+        "saturation": 0.386,
+        "lightness": 0.634,
+        "brightness": 0.664,
+        "contrast": 0.148,
+        "edgeDensity": 0.03
       },
       "classification": {
         "category": "tile",
@@ -4338,7 +3425,54 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 73: tile with orange bias, 51% brightness, kitchen fit 75%.",
+      "description": "Cell 72: tile with orange bias, 66% brightness, kitchen fit 75%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 73,
+      "row": 7,
+      "col": 3,
+      "bounds": {
+        "x0": 1229,
+        "y0": 2867,
+        "x1": 1638,
+        "y1": 3277,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.3,
+        "v0": 0.7,
+        "u1": 0.3999,
+        "v1": 0.8
+      },
+      "stats": {
+        "averageColor": {
+          "r": 187,
+          "g": 153,
+          "b": 124
+        },
+        "hue": 27.4,
+        "saturation": 0.319,
+        "lightness": 0.609,
+        "brightness": 0.619,
+        "contrast": 0.217,
+        "edgeDensity": 0.075
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.8,
+      "description": "Cell 73: tile with orange bias, 62% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4350,31 +3484,78 @@
       "row": 7,
       "col": 4,
       "bounds": {
-        "x0": 819,
-        "y0": 1434,
-        "x1": 1024,
-        "y1": 1638,
-        "width": 205,
-        "height": 204
+        "x0": 1638,
+        "y0": 2867,
+        "x1": 2048,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.3999,
-        "v0": 0.7002,
+        "v0": 0.7,
         "u1": 0.5,
-        "v1": 0.7998
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
-          "r": 208,
-          "g": 171,
-          "b": 174
+          "r": 175,
+          "g": 177,
+          "b": 167
         },
-        "hue": 355.5,
-        "saturation": 0.288,
-        "lightness": 0.744,
-        "brightness": 0.702,
-        "contrast": 0.201,
-        "edgeDensity": 0.178
+        "hue": 71.2,
+        "saturation": 0.06,
+        "lightness": 0.674,
+        "brightness": 0.689,
+        "contrast": 0.186,
+        "edgeDensity": 0.044
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.73,
+      "description": "Cell 74: fabric with green bias, 69% brightness, kitchen fit 73%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 75,
+      "row": 7,
+      "col": 5,
+      "bounds": {
+        "x0": 2048,
+        "y0": 2867,
+        "x1": 2458,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.7,
+        "u1": 0.6001,
+        "v1": 0.8
+      },
+      "stats": {
+        "averageColor": {
+          "r": 202,
+          "g": 160,
+          "b": 154
+        },
+        "hue": 7.4,
+        "saturation": 0.31,
+        "lightness": 0.697,
+        "brightness": 0.659,
+        "contrast": 0.186,
+        "edgeDensity": 0.077
       },
       "classification": {
         "category": "tile",
@@ -4384,8 +3565,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 74: tile with red bias, 70% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 75: tile with red bias, 66% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4393,82 +3574,35 @@
       ]
     },
     {
-      "index": 75,
-      "row": 7,
-      "col": 5,
-      "bounds": {
-        "x0": 1024,
-        "y0": 1434,
-        "x1": 1229,
-        "y1": 1638,
-        "width": 205,
-        "height": 204
-      },
-      "uv": {
-        "u0": 0.5,
-        "v0": 0.7002,
-        "u1": 0.6001,
-        "v1": 0.7998
-      },
-      "stats": {
-        "averageColor": {
-          "r": 148,
-          "g": 146,
-          "b": 139
-        },
-        "hue": 45.8,
-        "saturation": 0.042,
-        "lightness": 0.562,
-        "brightness": 0.572,
-        "contrast": 0.141,
-        "edgeDensity": 0.116
-      },
-      "classification": {
-        "category": "concrete",
-        "tags": [
-          "concrete",
-          "stone",
-          "neutral-surface"
-        ]
-      },
-      "kitchenFit": 0.68,
-      "description": "Cell 75: concrete with yellow bias, 57% brightness, kitchen fit 68%.",
-      "tags": [
-        "concrete",
-        "stone",
-        "neutral-surface"
-      ]
-    },
-    {
       "index": 76,
       "row": 7,
       "col": 6,
       "bounds": {
-        "x0": 1229,
-        "y0": 1434,
-        "x1": 1434,
-        "y1": 1638,
-        "width": 205,
-        "height": 204
+        "x0": 2458,
+        "y0": 2867,
+        "x1": 2867,
+        "y1": 3277,
+        "width": 409,
+        "height": 410
       },
       "uv": {
         "u0": 0.6001,
-        "v0": 0.7002,
-        "u1": 0.7002,
-        "v1": 0.7998
+        "v0": 0.7,
+        "u1": 0.7,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
-          "r": 167,
-          "g": 175,
-          "b": 175
+          "r": 150,
+          "g": 166,
+          "b": 169
         },
-        "hue": 179.5,
-        "saturation": 0.046,
-        "lightness": 0.67,
-        "brightness": 0.678,
-        "contrast": 0.153,
-        "edgeDensity": 0.062
+        "hue": 189.5,
+        "saturation": 0.099,
+        "lightness": 0.624,
+        "brightness": 0.637,
+        "contrast": 0.232,
+        "edgeDensity": 0.119
       },
       "classification": {
         "category": "tile",
@@ -4478,8 +3612,8 @@
           "ceramic"
         ]
       },
-      "kitchenFit": 0.83,
-      "description": "Cell 76: tile with cyan bias, 68% brightness, kitchen fit 83%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 76: tile with cyan bias, 64% brightness, kitchen fit 88%.",
       "tags": [
         "tile",
         "cool-surface",
@@ -4491,31 +3625,31 @@
       "row": 7,
       "col": 7,
       "bounds": {
-        "x0": 1434,
-        "y0": 1434,
-        "x1": 1638,
-        "y1": 1638,
-        "width": 204,
-        "height": 204
+        "x0": 2867,
+        "y0": 2867,
+        "x1": 3277,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.7002,
-        "v0": 0.7002,
-        "u1": 0.7998,
-        "v1": 0.7998
+        "u0": 0.7,
+        "v0": 0.7,
+        "u1": 0.8,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
-          "r": 211,
-          "g": 204,
-          "b": 196
+          "r": 184,
+          "g": 168,
+          "b": 168
         },
-        "hue": 28.4,
-        "saturation": 0.147,
-        "lightness": 0.8,
-        "brightness": 0.803,
-        "contrast": 0.31,
-        "edgeDensity": 0.272
+        "hue": 359.4,
+        "saturation": 0.103,
+        "lightness": 0.689,
+        "brightness": 0.671,
+        "contrast": 0.19,
+        "edgeDensity": 0.062
       },
       "classification": {
         "category": "tile",
@@ -4525,8 +3659,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.6,
-      "description": "Cell 77: tile with orange bias, 80% brightness, kitchen fit 60%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 77: tile with red bias, 67% brightness, kitchen fit 88%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4538,31 +3672,31 @@
       "row": 7,
       "col": 8,
       "bounds": {
-        "x0": 1638,
-        "y0": 1434,
-        "x1": 1843,
-        "y1": 1638,
-        "width": 205,
-        "height": 204
+        "x0": 3277,
+        "y0": 2867,
+        "x1": 3686,
+        "y1": 3277,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.7998,
-        "v0": 0.7002,
+        "u0": 0.8,
+        "v0": 0.7,
         "u1": 0.8999,
-        "v1": 0.7998
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
-          "r": 139,
-          "g": 127,
-          "b": 115
+          "r": 209,
+          "g": 187,
+          "b": 150
         },
-        "hue": 30,
-        "saturation": 0.094,
-        "lightness": 0.499,
-        "brightness": 0.506,
-        "contrast": 0.216,
-        "edgeDensity": 0.184
+        "hue": 37.7,
+        "saturation": 0.39,
+        "lightness": 0.705,
+        "brightness": 0.742,
+        "contrast": 0.203,
+        "edgeDensity": 0.07
       },
       "classification": {
         "category": "tile",
@@ -4572,8 +3706,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.78,
-      "description": "Cell 78: tile with orange bias, 51% brightness, kitchen fit 78%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 78: tile with orange bias, 74% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4585,46 +3719,44 @@
       "row": 7,
       "col": 9,
       "bounds": {
-        "x0": 1843,
-        "y0": 1434,
-        "x1": 2048,
-        "y1": 1638,
-        "width": 205,
-        "height": 204
+        "x0": 3686,
+        "y0": 2867,
+        "x1": 4096,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.8999,
-        "v0": 0.7002,
+        "v0": 0.7,
         "u1": 1,
-        "v1": 0.7998
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
-          "r": 193,
-          "g": 178,
-          "b": 138
+          "r": 206,
+          "g": 183,
+          "b": 192
         },
-        "hue": 44.4,
-        "saturation": 0.307,
-        "lightness": 0.648,
-        "brightness": 0.7,
-        "contrast": 0.178,
-        "edgeDensity": 0.05
+        "hue": 336.2,
+        "saturation": 0.192,
+        "lightness": 0.762,
+        "brightness": 0.738,
+        "contrast": 0.157,
+        "edgeDensity": 0.056
       },
       "classification": {
-        "category": "tile",
+        "category": "generic",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "generic-surface",
+          "unclassified"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 79: tile with orange bias, 70% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.6,
+      "description": "Cell 79: generic with magenta bias, 74% brightness, kitchen fit 60%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "generic-surface",
+        "unclassified"
       ]
     },
     {
@@ -4633,45 +3765,45 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 1638,
-        "x1": 205,
-        "y1": 1843,
-        "width": 205,
-        "height": 205
+        "y0": 3277,
+        "x1": 410,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0,
-        "v0": 0.7998,
+        "v0": 0.8,
         "u1": 0.1001,
         "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 170,
-          "g": 206,
-          "b": 179
+          "r": 208,
+          "g": 208,
+          "b": 208
         },
-        "hue": 134.5,
-        "saturation": 0.27,
-        "lightness": 0.738,
-        "brightness": 0.771,
-        "contrast": 0.105,
-        "edgeDensity": 0.044
+        "hue": 57.5,
+        "saturation": 0.003,
+        "lightness": 0.816,
+        "brightness": 0.816,
+        "contrast": 0.147,
+        "edgeDensity": 0.032
       },
       "classification": {
-        "category": "fabric",
+        "category": "plaster",
         "tags": [
-          "fabric",
-          "cloth",
-          "soft-surface"
+          "wall",
+          "paint",
+          "light-surface"
         ]
       },
-      "kitchenFit": 0.6,
-      "description": "Cell 80: fabric with green bias, 77% brightness, kitchen fit 60%.",
+      "kitchenFit": 0.78,
+      "description": "Cell 80: plaster with yellow bias, 82% brightness, kitchen fit 78%.",
       "tags": [
-        "fabric",
-        "cloth",
-        "soft-surface"
+        "wall",
+        "paint",
+        "light-surface"
       ]
     },
     {
@@ -4679,76 +3811,31 @@
       "row": 8,
       "col": 1,
       "bounds": {
-        "x0": 205,
-        "y0": 1638,
-        "x1": 410,
-        "y1": 1843,
-        "width": 205,
-        "height": 205
+        "x0": 410,
+        "y0": 3277,
+        "x1": 819,
+        "y1": 3686,
+        "width": 409,
+        "height": 409
       },
       "uv": {
         "u0": 0.1001,
-        "v0": 0.7998,
-        "u1": 0.2002,
-        "v1": 0.8999
-      },
-      "stats": {
-        "averageColor": {
-          "r": 169,
-          "g": 174,
-          "b": 140
-        },
-        "hue": 68.8,
-        "saturation": 0.175,
-        "lightness": 0.616,
-        "brightness": 0.67,
-        "contrast": 0.192,
-        "edgeDensity": 0.063
-      },
-      "classification": {
-        "category": "generic",
-        "tags": [
-          "generic-surface",
-          "unclassified"
-        ]
-      },
-      "kitchenFit": 0.65,
-      "description": "Cell 81: generic with yellow bias, 67% brightness, kitchen fit 65%.",
-      "tags": [
-        "generic-surface",
-        "unclassified"
-      ]
-    },
-    {
-      "index": 82,
-      "row": 8,
-      "col": 2,
-      "bounds": {
-        "x0": 410,
-        "y0": 1638,
-        "x1": 614,
-        "y1": 1843,
-        "width": 204,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.2002,
-        "v0": 0.7998,
-        "u1": 0.2998,
+        "v0": 0.8,
+        "u1": 0.2,
         "v1": 0.8999
       },
       "stats": {
         "averageColor": {
           "r": 209,
-          "g": 163,
-          "b": 160
+          "g": 199,
+          "b": 185
         },
-        "hue": 3.8,
-        "saturation": 0.348,
-        "lightness": 0.723,
-        "brightness": 0.676,
-        "contrast": 0.179,
-        "edgeDensity": 0.083
+        "hue": 34.7,
+        "saturation": 0.205,
+        "lightness": 0.774,
+        "brightness": 0.785,
+        "contrast": 0.078,
+        "edgeDensity": 0.009
       },
       "classification": {
         "category": "tile",
@@ -4759,11 +3846,58 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 82: tile with red bias, 68% brightness, kitchen fit 75%.",
+      "description": "Cell 81: tile with orange bias, 79% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
         "paint"
+      ]
+    },
+    {
+      "index": 82,
+      "row": 8,
+      "col": 2,
+      "bounds": {
+        "x0": 819,
+        "y0": 3277,
+        "x1": 1229,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
+      },
+      "uv": {
+        "u0": 0.2,
+        "v0": 0.8,
+        "u1": 0.3,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 188,
+          "g": 186,
+          "b": 186
+        },
+        "hue": 338.5,
+        "saturation": 0.013,
+        "lightness": 0.732,
+        "brightness": 0.73,
+        "contrast": 0.144,
+        "edgeDensity": 0.045
+      },
+      "classification": {
+        "category": "plaster",
+        "tags": [
+          "wall",
+          "paint",
+          "light-surface"
+        ]
+      },
+      "kitchenFit": 0.88,
+      "description": "Cell 82: plaster with magenta bias, 73% brightness, kitchen fit 88%.",
+      "tags": [
+        "wall",
+        "paint",
+        "light-surface"
       ]
     },
     {
@@ -4771,46 +3905,46 @@
       "row": 8,
       "col": 3,
       "bounds": {
-        "x0": 614,
-        "y0": 1638,
-        "x1": 819,
-        "y1": 1843,
-        "width": 205,
-        "height": 205
+        "x0": 1229,
+        "y0": 3277,
+        "x1": 1638,
+        "y1": 3686,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.2998,
-        "v0": 0.7998,
+        "u0": 0.3,
+        "v0": 0.8,
         "u1": 0.3999,
         "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 191,
-          "g": 112,
-          "b": 100
+          "r": 129,
+          "g": 139,
+          "b": 143
         },
-        "hue": 8.1,
-        "saturation": 0.412,
-        "lightness": 0.57,
-        "brightness": 0.502,
-        "contrast": 0.276,
-        "edgeDensity": 0.069
+        "hue": 199.1,
+        "saturation": 0.062,
+        "lightness": 0.533,
+        "brightness": 0.537,
+        "contrast": 0.182,
+        "edgeDensity": 0.053
       },
       "classification": {
         "category": "tile",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "tile",
+          "cool-surface",
+          "ceramic"
         ]
       },
-      "kitchenFit": 0.8,
-      "description": "Cell 83: tile with red bias, 50% brightness, kitchen fit 80%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 83: tile with cyan bias, 54% brightness, kitchen fit 88%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "tile",
+        "cool-surface",
+        "ceramic"
       ]
     },
     {
@@ -4818,44 +3952,46 @@
       "row": 8,
       "col": 4,
       "bounds": {
-        "x0": 819,
-        "y0": 1638,
-        "x1": 1024,
-        "y1": 1843,
-        "width": 205,
-        "height": 205
+        "x0": 1638,
+        "y0": 3277,
+        "x1": 2048,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.3999,
-        "v0": 0.7998,
+        "v0": 0.8,
         "u1": 0.5,
         "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 192,
-          "g": 162,
-          "b": 183
+          "r": 208,
+          "g": 190,
+          "b": 164
         },
-        "hue": 317,
-        "saturation": 0.192,
-        "lightness": 0.693,
-        "brightness": 0.665,
-        "contrast": 0.208,
-        "edgeDensity": 0.116
+        "hue": 35.8,
+        "saturation": 0.322,
+        "lightness": 0.729,
+        "brightness": 0.753,
+        "contrast": 0.052,
+        "edgeDensity": 0.002
       },
       "classification": {
-        "category": "generic",
+        "category": "tile",
         "tags": [
-          "generic-surface",
-          "unclassified"
+          "warm-surface",
+          "ceramic",
+          "paint"
         ]
       },
-      "kitchenFit": 0.65,
-      "description": "Cell 84: generic with magenta bias, 67% brightness, kitchen fit 65%.",
+      "kitchenFit": 0.75,
+      "description": "Cell 84: tile with orange bias, 75% brightness, kitchen fit 75%.",
       "tags": [
-        "generic-surface",
-        "unclassified"
+        "warm-surface",
+        "ceramic",
+        "paint"
       ]
     },
     {
@@ -4863,31 +3999,31 @@
       "row": 8,
       "col": 5,
       "bounds": {
-        "x0": 1024,
-        "y0": 1638,
-        "x1": 1229,
-        "y1": 1843,
-        "width": 205,
-        "height": 205
+        "x0": 2048,
+        "y0": 3277,
+        "x1": 2458,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.5,
-        "v0": 0.7998,
+        "v0": 0.8,
         "u1": 0.6001,
         "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 188,
-          "g": 176,
+          "r": 195,
+          "g": 181,
           "b": 162
         },
-        "hue": 31.7,
-        "saturation": 0.164,
-        "lightness": 0.688,
-        "brightness": 0.697,
-        "contrast": 0.224,
-        "edgeDensity": 0.139
+        "hue": 33.5,
+        "saturation": 0.218,
+        "lightness": 0.7,
+        "brightness": 0.715,
+        "contrast": 0.196,
+        "edgeDensity": 0.058
       },
       "classification": {
         "category": "tile",
@@ -4898,7 +4034,7 @@
         ]
       },
       "kitchenFit": 0.8,
-      "description": "Cell 85: tile with orange bias, 70% brightness, kitchen fit 80%.",
+      "description": "Cell 85: tile with orange bias, 72% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4910,46 +4046,46 @@
       "row": 8,
       "col": 6,
       "bounds": {
-        "x0": 1229,
-        "y0": 1638,
-        "x1": 1434,
-        "y1": 1843,
-        "width": 205,
-        "height": 205
+        "x0": 2458,
+        "y0": 3277,
+        "x1": 2867,
+        "y1": 3686,
+        "width": 409,
+        "height": 409
       },
       "uv": {
         "u0": 0.6001,
-        "v0": 0.7998,
-        "u1": 0.7002,
+        "v0": 0.8,
+        "u1": 0.7,
         "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 170,
-          "g": 172,
-          "b": 133
+          "r": 204,
+          "g": 203,
+          "b": 199
         },
-        "hue": 62.4,
-        "saturation": 0.189,
-        "lightness": 0.598,
-        "brightness": 0.662,
-        "contrast": 0.284,
-        "edgeDensity": 0.14
+        "hue": 41.9,
+        "saturation": 0.047,
+        "lightness": 0.792,
+        "brightness": 0.796,
+        "contrast": 0.145,
+        "edgeDensity": 0.031
       },
       "classification": {
-        "category": "patterned",
+        "category": "tile",
         "tags": [
-          "patterned",
-          "decorative",
-          "busy"
+          "warm-surface",
+          "ceramic",
+          "paint"
         ]
       },
-      "kitchenFit": 0.45,
-      "description": "Cell 86: patterned with yellow bias, 66% brightness, kitchen fit 45%.",
+      "kitchenFit": 0.83,
+      "description": "Cell 86: tile with orange bias, 80% brightness, kitchen fit 83%.",
       "tags": [
-        "patterned",
-        "decorative",
-        "busy"
+        "warm-surface",
+        "ceramic",
+        "paint"
       ]
     },
     {
@@ -4957,31 +4093,31 @@
       "row": 8,
       "col": 7,
       "bounds": {
-        "x0": 1434,
-        "y0": 1638,
-        "x1": 1638,
-        "y1": 1843,
-        "width": 204,
-        "height": 205
+        "x0": 2867,
+        "y0": 3277,
+        "x1": 3277,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.7002,
-        "v0": 0.7998,
-        "u1": 0.7998,
+        "u0": 0.7,
+        "v0": 0.8,
+        "u1": 0.8,
         "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 174,
-          "g": 148,
-          "b": 117
+          "r": 163,
+          "g": 141,
+          "b": 119
         },
-        "hue": 32.7,
-        "saturation": 0.258,
-        "lightness": 0.57,
-        "brightness": 0.593,
-        "contrast": 0.227,
-        "edgeDensity": 0.127
+        "hue": 29.9,
+        "saturation": 0.193,
+        "lightness": 0.553,
+        "brightness": 0.565,
+        "contrast": 0.226,
+        "edgeDensity": 0.037
       },
       "classification": {
         "category": "tile",
@@ -4992,7 +4128,7 @@
         ]
       },
       "kitchenFit": 0.8,
-      "description": "Cell 87: tile with orange bias, 59% brightness, kitchen fit 80%.",
+      "description": "Cell 87: tile with orange bias, 56% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -5004,31 +4140,31 @@
       "row": 8,
       "col": 8,
       "bounds": {
-        "x0": 1638,
-        "y0": 1638,
-        "x1": 1843,
-        "y1": 1843,
-        "width": 205,
-        "height": 205
+        "x0": 3277,
+        "y0": 3277,
+        "x1": 3686,
+        "y1": 3686,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.7998,
-        "v0": 0.7998,
+        "u0": 0.8,
+        "v0": 0.8,
         "u1": 0.8999,
         "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 190,
-          "g": 164,
-          "b": 131
+          "r": 154,
+          "g": 145,
+          "b": 135
         },
-        "hue": 34.1,
-        "saturation": 0.309,
-        "lightness": 0.628,
-        "brightness": 0.655,
-        "contrast": 0.099,
-        "edgeDensity": 0.013
+        "hue": 32.6,
+        "saturation": 0.086,
+        "lightness": 0.565,
+        "brightness": 0.573,
+        "contrast": 0.195,
+        "edgeDensity": 0.104
       },
       "classification": {
         "category": "tile",
@@ -5038,8 +4174,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 88: tile with orange bias, 66% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 88: tile with orange bias, 57% brightness, kitchen fit 88%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -5051,46 +4187,46 @@
       "row": 8,
       "col": 9,
       "bounds": {
-        "x0": 1843,
-        "y0": 1638,
-        "x1": 2048,
-        "y1": 1843,
-        "width": 205,
-        "height": 205
+        "x0": 3686,
+        "y0": 3277,
+        "x1": 4096,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.8999,
-        "v0": 0.7998,
+        "v0": 0.8,
         "u1": 1,
         "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 162,
-          "g": 160,
+          "r": 148,
+          "g": 165,
           "b": 152
         },
-        "hue": 49,
-        "saturation": 0.051,
+        "hue": 135.9,
+        "saturation": 0.091,
         "lightness": 0.614,
-        "brightness": 0.626,
-        "contrast": 0.181,
-        "edgeDensity": 0.108
+        "brightness": 0.63,
+        "contrast": 0.17,
+        "edgeDensity": 0.028
       },
       "classification": {
-        "category": "concrete",
+        "category": "fabric",
         "tags": [
-          "concrete",
-          "stone",
-          "neutral-surface"
+          "fabric",
+          "cloth",
+          "soft-surface"
         ]
       },
-      "kitchenFit": 0.73,
-      "description": "Cell 89: concrete with yellow bias, 63% brightness, kitchen fit 73%.",
+      "kitchenFit": 0.68,
+      "description": "Cell 89: fabric with green bias, 63% brightness, kitchen fit 68%.",
       "tags": [
-        "concrete",
-        "stone",
-        "neutral-surface"
+        "fabric",
+        "cloth",
+        "soft-surface"
       ]
     },
     {
@@ -5099,11 +4235,11 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 1843,
-        "x1": 205,
-        "y1": 2048,
-        "width": 205,
-        "height": 205
+        "y0": 3686,
+        "x1": 410,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0,
@@ -5113,16 +4249,16 @@
       },
       "stats": {
         "averageColor": {
-          "r": 197,
-          "g": 178,
-          "b": 146
+          "r": 169,
+          "g": 131,
+          "b": 119
         },
-        "hue": 37.4,
-        "saturation": 0.301,
-        "lightness": 0.672,
-        "brightness": 0.703,
-        "contrast": 0.254,
-        "edgeDensity": 0.246
+        "hue": 14.4,
+        "saturation": 0.228,
+        "lightness": 0.564,
+        "brightness": 0.542,
+        "contrast": 0.245,
+        "edgeDensity": 0.168
       },
       "classification": {
         "category": "tile",
@@ -5133,7 +4269,7 @@
         ]
       },
       "kitchenFit": 0.7,
-      "description": "Cell 90: tile with orange bias, 70% brightness, kitchen fit 70%.",
+      "description": "Cell 90: tile with red bias, 54% brightness, kitchen fit 70%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -5145,31 +4281,123 @@
       "row": 9,
       "col": 1,
       "bounds": {
-        "x0": 205,
-        "y0": 1843,
-        "x1": 410,
-        "y1": 2048,
-        "width": 205,
-        "height": 205
+        "x0": 410,
+        "y0": 3686,
+        "x1": 819,
+        "y1": 4096,
+        "width": 409,
+        "height": 410
       },
       "uv": {
         "u0": 0.1001,
         "v0": 0.8999,
-        "u1": 0.2002,
+        "u1": 0.2,
         "v1": 1
       },
       "stats": {
         "averageColor": {
-          "r": 217,
-          "g": 186,
-          "b": 111
+          "r": 176,
+          "g": 176,
+          "b": 175
         },
-        "hue": 42.1,
-        "saturation": 0.584,
-        "lightness": 0.644,
-        "brightness": 0.733,
-        "contrast": 0.204,
-        "edgeDensity": 0.159
+        "hue": 59.3,
+        "saturation": 0.002,
+        "lightness": 0.688,
+        "brightness": 0.689,
+        "contrast": 0.207,
+        "edgeDensity": 0.017
+      },
+      "classification": {
+        "category": "concrete",
+        "tags": [
+          "concrete",
+          "stone",
+          "neutral-surface"
+        ]
+      },
+      "kitchenFit": 0.73,
+      "description": "Cell 91: concrete with yellow bias, 69% brightness, kitchen fit 73%.",
+      "tags": [
+        "concrete",
+        "stone",
+        "neutral-surface"
+      ]
+    },
+    {
+      "index": 92,
+      "row": 9,
+      "col": 2,
+      "bounds": {
+        "x0": 819,
+        "y0": 3686,
+        "x1": 1229,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.2,
+        "v0": 0.8999,
+        "u1": 0.3,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 155,
+          "g": 147,
+          "b": 116
+        },
+        "hue": 48.2,
+        "saturation": 0.162,
+        "lightness": 0.53,
+        "brightness": 0.574,
+        "contrast": 0.187,
+        "edgeDensity": 0.045
+      },
+      "classification": {
+        "category": "generic",
+        "tags": [
+          "generic-surface",
+          "unclassified"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 92: generic with yellow bias, 57% brightness, kitchen fit 65%.",
+      "tags": [
+        "generic-surface",
+        "unclassified"
+      ]
+    },
+    {
+      "index": 93,
+      "row": 9,
+      "col": 3,
+      "bounds": {
+        "x0": 1229,
+        "y0": 3686,
+        "x1": 1638,
+        "y1": 4096,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.3,
+        "v0": 0.8999,
+        "u1": 0.3999,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 168,
+          "g": 146,
+          "b": 113
+        },
+        "hue": 36.4,
+        "saturation": 0.239,
+        "lightness": 0.549,
+        "brightness": 0.581,
+        "contrast": 0.294,
+        "edgeDensity": 0.052
       },
       "classification": {
         "category": "tile",
@@ -5180,101 +4408,7 @@
         ]
       },
       "kitchenFit": 0.8,
-      "description": "Cell 91: tile with orange bias, 73% brightness, kitchen fit 80%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-    {
-      "index": 92,
-      "row": 9,
-      "col": 2,
-      "bounds": {
-        "x0": 410,
-        "y0": 1843,
-        "x1": 614,
-        "y1": 2048,
-        "width": 204,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.2002,
-        "v0": 0.8999,
-        "u1": 0.2998,
-        "v1": 1
-      },
-      "stats": {
-        "averageColor": {
-          "r": 201,
-          "g": 163,
-          "b": 135
-        },
-        "hue": 26.1,
-        "saturation": 0.379,
-        "lightness": 0.658,
-        "brightness": 0.664,
-        "contrast": 0.172,
-        "edgeDensity": 0.041
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 92: tile with orange bias, 66% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-    {
-      "index": 93,
-      "row": 9,
-      "col": 3,
-      "bounds": {
-        "x0": 614,
-        "y0": 1843,
-        "x1": 819,
-        "y1": 2048,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.2998,
-        "v0": 0.8999,
-        "u1": 0.3999,
-        "v1": 1
-      },
-      "stats": {
-        "averageColor": {
-          "r": 206,
-          "g": 176,
-          "b": 139
-        },
-        "hue": 33.6,
-        "saturation": 0.4,
-        "lightness": 0.677,
-        "brightness": 0.706,
-        "contrast": 0.076,
-        "edgeDensity": 0.013
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 93: tile with orange bias, 71% brightness, kitchen fit 75%.",
+      "description": "Cell 93: tile with orange bias, 58% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -5286,12 +4420,12 @@
       "row": 9,
       "col": 4,
       "bounds": {
-        "x0": 819,
-        "y0": 1843,
-        "x1": 1024,
-        "y1": 2048,
-        "width": 205,
-        "height": 205
+        "x0": 1638,
+        "y0": 3686,
+        "x1": 2048,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.3999,
@@ -5301,16 +4435,155 @@
       },
       "stats": {
         "averageColor": {
-          "r": 170,
-          "g": 178,
-          "b": 168
+          "r": 207,
+          "g": 201,
+          "b": 186
         },
-        "hue": 107,
-        "saturation": 0.061,
-        "lightness": 0.677,
-        "brightness": 0.688,
-        "contrast": 0.239,
-        "edgeDensity": 0.15
+        "hue": 43,
+        "saturation": 0.176,
+        "lightness": 0.77,
+        "brightness": 0.788,
+        "contrast": 0.199,
+        "edgeDensity": 0.105
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "warm-surface",
+          "ceramic",
+          "paint"
+        ]
+      },
+      "kitchenFit": 0.8,
+      "description": "Cell 94: tile with orange bias, 79% brightness, kitchen fit 80%.",
+      "tags": [
+        "warm-surface",
+        "ceramic",
+        "paint"
+      ]
+    },
+    {
+      "index": 95,
+      "row": 9,
+      "col": 5,
+      "bounds": {
+        "x0": 2048,
+        "y0": 3686,
+        "x1": 2458,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.8999,
+        "u1": 0.6001,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 186,
+          "g": 162,
+          "b": 188
+        },
+        "hue": 297.2,
+        "saturation": 0.159,
+        "lightness": 0.685,
+        "brightness": 0.663,
+        "contrast": 0.161,
+        "edgeDensity": 0.061
+      },
+      "classification": {
+        "category": "generic",
+        "tags": [
+          "generic-surface",
+          "unclassified"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 95: generic with purple bias, 66% brightness, kitchen fit 60%.",
+      "tags": [
+        "generic-surface",
+        "unclassified"
+      ]
+    },
+    {
+      "index": 96,
+      "row": 9,
+      "col": 6,
+      "bounds": {
+        "x0": 2458,
+        "y0": 3686,
+        "x1": 2867,
+        "y1": 4096,
+        "width": 409,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.8999,
+        "u1": 0.7,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 87,
+          "g": 89,
+          "b": 93
+        },
+        "hue": 217.7,
+        "saturation": 0.035,
+        "lightness": 0.353,
+        "brightness": 0.349,
+        "contrast": 0.167,
+        "edgeDensity": 0.038
+      },
+      "classification": {
+        "category": "tile",
+        "tags": [
+          "tile",
+          "cool-surface",
+          "ceramic"
+        ]
+      },
+      "kitchenFit": 0.83,
+      "description": "Cell 96: tile with blue bias, 35% brightness, kitchen fit 83%.",
+      "tags": [
+        "tile",
+        "cool-surface",
+        "ceramic"
+      ]
+    },
+    {
+      "index": 97,
+      "row": 9,
+      "col": 7,
+      "bounds": {
+        "x0": 2867,
+        "y0": 3686,
+        "x1": 3277,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
+      },
+      "uv": {
+        "u0": 0.7,
+        "v0": 0.8999,
+        "u1": 0.8,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 142,
+          "g": 157,
+          "b": 140
+        },
+        "hue": 112.4,
+        "saturation": 0.079,
+        "lightness": 0.583,
+        "brightness": 0.599,
+        "contrast": 0.224,
+        "edgeDensity": 0.067
       },
       "classification": {
         "category": "fabric",
@@ -5321,7 +4594,7 @@
         ]
       },
       "kitchenFit": 0.73,
-      "description": "Cell 94: fabric with green bias, 69% brightness, kitchen fit 73%.",
+      "description": "Cell 97: fabric with green bias, 60% brightness, kitchen fit 73%.",
       "tags": [
         "fabric",
         "cloth",
@@ -5329,176 +4602,35 @@
       ]
     },
     {
-      "index": 95,
-      "row": 9,
-      "col": 5,
-      "bounds": {
-        "x0": 1024,
-        "y0": 1843,
-        "x1": 1229,
-        "y1": 2048,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.5,
-        "v0": 0.8999,
-        "u1": 0.6001,
-        "v1": 1
-      },
-      "stats": {
-        "averageColor": {
-          "r": 171,
-          "g": 150,
-          "b": 122
-        },
-        "hue": 34.3,
-        "saturation": 0.229,
-        "lightness": 0.574,
-        "brightness": 0.598,
-        "contrast": 0.145,
-        "edgeDensity": 0.085
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 95: tile with orange bias, 60% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-    {
-      "index": 96,
-      "row": 9,
-      "col": 6,
-      "bounds": {
-        "x0": 1229,
-        "y0": 1843,
-        "x1": 1434,
-        "y1": 2048,
-        "width": 205,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.6001,
-        "v0": 0.8999,
-        "u1": 0.7002,
-        "v1": 1
-      },
-      "stats": {
-        "averageColor": {
-          "r": 230,
-          "g": 194,
-          "b": 138
-        },
-        "hue": 36.3,
-        "saturation": 0.653,
-        "lightness": 0.722,
-        "brightness": 0.774,
-        "contrast": 0.141,
-        "edgeDensity": 0.068
-      },
-      "classification": {
-        "category": "tile",
-        "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
-        ]
-      },
-      "kitchenFit": 0.75,
-      "description": "Cell 96: tile with orange bias, 77% brightness, kitchen fit 75%.",
-      "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
-      ]
-    },
-    {
-      "index": 97,
-      "row": 9,
-      "col": 7,
-      "bounds": {
-        "x0": 1434,
-        "y0": 1843,
-        "x1": 1638,
-        "y1": 2048,
-        "width": 204,
-        "height": 205
-      },
-      "uv": {
-        "u0": 0.7002,
-        "v0": 0.8999,
-        "u1": 0.7998,
-        "v1": 1
-      },
-      "stats": {
-        "averageColor": {
-          "r": 156,
-          "g": 154,
-          "b": 148
-        },
-        "hue": 47.7,
-        "saturation": 0.038,
-        "lightness": 0.596,
-        "brightness": 0.605,
-        "contrast": 0.114,
-        "edgeDensity": 0.02
-      },
-      "classification": {
-        "category": "concrete",
-        "tags": [
-          "concrete",
-          "stone",
-          "neutral-surface"
-        ]
-      },
-      "kitchenFit": 0.68,
-      "description": "Cell 97: concrete with yellow bias, 61% brightness, kitchen fit 68%.",
-      "tags": [
-        "concrete",
-        "stone",
-        "neutral-surface"
-      ]
-    },
-    {
       "index": 98,
       "row": 9,
       "col": 8,
       "bounds": {
-        "x0": 1638,
-        "y0": 1843,
-        "x1": 1843,
-        "y1": 2048,
-        "width": 205,
-        "height": 205
+        "x0": 3277,
+        "y0": 3686,
+        "x1": 3686,
+        "y1": 4096,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.7998,
+        "u0": 0.8,
         "v0": 0.8999,
         "u1": 0.8999,
         "v1": 1
       },
       "stats": {
         "averageColor": {
-          "r": 183,
-          "g": 143,
-          "b": 118
+          "r": 189,
+          "g": 152,
+          "b": 109
         },
-        "hue": 23.5,
-        "saturation": 0.31,
-        "lightness": 0.589,
-        "brightness": 0.587,
-        "contrast": 0.159,
-        "edgeDensity": 0.131
+        "hue": 31.7,
+        "saturation": 0.379,
+        "lightness": 0.586,
+        "brightness": 0.614,
+        "contrast": 0.209,
+        "edgeDensity": 0.144
       },
       "classification": {
         "category": "tile",
@@ -5508,8 +4640,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 98: tile with orange bias, 59% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 98: tile with orange bias, 61% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -5521,12 +4653,12 @@
       "row": 9,
       "col": 9,
       "bounds": {
-        "x0": 1843,
-        "y0": 1843,
-        "x1": 2048,
-        "y1": 2048,
-        "width": 205,
-        "height": 205
+        "x0": 3686,
+        "y0": 3686,
+        "x1": 4096,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.8999,
@@ -5536,31 +4668,31 @@
       },
       "stats": {
         "averageColor": {
-          "r": 155,
-          "g": 121,
-          "b": 103
+          "r": 166,
+          "g": 195,
+          "b": 206
         },
-        "hue": 20.5,
-        "saturation": 0.203,
-        "lightness": 0.506,
-        "brightness": 0.497,
-        "contrast": 0.188,
-        "edgeDensity": 0.158
+        "hue": 196.8,
+        "saturation": 0.287,
+        "lightness": 0.73,
+        "brightness": 0.743,
+        "contrast": 0.171,
+        "edgeDensity": 0.053
       },
       "classification": {
         "category": "tile",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "tile",
+          "cool-surface",
+          "ceramic"
         ]
       },
-      "kitchenFit": 0.8,
-      "description": "Cell 99: tile with orange bias, 50% brightness, kitchen fit 80%.",
+      "kitchenFit": 0.75,
+      "description": "Cell 99: tile with cyan bias, 74% brightness, kitchen fit 75%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "tile",
+        "cool-surface",
+        "ceramic"
       ]
     }
   ]

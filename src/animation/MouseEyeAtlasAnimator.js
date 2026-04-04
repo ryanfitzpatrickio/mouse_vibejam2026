@@ -18,6 +18,13 @@ const DEFAULT_STATE_TO_EXPRESSION = Object.freeze({
   chew: 'angry',
 });
 
+const DEFAULT_VALUES = Object.freeze({
+  position: { x: 0, y: 0.014, z: -0.193 },
+  rotation: { x: -2.3096, y: 0, z: 0 },
+  scale: { x: 2.071, y: 2.059, z: 2.06 },
+  frameCrop: { x: 0.06, y: 0.08 },
+});
+
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -31,18 +38,20 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+const CAMERA_WORLD_POSITION = new THREE.Vector3();
+const EYE_WORLD_POSITION = new THREE.Vector3();
+const EYE_WORLD_NORMAL = new THREE.Vector3();
+const EYE_TO_CAMERA = new THREE.Vector3();
+const EYE_WORLD_QUATERNION = new THREE.Quaternion();
+
 export class MouseEyeAtlasAnimator {
   constructor({
     atlasUrl = '/eyeset1.jpg',
     columns = 5,
     rows = 5,
     fps = 10,
-    frameCrop = { x: 0.06, y: 0.08 },
-    placement = {
-      position: { x: 0, y: 0.014, z: -0.193 },
-      rotation: { x: -2.3096, y: 0, z: 0 },
-      scale: { x: 2.071, y: 2.059, z: 2.06 },
-    },
+    frameCrop = DEFAULT_VALUES.frameCrop,
+    placement = DEFAULT_VALUES,
     stateToExpression = DEFAULT_STATE_TO_EXPRESSION,
   } = {}) {
     this.atlasUrl = atlasUrl;
@@ -60,21 +69,24 @@ export class MouseEyeAtlasAnimator {
     this.hideTargets = [];
 
     this.baseOffset = new THREE.Vector3(
-      placement.position?.x ?? 0,
-      placement.position?.y ?? 0.014,
-      placement.position?.z ?? -0.193,
+      placement.position?.x ?? DEFAULT_VALUES.position.x,
+      placement.position?.y ?? DEFAULT_VALUES.position.y,
+      placement.position?.z ?? DEFAULT_VALUES.position.z,
     );
     this.baseRotation = new THREE.Euler(
-      placement.rotation?.x ?? -2.3096,
-      placement.rotation?.y ?? 0,
-      placement.rotation?.z ?? 0,
+      placement.rotation?.x ?? DEFAULT_VALUES.rotation.x,
+      placement.rotation?.y ?? DEFAULT_VALUES.rotation.y,
+      placement.rotation?.z ?? DEFAULT_VALUES.rotation.z,
     );
     this.baseScale = new THREE.Vector3(
-      placement.scale?.x ?? 2.071,
-      placement.scale?.y ?? 2.059,
-      placement.scale?.z ?? 2.06,
+      placement.scale?.x ?? DEFAULT_VALUES.scale.x,
+      placement.scale?.y ?? DEFAULT_VALUES.scale.y,
+      placement.scale?.z ?? DEFAULT_VALUES.scale.z,
     );
-    this.frameCrop = new THREE.Vector2(frameCrop.x ?? 0.06, frameCrop.y ?? 0.08);
+    this.frameCrop = new THREE.Vector2(
+      frameCrop.x ?? DEFAULT_VALUES.frameCrop.x,
+      frameCrop.y ?? DEFAULT_VALUES.frameCrop.y,
+    );
     this.viewCamera = null;
     this.currentState = 'idle';
     this.currentExpression = 'idle';
@@ -83,6 +95,7 @@ export class MouseEyeAtlasAnimator {
     this.frameTimer = 0;
     this.frameDuration = 1 / this.fps;
     this.loaded = false;
+    this.opacity = 1;
   }
 
   async load() {
@@ -129,6 +142,7 @@ export class MouseEyeAtlasAnimator {
 
     this.loaded = true;
     this._applyFrame();
+    this.setOpacity(this.opacity);
     return this;
   }
 
@@ -136,11 +150,33 @@ export class MouseEyeAtlasAnimator {
     this.viewCamera = camera ?? null;
   }
 
+  setOpacity(opacity = 1) {
+    this.opacity = clamp(opacity, 0, 1);
+    if (!this.material) return;
+
+    this.material.opacity = this.opacity;
+    this.material.transparent = this.opacity < 0.999;
+    this.material.depthWrite = this.opacity >= 0.999;
+    this.material.needsUpdate = true;
+  }
+
   attach(parent, {
     anchor = null,
-    localOffset = new THREE.Vector3(0, 0.02, 0.08),
-    localRotation = new THREE.Euler(0, 0, 0),
-    localScale = new THREE.Vector3(1, 1, 1),
+    localOffset = new THREE.Vector3(
+      DEFAULT_VALUES.position.x,
+      DEFAULT_VALUES.position.y,
+      DEFAULT_VALUES.position.z,
+    ),
+    localRotation = new THREE.Euler(
+      DEFAULT_VALUES.rotation.x,
+      DEFAULT_VALUES.rotation.y,
+      DEFAULT_VALUES.rotation.z,
+    ),
+    localScale = new THREE.Vector3(
+      DEFAULT_VALUES.scale.x,
+      DEFAULT_VALUES.scale.y,
+      DEFAULT_VALUES.scale.z,
+    ),
     eyeSize = 0.13,
     hideTargets = [],
   } = {}) {
@@ -170,6 +206,8 @@ export class MouseEyeAtlasAnimator {
     this.eye.userData.skipOutline = true;
     this.eye.renderOrder = 1001;
     this.eye.frustumCulled = false;
+    this.eye.castShadow = false;
+    this.eye.receiveShadow = false;
     this.group.add(this.eye);
 
     this.anchor.add(this.group);
@@ -232,19 +270,20 @@ export class MouseEyeAtlasAnimator {
   _updateVisibility() {
     if (!this.group || !this.eye || !this.viewCamera) return;
 
-    const eyePosition = new THREE.Vector3();
-    const eyeQuaternion = new THREE.Quaternion();
-    const cameraPosition = new THREE.Vector3();
-    const eyeForward = new THREE.Vector3(0, 0, 1);
+    this.viewCamera.getWorldPosition(CAMERA_WORLD_POSITION);
+    this.eye.getWorldPosition(EYE_WORLD_POSITION);
+    this.eye.getWorldQuaternion(EYE_WORLD_QUATERNION);
 
-    this.eye.getWorldPosition(eyePosition);
-    this.eye.getWorldQuaternion(eyeQuaternion);
-    this.viewCamera.getWorldPosition(cameraPosition);
+    EYE_WORLD_NORMAL.set(0, 0, 1).applyQuaternion(EYE_WORLD_QUATERNION).normalize();
+    EYE_TO_CAMERA.subVectors(CAMERA_WORLD_POSITION, EYE_WORLD_POSITION);
 
-    eyeForward.applyQuaternion(eyeQuaternion).normalize();
-    const toCamera = cameraPosition.sub(eyePosition).normalize();
+    if (EYE_TO_CAMERA.lengthSq() === 0) {
+      this.group.visible = true;
+      return;
+    }
 
-    this.group.visible = eyeForward.dot(toCamera) > 0.08;
+    EYE_TO_CAMERA.normalize();
+    this.group.visible = EYE_WORLD_NORMAL.dot(EYE_TO_CAMERA) > 0.02;
   }
 
   setPlacement({ position, rotation, scale, frameCrop } = {}) {

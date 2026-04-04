@@ -35,10 +35,9 @@ export async function createCelShadingDemoScene({ canvas, forceWebGL = false } =
   camera.position.set(4.5, 3, 6);
   camera.lookAt(0, 0.75, 0);
 
-  const ambientLight = new THREE.AmbientLight('#ffffff', 0.5);
   const keyLight = new THREE.DirectionalLight('#fff3dd', 1.25);
   keyLight.position.set(3, 4, 2);
-  scene.add(ambientLight, keyLight);
+  scene.add(keyLight);
 
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(6, 48),
