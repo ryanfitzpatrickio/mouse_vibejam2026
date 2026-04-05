@@ -39,6 +39,34 @@ function titleCase(value) {
   return String(value).charAt(0).toUpperCase() + String(value).slice(1);
 }
 
+function stripJsonCodeFence(text) {
+  return String(text)
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```$/i, '')
+    .trim();
+}
+
+function safeParseJson(text) {
+  const cleaned = stripJsonCodeFence(text);
+  return JSON.parse(cleaned);
+}
+
+function getStoredString(key, fallback = '') {
+  try {
+    return window.localStorage.getItem(key) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function setStoredString(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage failures in private mode or restricted contexts.
+  }
+}
+
 function createLocalPrimitive(type, grid) {
   const primitive = normalizePrefabPrimitive({
     id: createPrefabPartId(),
@@ -367,6 +395,59 @@ export class PrefabEditorDialog {
       this._rebuildScene();
       this._syncForm();
     });
+
+    if (import.meta.env.DEV) {
+      this._createAIGenerationSection(section);
+    }
+  }
+
+  _createAIGenerationSection(parent) {
+    const section = this._createSection('AI Generate');
+    parent.appendChild(section);
+
+    this.aiPromptInput = document.createElement('input');
+    this.aiPromptInput.type = 'text';
+    this.aiPromptInput.placeholder = 'chair';
+    this._styleField(this.aiPromptInput);
+    section.appendChild(this.aiPromptInput);
+
+    this.aiKeyInput = document.createElement('input');
+    this.aiKeyInput.type = 'password';
+    this.aiKeyInput.placeholder = 'OpenRouter API key';
+    this.aiKeyInput.value = getStoredString('mouse-trouble.openrouter.key', '');
+    this._styleField(this.aiKeyInput);
+    this.aiKeyInput.style.marginTop = '8px';
+    this.aiKeyInput.addEventListener('input', () => {
+      setStoredString('mouse-trouble.openrouter.key', this.aiKeyInput.value);
+    });
+    section.appendChild(this.aiKeyInput);
+
+    const controls = document.createElement('div');
+    Object.assign(controls.style, {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+      gap: '8px',
+      marginTop: '8px',
+    });
+    section.appendChild(controls);
+
+    this._addInlineButton(controls, 'Generate', () => this._generatePrefabFromPrompt(), '#23472d');
+    this._addInlineButton(controls, 'Clear Key', () => {
+      this.aiKeyInput.value = '';
+      setStoredString('mouse-trouble.openrouter.key', '');
+      this._setStatus('Cleared OpenRouter key.');
+    }, '#5d221f');
+
+    this.aiNote = document.createElement('div');
+    this.aiNote.textContent = 'Dev only. Uses OpenRouter + Gemini Flash. Key stays in localStorage.';
+    Object.assign(this.aiNote.style, {
+      marginTop: '8px',
+      color: '#9ee8b2',
+      fontSize: '11px',
+      lineHeight: '1.35',
+      whiteSpace: 'pre-wrap',
+    });
+    section.appendChild(this.aiNote);
   }
 
   _createPartSection() {
@@ -883,7 +964,6 @@ export class PrefabEditorDialog {
     this.scaleInputs.x.value = part.scale.x;
     this.scaleInputs.y.value = part.scale.y;
     this.scaleInputs.z.value = part.scale.z;
-    this.activeTextureAtlasId = part.texture.atlas ?? this.activeTextureAtlasId;
     this.textureCellInput.max = String((this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1);
     this.textureCellInput.value = this._getTextureCellInputValue(part);
     this.colorInput.value = part.material.color;
@@ -1103,6 +1183,100 @@ export class PrefabEditorDialog {
     this._syncForm();
     this._rebuildScene();
     this._setStatus(`Deleted ${part.name}.`);
+  }
+
+  async _generatePrefabFromPrompt() {
+    const prompt = this.aiPromptInput?.value?.trim();
+    if (!prompt) {
+      this._setStatus('Enter a prompt first.', true);
+      return;
+    }
+
+    const apiKey = this.aiKeyInput?.value?.trim() || getStoredString('mouse-trouble.openrouter.key', '');
+    if (!apiKey) {
+      this._setStatus('Add an OpenRouter API key first.', true);
+      return;
+    }
+
+    setStoredString('mouse-trouble.openrouter.key', apiKey);
+    this.aiNote.textContent = `Generating "${prompt}"...`;
+
+    const atlasIds = this.textureAtlases.map((atlas) => atlas.id).join(', ');
+    const systemPrompt = [
+      'You are generating prefab geometry for a 3D kitchen game.',
+      'Return JSON only. No markdown, no commentary, no code fences.',
+      'The JSON must match this shape:',
+      '{ name: string, size: { x: number, y: number, z: number }, primitives: Array<primitive> }',
+      'Each primitive must use only these fields:',
+      '{ id, name, type, position:{x,y,z}, rotation:{x,y,z}, scale:{x,y,z}, texture:{atlas,cell,repeat:{x,y},rotation}, material:{color,roughness,metalness}, collider, castShadow, receiveShadow }',
+      'Allowed primitive types: box, plane, cylinder.',
+      'Keep the object simple, compact, and valid for a 1x1 or small multi-cell prefab.',
+      'Use the smallest sensible number of primitives. Favor boxes and cylinders.',
+      `Available texture atlases: ${atlasIds}. Use atlas ids only if texture assignment is helpful.`,
+      'Do not include duplicate parts, negative scales, or huge coordinates.',
+      'The user prompt is the desired object, for example "chair".',
+    ].join('\n');
+
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Mouse Trouble Prefab Editor',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+          max_completion_tokens: 1400,
+        }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.error?.message || response.statusText || 'OpenRouter request failed');
+      }
+
+      const content = payload?.choices?.[0]?.message?.content ?? '';
+      const parsed = safeParseJson(content);
+      const prefab = normalizePrefab({
+        name: parsed.name || prompt,
+        size: parsed.size,
+        primitives: Array.isArray(parsed.primitives) ? parsed.primitives : [],
+      });
+
+      prefab.primitives = prefab.primitives.map((primitive) => normalizePrefabPrimitive({
+        ...primitive,
+        texture: {
+          atlas: primitive.texture?.atlas ?? DEFAULT_TEXTURE_ATLAS,
+          cell: Number.isFinite(primitive.texture?.cell) ? primitive.texture.cell : 0,
+          repeat: primitive.texture?.repeat ?? { x: 1, y: 1 },
+          rotation: primitive.texture?.rotation ?? 0,
+        },
+      }));
+
+      if (!prefab.primitives.length) {
+        throw new Error('Model returned no primitives.');
+      }
+
+      this.library.prefabs.push(prefab);
+      this.prefabId = prefab.id;
+      this.selectedPartId = prefab.primitives[0]?.id ?? null;
+      this._syncPrefabOptions();
+      this._syncForm();
+      this._rebuildScene();
+      this.aiNote.textContent = `Generated "${prefab.name}" with ${prefab.primitives.length} parts.`;
+      this._setStatus(`Generated ${prefab.name}.`);
+    } catch (error) {
+      this.aiNote.textContent = `Generation failed: ${error.message}`;
+      this._setStatus(`AI generation failed: ${error.message}`, true);
+    }
   }
 
   _setTransformMode(mode) {

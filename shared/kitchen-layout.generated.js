@@ -7,9 +7,9 @@ export default {
       "name": "Floor",
       "type": "plane",
       "position": {
-        "x": 0,
-        "y": -0.0111,
-        "z": 0
+        "x": -0.6667,
+        "y": 0,
+        "z": 0.6919
       },
       "rotation": {
         "x": -1.5708,
@@ -17,13 +17,13 @@ export default {
         "z": 0
       },
       "scale": {
-        "x": 1,
-        "y": 1,
+        "x": 1.221,
+        "y": 1.3839,
         "z": 1
       },
       "texture": {
-        "atlas": "textures",
-        "cell": 12,
+        "atlas": "textures3",
+        "cell": 4,
         "repeat": {
           "x": 6,
           "y": 6
@@ -263,10 +263,10 @@ export default {
       "faceTextures": {},
       "prefabId": null,
       "prefabInstanceId": null,
-      "collider": true,
+      "collider": false,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": true
     },
     {
       "id": "builtin-BackCounterLeft",
@@ -703,7 +703,7 @@ export default {
       },
       "texture": {
         "atlas": "textures",
-        "cell": null,
+        "cell": 0,
         "repeat": {
           "x": 1,
           "y": 1
@@ -718,7 +718,7 @@ export default {
       "faceTextures": {
         "right": {
           "atlas": "textures",
-          "cell": null
+          "cell": 0
         }
       },
       "prefabId": null,
@@ -749,7 +749,7 @@ export default {
       },
       "texture": {
         "atlas": "textures",
-        "cell": null,
+        "cell": 0,
         "repeat": {
           "x": 1,
           "y": 1
@@ -764,7 +764,7 @@ export default {
       "faceTextures": {
         "right": {
           "atlas": "textures",
-          "cell": null
+          "cell": 0
         }
       },
       "prefabId": null,
@@ -795,7 +795,7 @@ export default {
       },
       "texture": {
         "atlas": "textures",
-        "cell": null,
+        "cell": 0,
         "repeat": {
           "x": 1,
           "y": 1
@@ -810,7 +810,7 @@ export default {
       "faceTextures": {
         "right": {
           "atlas": "textures",
-          "cell": null
+          "cell": 0
         }
       },
       "prefabId": null,
@@ -841,7 +841,7 @@ export default {
       },
       "texture": {
         "atlas": "textures",
-        "cell": null,
+        "cell": 0,
         "repeat": {
           "x": 1,
           "y": 1
@@ -856,7 +856,7 @@ export default {
       "faceTextures": {
         "right": {
           "atlas": "textures",
-          "cell": null
+          "cell": 0
         }
       },
       "prefabId": null,
@@ -1071,7 +1071,7 @@ export default {
       },
       "texture": {
         "atlas": "textures",
-        "cell": null,
+        "cell": 0,
         "repeat": {
           "x": 1,
           "y": 1
@@ -1086,7 +1086,7 @@ export default {
       "faceTextures": {
         "right": {
           "atlas": "textures",
-          "cell": null
+          "cell": 0
         }
       },
       "prefabId": null,
@@ -1117,7 +1117,7 @@ export default {
       },
       "texture": {
         "atlas": "textures",
-        "cell": null,
+        "cell": 0,
         "repeat": {
           "x": 1,
           "y": 1
@@ -1132,7 +1132,7 @@ export default {
       "faceTextures": {
         "right": {
           "atlas": "textures",
-          "cell": null
+          "cell": 0
         }
       },
       "prefabId": null,
@@ -1853,7 +1853,7 @@ export default {
       },
       "texture": {
         "atlas": "textures",
-        "cell": null,
+        "cell": 0,
         "repeat": {
           "x": 1,
           "y": 1
@@ -1868,7 +1868,7 @@ export default {
       "faceTextures": {
         "right": {
           "atlas": "textures",
-          "cell": null
+          "cell": 0
         }
       },
       "prefabId": null,
@@ -1899,7 +1899,7 @@ export default {
       },
       "texture": {
         "atlas": "textures",
-        "cell": null,
+        "cell": 0,
         "repeat": {
           "x": 1,
           "y": 1
@@ -1914,7 +1914,7 @@ export default {
       "faceTextures": {
         "right": {
           "atlas": "textures",
-          "cell": null
+          "cell": 0
         }
       },
       "prefabId": null,
@@ -2015,6 +2015,718 @@ export default {
       "castShadow": true,
       "receiveShadow": true,
       "deleted": true
+    },
+    {
+      "id": "prefab-instance-mnm0ht51-gb2st-part-1",
+      "name": "Oven 2-box-part",
+      "type": "box",
+      "position": {
+        "x": 2,
+        "y": 0.625,
+        "z": 0.6666666666666661
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1.3333,
+        "y": 1.25,
+        "z": 1.3333
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 41,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "right": {
+          "atlas": "textures3",
+          "cell": 41
+        },
+        "left": {
+          "atlas": "textures3",
+          "cell": 41
+        },
+        "top": {
+          "atlas": "textures",
+          "cell": 45
+        },
+        "front": {
+          "atlas": "textures3",
+          "cell": 35
+        },
+        "back": {
+          "atlas": "textures3",
+          "cell": 40
+        }
+      },
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "prefabId": "counter-module",
+      "prefabInstanceId": "prefab-instance-mnm0ht51-gb2st",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0ht51-gb2st-part-2",
+      "name": "Oven 2-box-part",
+      "type": "box",
+      "position": {
+        "x": 2,
+        "y": 1.2549,
+        "z": 0.12196666666666611
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1.25,
+        "y": 0.25,
+        "z": 0.25
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 27,
+        "repeat": {
+          "x": 1,
+          "y": 0.1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "front": {
+          "atlas": "textures2",
+          "cell": 27
+        },
+        "back": {
+          "atlas": "textures2",
+          "cell": 23
+        }
+      },
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "prefabId": "counter-module",
+      "prefabInstanceId": "prefab-instance-mnm0ht51-gb2st",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0jq8i-tn59l-part-1",
+      "name": "fridge-fridge",
+      "type": "box",
+      "position": {
+        "x": -3.3333333333333335,
+        "y": 1.5,
+        "z": -2
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1.25,
+        "y": 3,
+        "z": 1.25
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 40,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "right": {
+          "atlas": "textures",
+          "cell": 37
+        },
+        "left": {
+          "atlas": "textures",
+          "cell": 37
+        },
+        "top": {
+          "atlas": "textures",
+          "cell": 37
+        },
+        "bottom": {
+          "atlas": "textures",
+          "cell": 37
+        },
+        "back": {
+          "atlas": "textures",
+          "cell": 49
+        }
+      },
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "prefabId": "prefab-mnls4d08-4gxlh",
+      "prefabInstanceId": "prefab-instance-mnm0jq8i-tn59l",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0jq8i-tn59l-part-2",
+      "name": "fridge-box-part",
+      "type": "box",
+      "position": {
+        "x": -3.3333333333333335,
+        "y": 0.4241,
+        "z": -2.4449
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 0.5,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 0,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "back": {
+          "atlas": "textures",
+          "cell": 46
+        }
+      },
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "prefabId": "prefab-mnls4d08-4gxlh",
+      "prefabInstanceId": "prefab-instance-mnm0jq8i-tn59l",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0jxz7-iz3s8-part-1",
+      "name": "chair-leg",
+      "type": "box",
+      "position": {
+        "x": -3.5333333333333337,
+        "y": 0.25,
+        "z": -2.2
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.05,
+        "y": 0.5,
+        "z": 0.05
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 5,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#8B4513",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0jxz7-iz3s8-part-2",
+      "name": "chair-leg",
+      "type": "box",
+      "position": {
+        "x": -3.1333333333333333,
+        "y": 0.25,
+        "z": -2.2
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.05,
+        "y": 0.5,
+        "z": 0.05
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 5,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#8B4513",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0jxz7-iz3s8-part-3",
+      "name": "chair-leg",
+      "type": "box",
+      "position": {
+        "x": -3.5333333333333337,
+        "y": 0.25,
+        "z": -1.8
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.05,
+        "y": 0.5,
+        "z": 0.05
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 5,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#8B4513",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0jxz7-iz3s8-part-4",
+      "name": "chair-leg",
+      "type": "box",
+      "position": {
+        "x": -3.1333333333333333,
+        "y": 0.25,
+        "z": -1.8
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.05,
+        "y": 0.5,
+        "z": 0.05
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 5,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#8B4513",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0jxz7-iz3s8-part-5",
+      "name": "chair-seat",
+      "type": "box",
+      "position": {
+        "x": -3.3333333333333335,
+        "y": 0.525,
+        "z": -2
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 0.05,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#A0522D",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0jxz7-iz3s8-part-6",
+      "name": "chair-backrest",
+      "type": "box",
+      "position": {
+        "x": -3.3333333333333335,
+        "y": 0.775,
+        "z": -1.775
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 0.5,
+        "z": 0.05
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#A0522D",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0k3f1-9zcj6-part-1",
+      "name": "chair-leg",
+      "type": "box",
+      "position": {
+        "x": -3.5333333333333337,
+        "y": 0.25,
+        "z": -2.2
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.05,
+        "y": 0.5,
+        "z": 0.05
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 5,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#8B4513",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0k3f1-9zcj6-part-2",
+      "name": "chair-leg",
+      "type": "box",
+      "position": {
+        "x": -3.1333333333333333,
+        "y": 0.25,
+        "z": -2.2
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.05,
+        "y": 0.5,
+        "z": 0.05
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 5,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#8B4513",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0k3f1-9zcj6-part-3",
+      "name": "chair-leg",
+      "type": "box",
+      "position": {
+        "x": -3.5333333333333337,
+        "y": 0.25,
+        "z": -1.8
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.05,
+        "y": 0.5,
+        "z": 0.05
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 5,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#8B4513",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0k3f1-9zcj6-part-4",
+      "name": "chair-leg",
+      "type": "box",
+      "position": {
+        "x": -3.1333333333333333,
+        "y": 0.25,
+        "z": -1.8
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.05,
+        "y": 0.5,
+        "z": 0.05
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 5,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#8B4513",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0k3f1-9zcj6-part-5",
+      "name": "chair-seat",
+      "type": "box",
+      "position": {
+        "x": -3.3333333333333335,
+        "y": 0.525,
+        "z": -2
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 0.05,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#A0522D",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0k3f1-9zcj6-part-6",
+      "name": "chair-backrest",
+      "type": "box",
+      "position": {
+        "x": -3.3333333333333335,
+        "y": 0.775,
+        "z": -1.775
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 0.5,
+        "z": 0.05
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#A0522D",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "prefabId": "prefab-mnlzgh57-sy1xr",
+      "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
     }
   ]
 };

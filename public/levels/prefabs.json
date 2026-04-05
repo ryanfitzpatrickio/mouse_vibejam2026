@@ -30,6 +30,7 @@
             "z": 1.3333
           },
           "texture": {
+            "atlas": "textures3",
             "cell": 41,
             "repeat": {
               "x": 1,
@@ -38,10 +39,26 @@
             "rotation": 0
           },
           "faceTextures": {
-            "right": 37,
-            "left": 37,
-            "top": 45,
-            "back": 37
+            "right": {
+              "atlas": "textures3",
+              "cell": 41
+            },
+            "left": {
+              "atlas": "textures3",
+              "cell": 41
+            },
+            "top": {
+              "atlas": "textures",
+              "cell": 45
+            },
+            "front": {
+              "atlas": "textures3",
+              "cell": 35
+            },
+            "back": {
+              "atlas": "textures3",
+              "cell": 40
+            }
           },
           "material": {
             "color": "#ffffff",
@@ -58,8 +75,8 @@
           "type": "box",
           "position": {
             "x": 0,
-            "y": 1.3419,
-            "z": -0.5408
+            "y": 1.2549,
+            "z": -0.5447
           },
           "rotation": {
             "x": 0,
@@ -72,7 +89,8 @@
             "z": 0.25
           },
           "texture": {
-            "cell": 37,
+            "atlas": "textures2",
+            "cell": 27,
             "repeat": {
               "x": 1,
               "y": 0.1
@@ -80,7 +98,14 @@
             "rotation": 0
           },
           "faceTextures": {
-            "front": 43
+            "front": {
+              "atlas": "textures2",
+              "cell": 27
+            },
+            "back": {
+              "atlas": "textures2",
+              "cell": 23
+            }
           },
           "material": {
             "color": "#ffffff",
@@ -92,56 +117,6 @@
           "receiveShadow": true
         }
       ]
-    },
-    {
-      "id": "chair-module",
-      "name": "Chair Module",
-      "size": {
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "primitives": []
-    },
-    {
-      "id": "appliance-module",
-      "name": "Appliance Module",
-      "size": {
-        "x": 1,
-        "y": 2,
-        "z": 1
-      },
-      "primitives": []
-    },
-    {
-      "id": "prefab-mnkk823k-t5cz5",
-      "name": "Oven",
-      "size": {
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "primitives": []
-    },
-    {
-      "id": "prefab-mnkk872a-28e9e",
-      "name": "Prefab 5",
-      "size": {
-        "x": 1,
-        "y": 1,
-        "z": 1
-      },
-      "primitives": []
-    },
-    {
-      "id": "prefab-mnls46ab-fi6ly",
-      "name": "Prefab 6",
-      "size": {
-        "x": 1,
-        "y": 2,
-        "z": 1
-      },
-      "primitives": []
     },
     {
       "id": "prefab-mnls4d08-4gxlh",
@@ -172,6 +147,7 @@
             "z": 1.25
           },
           "texture": {
+            "atlas": "textures",
             "cell": 40,
             "repeat": {
               "x": 1,
@@ -180,11 +156,26 @@
             "rotation": 0
           },
           "faceTextures": {
-            "right": 37,
-            "left": 37,
-            "top": 37,
-            "bottom": 37,
-            "back": 49
+            "right": {
+              "atlas": "textures",
+              "cell": 37
+            },
+            "left": {
+              "atlas": "textures",
+              "cell": 37
+            },
+            "top": {
+              "atlas": "textures",
+              "cell": 37
+            },
+            "bottom": {
+              "atlas": "textures",
+              "cell": 37
+            },
+            "back": {
+              "atlas": "textures",
+              "cell": 49
+            }
           },
           "material": {
             "color": "#ffffff",
@@ -215,6 +206,7 @@
             "z": 0.5
           },
           "texture": {
+            "atlas": "textures",
             "cell": 0,
             "repeat": {
               "x": 1,
@@ -223,7 +215,10 @@
             "rotation": 0
           },
           "faceTextures": {
-            "back": 46
+            "back": {
+              "atlas": "textures",
+              "cell": 46
+            }
           },
           "material": {
             "color": "#ffffff",
@@ -235,6 +230,982 @@
           "receiveShadow": true
         }
       ]
+    },
+    {
+      "id": "prefab-mnlzgh57-sy1xr",
+      "name": "chair",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "leg1",
+          "name": "leg",
+          "type": "box",
+          "position": {
+            "x": -0.2,
+            "y": 0.25,
+            "z": -0.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.5,
+            "z": 0.05
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 5,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "leg2",
+          "name": "leg",
+          "type": "box",
+          "position": {
+            "x": 0.2,
+            "y": 0.25,
+            "z": -0.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.5,
+            "z": 0.05
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 5,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "leg3",
+          "name": "leg",
+          "type": "box",
+          "position": {
+            "x": -0.2,
+            "y": 0.25,
+            "z": 0.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.5,
+            "z": 0.05
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 5,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "leg4",
+          "name": "leg",
+          "type": "box",
+          "position": {
+            "x": 0.2,
+            "y": 0.25,
+            "z": 0.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.5,
+            "z": 0.05
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 5,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "seat",
+          "name": "seat",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.525,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5,
+            "y": 0.05,
+            "z": 0.5
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 52,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#A0522D",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "backrest",
+          "name": "backrest",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.775,
+            "z": 0.225
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5,
+            "y": 0.5,
+            "z": 0.05
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 52,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#A0522D",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
+    },
+    {
+      "id": "prefab-mnm02jw8-m28hj",
+      "name": "counter",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "counter_top",
+          "name": "counter_top",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.45,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 0.1,
+            "z": 0.6
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#FFFFFF",
+            "roughness": 0.5,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "counter_leg_1",
+          "name": "counter_leg_1",
+          "type": "box",
+          "position": {
+            "x": 0.4,
+            "y": 0.2,
+            "z": 0.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.1,
+            "y": 0.4,
+            "z": 0.1
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#FFFFFF",
+            "roughness": 0.5,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "counter_leg_2",
+          "name": "counter_leg_2",
+          "type": "box",
+          "position": {
+            "x": -0.4,
+            "y": 0.2,
+            "z": 0.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.1,
+            "y": 0.4,
+            "z": 0.1
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#FFFFFF",
+            "roughness": 0.5,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "counter_leg_3",
+          "name": "counter_leg_3",
+          "type": "box",
+          "position": {
+            "x": 0.4,
+            "y": 0.2,
+            "z": -0.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.1,
+            "y": 0.4,
+            "z": 0.1
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#FFFFFF",
+            "roughness": 0.5,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "counter_leg_4",
+          "name": "counter_leg_4",
+          "type": "box",
+          "position": {
+            "x": -0.4,
+            "y": 0.2,
+            "z": -0.2
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.1,
+            "y": 0.4,
+            "z": 0.1
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#FFFFFF",
+            "roughness": 0.5,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
+    },
+    {
+      "id": "prefab-mnm02yk0-67pvl",
+      "name": "countertop_with_cupboards",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "countertop",
+          "name": "countertop",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.45,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 0.1,
+            "z": 0.6
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 20,
+            "repeat": {
+              "x": 0.5,
+              "y": 0.1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {
+            "right": {
+              "atlas": "textures2",
+              "cell": 32
+            }
+          },
+          "material": {
+            "color": "#A9A9A9",
+            "roughness": 0.5,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "cupboard_left",
+          "name": "cupboard_left",
+          "type": "box",
+          "position": {
+            "x": -0.25,
+            "y": 0.2,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5,
+            "y": 0.4,
+            "z": 0.6
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 52,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.7,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "cupboard_right",
+          "name": "cupboard_right",
+          "type": "box",
+          "position": {
+            "x": 0.25,
+            "y": 0.2,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5,
+            "y": 0.4,
+            "z": 0.6
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 52,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.7,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "handle_left",
+          "name": "handle_left",
+          "type": "box",
+          "position": {
+            "x": -0.1,
+            "y": 0.2,
+            "z": 0.31
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.15,
+            "z": 0.02
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#D3D3D3",
+            "roughness": 0.2,
+            "metalness": 0.8
+          },
+          "collider": false,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "handle_right",
+          "name": "handle_right",
+          "type": "box",
+          "position": {
+            "x": 0.1,
+            "y": 0.2,
+            "z": 0.31
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.15,
+            "z": 0.02
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#D3D3D3",
+            "roughness": 0.2,
+            "metalness": 0.8
+          },
+          "collider": false,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
+    },
+    {
+      "id": "prefab-mnm08ong-c0jwt",
+      "name": "countertop_with_top_cupboards",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "prefab-part-mnm08ong-i4rro",
+          "name": "countertop",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.45,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 0.1,
+            "z": 0.6
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 20,
+            "repeat": {
+              "x": 0.5,
+              "y": 0.1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {
+            "right": {
+              "atlas": "textures2",
+              "cell": 32
+            }
+          },
+          "material": {
+            "color": "#A9A9A9",
+            "roughness": 0.5,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnm08ong-24bqs",
+          "name": "cupboard_left",
+          "type": "box",
+          "position": {
+            "x": -0.25,
+            "y": 0.2,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5,
+            "y": 0.4,
+            "z": 0.6
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 52,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.7,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnm08ong-fcgp2",
+          "name": "cupboard_right",
+          "type": "box",
+          "position": {
+            "x": 0.25,
+            "y": 0.2,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5,
+            "y": 0.4,
+            "z": 0.6
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 52,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.7,
+            "metalness": 0
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnm08ong-0irti",
+          "name": "handle_left",
+          "type": "box",
+          "position": {
+            "x": -0.1,
+            "y": 0.2,
+            "z": 0.31
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.15,
+            "z": 0.02
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#D3D3D3",
+            "roughness": 0.2,
+            "metalness": 0.8
+          },
+          "collider": false,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnm08ong-7j1co",
+          "name": "handle_right",
+          "type": "box",
+          "position": {
+            "x": 0.1,
+            "y": 0.2,
+            "z": 0.31
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.05,
+            "y": 0.15,
+            "z": 0.02
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#D3D3D3",
+            "roughness": 0.2,
+            "metalness": 0.8
+          },
+          "collider": false,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnm0922s-gqael",
+          "name": "box-part",
+          "type": "box",
+          "position": {
+            "x": -0.2489,
+            "y": 0.9973,
+            "z": -0.0269
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5,
+            "y": 0.5,
+            "z": 0.5
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 4,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8b1009",
+            "roughness": 0.88,
+            "metalness": 0.04
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnm0adrg-d6f08",
+          "name": "box-part-copy",
+          "type": "box",
+          "position": {
+            "x": 0.2523,
+            "y": 0.9963,
+            "z": -0.0271
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.5,
+            "y": 0.5,
+            "z": 0.5
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 4,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8b1009",
+            "roughness": 0.88,
+            "metalness": 0.04
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnm0etg2-b2qp3",
+          "name": "plane-part",
+          "type": "plane",
+          "position": {
+            "x": 0,
+            "y": 0.5631,
+            "z": -0.2976
+          },
+          "rotation": {
+            "x": -3.141592653589793,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1,
+            "y": 1,
+            "z": 1
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#ffffff",
+            "roughness": 0.88,
+            "metalness": 0.04
+          },
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
+    },
+    {
+      "id": "prefab-mnm0ducj-i6asv",
+      "name": "Prefab 7",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": []
     }
   ]
 }

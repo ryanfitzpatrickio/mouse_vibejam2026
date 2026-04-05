@@ -243,6 +243,8 @@ export class Room {
     this.editableGroup.name = 'EditableLayout';
     this.editableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
     this.editableMeshes = new Map();
+    this.prefabInstanceGroups = new Map();
+    this.prefabInstanceIdByPrimitiveId = new Map();
     this.ready = Promise.all([
       this._loadTextureAtlas(),
       this._loadEditableLayout(),
@@ -417,6 +419,7 @@ export class Room {
       },
       prefabId: entry.prefabId ?? null,
       prefabInstanceId: entry.prefabInstanceId ?? null,
+      prefabInstanceOrigin: entry.prefabInstanceOrigin ? cloneVectorLike(entry.prefabInstanceOrigin, { x: 0, y: 0, z: 0 }) : null,
       collider: entry.collider !== false,
       castShadow: entry.castShadow !== false,
       receiveShadow: entry.receiveShadow !== false,
@@ -507,6 +510,7 @@ export class Room {
       faceTextures,
       prefabId: entry.primitive.prefabId ?? null,
       prefabInstanceId: entry.primitive.prefabInstanceId ?? null,
+      prefabInstanceOrigin: entry.primitive.prefabInstanceOrigin ?? null,
       collider: mesh.userData.colliderEnabled !== false,
       castShadow: mesh.castShadow !== false,
       receiveShadow: mesh.receiveShadow !== false,
@@ -620,12 +624,28 @@ export class Room {
 
     this.editableGroup.traverse((child) => {
       if (child.geometry) child.geometry.dispose();
-      if (child.material) child.material.dispose();
+      if (Array.isArray(child.material)) {
+        child.material.forEach((material) => material?.dispose?.());
+      } else if (child.material) {
+        child.material.dispose?.();
+      }
     });
     this.editableGroup.clear();
     this.editableMeshes.clear();
+    this.prefabInstanceGroups.clear();
+    this.prefabInstanceIdByPrimitiveId.clear();
+
+    const groupedPrimitives = new Map();
 
     for (const primitive of this.editableLayout.primitives) {
+      if (primitive.prefabInstanceId) {
+        const bucket = groupedPrimitives.get(primitive.prefabInstanceId) ?? [];
+        bucket.push(primitive);
+        groupedPrimitives.set(primitive.prefabInstanceId, bucket);
+        this.prefabInstanceIdByPrimitiveId.set(primitive.id, primitive.prefabInstanceId);
+        continue;
+      }
+
       const geometry = createPrimitiveGeometry(primitive.type);
       const material = this._createEditablePrimitiveMaterial(primitive);
       const mesh = new THREE.Mesh(geometry, material);
@@ -653,6 +673,60 @@ export class Room {
           },
         });
       }
+    }
+
+    for (const [instanceId, primitives] of groupedPrimitives.entries()) {
+      const anchor = primitives[0];
+      if (!anchor) continue;
+      const origin = anchor.prefabInstanceOrigin ?? anchor.position;
+
+      const group = new THREE.Group();
+      group.name = `PrefabInstance-${instanceId}`;
+      group.position.set(origin.x, origin.y, origin.z);
+      group.userData.editablePrimitive = true;
+      group.userData.prefabInstanceId = instanceId;
+      this.editableGroup.add(group);
+      this.prefabInstanceGroups.set(instanceId, {
+        group,
+        origin,
+        primitiveIds: primitives.map((primitive) => primitive.id),
+      });
+
+      primitives.forEach((primitive) => {
+        const geometry = createPrimitiveGeometry(primitive.type);
+        const material = this._createEditablePrimitiveMaterial(primitive);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.name = primitive.name;
+        mesh.position.set(
+          primitive.position.x - origin.x,
+          primitive.position.y - origin.y,
+          primitive.position.z - origin.z,
+        );
+        mesh.rotation.set(primitive.rotation.x, primitive.rotation.y, primitive.rotation.z);
+        mesh.scale.set(primitive.scale.x, primitive.scale.y, primitive.scale.z);
+        mesh.castShadow = primitive.castShadow;
+        mesh.receiveShadow = primitive.receiveShadow;
+        mesh.visible = !primitive.deleted;
+        mesh.userData.editablePrimitive = true;
+        mesh.userData.primitiveId = primitive.id;
+        mesh.userData.prefabInstanceId = instanceId;
+        group.add(mesh);
+        this.editableMeshes.set(primitive.id, mesh);
+        this.prefabInstanceIdByPrimitiveId.set(primitive.id, instanceId);
+
+        if (primitive.collider) {
+          this.colliders.push({
+            mesh,
+            aabb: AABB.fromMesh(mesh),
+            type: primitive.type === 'plane' ? 'surface' : 'furniture',
+            metadata: {
+              source: 'editable',
+              primitiveId: primitive.id,
+              prefabInstanceId: instanceId,
+            },
+          });
+        }
+      });
     }
 
     this._applyTextureAtlas();
@@ -723,12 +797,24 @@ export class Room {
       return;
     }
 
+    const prefabInstanceId = this.prefabInstanceIdByPrimitiveId.get(id);
+    if (prefabInstanceId) {
+      this.editableLayout.primitives = this.editableLayout.primitives.filter((entry) => entry.prefabInstanceId !== prefabInstanceId);
+      this.loadedEditableLayout.primitives = this.loadedEditableLayout.primitives.filter((entry) => entry.prefabInstanceId !== prefabInstanceId);
+      this._rebuildEditableLayout();
+      return;
+    }
+
     this.editableLayout.primitives = this.editableLayout.primitives.filter((entry) => entry.id !== id);
     this.loadedEditableLayout.primitives = this.loadedEditableLayout.primitives.filter((entry) => entry.id !== id);
     this._rebuildEditableLayout();
   }
 
   getEditableMesh(id) {
+    const prefabInstanceId = this.prefabInstanceIdByPrimitiveId.get(id);
+    if (prefabInstanceId) {
+      return this.prefabInstanceGroups.get(prefabInstanceId)?.group ?? null;
+    }
     if (this.builtInEditableMeshes.has(id)) {
       return this.builtInEditableMeshes.get(id)?.mesh ?? null;
     }
@@ -738,6 +824,15 @@ export class Room {
 
   updateEditablePrimitiveTransform(id, transform = {}) {
     if (!id) return null;
+
+    const prefabInstanceId = this.prefabInstanceIdByPrimitiveId.get(id);
+    if (prefabInstanceId) {
+      return this.updatePrefabInstanceTransform(prefabInstanceId, transform);
+    }
+
+    if (this.prefabInstanceGroups.has(id)) {
+      return this.updatePrefabInstanceTransform(id, transform);
+    }
 
     if (this.builtInEditableMeshes.has(id)) {
       const entry = this.builtInEditableMeshes.get(id);
@@ -780,6 +875,45 @@ export class Room {
     }
     this.refreshColliders();
     return primitive;
+  }
+
+  updatePrefabInstanceTransform(instanceId, transform = {}) {
+    const primitives = this.editableLayout.primitives.filter((entry) => entry.prefabInstanceId === instanceId);
+    if (!primitives.length) return null;
+
+    if (!transform.position) {
+      return primitives[0];
+    }
+
+    const anchor = primitives[0].prefabInstanceOrigin ?? primitives[0].position;
+    const nextAnchor = cloneVectorLike(transform.position, anchor);
+    const delta = {
+      x: nextAnchor.x - anchor.x,
+      y: nextAnchor.y - anchor.y,
+      z: nextAnchor.z - anchor.z,
+    };
+
+    primitives.forEach((primitive) => {
+      primitive.position = {
+        x: Number((primitive.position.x + delta.x).toFixed(4)),
+        y: Number((primitive.position.y + delta.y).toFixed(4)),
+        z: Number((primitive.position.z + delta.z).toFixed(4)),
+      };
+      primitive.prefabInstanceOrigin = {
+        x: Number((anchor.x + delta.x).toFixed(4)),
+        y: Number((anchor.y + delta.y).toFixed(4)),
+        z: Number((anchor.z + delta.z).toFixed(4)),
+      };
+    });
+
+    this.editableLayout.primitives = this.editableLayout.primitives.map((entry) => (
+      entry.prefabInstanceId === instanceId
+        ? primitives.find((primitive) => primitive.id === entry.id) ?? entry
+        : entry
+    ));
+
+    this._rebuildEditableLayout();
+    return primitives[0];
   }
 
   refreshColliders() {
@@ -855,7 +989,7 @@ export class Room {
     return THREE.MathUtils.clamp(snapped, min, max);
   }
 
-  snapPrimitiveToGrid(definition, { snapY = false, snapScale = false } = {}) {
+  snapPrimitiveToGrid(definition, { snapY = false, snapScale = false, snapPosition = true } = {}) {
     const primitive = this._normalizePrimitive(definition);
     const grid = this.getBuildGridConfig();
 
@@ -869,19 +1003,21 @@ export class Room {
       }
     }
 
-    const footprint = this._getPrimitiveFootprint(primitive);
-    primitive.position.x = this._snapGridAxisPosition(
-      primitive.position.x,
-      footprint.width,
-      grid.roomWidth,
-      grid.cellWidth,
-    );
-    primitive.position.z = this._snapGridAxisPosition(
-      primitive.position.z,
-      footprint.depth,
-      grid.roomDepth,
-      grid.cellDepth,
-    );
+    if (snapPosition) {
+      const footprint = this._getPrimitiveFootprint(primitive);
+      primitive.position.x = this._snapGridAxisPosition(
+        primitive.position.x,
+        footprint.width,
+        grid.roomWidth,
+        grid.cellWidth,
+      );
+      primitive.position.z = this._snapGridAxisPosition(
+        primitive.position.z,
+        footprint.depth,
+        grid.roomDepth,
+        grid.cellDepth,
+      );
+    }
 
     if (snapY) {
       primitive.position.y = snapToStep(primitive.position.y, grid.verticalStep);
@@ -922,6 +1058,11 @@ export class Room {
           x: anchor.x + (part.position?.x ?? 0),
           y: part.position?.y ?? 0,
           z: anchor.z + (part.position?.z ?? 0),
+        },
+        prefabInstanceOrigin: {
+          x: anchor.x,
+          y: anchor.y,
+          z: anchor.z,
         },
         prefabId: prefab.id,
         prefabInstanceId: instanceId,

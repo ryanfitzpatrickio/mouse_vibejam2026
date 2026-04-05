@@ -91,6 +91,9 @@ export function normalizePrefabPrimitive(entry = {}) {
       roughness: entry.material?.roughness ?? 0.88,
       metalness: entry.material?.metalness ?? 0.04,
     },
+    prefabInstanceOrigin: entry.prefabInstanceOrigin
+      ? cloneVectorLike(entry.prefabInstanceOrigin, { x: 0, y: 0, z: 0 })
+      : null,
     collider: entry.collider !== false,
     castShadow: entry.castShadow !== false,
     receiveShadow: entry.receiveShadow !== false,

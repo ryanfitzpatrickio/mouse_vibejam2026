@@ -107,6 +107,7 @@ class BuildModeEditor {
     this.raycaster = new THREE.Raycaster();
     this.currentHit = null;
     this._suppressTransformSync = false;
+    this.transformMode = 'translate';
 
     this._createUI();
     this._createProbeVisuals();
@@ -327,29 +328,53 @@ class BuildModeEditor {
       if (this._suppressTransformSync) return;
       const object = this.transformControls.object;
       const primitiveId = object?.userData?.primitiveId;
-      if (!primitiveId) return;
+      const prefabInstanceId = object?.userData?.prefabInstanceId;
+      if (!primitiveId && !prefabInstanceId) return;
 
-      const primitive = this.layout.primitives.find((entry) => entry.id === primitiveId);
-      if (!primitive) return;
-
-      const next = this.app.room.snapPrimitiveToGrid({
-        ...deepClone(primitive),
-        position: {
-          x: object.position.x,
-          y: object.position.y,
-          z: object.position.z,
-        },
-        rotation: {
-          x: object.rotation.x,
-          y: object.rotation.y,
-          z: object.rotation.z,
-        },
-        scale: {
-          x: object.scale.x,
-          y: object.scale.y,
-          z: object.scale.z,
-        },
-      }, { snapY: true });
+      const primitive = primitiveId
+        ? this.layout.primitives.find((entry) => entry.id === primitiveId)
+        : null;
+      const mode = this.transformMode || this.transformControls?.mode || 'translate';
+      const next = primitive
+        ? this.app.room.snapPrimitiveToGrid({
+          ...deepClone(primitive),
+          position: {
+            x: object.position.x,
+            y: object.position.y,
+            z: object.position.z,
+          },
+          rotation: {
+            x: object.rotation.x,
+            y: object.rotation.y,
+            z: object.rotation.z,
+          },
+          scale: {
+            x: object.scale.x,
+            y: object.scale.y,
+            z: object.scale.z,
+          },
+        }, {
+          snapY: true,
+          snapPosition: mode !== 'scale',
+          snapScale: mode === 'scale',
+        })
+        : {
+          position: {
+            x: Number(object.position.x.toFixed(4)),
+            y: Number(object.position.y.toFixed(4)),
+            z: Number(object.position.z.toFixed(4)),
+          },
+          rotation: {
+            x: Number(object.rotation.x.toFixed(4)),
+            y: Number(object.rotation.y.toFixed(4)),
+            z: Number(object.rotation.z.toFixed(4)),
+          },
+          scale: {
+            x: Number(object.scale.x.toFixed(4)),
+            y: Number(object.scale.y.toFixed(4)),
+            z: Number(object.scale.z.toFixed(4)),
+          },
+        };
 
       this._suppressTransformSync = true;
       object.position.set(next.position.x, next.position.y, next.position.z);
@@ -357,7 +382,7 @@ class BuildModeEditor {
       object.scale.set(next.scale.x, next.scale.y, next.scale.z);
       this._suppressTransformSync = false;
 
-      this.app.room.updateEditablePrimitiveTransform(primitiveId, {
+      this.app.room.updateEditablePrimitiveTransform(primitiveId || prefabInstanceId, {
         position: next.position,
         rotation: next.rotation,
         scale: next.scale,
@@ -445,6 +470,7 @@ class BuildModeEditor {
   }
 
   _setTransformMode(mode) {
+    this.transformMode = mode;
     this.transformControls?.setMode(mode);
     this._setStatus(`Transform mode: ${mode}`);
   }
@@ -514,17 +540,17 @@ class BuildModeEditor {
     this.positionInputs = this._createVectorInputs(section, 'Position', { step: 0.05 }, (axis, value) => {
       this._updateSelected((primitive) => {
         primitive.position[axis] = value;
-      });
+      }, { snapPosition: true, snapScale: false });
     });
     this.rotationInputs = this._createVectorInputs(section, 'Rotation', { step: 1 }, (axis, value) => {
       this._updateSelected((primitive) => {
         primitive.rotation[axis] = value * DEG_TO_RAD;
-      });
+      }, { snapPosition: false, snapScale: false });
     });
     this.scaleInputs = this._createVectorInputs(section, 'Scale', { step: 0.1, min: 0.1 }, (axis, value) => {
       this._updateSelected((primitive) => {
         primitive.scale[axis] = Math.max(0.1, value);
-      });
+      }, { snapPosition: false, snapScale: true });
     });
   }
 
@@ -1150,13 +1176,17 @@ class BuildModeEditor {
     return { col, row };
   }
 
-  _updateSelected(mutator) {
+  _updateSelected(mutator, { snapPosition = true, snapScale = false, snapY = true } = {}) {
     const primitive = this._selectedPrimitive();
     if (!primitive) return;
 
     const next = deepClone(primitive);
     mutator(next);
-    const snapped = this.app.room.snapPrimitiveToGrid(next, { snapY: true });
+    const snapped = this.app.room.snapPrimitiveToGrid(next, {
+      snapY,
+      snapPosition,
+      snapScale,
+    });
     this.app.room.upsertEditablePrimitive(snapped);
     this.layout = this.app.room.getEditableLayout();
     this._syncForm();

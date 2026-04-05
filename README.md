@@ -1,6 +1,8 @@
 # vibejam2026
 ![Mouse preview](./mouse.gif)
 
+[Play Mouse Trouble](https://mouse.ryanfitzpatrick.io/)
+
 Mouse Trouble is a multiplayer kitchen-stealth game built with Vite and Three.js. You play a mouse in a stylized kitchen, move through the room with server-authoritative networking, and interact with a level that can be edited locally in build mode.
 
 The project includes:
