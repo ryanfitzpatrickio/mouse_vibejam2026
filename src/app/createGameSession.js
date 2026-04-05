@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { Mouse } from '../entities/Mouse.js';
+import { Bunny } from '../entities/Bunny.js';
+import { PredatorManager } from '../entities/PredatorManager.js';
 import { Room } from '../world/Room.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
@@ -99,6 +101,7 @@ async function createWebGPURenderer(canvas) {
 
 const isMobile = typeof window !== 'undefined'
   && (window.matchMedia?.('(pointer: coarse)')?.matches || navigator.maxTouchPoints > 0);
+const ENABLE_BUNNY_PREDATOR = false;
 
 export async function createGameSession({ canvas, mode = 'webgl', roomId = 'default' } = {}) {
   const scene = new THREE.Scene();
@@ -163,6 +166,21 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     thirdPersonCamera,
     collisionQuery: () => room.getCollisionColliders(),
   });
+
+  // --- Predators ---
+  const predatorManager = ENABLE_BUNNY_PREDATOR
+    ? new PredatorManager({
+      scene,
+      controller,
+      collisionQuery: () => room.getCollisionColliders(),
+    })
+    : null;
+
+  const bunny = ENABLE_BUNNY_PREDATOR ? new Bunny() : null;
+  if (bunny && predatorManager) {
+    await bunny.ready;
+    predatorManager.add(bunny, new THREE.Vector3(5, 0, 5));
+  }
 
   const hud = new HUD();
 
@@ -330,6 +348,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       physicsAccum = 0;
     }
 
+    predatorManager?.update(deltaSeconds);
     room.updateLoot(timeMs);
 
     if (net.connected) {
@@ -351,6 +370,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   function dispose() {
     net.disconnect();
     remotePlayerManager.dispose();
+    predatorManager?.dispose();
     hud.dispose();
     renderer.dispose();
   }
@@ -362,6 +382,8 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     camera,
     room,
     mouse,
+    bunny,
+    predatorManager,
     thirdPersonCamera,
     controller,
     hud,

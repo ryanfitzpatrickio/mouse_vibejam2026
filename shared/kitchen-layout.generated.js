@@ -9,7 +9,7 @@ export default {
       "position": {
         "x": -0.6667,
         "y": 0,
-        "z": 0.6919
+        "z": -0.6414
       },
       "rotation": {
         "x": -1.5708,
@@ -38,6 +38,7 @@ export default {
       "faceTextures": {},
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": false,
       "receiveShadow": true,
@@ -84,6 +85,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -130,6 +132,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -176,6 +179,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -222,6 +226,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -263,6 +268,7 @@ export default {
       "faceTextures": {},
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": false,
       "receiveShadow": true,
@@ -309,6 +315,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -355,6 +362,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -401,6 +409,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -447,6 +456,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -493,6 +503,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -539,6 +550,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -585,6 +597,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -631,6 +644,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -677,6 +691,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -723,6 +738,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -769,6 +785,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -815,6 +832,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -861,6 +879,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -907,6 +926,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -953,6 +973,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -999,6 +1020,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1045,6 +1067,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1091,6 +1114,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -1137,6 +1161,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1183,6 +1208,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1229,6 +1255,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1275,6 +1302,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1321,6 +1349,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1367,6 +1396,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1413,6 +1443,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1459,6 +1490,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1505,6 +1537,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1551,6 +1584,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1597,6 +1631,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1643,6 +1678,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1689,6 +1725,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1735,6 +1772,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1781,6 +1819,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1827,6 +1866,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -1873,6 +1913,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -1919,6 +1960,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -1965,6 +2007,7 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
@@ -2011,131 +2054,20 @@ export default {
       },
       "prefabId": null,
       "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
       "collider": false,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": true
     },
     {
-      "id": "prefab-instance-mnm0ht51-gb2st-part-1",
-      "name": "Oven 2-box-part",
-      "type": "box",
-      "position": {
-        "x": 2,
-        "y": 0.625,
-        "z": 0.6666666666666661
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "x": 1.3333,
-        "y": 1.25,
-        "z": 1.3333
-      },
-      "texture": {
-        "atlas": "textures3",
-        "cell": 41,
-        "repeat": {
-          "x": 1,
-          "y": 1
-        },
-        "rotation": 0
-      },
-      "faceTextures": {
-        "right": {
-          "atlas": "textures3",
-          "cell": 41
-        },
-        "left": {
-          "atlas": "textures3",
-          "cell": 41
-        },
-        "top": {
-          "atlas": "textures",
-          "cell": 45
-        },
-        "front": {
-          "atlas": "textures3",
-          "cell": 35
-        },
-        "back": {
-          "atlas": "textures3",
-          "cell": 40
-        }
-      },
-      "material": {
-        "color": "#ffffff",
-        "roughness": 0.88,
-        "metalness": 0.04
-      },
-      "prefabId": "counter-module",
-      "prefabInstanceId": "prefab-instance-mnm0ht51-gb2st",
-      "collider": true,
-      "castShadow": true,
-      "receiveShadow": true,
-      "deleted": false
-    },
-    {
-      "id": "prefab-instance-mnm0ht51-gb2st-part-2",
-      "name": "Oven 2-box-part",
-      "type": "box",
-      "position": {
-        "x": 2,
-        "y": 1.2549,
-        "z": 0.12196666666666611
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "x": 1.25,
-        "y": 0.25,
-        "z": 0.25
-      },
-      "texture": {
-        "atlas": "textures2",
-        "cell": 27,
-        "repeat": {
-          "x": 1,
-          "y": 0.1
-        },
-        "rotation": 0
-      },
-      "faceTextures": {
-        "front": {
-          "atlas": "textures2",
-          "cell": 27
-        },
-        "back": {
-          "atlas": "textures2",
-          "cell": 23
-        }
-      },
-      "material": {
-        "color": "#ffffff",
-        "roughness": 0.88,
-        "metalness": 0.04
-      },
-      "prefabId": "counter-module",
-      "prefabInstanceId": "prefab-instance-mnm0ht51-gb2st",
-      "collider": true,
-      "castShadow": true,
-      "receiveShadow": true,
-      "deleted": false
-    },
-    {
       "id": "prefab-instance-mnm0jq8i-tn59l-part-1",
       "name": "fridge-fridge",
       "type": "box",
       "position": {
-        "x": -3.3333333333333335,
+        "x": 0.9637,
         "y": 1.5,
-        "z": -2
+        "z": -3.3132
       },
       "rotation": {
         "x": 0,
@@ -2185,6 +2117,11 @@ export default {
       },
       "prefabId": "prefab-mnls4d08-4gxlh",
       "prefabInstanceId": "prefab-instance-mnm0jq8i-tn59l",
+      "prefabInstanceOrigin": {
+        "x": 0.9637,
+        "y": 1.5,
+        "z": -3.3132
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2195,9 +2132,9 @@ export default {
       "name": "fridge-box-part",
       "type": "box",
       "position": {
-        "x": -3.3333333333333335,
+        "x": 0.9637,
         "y": 0.4241,
-        "z": -2.4449
+        "z": -3.7581
       },
       "rotation": {
         "x": 0,
@@ -2231,6 +2168,11 @@ export default {
       },
       "prefabId": "prefab-mnls4d08-4gxlh",
       "prefabInstanceId": "prefab-instance-mnm0jq8i-tn59l",
+      "prefabInstanceOrigin": {
+        "x": 0.9637,
+        "y": 1.5,
+        "z": -3.3132
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2272,6 +2214,7 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2313,6 +2256,7 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2354,6 +2298,7 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2395,6 +2340,7 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2436,6 +2382,7 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2477,6 +2424,7 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0jxz7-iz3s8",
+      "prefabInstanceOrigin": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2487,9 +2435,9 @@ export default {
       "name": "chair-leg",
       "type": "box",
       "position": {
-        "x": -3.5333333333333337,
+        "x": 3.2243,
         "y": 0.25,
-        "z": -2.2
+        "z": -0.4209
       },
       "rotation": {
         "x": 0,
@@ -2518,6 +2466,11 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2528,9 +2481,9 @@ export default {
       "name": "chair-leg",
       "type": "box",
       "position": {
-        "x": -3.1333333333333333,
+        "x": 3.6243,
         "y": 0.25,
-        "z": -2.2
+        "z": -0.4209
       },
       "rotation": {
         "x": 0,
@@ -2559,6 +2512,11 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2569,9 +2527,9 @@ export default {
       "name": "chair-leg",
       "type": "box",
       "position": {
-        "x": -3.5333333333333337,
+        "x": 3.2243,
         "y": 0.25,
-        "z": -1.8
+        "z": -0.0209
       },
       "rotation": {
         "x": 0,
@@ -2600,6 +2558,11 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2610,9 +2573,9 @@ export default {
       "name": "chair-leg",
       "type": "box",
       "position": {
-        "x": -3.1333333333333333,
+        "x": 3.6243,
         "y": 0.25,
-        "z": -1.8
+        "z": -0.0209
       },
       "rotation": {
         "x": 0,
@@ -2641,6 +2604,11 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2651,9 +2619,9 @@ export default {
       "name": "chair-seat",
       "type": "box",
       "position": {
-        "x": -3.3333333333333335,
+        "x": 3.4243,
         "y": 0.525,
-        "z": -2
+        "z": -0.2209
       },
       "rotation": {
         "x": 0,
@@ -2682,6 +2650,11 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2692,9 +2665,9 @@ export default {
       "name": "chair-backrest",
       "type": "box",
       "position": {
-        "x": -3.3333333333333335,
+        "x": 3.4243,
         "y": 0.775,
-        "z": -1.775
+        "z": 0.0041
       },
       "rotation": {
         "x": 0,
@@ -2723,6 +2696,133 @@ export default {
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0wtup-6v0dy-part-1",
+      "name": "Oven 2-box-part",
+      "type": "box",
+      "position": {
+        "x": 2.3911,
+        "y": 0.625,
+        "z": -3.3333
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1.3333,
+        "y": 1.25,
+        "z": 1.3333
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 41,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "right": {
+          "atlas": "textures3",
+          "cell": 41
+        },
+        "left": {
+          "atlas": "textures3",
+          "cell": 41
+        },
+        "top": {
+          "atlas": "textures",
+          "cell": 45
+        },
+        "front": {
+          "atlas": "textures3",
+          "cell": 35
+        },
+        "back": {
+          "atlas": "textures3",
+          "cell": 40
+        }
+      },
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "prefabId": "counter-module",
+      "prefabInstanceId": "prefab-instance-mnm0wtup-6v0dy",
+      "prefabInstanceOrigin": {
+        "x": 2.3911,
+        "y": 0,
+        "z": -3.3333
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnm0wtup-6v0dy-part-2",
+      "name": "Oven 2-box-part",
+      "type": "box",
+      "position": {
+        "x": 2.3911,
+        "y": 1.2549,
+        "z": -3.878
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1.25,
+        "y": 0.25,
+        "z": 0.25
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 27,
+        "repeat": {
+          "x": 1,
+          "y": 0.1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "front": {
+          "atlas": "textures2",
+          "cell": 27
+        },
+        "back": {
+          "atlas": "textures2",
+          "cell": 23
+        }
+      },
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "prefabId": "counter-module",
+      "prefabInstanceId": "prefab-instance-mnm0wtup-6v0dy",
+      "prefabInstanceOrigin": {
+        "x": 2.3911,
+        "y": 0,
+        "z": -3.3333
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,

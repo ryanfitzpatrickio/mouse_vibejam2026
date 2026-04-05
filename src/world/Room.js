@@ -912,7 +912,27 @@ export class Room {
         : entry
     ));
 
-    this._rebuildEditableLayout();
+    const instanceEntry = this.prefabInstanceGroups.get(instanceId);
+    if (instanceEntry) {
+      const newOrigin = primitives[0].prefabInstanceOrigin ?? primitives[0].position;
+      instanceEntry.group.position.set(newOrigin.x, newOrigin.y, newOrigin.z);
+      instanceEntry.origin = cloneVectorLike(newOrigin, { x: 0, y: 0, z: 0 });
+
+      primitives.forEach((primitive) => {
+        const mesh = this.editableMeshes.get(primitive.id);
+        if (mesh) {
+          mesh.position.set(
+            primitive.position.x - newOrigin.x,
+            primitive.position.y - newOrigin.y,
+            primitive.position.z - newOrigin.z,
+          );
+        }
+      });
+
+      instanceEntry.group.updateMatrixWorld(true);
+    }
+
+    this.refreshColliders();
     return primitives[0];
   }
 

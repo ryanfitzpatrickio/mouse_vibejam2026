@@ -8,7 +8,7 @@
       "position": {
         "x": -0.6667,
         "y": 0,
-        "z": 0.6919
+        "z": -0.6414
       },
       "rotation": {
         "x": -1.5708,
@@ -2064,9 +2064,9 @@
       "name": "fridge-fridge",
       "type": "box",
       "position": {
-        "x": -3.3333333333333335,
+        "x": 0.9637,
         "y": 1.5,
-        "z": -2
+        "z": -3.3132
       },
       "rotation": {
         "x": 0,
@@ -2116,7 +2116,11 @@
       },
       "prefabId": "prefab-mnls4d08-4gxlh",
       "prefabInstanceId": "prefab-instance-mnm0jq8i-tn59l",
-      "prefabInstanceOrigin": null,
+      "prefabInstanceOrigin": {
+        "x": 0.9637,
+        "y": 1.5,
+        "z": -3.3132
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2127,9 +2131,9 @@
       "name": "fridge-box-part",
       "type": "box",
       "position": {
-        "x": -3.3333333333333335,
+        "x": 0.9637,
         "y": 0.4241,
-        "z": -2.4449
+        "z": -3.7581
       },
       "rotation": {
         "x": 0,
@@ -2163,7 +2167,11 @@
       },
       "prefabId": "prefab-mnls4d08-4gxlh",
       "prefabInstanceId": "prefab-instance-mnm0jq8i-tn59l",
-      "prefabInstanceOrigin": null,
+      "prefabInstanceOrigin": {
+        "x": 0.9637,
+        "y": 1.5,
+        "z": -3.3132
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2426,9 +2434,9 @@
       "name": "chair-leg",
       "type": "box",
       "position": {
-        "x": -3.5333333333333337,
+        "x": 3.2243,
         "y": 0.25,
-        "z": -2.2
+        "z": -0.4209
       },
       "rotation": {
         "x": 0,
@@ -2457,7 +2465,11 @@
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
-      "prefabInstanceOrigin": null,
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2468,9 +2480,9 @@
       "name": "chair-leg",
       "type": "box",
       "position": {
-        "x": -3.1333333333333333,
+        "x": 3.6243,
         "y": 0.25,
-        "z": -2.2
+        "z": -0.4209
       },
       "rotation": {
         "x": 0,
@@ -2499,7 +2511,11 @@
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
-      "prefabInstanceOrigin": null,
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2510,9 +2526,9 @@
       "name": "chair-leg",
       "type": "box",
       "position": {
-        "x": -3.5333333333333337,
+        "x": 3.2243,
         "y": 0.25,
-        "z": -1.8
+        "z": -0.0209
       },
       "rotation": {
         "x": 0,
@@ -2541,7 +2557,11 @@
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
-      "prefabInstanceOrigin": null,
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2552,9 +2572,9 @@
       "name": "chair-leg",
       "type": "box",
       "position": {
-        "x": -3.1333333333333333,
+        "x": 3.6243,
         "y": 0.25,
-        "z": -1.8
+        "z": -0.0209
       },
       "rotation": {
         "x": 0,
@@ -2583,7 +2603,11 @@
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
-      "prefabInstanceOrigin": null,
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2594,9 +2618,9 @@
       "name": "chair-seat",
       "type": "box",
       "position": {
-        "x": -3.3333333333333335,
+        "x": 3.4243,
         "y": 0.525,
-        "z": -2
+        "z": -0.2209
       },
       "rotation": {
         "x": 0,
@@ -2625,7 +2649,11 @@
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
-      "prefabInstanceOrigin": null,
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2636,9 +2664,9 @@
       "name": "chair-backrest",
       "type": "box",
       "position": {
-        "x": -3.3333333333333335,
+        "x": 3.4243,
         "y": 0.775,
-        "z": -1.775
+        "z": 0.0041
       },
       "rotation": {
         "x": 0,
@@ -2667,7 +2695,11 @@
       },
       "prefabId": "prefab-mnlzgh57-sy1xr",
       "prefabInstanceId": "prefab-instance-mnm0k3f1-9zcj6",
-      "prefabInstanceOrigin": null,
+      "prefabInstanceOrigin": {
+        "x": 3.2243,
+        "y": 0.25,
+        "z": -0.4209
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -2678,9 +2710,9 @@
       "name": "Oven 2-box-part",
       "type": "box",
       "position": {
-        "x": 3.333333333333333,
+        "x": 2.3911,
         "y": 0.625,
-        "z": -3.3333333333333335
+        "z": -3.3333
       },
       "rotation": {
         "x": 0,
@@ -2731,9 +2763,9 @@
       "prefabId": "counter-module",
       "prefabInstanceId": "prefab-instance-mnm0wtup-6v0dy",
       "prefabInstanceOrigin": {
-        "x": 3.333333333333333,
+        "x": 2.3911,
         "y": 0,
-        "z": -3.3333333333333335
+        "z": -3.3333
       },
       "collider": true,
       "castShadow": true,
@@ -2745,9 +2777,9 @@
       "name": "Oven 2-box-part",
       "type": "box",
       "position": {
-        "x": 3.333333333333333,
+        "x": 2.3911,
         "y": 1.2549,
-        "z": -3.8780333333333337
+        "z": -3.878
       },
       "rotation": {
         "x": 0,
@@ -2786,9 +2818,9 @@
       "prefabId": "counter-module",
       "prefabInstanceId": "prefab-instance-mnm0wtup-6v0dy",
       "prefabInstanceOrigin": {
-        "x": 3.333333333333333,
+        "x": 2.3911,
         "y": 0,
-        "z": -3.3333333333333335
+        "z": -3.3333
       },
       "collider": true,
       "castShadow": true,
