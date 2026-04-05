@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const DEFAULT_RIGGED = 'public/mouse.glb';
-const DEFAULT_SKIN = 'public/mouse-skin.glb';
-const DEFAULT_OUTPUT = 'public/mouse-skinned.glb';
+const DEFAULT_RIGGED = 'assets/source/mouse.glb';
+const DEFAULT_SKIN = 'assets/source/mouse-skin.glb';
+const DEFAULT_OUTPUT = 'assets/source/mouse-skinned.glb';
 
 function parseArgs(argv) {
   const options = {
@@ -44,7 +44,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/apply-mouse-skin.mjs [--rigged public/mouse.glb] [--skin public/mouse-skin.glb] [--out public/mouse-skinned.glb]
+  node scripts/apply-mouse-skin.mjs [--rigged assets/source/mouse.glb] [--skin assets/source/mouse-skin.glb] [--out assets/source/mouse-skinned.glb]
 
 The script keeps the rigged mouse skeleton and animations, then copies the
 material and embedded texture payloads from mouse-skin.glb into a new GLB.`);

@@ -25,7 +25,7 @@ import { MeshoptEncoder } from 'meshoptimizer';
 import path from 'node:path';
 import fs from 'node:fs';
 
-const INPUT = path.resolve('public/mouse-skinned.glb');
+const INPUT = path.resolve('assets/source/mouse-skinned.glb');
 const OUTPUT = path.resolve('public/mouse-skinned.optimized.glb');
 
 async function main() {

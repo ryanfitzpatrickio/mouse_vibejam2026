@@ -47,7 +47,7 @@ const EYE_WORLD_QUATERNION = new THREE.Quaternion();
 
 export class MouseEyeAtlasAnimator {
   constructor({
-    atlasUrl = assetUrl('eyeset1.jpg'),
+    atlasUrl = assetUrl('eyeset1.optimized.webp'),
     columns = 5,
     rows = 5,
     fps = 10,

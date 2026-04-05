@@ -6,10 +6,10 @@ import { MouseAnimationManager } from '../animation/MouseAnimationManager.js';
 import { MouseEyeAtlasAnimator } from '../animation/MouseEyeAtlasAnimator.js';
 import { assetUrl } from '../utils/assetUrl.js';
 
-function createToonAvatarMaterial(sourceMaterial) {
-  const baseColor = sourceMaterial?.color?.getStyle?.() ?? sourceMaterial?.color ?? '#ffffff';
-  const material = createKeyCelMaterial({ baseColor });
+const IS_MOBILE = typeof navigator !== 'undefined'
+  && (navigator.maxTouchPoints > 0 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
 
+function applyCommonProps(material, sourceMaterial) {
   material.map = sourceMaterial?.map ?? null;
   material.alphaMap = sourceMaterial?.alphaMap ?? null;
   material.alphaTest = sourceMaterial?.alphaTest ?? material.alphaTest;
@@ -21,31 +21,50 @@ function createToonAvatarMaterial(sourceMaterial) {
   material.morphNormals = sourceMaterial?.morphNormals ?? false;
   material.depthTest = sourceMaterial?.depthTest ?? material.depthTest;
   material.depthWrite = sourceMaterial?.depthWrite ?? material.depthWrite;
-  material.fog = sourceMaterial?.fog ?? material.fog;
-  material.needsUpdate = true;
+  material.fog = false;
+  return material;
+}
 
+function createToonAvatarMaterial(sourceMaterial) {
+  const baseColor = sourceMaterial?.color?.getStyle?.() ?? sourceMaterial?.color ?? '#ffffff';
+
+  if (IS_MOBILE) {
+    const material = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(baseColor),
+      roughness: 0.65,
+      metalness: 0.0,
+    });
+    material.flatShading = false;
+    applyCommonProps(material, sourceMaterial);
+    material.needsUpdate = true;
+    return material;
+  }
+
+  const material = createKeyCelMaterial({ baseColor });
+  material.flatShading = false;
+  applyCommonProps(material, sourceMaterial);
+  material.needsUpdate = true;
   return material;
 }
 
 function createWebGPUToonAvatarMaterial(sourceMaterial, MeshToonNodeMaterial) {
+  const color = sourceMaterial?.color?.clone?.() ?? new THREE.Color(sourceMaterial?.color ?? '#ffffff');
+
+  if (IS_MOBILE) {
+    const material = new MeshStandardMaterial({
+      color,
+      roughness: 0.65,
+      metalness: 0.0,
+    });
+    applyCommonProps(material, sourceMaterial);
+    return material;
+  }
+
   const material = new MeshToonNodeMaterial({
-    color: sourceMaterial?.color?.clone?.() ?? new THREE.Color(sourceMaterial?.color ?? '#ffffff'),
+    color,
     gradientMap: createThreeBandGradientTexture(),
   });
-
-  material.map = sourceMaterial?.map ?? null;
-  material.alphaMap = sourceMaterial?.alphaMap ?? null;
-  material.alphaTest = sourceMaterial?.alphaTest ?? material.alphaTest;
-  material.transparent = sourceMaterial?.transparent ?? material.transparent;
-  material.opacity = sourceMaterial?.opacity ?? material.opacity;
-  material.side = sourceMaterial?.side ?? material.side;
-  material.skinning = sourceMaterial?.skinning ?? false;
-  material.morphTargets = sourceMaterial?.morphTargets ?? false;
-  material.morphNormals = sourceMaterial?.morphNormals ?? false;
-  material.depthTest = sourceMaterial?.depthTest ?? material.depthTest;
-  material.depthWrite = sourceMaterial?.depthWrite ?? material.depthWrite;
-  material.fog = sourceMaterial?.fog ?? material.fog;
-
+  applyCommonProps(material, sourceMaterial);
   return material;
 }
 
@@ -93,7 +112,7 @@ export class Mouse extends THREE.Group {
       fadeDuration: options.fadeDuration,
     });
     this.eyeAnimator = new MouseEyeAtlasAnimator({
-      atlasUrl: options.eyeAtlasUrl ?? assetUrl('eyeset1.jpg'),
+      atlasUrl: options.eyeAtlasUrl ?? assetUrl('eyeset1.optimized.webp'),
     });
     this.rendererMode = options.rendererMode ?? 'webgl';
     this.rendererToolkit = options.rendererToolkit ?? null;
@@ -110,9 +129,7 @@ export class Mouse extends THREE.Group {
     const loader = new GLTFLoader();
     loader.setMeshoptDecoder(MeshoptDecoder);
 
-    const modelUrls = import.meta.env.PROD
-      ? [assetUrl('mouse-skinned.optimized.glb'), assetUrl('mouse-skinned.glb')]
-      : [assetUrl('mouse-skinned.glb')];
+    const modelUrls = [assetUrl('mouse-skinned.optimized.glb')];
 
     for (const modelUrl of modelUrls) {
       try {
@@ -274,29 +291,27 @@ export class Mouse extends THREE.Group {
 
   buildMouse() {
     // Materials
-    const furMat = createKeyCelMaterial({
-      baseColor: this.furColor,
-      toonBands: 3,
-      rimPower: 2.5,
-      rimStrength: 0.3,
-    });
+    const furMat = IS_MOBILE
+      ? new THREE.MeshStandardMaterial({ color: new THREE.Color(this.furColor), roughness: 0.65, metalness: 0.0, fog: false })
+      : (() => { const m = createKeyCelMaterial({ baseColor: this.furColor, toonBands: 3, rimPower: 2.5, rimStrength: 0.3 }); m.flatShading = false; m.fog = false; return m; })();
 
-    const bellyMat = createKeyCelMaterial({
-      baseColor: this.bellyColor,
-      toonBands: 3,
-    });
+    const bellyMat = IS_MOBILE
+      ? new THREE.MeshStandardMaterial({ color: new THREE.Color(this.bellyColor), roughness: 0.65, metalness: 0.0, fog: false })
+      : (() => { const m = createKeyCelMaterial({ baseColor: this.bellyColor, toonBands: 3 }); m.flatShading = false; m.fog = false; return m; })();
 
     const eyeMat = new THREE.MeshStandardMaterial({
       color: this.eyeColor,
       metalness: 0.5,
       roughness: 0.2,
       emissive: '#222222',
+      fog: false,
     });
 
     const noseMat = new THREE.MeshStandardMaterial({
       color: this.noseColor,
       metalness: 0.3,
       roughness: 0.3,
+      fog: false,
     });
 
     // BODY: elongated torso aligned forward (+Z)
@@ -367,6 +382,7 @@ export class Mouse extends THREE.Group {
       emissive: '#ffffff',
       emissiveIntensity: 0.3,
       transparent: true,
+      fog: false,
     });
 
     const pupilLeft = new THREE.Mesh(pupilGeo, pupilMat);

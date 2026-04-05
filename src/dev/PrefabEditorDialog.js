@@ -28,7 +28,7 @@ function createAtlasButtonStyle(index, columns = 10, rows = 10) {
   const y = rows > 1 ? (row / (rows - 1)) * 100 : 0;
 
   return {
-    backgroundImage: `url('${assetUrl('textures.webp')}')`,
+    backgroundImage: `url('${assetUrl('textures.optimized.webp')}')`,
     backgroundSize: `${columns * 100}% ${rows * 100}%`,
     backgroundPosition: `${x}% ${y}%`,
   };

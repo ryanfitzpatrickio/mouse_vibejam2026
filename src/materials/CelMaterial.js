@@ -3,24 +3,26 @@ import * as THREE from 'three';
 const DEFAULT_LIGHT_DIRECTION = new THREE.Vector3(1, 1, 1).normalize();
 
 export function createThreeBandGradientTexture({
-  dark = 0,
-  mid = 100,
+  dark = 90,
+  mid = 180,
   light = 255,
 } = {}) {
   const gradientTexture = new THREE.DataTexture(
     new Uint8Array([
-      dark,
-      mid,
-      light,
+      dark, dark, dark, 255,
+      mid, mid, mid, 255,
+      light, light, light, 255,
     ]),
     3,
     1,
-    THREE.RedFormat,
+    THREE.RGBAFormat,
   );
 
   gradientTexture.needsUpdate = true;
   gradientTexture.magFilter = THREE.NearestFilter;
   gradientTexture.minFilter = THREE.NearestFilter;
+  gradientTexture.wrapS = THREE.ClampToEdgeWrapping;
+  gradientTexture.wrapT = THREE.ClampToEdgeWrapping;
   gradientTexture.generateMipmaps = false;
 
   return gradientTexture;

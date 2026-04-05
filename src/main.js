@@ -18,6 +18,10 @@ const modePanel = new RendererModePanel({
 
 let app;
 let buildMode = null;
+let mobileControls = null;
+
+const isCoarsePointer = window.matchMedia?.('(pointer: coarse)')?.matches ?? false;
+const shouldShowMobileControls = isCoarsePointer || navigator.maxTouchPoints > 0;
 
 function showFatalBootError(error) {
   const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
@@ -73,8 +77,21 @@ if (import.meta.env.DEV) {
   buildMode = await installBuildMode(app);
 }
 
+if (shouldShowMobileControls) {
+  const { MobileControls } = await import('./input/MobileControls.js');
+  mobileControls = await new MobileControls({
+    controller: app.controller,
+    thirdPersonCamera: app.thirdPersonCamera,
+  }).init();
+  app.setMobileControls(mobileControls);
+}
+
+if (buildMode?.isActive?.()) {
+  mobileControls?.hide();
+}
+
 canvas.addEventListener('click', () => {
-  if (buildMode?.isActive?.()) return;
+  if (buildMode?.isActive?.() || shouldShowMobileControls) return;
   app.thirdPersonCamera.requestPointerLock();
 });
 
@@ -89,6 +106,11 @@ window.addEventListener('keydown', (event) => {
 
   if (key === 'b' && buildMode) {
     buildMode.toggle();
+    if (buildMode.isActive?.()) {
+      mobileControls?.hide();
+    } else {
+      mobileControls?.show();
+    }
   }
 });
 
@@ -100,6 +122,9 @@ function resize() {
 
 resize();
 window.addEventListener('resize', resize);
+window.addEventListener('beforeunload', () => {
+  mobileControls?.dispose();
+});
 
 let lastTime = 0;
 

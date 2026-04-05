@@ -4,11 +4,13 @@ import sharp from 'sharp';
 
 const ROOT = process.cwd();
 const INPUT_CANDIDATES = [
+  path.join(ROOT, 'public', 'textures.optimized.webp'),
   path.join(ROOT, 'public', 'textures.webp'),
-  path.join(ROOT, 'public', 'textures.jpg'),
+  path.join(ROOT, 'assets', 'source', 'textures.webp'),
+  path.join(ROOT, 'assets', 'source', 'textures.jpg'),
 ];
 const OUTPUT_MANIFEST = path.join(ROOT, 'public', 'textures.manifest.json');
-const OUTPUT_SHEET = path.join(ROOT, 'public', 'textures-contact-sheet.png');
+const OUTPUT_SHEET = path.join(ROOT, 'artifacts', 'textures-contact-sheet.png');
 
 const GRID = 10;
 

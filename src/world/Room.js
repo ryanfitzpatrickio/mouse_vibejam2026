@@ -183,7 +183,7 @@ export class Room {
     this.group.scale.setScalar(this.scaleFactor);
     this.rendererMode = options.rendererMode ?? 'webgl';
     this.rendererToolkit = options.rendererToolkit ?? null;
-    this.textureAtlasUrl = options.textureAtlasUrl ?? assetUrl('textures.webp');
+    this.textureAtlasUrl = options.textureAtlasUrl ?? assetUrl('textures.optimized.webp');
     this.levelLayoutUrl = options.levelLayoutUrl ?? assetUrl('levels/kitchen-layout.json');
     this.buildGrid = {
       columns: options.buildGridColumns ?? BUILD_GRID_COLUMNS,
