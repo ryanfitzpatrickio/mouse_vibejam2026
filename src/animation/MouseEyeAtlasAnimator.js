@@ -50,7 +50,7 @@ export class MouseEyeAtlasAnimator {
     atlasUrl = assetUrl('eyeset1.optimized.webp'),
     columns = 5,
     rows = 5,
-    fps = 10,
+    fps = 4,
     frameCrop = DEFAULT_VALUES.frameCrop,
     placement = DEFAULT_VALUES,
     stateToExpression = DEFAULT_STATE_TO_EXPRESSION,
@@ -95,6 +95,7 @@ export class MouseEyeAtlasAnimator {
     this.currentFrame = 0;
     this.frameTimer = 0;
     this.frameDuration = 1 / this.fps;
+    this._frameDurationMultiplier = 1.5;
     this.loaded = false;
     this.opacity = 1;
   }
@@ -254,8 +255,9 @@ export class MouseEyeAtlasAnimator {
     this._updateVisibility();
 
     this.frameTimer += delta;
-    while (this.frameTimer >= this.frameDuration) {
-      this.frameTimer -= this.frameDuration;
+    const step = this.frameDuration * this._frameDurationMultiplier;
+    while (this.frameTimer >= step) {
+      this.frameTimer -= step;
       this.currentFrame = (this.currentFrame + 1) % this.columns;
       this._applyFrame();
     }

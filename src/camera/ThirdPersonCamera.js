@@ -12,7 +12,7 @@ export class ThirdPersonCamera {
     collisionObjects = null,
     collisionQuery = null,
     armLength = 4.5,
-    minArmLength = 1.1,
+    minArmLength = 0.55,
     maxArmLength = 7.5,
     shoulderOffset = new THREE.Vector3(0, 1.3, 0),
     stiffness = 22,
@@ -84,6 +84,7 @@ export class ThirdPersonCamera {
 
     this._onMouseMove = this._onMouseMove.bind(this);
     this._onPointerLockChange = this._onPointerLockChange.bind(this);
+    this._onWheel = this._onWheel.bind(this);
 
     if (typeof fov === 'number') {
       this.setFov(fov);
@@ -104,6 +105,7 @@ export class ThirdPersonCamera {
     }
 
     document.addEventListener('mousemove', this._onMouseMove, false);
+    this.domElement.addEventListener('wheel', this._onWheel, { passive: false });
     document.addEventListener('pointerlockchange', this._onPointerLockChange, false);
     this._onPointerLockChange();
   }
@@ -115,6 +117,7 @@ export class ThirdPersonCamera {
     }
 
     document.removeEventListener('mousemove', this._onMouseMove, false);
+    this.domElement?.removeEventListener('wheel', this._onWheel, false);
     document.removeEventListener('pointerlockchange', this._onPointerLockChange, false);
     this.pointerLocked = false;
   }
@@ -342,6 +345,15 @@ export class ThirdPersonCamera {
     }
 
     this.pointerLocked = document.pointerLockElement === this.domElement;
+  }
+
+  _onWheel(event) {
+    if (!this.enabled) return;
+    event.preventDefault();
+
+    const zoomSpeed = event.shiftKey ? 0.18 : 0.08;
+    const delta = Math.sign(event.deltaY) * zoomSpeed;
+    this.setArmLength(this.armLength + delta);
   }
 }
 
