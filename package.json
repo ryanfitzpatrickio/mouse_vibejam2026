@@ -6,13 +6,13 @@
   "scripts": {
     "dev": "vite",
     "dev:party": "npx partykit dev",
-    "prebuild": "node scripts/generate-kitchen-layout-module.mjs && node scripts/apply-mouse-skin.mjs && node scripts/optimize-runtime-images.mjs && node scripts/optimize-glb.mjs",
+    "prebuild": "node scripts/generate-kitchen-layout-module.mjs && node scripts/apply-mouse-skin.mjs && node scripts/generate-texture-atlas-registry.mjs && node scripts/analyze-texture-atlases.mjs && node scripts/optimize-runtime-images.mjs && node scripts/optimize-glb.mjs",
     "build": "vite build",
     "deploy:cf": "npm run build && wrangler deploy",
     "deploy:party": "npx partykit deploy",
     "deploy": "npm run deploy:cf && npm run deploy:party",
     "mouse:skin": "node scripts/apply-mouse-skin.mjs",
-    "textures:analyze": "node scripts/analyze-texture-atlas.mjs",
+    "textures:analyze": "node scripts/analyze-texture-atlases.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PrefabEditorDialog } from './PrefabEditorDialog.js';
 import { DEFAULT_PREFAB_LIBRARY, normalizePrefabLibrary } from './prefabRegistry.js';
+import { loadTextureAtlases, TEXTURE_ATLASES } from './textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
 
 const RAD_TO_DEG = 180 / Math.PI;
@@ -43,6 +44,7 @@ function createDefaultPrimitive(type, app) {
     rotation: { x: 0, y: 0, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
     texture: {
+      atlas: 'textures',
       cell: 0,
       repeat: { x: 1, y: 1 },
       rotation: 0,
@@ -74,23 +76,24 @@ function createDefaultPrimitive(type, app) {
   return app.room.snapPrimitiveToGrid(primitive, { snapY: true, snapScale: true });
 }
 
-function createAtlasButtonStyle(index, columns = 10, rows = 10) {
+function createAtlasButtonStyle(index, atlasUrl, columns = 10, rows = 10) {
   const col = index % columns;
   const row = Math.floor(index / columns);
   const x = columns > 1 ? (col / (columns - 1)) * 100 : 0;
   const y = rows > 1 ? (row / (rows - 1)) * 100 : 0;
 
   return {
-    backgroundImage: `url('${assetUrl('textures.optimized.webp')}')`,
+    backgroundImage: `url('${atlasUrl}')`,
     backgroundSize: `${columns * 100}% ${rows * 100}%`,
     backgroundPosition: `${x}% ${y}%`,
   };
 }
 
 class BuildModeEditor {
-  constructor(app, manifest, prefabLibrary, OrbitControls, TransformControls) {
+  constructor(app, textureAtlases, prefabLibrary, OrbitControls, TransformControls) {
     this.app = app;
-    this.manifest = manifest;
+    this.textureAtlases = textureAtlases;
+    this.activeTextureAtlasId = textureAtlases[0]?.id ?? TEXTURE_ATLASES[0].id;
     this.OrbitControls = OrbitControls;
     this.TransformControls = TransformControls;
     this.prefabLibrary = normalizePrefabLibrary(prefabLibrary ?? DEFAULT_PREFAB_LIBRARY);
@@ -118,6 +121,10 @@ class BuildModeEditor {
 
   isActive() {
     return this.visible;
+  }
+
+  _activeTextureAtlas() {
+    return this.textureAtlases.find((atlas) => atlas.id === this.activeTextureAtlasId) ?? this.textureAtlases[0] ?? TEXTURE_ATLASES[0];
   }
 
   toggle() {
@@ -287,7 +294,7 @@ class BuildModeEditor {
   _createPrefabEditorDialog() {
     this.prefabEditor = new PrefabEditorDialog({
       room: this.app.room,
-      manifest: this.manifest,
+      textureAtlases: this.textureAtlases,
       OrbitControls: this.OrbitControls,
       TransformControls: this.TransformControls,
       onSaveLibrary: async (library) => {
@@ -535,12 +542,13 @@ class BuildModeEditor {
     this.textureCellInput = this._createNumberField(grid, 'Texture Cell', {
       step: 1,
       min: 0,
-      max: (this.manifest?.cells?.length ?? 100) - 1,
+      max: (this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1,
     }, (value) => {
       this._updateSelected((primitive) => {
         primitive.texture.cell = Number.isFinite(value)
-          ? clamp(Math.round(value), 0, (this.manifest?.cells?.length ?? 100) - 1)
+          ? clamp(Math.round(value), 0, (this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1)
           : null;
+        primitive.texture.atlas = this.activeTextureAtlasId;
       });
       this._highlightPalette();
     });
@@ -625,6 +633,15 @@ class BuildModeEditor {
   _createPaletteSection() {
     const section = this._createSection('Texture Palette');
 
+    this.textureAtlasTabs = document.createElement('div');
+    Object.assign(this.textureAtlasTabs.style, {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '6px',
+      marginBottom: '8px',
+    });
+    section.appendChild(this.textureAtlasTabs);
+
     this.paletteGrid = document.createElement('div');
     Object.assign(this.paletteGrid.style, {
       display: 'grid',
@@ -635,15 +652,18 @@ class BuildModeEditor {
   }
 
   _renderPalette() {
+    this._renderTextureAtlasTabs();
     this.paletteGrid.innerHTML = '';
-    const columns = this.manifest?.grid?.columns ?? 10;
-    const rows = this.manifest?.grid?.rows ?? 10;
-    const cells = this.manifest?.cells ?? [];
+    const activeAtlas = this._activeTextureAtlas();
+    const columns = activeAtlas.manifest?.grid?.columns ?? 10;
+    const rows = activeAtlas.manifest?.grid?.rows ?? 10;
+    const cells = activeAtlas.manifest?.cells ?? [];
 
     cells.forEach((cell) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.dataset.cellIndex = String(cell.index);
+      button.dataset.atlasId = activeAtlas.id;
       Object.assign(button.style, {
         position: 'relative',
         width: '100%',
@@ -652,12 +672,13 @@ class BuildModeEditor {
         border: '1px solid rgba(255,255,255,0.18)',
         cursor: 'pointer',
         overflow: 'hidden',
-        ...createAtlasButtonStyle(cell.index, columns, rows),
+        ...createAtlasButtonStyle(cell.index, activeAtlas.imageUrl, columns, rows),
       });
-      button.title = cell.description ?? `Cell ${cell.index}`;
+      button.title = `${activeAtlas.label}: ${cell.description ?? `Cell ${cell.index}`}`;
       button.addEventListener('click', () => {
         this.textureCellInput.value = String(cell.index);
         this._updateSelected((primitive) => {
+          primitive.texture.atlas = activeAtlas.id;
           primitive.texture.cell = cell.index;
         });
         this._highlightPalette();
@@ -678,6 +699,31 @@ class BuildModeEditor {
       button.appendChild(badge);
 
       this.paletteGrid.appendChild(button);
+    });
+  }
+
+  _renderTextureAtlasTabs() {
+    this.textureAtlasTabs.innerHTML = '';
+    this.textureAtlases.forEach((atlas) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = atlas.label;
+      Object.assign(button.style, {
+        padding: '6px 8px',
+        borderRadius: '8px',
+        border: '1px solid rgba(255,255,255,0.12)',
+        background: this.activeTextureAtlasId === atlas.id ? '#6d4f2a' : 'rgba(255,255,255,0.06)',
+        color: '#fff4e8',
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        fontSize: '11px',
+      });
+      button.addEventListener('click', () => {
+        this.activeTextureAtlasId = atlas.id;
+        this._renderPalette();
+        this._syncForm();
+      });
+      this.textureAtlasTabs.appendChild(button);
     });
   }
 
@@ -961,7 +1007,9 @@ class BuildModeEditor {
     this.scaleInputs.x.value = primitive.scale.x;
     this.scaleInputs.y.value = primitive.scale.y;
     this.scaleInputs.z.value = primitive.scale.z;
+    this.activeTextureAtlasId = primitive.texture.atlas ?? this.activeTextureAtlasId;
     this.textureCellInput.value = primitive.texture.cell ?? '';
+    this.textureCellInput.max = String((this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1);
     this.colorInput.value = primitive.material.color;
     this.repeatInputs.x.value = primitive.texture.repeat.x;
     this.repeatInputs.y.value = primitive.texture.repeat.y;
@@ -979,8 +1027,11 @@ class BuildModeEditor {
 
   _highlightPalette() {
     const selectedCell = String(this._selectedPrimitive()?.texture.cell ?? '');
+    const selectedAtlas = this._selectedPrimitive()?.texture?.atlas ?? this.activeTextureAtlasId;
     this.paletteGrid.querySelectorAll('button').forEach((button) => {
-      button.style.outline = button.dataset.cellIndex === selectedCell ? '2px solid #ffe39d' : 'none';
+      button.style.outline = button.dataset.cellIndex === selectedCell && button.dataset.atlasId === selectedAtlas
+        ? '2px solid #ffe39d'
+        : 'none';
     });
   }
 
@@ -1143,7 +1194,7 @@ class BuildModeEditor {
   _deleteSelected() {
     if (!this.selectedId) return;
     const currentName = this._selectedPrimitive()?.name ?? 'primitive';
-    this.app.room.removeEditablePrimitive(this.selectedId);
+    this.app.room.purgeEditablePrimitive(this.selectedId);
     this.layout = this.app.room.getEditableLayout();
     this.selectedId = this.layout.primitives[0]?.id ?? null;
     this._syncForm();
@@ -1191,19 +1242,7 @@ class BuildModeEditor {
 }
 
 async function loadManifest() {
-  try {
-    const response = await fetch(assetUrl('textures.manifest.json'), { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  } catch {
-    return {
-      grid: { columns: 10, rows: 10 },
-      cells: Array.from({ length: 100 }, (_, index) => ({
-        index,
-        description: `Cell ${index}`,
-      })),
-    };
-  }
+  return loadTextureAtlases();
 }
 
 async function loadPrefabLibrary() {
@@ -1218,9 +1257,9 @@ async function loadPrefabLibrary() {
 }
 
 export async function installBuildMode(app) {
-  const manifest = await loadManifest();
+  const textureAtlases = await loadManifest();
   const prefabLibrary = await loadPrefabLibrary();
   const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
   const { TransformControls } = await import('three/addons/controls/TransformControls.js');
-  return new BuildModeEditor(app, manifest, prefabLibrary, OrbitControls, TransformControls);
+  return new BuildModeEditor(app, textureAtlases, prefabLibrary, OrbitControls, TransformControls);
 }

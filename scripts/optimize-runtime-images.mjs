@@ -4,24 +4,13 @@ import path from 'node:path';
 import sharp from 'sharp';
 
 const ROOT = process.cwd();
-const SOURCES = [
-  {
-    input: path.join(ROOT, 'assets', 'source', 'textures.webp'),
-    output: path.join(ROOT, 'public', 'textures.optimized.webp'),
-    width: 1536,
-    quality: 62,
-    nearLossless: false,
-    label: 'textures atlas',
-  },
-  {
-    input: path.join(ROOT, 'assets', 'source', 'eyeset1.jpg'),
-    output: path.join(ROOT, 'public', 'eyeset1.optimized.webp'),
-    width: 1920,
-    quality: 60,
-    nearLossless: false,
-    label: 'eye atlas',
-  },
-];
+const SOURCE_DIR = path.join(ROOT, 'assets', 'source');
+
+function atlasIdFromFilename(filename) {
+  const match = /^textures(?:(\d+))?\.webp$/i.exec(filename);
+  if (!match) return null;
+  return match[1] ? `textures${match[1]}` : 'textures';
+}
 
 async function optimizeImage({ input, output, width, quality, nearLossless, label }) {
   const exists = await fs
@@ -56,7 +45,40 @@ async function optimizeImage({ input, output, width, quality, nearLossless, labe
 
 async function main() {
   await fs.mkdir(path.join(ROOT, 'public'), { recursive: true });
-  for (const entry of SOURCES) {
+
+  const files = await fs.readdir(SOURCE_DIR);
+  const atlasSources = files
+    .map((filename) => {
+      const id = atlasIdFromFilename(filename);
+      return id ? {
+        id,
+        input: path.join(SOURCE_DIR, filename),
+        output: path.join(ROOT, 'public', `${id}.optimized.webp`),
+        width: 1536,
+        quality: 62,
+        nearLossless: false,
+        label: `${id} atlas`,
+      } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const aNum = a.id === 'textures' ? 1 : Number.parseInt(a.id.replace('textures', ''), 10);
+      const bNum = b.id === 'textures' ? 1 : Number.parseInt(b.id.replace('textures', ''), 10);
+      return aNum - bNum;
+    });
+
+  const otherSources = [
+    {
+      input: path.join(SOURCE_DIR, 'eyeset1.jpg'),
+      output: path.join(ROOT, 'public', 'eyeset1.optimized.webp'),
+      width: 1920,
+      quality: 60,
+      nearLossless: false,
+      label: 'eye atlas',
+    },
+  ];
+
+  for (const entry of [...atlasSources, ...otherSources]) {
     await optimizeImage(entry);
   }
 }

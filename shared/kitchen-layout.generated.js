@@ -22,6 +22,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 12,
         "repeat": {
           "x": 6,
@@ -62,6 +63,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 30,
         "repeat": {
           "x": 1,
@@ -75,7 +77,10 @@ export default {
         "metalness": 0
       },
       "faceTextures": {
-        "right": 30
+        "right": {
+          "atlas": "textures",
+          "cell": 30
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -104,6 +109,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 30,
         "repeat": {
           "x": 1,
@@ -117,7 +123,10 @@ export default {
         "metalness": 0
       },
       "faceTextures": {
-        "right": 30
+        "right": {
+          "atlas": "textures",
+          "cell": 30
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -146,6 +155,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 30,
         "repeat": {
           "x": 1,
@@ -159,7 +169,10 @@ export default {
         "metalness": 0
       },
       "faceTextures": {
-        "right": 30
+        "right": {
+          "atlas": "textures",
+          "cell": 30
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -188,6 +201,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 30,
         "repeat": {
           "x": 1,
@@ -201,7 +215,10 @@ export default {
         "metalness": 0
       },
       "faceTextures": {
-        "right": 30
+        "right": {
+          "atlas": "textures",
+          "cell": 30
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -230,6 +247,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 29,
         "repeat": {
           "x": 1,
@@ -270,6 +288,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 11,
         "repeat": {
           "x": 1.5,
@@ -283,7 +302,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 11
+        "right": {
+          "atlas": "textures",
+          "cell": 11
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -312,6 +334,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 11,
         "repeat": {
           "x": 1.5,
@@ -325,7 +348,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 11
+        "right": {
+          "atlas": "textures",
+          "cell": 11
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -354,6 +380,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 11,
         "repeat": {
           "x": 1.5,
@@ -367,7 +394,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 11
+        "right": {
+          "atlas": "textures",
+          "cell": 11
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -396,6 +426,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 31,
         "repeat": {
           "x": 4.2,
@@ -409,7 +440,10 @@ export default {
         "metalness": 0.08
       },
       "faceTextures": {
-        "right": 31
+        "right": {
+          "atlas": "textures",
+          "cell": 31
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -438,6 +472,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 33,
         "repeat": {
           "x": 6,
@@ -451,7 +486,10 @@ export default {
         "metalness": 0.05
       },
       "faceTextures": {
-        "right": 33
+        "right": {
+          "atlas": "textures",
+          "cell": 33
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -480,6 +518,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 28,
         "repeat": {
           "x": 1,
@@ -493,7 +532,10 @@ export default {
         "metalness": 0.03
       },
       "faceTextures": {
-        "right": 28
+        "right": {
+          "atlas": "textures",
+          "cell": 28
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -522,6 +564,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 28,
         "repeat": {
           "x": 1,
@@ -535,7 +578,10 @@ export default {
         "metalness": 0.03
       },
       "faceTextures": {
-        "right": 28
+        "right": {
+          "atlas": "textures",
+          "cell": 28
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -564,6 +610,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 28,
         "repeat": {
           "x": 1,
@@ -577,7 +624,10 @@ export default {
         "metalness": 0.03
       },
       "faceTextures": {
-        "right": 28
+        "right": {
+          "atlas": "textures",
+          "cell": 28
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -606,6 +656,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 44,
         "repeat": {
           "x": 0.9,
@@ -619,7 +670,10 @@ export default {
         "metalness": 0.33
       },
       "faceTextures": {
-        "right": 44
+        "right": {
+          "atlas": "textures",
+          "cell": 44
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -648,6 +702,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": null,
         "repeat": {
           "x": 1,
@@ -661,7 +716,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": null
+        "right": {
+          "atlas": "textures",
+          "cell": null
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -690,6 +748,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": null,
         "repeat": {
           "x": 1,
@@ -703,7 +762,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": null
+        "right": {
+          "atlas": "textures",
+          "cell": null
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -732,6 +794,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": null,
         "repeat": {
           "x": 1,
@@ -745,7 +808,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": null
+        "right": {
+          "atlas": "textures",
+          "cell": null
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -774,6 +840,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": null,
         "repeat": {
           "x": 1,
@@ -787,7 +854,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": null
+        "right": {
+          "atlas": "textures",
+          "cell": null
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -816,6 +886,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 44,
         "repeat": {
           "x": 0.9,
@@ -829,7 +900,10 @@ export default {
         "metalness": 0.33
       },
       "faceTextures": {
-        "right": 44
+        "right": {
+          "atlas": "textures",
+          "cell": 44
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -858,6 +932,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 44,
         "repeat": {
           "x": 0.9,
@@ -871,7 +946,10 @@ export default {
         "metalness": 0.33
       },
       "faceTextures": {
-        "right": 44
+        "right": {
+          "atlas": "textures",
+          "cell": 44
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -900,6 +978,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 44,
         "repeat": {
           "x": 0.9,
@@ -913,7 +992,10 @@ export default {
         "metalness": 0.33
       },
       "faceTextures": {
-        "right": 44
+        "right": {
+          "atlas": "textures",
+          "cell": 44
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -942,6 +1024,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 40,
         "repeat": {
           "x": 1,
@@ -955,7 +1038,10 @@ export default {
         "metalness": 0.14
       },
       "faceTextures": {
-        "right": 40
+        "right": {
+          "atlas": "textures",
+          "cell": 40
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -984,6 +1070,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": null,
         "repeat": {
           "x": 1,
@@ -997,7 +1084,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": null
+        "right": {
+          "atlas": "textures",
+          "cell": null
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1026,6 +1116,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": null,
         "repeat": {
           "x": 1,
@@ -1039,7 +1130,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": null
+        "right": {
+          "atlas": "textures",
+          "cell": null
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1068,6 +1162,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 11,
         "repeat": {
           "x": 1.5,
@@ -1081,7 +1176,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 11
+        "right": {
+          "atlas": "textures",
+          "cell": 11
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1110,6 +1208,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 11,
         "repeat": {
           "x": 1.5,
@@ -1123,7 +1222,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 11
+        "right": {
+          "atlas": "textures",
+          "cell": 11
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1152,6 +1254,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 11,
         "repeat": {
           "x": 1.5,
@@ -1165,7 +1268,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 11
+        "right": {
+          "atlas": "textures",
+          "cell": 11
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1194,6 +1300,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 11,
         "repeat": {
           "x": 1.5,
@@ -1207,7 +1314,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 11
+        "right": {
+          "atlas": "textures",
+          "cell": 11
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1236,6 +1346,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 11,
         "repeat": {
           "x": 1.5,
@@ -1249,7 +1360,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 11
+        "right": {
+          "atlas": "textures",
+          "cell": 11
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1278,6 +1392,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 84,
         "repeat": {
           "x": 1.5,
@@ -1291,7 +1406,10 @@ export default {
         "metalness": 0
       },
       "faceTextures": {
-        "right": 84
+        "right": {
+          "atlas": "textures",
+          "cell": 84
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1320,6 +1438,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 28,
         "repeat": {
           "x": 1,
@@ -1333,7 +1452,10 @@ export default {
         "metalness": 0.03
       },
       "faceTextures": {
-        "right": 28
+        "right": {
+          "atlas": "textures",
+          "cell": 28
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1362,6 +1484,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 84,
         "repeat": {
           "x": 1.5,
@@ -1375,7 +1498,10 @@ export default {
         "metalness": 0
       },
       "faceTextures": {
-        "right": 84
+        "right": {
+          "atlas": "textures",
+          "cell": 84
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1404,6 +1530,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 28,
         "repeat": {
           "x": 1,
@@ -1417,7 +1544,10 @@ export default {
         "metalness": 0.03
       },
       "faceTextures": {
-        "right": 28
+        "right": {
+          "atlas": "textures",
+          "cell": 28
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1446,6 +1576,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 84,
         "repeat": {
           "x": 1.5,
@@ -1459,7 +1590,10 @@ export default {
         "metalness": 0
       },
       "faceTextures": {
-        "right": 84
+        "right": {
+          "atlas": "textures",
+          "cell": 84
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1488,6 +1622,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 28,
         "repeat": {
           "x": 1,
@@ -1501,7 +1636,10 @@ export default {
         "metalness": 0.03
       },
       "faceTextures": {
-        "right": 28
+        "right": {
+          "atlas": "textures",
+          "cell": 28
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1530,6 +1668,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 84,
         "repeat": {
           "x": 1.5,
@@ -1543,7 +1682,10 @@ export default {
         "metalness": 0
       },
       "faceTextures": {
-        "right": 84
+        "right": {
+          "atlas": "textures",
+          "cell": 84
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1572,6 +1714,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 28,
         "repeat": {
           "x": 1,
@@ -1585,7 +1728,10 @@ export default {
         "metalness": 0.03
       },
       "faceTextures": {
-        "right": 28
+        "right": {
+          "atlas": "textures",
+          "cell": 28
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1614,6 +1760,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 11,
         "repeat": {
           "x": 1.5,
@@ -1627,7 +1774,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 11
+        "right": {
+          "atlas": "textures",
+          "cell": 11
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1656,6 +1806,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 11,
         "repeat": {
           "x": 1.5,
@@ -1669,7 +1820,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 11
+        "right": {
+          "atlas": "textures",
+          "cell": 11
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1698,6 +1852,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": null,
         "repeat": {
           "x": 1,
@@ -1711,7 +1866,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": null
+        "right": {
+          "atlas": "textures",
+          "cell": null
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1740,6 +1898,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": null,
         "repeat": {
           "x": 1,
@@ -1753,7 +1912,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": null
+        "right": {
+          "atlas": "textures",
+          "cell": null
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1782,6 +1944,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 76,
         "repeat": {
           "x": 1,
@@ -1795,7 +1958,10 @@ export default {
         "metalness": 0.04
       },
       "faceTextures": {
-        "right": 76
+        "right": {
+          "atlas": "textures",
+          "cell": 76
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1824,6 +1990,7 @@ export default {
         "z": 1
       },
       "texture": {
+        "atlas": "textures",
         "cell": 84,
         "repeat": {
           "x": 1.5,
@@ -1837,7 +2004,10 @@ export default {
         "metalness": 0
       },
       "faceTextures": {
-        "right": 84
+        "right": {
+          "atlas": "textures",
+          "cell": 84
+        }
       },
       "prefabId": null,
       "prefabInstanceId": null,
@@ -1845,46 +2015,6 @@ export default {
       "castShadow": true,
       "receiveShadow": true,
       "deleted": true
-    },
-    {
-      "id": "primitive-mnkln2bx-c71r6",
-      "name": "box-7dr",
-      "type": "box",
-      "position": {
-        "x": -2,
-        "y": 0.5,
-        "z": -0.6667
-      },
-      "rotation": {
-        "x": 0,
-        "y": 0,
-        "z": 0
-      },
-      "scale": {
-        "x": 1.3333,
-        "y": 1,
-        "z": 1.3333
-      },
-      "texture": {
-        "cell": 0,
-        "repeat": {
-          "x": 1,
-          "y": 1
-        },
-        "rotation": 0
-      },
-      "faceTextures": {},
-      "material": {
-        "color": "#ffffff",
-        "roughness": 0.88,
-        "metalness": 0.04
-      },
-      "prefabId": null,
-      "prefabInstanceId": null,
-      "collider": true,
-      "castShadow": true,
-      "receiveShadow": true,
-      "deleted": false
     }
   ]
 };

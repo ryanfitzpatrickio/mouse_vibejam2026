@@ -1,3 +1,5 @@
+import { DEFAULT_TEXTURE_ATLAS } from './textureAtlasRegistry.js';
+
 function cloneVectorLike(source, fallback) {
   return {
     x: source?.x ?? fallback.x,
@@ -6,21 +8,49 @@ function cloneVectorLike(source, fallback) {
   };
 }
 
+function normalizeTextureAtlasId(value) {
+  return typeof value === 'string' && /^textures\d*$/i.test(value) ? value.toLowerCase() : DEFAULT_TEXTURE_ATLAS;
+}
+
 export const FACE_TEXTURE_SLOTS = Object.freeze({
   box: Object.freeze(['right', 'left', 'top', 'bottom', 'front', 'back']),
   cylinder: Object.freeze(['side', 'top', 'bottom']),
   plane: Object.freeze([]),
 });
 
+function normalizeTextureRef(value, fallbackCell = 0) {
+  if (typeof value === 'number') {
+    return {
+      atlas: DEFAULT_TEXTURE_ATLAS,
+      cell: value,
+    };
+  }
+
+  if (value && typeof value === 'object') {
+    return {
+      atlas: normalizeTextureAtlasId(value.atlas),
+      cell: Number.isFinite(value.cell) ? value.cell : fallbackCell,
+    };
+  }
+
+  return {
+    atlas: DEFAULT_TEXTURE_ATLAS,
+    cell: fallbackCell,
+  };
+}
+
 function normalizeFaceTextures(type, value = {}) {
   const slots = FACE_TEXTURE_SLOTS[type] ?? [];
   const result = {};
 
   slots.forEach((slot) => {
-    const cell = value?.[slot];
-    if (Number.isFinite(cell) || cell === null) {
-      result[slot] = cell;
+    const ref = value?.[slot];
+    if (ref == null) return;
+    if (ref === null) {
+      result[slot] = null;
+      return;
     }
+    result[slot] = normalizeTextureRef(ref);
   });
 
   return result;
@@ -37,6 +67,7 @@ export function createPrefabPartId() {
 export function normalizePrefabPrimitive(entry = {}) {
   const type = entry.type === 'plane' || entry.type === 'cylinder' ? entry.type : 'box';
   const texture = entry.texture ?? {};
+  const textureRef = normalizeTextureRef(texture, 0);
 
   return {
     id: entry.id ?? createPrefabPartId(),
@@ -46,7 +77,8 @@ export function normalizePrefabPrimitive(entry = {}) {
     rotation: cloneVectorLike(entry.rotation, { x: 0, y: 0, z: 0 }),
     scale: cloneVectorLike(entry.scale, { x: 1, y: 1, z: 1 }),
     texture: {
-      cell: Number.isFinite(texture.cell) ? texture.cell : 0,
+      atlas: textureRef.atlas,
+      cell: textureRef.cell,
       repeat: {
         x: texture.repeat?.x ?? 1,
         y: texture.repeat?.y ?? 1,

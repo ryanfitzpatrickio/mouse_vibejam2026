@@ -9,10 +9,16 @@ const INPUT_CANDIDATES = [
   path.join(ROOT, 'assets', 'source', 'textures.webp'),
   path.join(ROOT, 'assets', 'source', 'textures.jpg'),
 ];
-const OUTPUT_MANIFEST = path.join(ROOT, 'public', 'textures.manifest.json');
-const OUTPUT_SHEET = path.join(ROOT, 'artifacts', 'textures-contact-sheet.png');
+const DEFAULT_OUTPUT_MANIFEST = path.join(ROOT, 'public', 'textures.manifest.json');
+const DEFAULT_OUTPUT_SHEET = path.join(ROOT, 'artifacts', 'textures-contact-sheet.png');
 
 const GRID = 10;
+
+function parseArg(name) {
+  const index = process.argv.indexOf(name);
+  if (index === -1) return null;
+  return process.argv[index + 1] ?? null;
+}
 
 function getCellBounds(index, size) {
   const start = Math.round((index / GRID) * size);
@@ -114,7 +120,13 @@ function buildDescription(index, stats, classification, score) {
 }
 
 async function main() {
-  const INPUT = await resolveInput();
+  const INPUT = await resolveInput(parseArg('--input'));
+  const OUTPUT_MANIFEST = parseArg('--output')
+    ? path.resolve(ROOT, parseArg('--output'))
+    : DEFAULT_OUTPUT_MANIFEST;
+  const OUTPUT_SHEET = parseArg('--sheet')
+    ? path.resolve(ROOT, parseArg('--sheet'))
+    : DEFAULT_OUTPUT_SHEET;
   const image = sharp(INPUT, { failOn: 'none' });
   const metadata = await image.metadata();
   if (!metadata.width || !metadata.height) {
@@ -294,7 +306,13 @@ async function main() {
   console.log(`Wrote ${OUTPUT_SHEET}`);
 }
 
-async function resolveInput() {
+async function resolveInput(forcedInput = null) {
+  if (forcedInput) {
+    const absolute = path.isAbsolute(forcedInput) ? forcedInput : path.join(ROOT, forcedInput);
+    await fs.access(absolute);
+    return absolute;
+  }
+
   for (const candidate of INPUT_CANDIDATES) {
     try {
       await fs.access(candidate);

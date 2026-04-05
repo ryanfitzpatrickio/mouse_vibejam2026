@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { FACE_TEXTURE_SLOTS } from '../dev/prefabRegistry.js';
+import { DEFAULT_TEXTURE_ATLAS, TEXTURE_ATLASES } from '../dev/textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
 
 const ATLAS_GRID = 10;
@@ -90,6 +91,10 @@ function cloneVectorLike(source, fallback) {
   };
 }
 
+function normalizeTextureAtlasId(value) {
+  return typeof value === 'string' && /^textures\d*$/i.test(value) ? value.toLowerCase() : DEFAULT_TEXTURE_ATLAS;
+}
+
 function cloneLayout(layout) {
   return JSON.parse(JSON.stringify(layout ?? DEFAULT_EDITABLE_LAYOUT));
 }
@@ -99,21 +104,55 @@ function normalizeFaceTextures(type, value = {}) {
   const result = {};
 
   slots.forEach((slot) => {
-    const cell = value?.[slot];
-    if (Number.isFinite(cell) || cell === null) {
-      result[slot] = cell;
+    const ref = value?.[slot];
+    if (ref == null) return;
+    if (ref === null) {
+      result[slot] = null;
+      return;
     }
+    if (typeof ref === 'number') {
+      result[slot] = {
+        atlas: DEFAULT_TEXTURE_ATLAS,
+        cell: ref,
+      };
+      return;
+    }
+    result[slot] = {
+      atlas: normalizeTextureAtlasId(ref.atlas),
+      cell: Number.isFinite(ref.cell) ? ref.cell : 0,
+    };
   });
 
   return result;
 }
 
 function getFaceTextureCell(definition, slot) {
+  const ref = getFaceTextureRef(definition, slot);
+  return ref?.cell ?? null;
+}
+
+function getFaceTextureAtlas(definition, slot) {
+  const ref = getFaceTextureRef(definition, slot);
+  return ref?.atlas ?? DEFAULT_TEXTURE_ATLAS;
+}
+
+function getFaceTextureRef(definition, slot) {
   if (Object.prototype.hasOwnProperty.call(definition.faceTextures ?? {}, slot)) {
-    return definition.faceTextures[slot];
+    const value = definition.faceTextures[slot];
+    if (value == null) return value;
+    if (typeof value === 'number') {
+      return {
+        atlas: DEFAULT_TEXTURE_ATLAS,
+        cell: value,
+      };
+    }
+    return {
+      atlas: normalizeTextureAtlasId(value.atlas),
+      cell: Number.isFinite(value.cell) ? value.cell : null,
+    };
   }
 
-  return definition.texture.cell;
+  return definition.texture;
 }
 
 function snapToStep(value, step) {
@@ -183,7 +222,10 @@ export class Room {
     this.group.scale.setScalar(this.scaleFactor);
     this.rendererMode = options.rendererMode ?? 'webgl';
     this.rendererToolkit = options.rendererToolkit ?? null;
-    this.textureAtlasUrl = options.textureAtlasUrl ?? assetUrl('textures.optimized.webp');
+    this.textureAtlasUrls = Object.fromEntries(TEXTURE_ATLASES.map((atlas) => [
+      atlas.id,
+      atlas.imageUrl,
+    ]));
     this.levelLayoutUrl = options.levelLayoutUrl ?? assetUrl('levels/kitchen-layout.json');
     this.buildGrid = {
       columns: options.buildGridColumns ?? BUILD_GRID_COLUMNS,
@@ -191,6 +233,7 @@ export class Room {
       verticalStep: options.buildGridVerticalStep ?? BUILD_GRID_VERTICAL_STEP,
     };
     this.textureAtlasImage = null;
+    this.textureAtlasImages = new Map();
     this.textureCache = new Map();
     this.surfaceMaterials = new Set();
     this.builtInEditableMeshes = new Map();
@@ -221,6 +264,7 @@ export class Room {
 
   _createSurfaceMaterial(baseColor, {
     textureCell = null,
+    textureAtlas = DEFAULT_TEXTURE_ATLAS,
     textureRepeat = 1,
     roughness = 0.92,
     metalness = 0.04,
@@ -231,25 +275,38 @@ export class Room {
       metalness,
     });
 
-    material.dithering = true;
-    material.userData.textureCell = textureCell;
-    material.userData.textureRepeat = textureRepeat;
-    this.surfaceMaterials.add(material);
-    return material;
+      material.dithering = true;
+      material.userData.textureAtlas = textureAtlas;
+      material.userData.textureCell = textureCell;
+      material.userData.textureRepeat = textureRepeat;
+      this.surfaceMaterials.add(material);
+      return material;
   }
 
   async _loadTextureAtlas() {
-    this.textureAtlasImage = await loadImage(this.textureAtlasUrl);
+    const loaded = [];
+    for (const [atlas, url] of Object.entries(this.textureAtlasUrls)) {
+      try {
+        loaded.push([atlas, await loadImage(url)]);
+      } catch (error) {
+        if (atlas === DEFAULT_TEXTURE_ATLAS) {
+          throw error;
+        }
+      }
+    }
+    this.textureAtlasImages = new Map(loaded);
+    this.textureAtlasImage = this.textureAtlasImages.get(DEFAULT_TEXTURE_ATLAS) ?? null;
     return this.textureAtlasImage;
   }
 
-  _createAtlasTexture(cellIndex, repeat = 1) {
-    if (!this.textureAtlasImage) return null;
+  _createAtlasTexture(cellIndex, repeat = 1, atlas = DEFAULT_TEXTURE_ATLAS) {
+    const atlasId = typeof repeat === 'object' && repeat?.atlas ? repeat.atlas : atlas;
+    const image = this.textureAtlasImages.get(atlasId) ?? this.textureAtlasImage;
+    if (!image) return null;
     const textureSettings = normalizeTextureSettings(repeat);
-    const cacheKey = `${cellIndex}:${textureSettings.x}:${textureSettings.y}:${textureSettings.rotation}`;
+    const cacheKey = `${atlasId}:${cellIndex}:${textureSettings.x}:${textureSettings.y}:${textureSettings.rotation}`;
     if (this.textureCache.has(cacheKey)) return this.textureCache.get(cacheKey);
 
-    const image = this.textureAtlasImage;
     const col = cellIndex % ATLAS_GRID;
     const row = Math.floor(cellIndex / ATLAS_GRID);
     const xBounds = getCellBounds(col, image.width);
@@ -293,7 +350,7 @@ export class Room {
   }
 
   _applyTextureAtlas() {
-    if (!this.textureAtlasImage) return;
+    if (!this.textureAtlasImages.size) return;
 
     this.surfaceMaterials.forEach((material) => {
       const cellIndex = material.userData?.textureCell;
@@ -303,7 +360,11 @@ export class Room {
         return;
       }
 
-      const texture = this._createAtlasTexture(cellIndex, material.userData.textureRepeat ?? 1);
+      const texture = this._createAtlasTexture(
+        cellIndex,
+        material.userData.textureRepeat ?? 1,
+        material.userData.textureAtlas ?? DEFAULT_TEXTURE_ATLAS,
+      );
       if (!texture) return;
       material.map = texture;
       material.needsUpdate = true;
@@ -329,7 +390,8 @@ export class Room {
   _normalizePrimitive(entry = {}) {
     const type = entry.type === 'plane' || entry.type === 'cylinder' ? entry.type : 'box';
     const defaults = EDITABLE_TYPE_DEFAULTS[type] ?? EDITABLE_TYPE_DEFAULTS.box;
-    const texture = entry.texture ?? {};
+    const texture = typeof entry.texture === 'number' ? { cell: entry.texture } : (entry.texture ?? {});
+    const atlas = normalizeTextureAtlasId(texture.atlas);
 
     return {
       id: entry.id ?? `primitive-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
@@ -339,6 +401,7 @@ export class Room {
       rotation: cloneVectorLike(entry.rotation, { x: 0, y: 0, z: 0 }),
       scale: cloneVectorLike(entry.scale, defaults.scale),
       texture: {
+        atlas,
         cell: Number.isFinite(texture.cell) ? texture.cell : (texture.cell === null ? null : ROOM_TEXTURE_CELLS.tile),
         repeat: {
           x: texture.repeat?.x ?? 1,
@@ -405,7 +468,10 @@ export class Room {
       if (!faceMaterial) return;
       const cell = faceMaterial.userData?.textureCell;
       if (Number.isFinite(cell) || cell === null) {
-        faceTextures[slot] = cell;
+        faceTextures[slot] = {
+          atlas: faceMaterial.userData?.textureAtlas ?? DEFAULT_TEXTURE_ATLAS,
+          cell,
+        };
       }
     });
 
@@ -429,6 +495,7 @@ export class Room {
         z: Number(mesh.scale.z.toFixed(4)),
       },
       texture: {
+        atlas: material?.userData?.textureAtlas ?? DEFAULT_TEXTURE_ATLAS,
         cell: material?.userData?.textureCell ?? null,
         repeat: {
           x: Number(textureRepeat.x.toFixed(4)),
@@ -471,7 +538,9 @@ export class Room {
         material.metalness = primitive.material.metalness;
       }
       const slot = faceSlots[index];
-      material.userData.textureCell = slot ? getFaceTextureCell(primitive, slot) : primitive.texture.cell;
+      const ref = slot ? getFaceTextureRef(primitive, slot) : primitive.texture;
+      material.userData.textureCell = ref?.cell ?? null;
+      material.userData.textureAtlas = ref?.atlas ?? DEFAULT_TEXTURE_ATLAS;
       material.userData.textureRepeat = {
         x: primitive.texture.repeat.x,
         y: primitive.texture.repeat.y,
@@ -523,12 +592,14 @@ export class Room {
       return faceSlots.map((slot) => this._createSurfaceMaterial(definition.material.color, {
         ...materialOptions,
         textureCell: getFaceTextureCell(definition, slot),
+        textureAtlas: getFaceTextureAtlas(definition, slot),
       }));
     }
 
     const material = this._createSurfaceMaterial(definition.material.color, {
       ...materialOptions,
       textureCell: definition.texture.cell,
+      textureAtlas: definition.texture.atlas ?? DEFAULT_TEXTURE_ATLAS,
     });
 
     if (definition.type === 'plane') {
@@ -639,6 +710,21 @@ export class Room {
       return;
     }
     this.editableLayout.primitives = this.editableLayout.primitives.filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
+  purgeEditablePrimitive(id) {
+    if (this.builtInEditableMeshes.has(id)) {
+      const entry = this.builtInEditableMeshes.get(id);
+      this.deletedBuiltInPrimitives.add(id);
+      entry.mesh.visible = false;
+      entry.mesh.userData.colliderEnabled = false;
+      this.refreshColliders();
+      return;
+    }
+
+    this.editableLayout.primitives = this.editableLayout.primitives.filter((entry) => entry.id !== id);
+    this.loadedEditableLayout.primitives = this.loadedEditableLayout.primitives.filter((entry) => entry.id !== id);
     this._rebuildEditableLayout();
   }
 

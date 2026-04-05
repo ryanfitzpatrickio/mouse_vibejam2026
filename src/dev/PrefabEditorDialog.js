@@ -8,6 +8,7 @@ import {
   normalizePrefabLibrary,
   normalizePrefabPrimitive,
 } from './prefabRegistry.js';
+import { DEFAULT_TEXTURE_ATLAS, TEXTURE_ATLASES } from './textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
 
 const RAD_TO_DEG = 180 / Math.PI;
@@ -21,14 +22,14 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-function createAtlasButtonStyle(index, columns = 10, rows = 10) {
+function createAtlasButtonStyle(index, atlasUrl, columns = 10, rows = 10) {
   const col = index % columns;
   const row = Math.floor(index / columns);
   const x = columns > 1 ? (col / (columns - 1)) * 100 : 0;
   const y = rows > 1 ? (row / (rows - 1)) * 100 : 0;
 
   return {
-    backgroundImage: `url('${assetUrl('textures.optimized.webp')}')`,
+    backgroundImage: `url('${atlasUrl}')`,
     backgroundSize: `${columns * 100}% ${rows * 100}%`,
     backgroundPosition: `${x}% ${y}%`,
   };
@@ -48,6 +49,12 @@ function createLocalPrimitive(type, grid) {
       x: grid.cellWidth,
       y: Math.max(grid.verticalStep, 0.5),
       z: grid.cellDepth,
+    },
+    texture: {
+      atlas: DEFAULT_TEXTURE_ATLAS,
+      cell: 0,
+      repeat: { x: 1, y: 1 },
+      rotation: 0,
     },
   });
 
@@ -79,13 +86,14 @@ function createPrimitiveGeometry(type) {
 export class PrefabEditorDialog {
   constructor({
     room,
-    manifest,
+    textureAtlases,
     OrbitControls,
     TransformControls,
     onSaveLibrary,
   }) {
     this.room = room;
-    this.manifest = manifest;
+    this.textureAtlases = textureAtlases ?? TEXTURE_ATLASES;
+    this.activeTextureAtlasId = this.textureAtlases[0]?.id ?? DEFAULT_TEXTURE_ATLAS;
     this.OrbitControls = OrbitControls;
     this.TransformControls = TransformControls;
     this.onSaveLibrary = onSaveLibrary;
@@ -135,6 +143,12 @@ export class PrefabEditorDialog {
 
   _selectedPart() {
     return this._selectedPrefab()?.primitives.find((primitive) => primitive.id === this.selectedPartId) ?? null;
+  }
+
+  _activeTextureAtlas() {
+    return this.textureAtlases.find((atlas) => atlas.id === this.activeTextureAtlasId)
+      ?? this.textureAtlases[0]
+      ?? TEXTURE_ATLASES[0];
   }
 
   _createUI() {
@@ -454,7 +468,7 @@ export class PrefabEditorDialog {
     this.textureCellInput = this._createNumberField(section, 'Texture Cell', {
       step: 1,
       min: 0,
-      max: (this.manifest?.cells?.length ?? 100) - 1,
+      max: (this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1,
     }, (value) => {
       const part = this._selectedPart();
       if (!part) return;
@@ -504,10 +518,21 @@ export class PrefabEditorDialog {
       part.material.metalness = value;
       this._rebuildScene();
     });
+
+    this._renderTextureAtlasTabs();
   }
 
   _createPaletteSection() {
     const section = this._createSection('Texture Palette');
+    this.textureAtlasTabs = document.createElement('div');
+    Object.assign(this.textureAtlasTabs.style, {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '6px',
+      marginBottom: '8px',
+    });
+    section.appendChild(this.textureAtlasTabs);
+
     this.paletteGrid = document.createElement('div');
     Object.assign(this.paletteGrid.style, {
       display: 'grid',
@@ -518,15 +543,18 @@ export class PrefabEditorDialog {
   }
 
   _renderPalette() {
+    this._renderTextureAtlasTabs();
     this.paletteGrid.innerHTML = '';
-    const columns = this.manifest?.grid?.columns ?? 10;
-    const rows = this.manifest?.grid?.rows ?? 10;
-    const cells = this.manifest?.cells ?? [];
+    const activeAtlas = this._activeTextureAtlas();
+    const columns = activeAtlas.manifest?.grid?.columns ?? 10;
+    const rows = activeAtlas.manifest?.grid?.rows ?? 10;
+    const cells = activeAtlas.manifest?.cells ?? [];
 
     cells.forEach((cell) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.dataset.cellIndex = String(cell.index);
+      button.dataset.atlasId = activeAtlas.id;
       Object.assign(button.style, {
         position: 'relative',
         width: '100%',
@@ -535,15 +563,17 @@ export class PrefabEditorDialog {
         border: '1px solid rgba(255,255,255,0.18)',
         cursor: 'pointer',
         overflow: 'hidden',
-        ...createAtlasButtonStyle(cell.index, columns, rows),
+        ...createAtlasButtonStyle(cell.index, activeAtlas.imageUrl, columns, rows),
       });
-      button.title = cell.description ?? `Cell ${cell.index}`;
+      button.title = `${activeAtlas.label}: ${cell.description ?? `Cell ${cell.index}`}`;
       button.addEventListener('click', () => {
         const part = this._selectedPart();
         if (!part) return;
+        part.texture.atlas = activeAtlas.id;
         this._setTextureCellValue(part, cell.index);
         this._syncForm();
         this._rebuildScene();
+        this._highlightPalette();
       });
 
       const badge = document.createElement('span');
@@ -560,6 +590,32 @@ export class PrefabEditorDialog {
       });
       button.appendChild(badge);
       this.paletteGrid.appendChild(button);
+    });
+  }
+
+  _renderTextureAtlasTabs() {
+    if (!this.textureAtlasTabs) return;
+    this.textureAtlasTabs.innerHTML = '';
+    this.textureAtlases.forEach((atlas) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = atlas.label;
+      Object.assign(button.style, {
+        padding: '6px 8px',
+        borderRadius: '8px',
+        border: '1px solid rgba(255,255,255,0.12)',
+        background: this.activeTextureAtlasId === atlas.id ? '#6d4f2a' : 'rgba(255,255,255,0.06)',
+        color: '#fff4e8',
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        fontSize: '11px',
+      });
+      button.addEventListener('click', () => {
+        this.activeTextureAtlasId = atlas.id;
+        this._syncForm();
+        this._renderPalette();
+      });
+      this.textureAtlasTabs.appendChild(button);
     });
   }
 
@@ -827,6 +883,8 @@ export class PrefabEditorDialog {
     this.scaleInputs.x.value = part.scale.x;
     this.scaleInputs.y.value = part.scale.y;
     this.scaleInputs.z.value = part.scale.z;
+    this.activeTextureAtlasId = part.texture.atlas ?? this.activeTextureAtlasId;
+    this.textureCellInput.max = String((this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1);
     this.textureCellInput.value = this._getTextureCellInputValue(part);
     this.colorInput.value = part.material.color;
     this.repeatInputs.x.value = part.texture.repeat.x;
@@ -840,9 +898,13 @@ export class PrefabEditorDialog {
   }
 
   _highlightPalette() {
-    const selectedCell = String(this._getPaletteSelectedCell(this._selectedPart()) ?? '');
+    const part = this._selectedPart();
+    const selectedCell = String(this._getPaletteSelectedCell(part)?.cell ?? '');
+    const selectedAtlas = this._getPaletteSelectedCell(part)?.atlas ?? this.activeTextureAtlasId;
     this.paletteGrid.querySelectorAll('button').forEach((button) => {
-      button.style.outline = button.dataset.cellIndex === selectedCell ? '2px solid #ffe39d' : 'none';
+      button.style.outline = button.dataset.cellIndex === selectedCell && button.dataset.atlasId === selectedAtlas
+        ? '2px solid #ffe39d'
+        : 'none';
     });
   }
 
@@ -860,7 +922,7 @@ export class PrefabEditorDialog {
 
   _getPaletteSelectedCell(part) {
     if (!part) return null;
-    if (this.textureTarget === 'all') return part.texture.cell ?? null;
+    if (this.textureTarget === 'all') return part.texture ?? null;
     if (Object.prototype.hasOwnProperty.call(part.faceTextures ?? {}, this.textureTarget)) {
       return part.faceTextures[this.textureTarget];
     }
@@ -872,21 +934,27 @@ export class PrefabEditorDialog {
     if (Object.prototype.hasOwnProperty.call(part.faceTextures ?? {}, slot)) {
       return part.faceTextures[slot];
     }
-    return part.texture.cell ?? null;
+    return part.texture ?? null;
   }
 
   _getTextureCellInputValue(part) {
-    const cell = this._getPaletteSelectedCell(part);
-    if (cell == null) return '';
-    return cell;
+    const ref = this._getPaletteSelectedCell(part);
+    if (!ref) return '';
+    return ref.cell ?? '';
   }
 
   _setTextureCellValue(part, value) {
-    const maxCell = (this.manifest?.cells?.length ?? 100) - 1;
+    const maxCell = (this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1;
     const clampedValue = Number.isFinite(value) ? clamp(Math.round(value), 0, maxCell) : null;
+    const atlasId = this.activeTextureAtlasId;
+    const ref = clampedValue == null ? null : { atlas: atlasId, cell: clampedValue };
 
     if (this.textureTarget === 'all') {
-      part.texture.cell = clampedValue ?? 0;
+      part.texture = {
+        ...part.texture,
+        atlas: atlasId,
+        cell: clampedValue ?? 0,
+      };
       return;
     }
 
@@ -895,7 +963,7 @@ export class PrefabEditorDialog {
       delete part.faceTextures[this.textureTarget];
       return;
     }
-    part.faceTextures[this.textureTarget] = clampedValue;
+    part.faceTextures[this.textureTarget] = ref;
   }
 
   _syncTextureTargetButtons(part) {
@@ -931,7 +999,7 @@ export class PrefabEditorDialog {
     }
 
     if (this.textureTarget === 'all') {
-      this.textureTargetHint.textContent = 'All faces inherit this atlas cell unless a face override is set.';
+      this.textureTargetHint.textContent = `All faces inherit atlas ${part.texture.atlas ?? DEFAULT_TEXTURE_ATLAS}, cell ${part.texture.cell ?? 'none'} unless a face override is set.`;
       return;
     }
 
@@ -940,8 +1008,8 @@ export class PrefabEditorDialog {
       : null;
     const effective = this._getEffectiveTextureCell(part, this.textureTarget);
     this.textureTargetHint.textContent = override == null
-      ? `${titleCase(this.textureTarget)} inherits cell ${effective ?? 'none'}. Clear stays on inherit.`
-      : `${titleCase(this.textureTarget)} overrides to cell ${override}. Clear to return to shared cell ${part.texture.cell ?? 'none'}.`;
+      ? `${titleCase(this.textureTarget)} inherits atlas ${effective?.atlas ?? DEFAULT_TEXTURE_ATLAS}, cell ${effective?.cell ?? 'none'}. Clear stays on inherit.`
+      : `${titleCase(this.textureTarget)} overrides to atlas ${override.atlas ?? DEFAULT_TEXTURE_ATLAS}, cell ${override.cell ?? 'none'}. Clear to return to shared atlas ${part.texture.atlas ?? DEFAULT_TEXTURE_ATLAS}, cell ${part.texture.cell ?? 'none'}.`;
   }
 
   _newPrefab() {
@@ -1042,53 +1110,26 @@ export class PrefabEditorDialog {
     this._setStatus(`Transform mode: ${mode}`);
   }
 
-  _getLocalBounds(size) {
-    return {
-      minX: -size.x * this.grid.cellWidth * 0.5,
-      maxX: size.x * this.grid.cellWidth * 0.5,
-      minZ: -size.z * this.grid.cellDepth * 0.5,
-      maxZ: size.z * this.grid.cellDepth * 0.5,
-      minY: 0,
-      maxY: size.y * this.grid.verticalStep,
-    };
-  }
-
-  _snapAxisPosition(value, footprint, min, max, step) {
-    const clampedSize = Math.min(Math.max(footprint, step), max - min);
-    const innerMin = min + clampedSize * 0.5;
-    const innerMax = max - clampedSize * 0.5;
-    if (innerMax <= innerMin) return 0;
-    const snapped = innerMin + Math.round((value - innerMin) / step) * step;
-    return clamp(snapped, innerMin, innerMax);
-  }
-
-  _applyPartSnap(part, { snapScale = false } = {}) {
-    const prefab = this._selectedPrefab();
-    if (!prefab || !part) return;
-    const size = prefab.size ?? { x: 1, y: 1, z: 1 };
-    const bounds = this._getLocalBounds(size);
+  _applyPartSnap(part, { snapScale = false, snapPosition = false } = {}) {
+    if (!part) return;
 
     if (snapScale) {
+      const minSize = this.grid.verticalStep;
       if (part.type === 'plane') {
-        part.scale.x = Math.max(this.grid.cellWidth, Math.round(part.scale.x / this.grid.cellWidth) * this.grid.cellWidth);
-        part.scale.y = Math.max(this.grid.cellDepth, Math.round(part.scale.y / this.grid.cellDepth) * this.grid.cellDepth);
+        part.scale.x = Math.max(minSize, Math.round(part.scale.x / this.grid.verticalStep) * this.grid.verticalStep);
+        part.scale.y = Math.max(minSize, Math.round(part.scale.y / this.grid.verticalStep) * this.grid.verticalStep);
       } else {
-        part.scale.x = Math.max(this.grid.cellWidth, Math.round(part.scale.x / this.grid.cellWidth) * this.grid.cellWidth);
-        part.scale.z = Math.max(this.grid.cellDepth, Math.round(part.scale.z / this.grid.cellDepth) * this.grid.cellDepth);
-        part.scale.y = Math.max(this.grid.verticalStep, Math.round(part.scale.y / this.grid.verticalStep) * this.grid.verticalStep);
+        part.scale.x = Math.max(minSize, Math.round(part.scale.x / this.grid.verticalStep) * this.grid.verticalStep);
+        part.scale.z = Math.max(minSize, Math.round(part.scale.z / this.grid.verticalStep) * this.grid.verticalStep);
+        part.scale.y = Math.max(minSize, Math.round(part.scale.y / this.grid.verticalStep) * this.grid.verticalStep);
       }
     }
 
-    const footprintX = part.type === 'plane' ? part.scale.x : part.scale.x;
-    const footprintZ = part.type === 'plane' ? part.scale.y : part.scale.z;
-    part.position.x = this._snapAxisPosition(part.position.x, footprintX, bounds.minX, bounds.maxX, this.grid.cellWidth);
-    part.position.z = this._snapAxisPosition(part.position.z, footprintZ, bounds.minZ, bounds.maxZ, this.grid.cellDepth);
-
-    const yStep = this.grid.verticalStep;
-    const yHalf = part.type === 'plane' ? 0 : part.scale.y * 0.5;
-    const yMax = Math.max(bounds.minY + yHalf, bounds.maxY - yHalf);
-    const snappedY = Math.round(part.position.y / yStep) * yStep;
-    part.position.y = clamp(snappedY, bounds.minY + yHalf, yMax);
+    if (snapPosition) {
+      part.position.x = Math.round(part.position.x / this.grid.cellWidth) * this.grid.cellWidth;
+      part.position.z = Math.round(part.position.z / this.grid.cellDepth) * this.grid.cellDepth;
+      part.position.y = Math.round(part.position.y / this.grid.verticalStep) * this.grid.verticalStep;
+    }
 
     part.position.x = Number(part.position.x.toFixed(4));
     part.position.y = Number(part.position.y.toFixed(4));
@@ -1099,7 +1140,7 @@ export class PrefabEditorDialog {
   }
 
   _createMaterial(part) {
-    const createMaterial = (textureCell, side = THREE.FrontSide) => {
+    const createMaterial = (textureRef, side = THREE.FrontSide) => {
       const material = new THREE.MeshStandardMaterial({
         color: new THREE.Color(part.material.color),
         roughness: part.material.roughness,
@@ -1108,15 +1149,18 @@ export class PrefabEditorDialog {
       material.dithering = true;
       material.side = side;
 
-      if (Number.isFinite(textureCell)) {
-        const map = this.room._createAtlasTexture?.(textureCell, {
+      if (textureRef && Number.isFinite(textureRef.cell)) {
+        const map = this.room._createAtlasTexture?.(textureRef.cell, {
           x: part.texture.repeat.x,
           y: part.texture.repeat.y,
           rotation: part.texture.rotation,
+          atlas: textureRef.atlas ?? DEFAULT_TEXTURE_ATLAS,
         });
         if (map) {
           material.map = map;
         }
+        material.userData.textureAtlas = textureRef.atlas ?? DEFAULT_TEXTURE_ATLAS;
+        material.userData.textureCell = textureRef.cell;
       }
 
       return material;
@@ -1127,7 +1171,7 @@ export class PrefabEditorDialog {
       return faceSlots.map((slot) => createMaterial(this._getEffectiveTextureCell(part, slot)));
     }
 
-    return createMaterial(part.texture.cell, part.type === 'plane' ? THREE.DoubleSide : THREE.FrontSide);
+    return createMaterial(part.texture, part.type === 'plane' ? THREE.DoubleSide : THREE.FrontSide);
   }
 
   _rebuildGrid() {
@@ -1181,7 +1225,6 @@ export class PrefabEditorDialog {
     if (!prefab) return;
 
     prefab.primitives.forEach((part) => {
-      this._applyPartSnap(part, { snapScale: false });
       const mesh = new THREE.Mesh(createPrimitiveGeometry(part.type), this._createMaterial(part));
       mesh.name = part.name;
       mesh.position.set(part.position.x, part.position.y, part.position.z);

@@ -52,7 +52,3 @@ The Wrangler config lives in [wrangler.jsonc](/Users/personal/source/vibejam2026
 ```bash
 VITE_PARTYKIT_HOST=mouse-trouble.username.partykit.dev
 ```
-
-## Credits
-
-Outline Material: https://codepen.io/prisoner849/pen/xxwXyQo

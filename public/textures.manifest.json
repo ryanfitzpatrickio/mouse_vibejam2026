@@ -1,12 +1,12 @@
 {
-  "source": "textures.optimized.webp",
+  "source": "textures.webp",
   "grid": {
     "columns": 10,
     "rows": 10,
-    "width": 1536,
-    "height": 1536,
-    "nominalCellWidth": 153.6,
-    "nominalCellHeight": 153.6
+    "width": 4096,
+    "height": 4096,
+    "nominalCellWidth": 409.6,
+    "nominalCellHeight": 409.6
   },
   "cells": [
     {
@@ -16,29 +16,29 @@
       "bounds": {
         "x0": 0,
         "y0": 0,
-        "x1": 154,
-        "y1": 154,
-        "width": 154,
-        "height": 154
+        "x1": 410,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0,
         "v0": 0,
-        "u1": 0.1003,
-        "v1": 0.1003
+        "u1": 0.1001,
+        "v1": 0.1001
       },
       "stats": {
         "averageColor": {
           "r": 168,
           "g": 206,
-          "b": 185
+          "b": 186
         },
-        "hue": 147.1,
-        "saturation": 0.283,
-        "lightness": 0.733,
+        "hue": 147.7,
+        "saturation": 0.282,
+        "lightness": 0.734,
         "brightness": 0.771,
-        "contrast": 0.085,
-        "edgeDensity": 0.076
+        "contrast": 0.091,
+        "edgeDensity": 0.016
       },
       "classification": {
         "category": "fabric",
@@ -61,31 +61,31 @@
       "row": 0,
       "col": 1,
       "bounds": {
-        "x0": 154,
+        "x0": 410,
         "y0": 0,
-        "x1": 307,
-        "y1": 154,
-        "width": 153,
-        "height": 154
+        "x1": 819,
+        "y1": 410,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1003,
+        "u0": 0.1001,
         "v0": 0,
-        "u1": 0.1999,
-        "v1": 0.1003
+        "u1": 0.2,
+        "v1": 0.1001
       },
       "stats": {
         "averageColor": {
           "r": 162,
-          "g": 196,
+          "g": 197,
           "b": 174
         },
-        "hue": 140.6,
-        "saturation": 0.226,
+        "hue": 141.5,
+        "saturation": 0.229,
         "lightness": 0.704,
         "brightness": 0.736,
-        "contrast": 0.102,
-        "edgeDensity": 0.069
+        "contrast": 0.108,
+        "edgeDensity": 0.02
       },
       "classification": {
         "category": "fabric",
@@ -108,18 +108,18 @@
       "row": 0,
       "col": 2,
       "bounds": {
-        "x0": 307,
+        "x0": 819,
         "y0": 0,
-        "x1": 461,
-        "y1": 154,
-        "width": 154,
-        "height": 154
+        "x1": 1229,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1999,
+        "u0": 0.2,
         "v0": 0,
-        "u1": 0.3001,
-        "v1": 0.1003
+        "u1": 0.3,
+        "v1": 0.1001
       },
       "stats": {
         "averageColor": {
@@ -127,12 +127,12 @@
           "g": 216,
           "b": 140
         },
-        "hue": 45.5,
-        "saturation": 0.777,
-        "lightness": 0.745,
+        "hue": 45.1,
+        "saturation": 0.785,
+        "lightness": 0.747,
         "brightness": 0.846,
-        "contrast": 0.041,
-        "edgeDensity": 0.007
+        "contrast": 0.045,
+        "edgeDensity": 0.002
       },
       "classification": {
         "category": "wood",
@@ -155,31 +155,31 @@
       "row": 0,
       "col": 3,
       "bounds": {
-        "x0": 461,
+        "x0": 1229,
         "y0": 0,
-        "x1": 614,
-        "y1": 154,
-        "width": 153,
-        "height": 154
+        "x1": 1638,
+        "y1": 410,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3001,
+        "u0": 0.3,
         "v0": 0,
-        "u1": 0.3997,
-        "v1": 0.1003
+        "u1": 0.3999,
+        "v1": 0.1001
       },
       "stats": {
         "averageColor": {
-          "r": 241,
+          "r": 242,
           "g": 197,
           "b": 99
         },
-        "hue": 41.2,
-        "saturation": 0.84,
+        "hue": 41.1,
+        "saturation": 0.841,
         "lightness": 0.667,
-        "brightness": 0.781,
-        "contrast": 0.084,
-        "edgeDensity": 0.01
+        "brightness": 0.78,
+        "contrast": 0.086,
+        "edgeDensity": 0.001
       },
       "classification": {
         "category": "tile",
@@ -202,18 +202,18 @@
       "row": 0,
       "col": 4,
       "bounds": {
-        "x0": 614,
+        "x0": 1638,
         "y0": 0,
-        "x1": 768,
-        "y1": 154,
-        "width": 154,
-        "height": 154
+        "x1": 2048,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3997,
+        "u0": 0.3999,
         "v0": 0,
         "u1": 0.5,
-        "v1": 0.1003
+        "v1": 0.1001
       },
       "stats": {
         "averageColor": {
@@ -222,11 +222,11 @@
           "b": 203
         },
         "hue": 274.1,
-        "saturation": 0.23,
-        "lightness": 0.735,
+        "saturation": 0.235,
+        "lightness": 0.736,
         "brightness": 0.698,
-        "contrast": 0.083,
-        "edgeDensity": 0.061
+        "contrast": 0.089,
+        "edgeDensity": 0.013
       },
       "classification": {
         "category": "generic",
@@ -247,31 +247,31 @@
       "row": 0,
       "col": 5,
       "bounds": {
-        "x0": 768,
+        "x0": 2048,
         "y0": 0,
-        "x1": 922,
-        "y1": 154,
-        "width": 154,
-        "height": 154
+        "x1": 2458,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.5,
         "v0": 0,
-        "u1": 0.6003,
-        "v1": 0.1003
+        "u1": 0.6001,
+        "v1": 0.1001
       },
       "stats": {
         "averageColor": {
-          "r": 222,
+          "r": 223,
           "g": 207,
           "b": 177
         },
-        "hue": 39.9,
-        "saturation": 0.407,
-        "lightness": 0.783,
+        "hue": 39.1,
+        "saturation": 0.41,
+        "lightness": 0.784,
         "brightness": 0.816,
-        "contrast": 0.164,
-        "edgeDensity": 0.025
+        "contrast": 0.168,
+        "edgeDensity": 0.008
       },
       "classification": {
         "category": "tile",
@@ -294,18 +294,18 @@
       "row": 0,
       "col": 6,
       "bounds": {
-        "x0": 922,
+        "x0": 2458,
         "y0": 0,
-        "x1": 1075,
-        "y1": 154,
-        "width": 153,
-        "height": 154
+        "x1": 2867,
+        "y1": 410,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6003,
+        "u0": 0.6001,
         "v0": 0,
-        "u1": 0.6999,
-        "v1": 0.1003
+        "u1": 0.7,
+        "v1": 0.1001
       },
       "stats": {
         "averageColor": {
@@ -313,12 +313,12 @@
           "g": 183,
           "b": 183
         },
-        "hue": 179.5,
-        "saturation": 0.322,
+        "hue": 179.8,
+        "saturation": 0.323,
         "lightness": 0.585,
         "brightness": 0.662,
-        "contrast": 0.067,
-        "edgeDensity": 0.035
+        "contrast": 0.071,
+        "edgeDensity": 0.005
       },
       "classification": {
         "category": "tile",
@@ -341,31 +341,31 @@
       "row": 0,
       "col": 7,
       "bounds": {
-        "x0": 1075,
+        "x0": 2867,
         "y0": 0,
-        "x1": 1229,
-        "y1": 154,
-        "width": 154,
-        "height": 154
+        "x1": 3277,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6999,
+        "u0": 0.7,
         "v0": 0,
-        "u1": 0.8001,
-        "v1": 0.1003
+        "u1": 0.8,
+        "v1": 0.1001
       },
       "stats": {
         "averageColor": {
           "r": 205,
-          "g": 173,
+          "g": 172,
           "b": 162
         },
-        "hue": 15.4,
-        "saturation": 0.299,
-        "lightness": 0.718,
-        "brightness": 0.701,
-        "contrast": 0.104,
-        "edgeDensity": 0.06
+        "hue": 14.8,
+        "saturation": 0.301,
+        "lightness": 0.719,
+        "brightness": 0.7,
+        "contrast": 0.111,
+        "edgeDensity": 0.015
       },
       "classification": {
         "category": "tile",
@@ -388,18 +388,18 @@
       "row": 0,
       "col": 8,
       "bounds": {
-        "x0": 1229,
+        "x0": 3277,
         "y0": 0,
-        "x1": 1382,
-        "y1": 154,
-        "width": 153,
-        "height": 154
+        "x1": 3686,
+        "y1": 410,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8001,
+        "u0": 0.8,
         "v0": 0,
-        "u1": 0.8997,
-        "v1": 0.1003
+        "u1": 0.8999,
+        "v1": 0.1001
       },
       "stats": {
         "averageColor": {
@@ -407,12 +407,12 @@
           "g": 215,
           "b": 213
         },
-        "hue": 33.7,
-        "saturation": 0.034,
+        "hue": 25.3,
+        "saturation": 0.032,
         "lightness": 0.842,
-        "brightness": 0.843,
-        "contrast": 0.115,
-        "edgeDensity": 0.059
+        "brightness": 0.842,
+        "contrast": 0.121,
+        "edgeDensity": 0.018
       },
       "classification": {
         "category": "tile",
@@ -435,31 +435,31 @@
       "row": 0,
       "col": 9,
       "bounds": {
-        "x0": 1382,
+        "x0": 3686,
         "y0": 0,
-        "x1": 1536,
-        "y1": 154,
-        "width": 154,
-        "height": 154
+        "x1": 4096,
+        "y1": 410,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8997,
+        "u0": 0.8999,
         "v0": 0,
         "u1": 1,
-        "v1": 0.1003
+        "v1": 0.1001
       },
       "stats": {
         "averageColor": {
           "r": 207,
           "g": 204,
-          "b": 200
+          "b": 201
         },
-        "hue": 32.5,
-        "saturation": 0.07,
-        "lightness": 0.799,
+        "hue": 29.1,
+        "saturation": 0.068,
+        "lightness": 0.8,
         "brightness": 0.802,
-        "contrast": 0.121,
-        "edgeDensity": 0.058
+        "contrast": 0.127,
+        "edgeDensity": 0.016
       },
       "classification": {
         "category": "tile",
@@ -483,30 +483,30 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 154,
-        "x1": 154,
-        "y1": 307,
-        "width": 154,
-        "height": 153
+        "y0": 410,
+        "x1": 410,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0,
-        "v0": 0.1003,
-        "u1": 0.1003,
-        "v1": 0.1999
+        "v0": 0.1001,
+        "u1": 0.1001,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
           "r": 176,
           "g": 194,
-          "b": 191
+          "b": 192
         },
-        "hue": 171.6,
-        "saturation": 0.125,
+        "hue": 173,
+        "saturation": 0.124,
         "lightness": 0.725,
         "brightness": 0.744,
-        "contrast": 0.14,
-        "edgeDensity": 0.033
+        "contrast": 0.141,
+        "edgeDensity": 0.001
       },
       "classification": {
         "category": "tile",
@@ -529,31 +529,31 @@
       "row": 1,
       "col": 1,
       "bounds": {
-        "x0": 154,
-        "y0": 154,
-        "x1": 307,
-        "y1": 307,
-        "width": 153,
-        "height": 153
+        "x0": 410,
+        "y0": 410,
+        "x1": 819,
+        "y1": 819,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.1003,
-        "v0": 0.1003,
-        "u1": 0.1999,
-        "v1": 0.1999
+        "u0": 0.1001,
+        "v0": 0.1001,
+        "u1": 0.2,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
           "r": 120,
-          "g": 89,
+          "g": 88,
           "b": 64
         },
-        "hue": 26.9,
+        "hue": 26.3,
         "saturation": 0.305,
         "lightness": 0.36,
-        "brightness": 0.367,
-        "contrast": 0.068,
-        "edgeDensity": 0.028
+        "brightness": 0.366,
+        "contrast": 0.074,
+        "edgeDensity": 0.002
       },
       "classification": {
         "category": "tile",
@@ -576,31 +576,31 @@
       "row": 1,
       "col": 2,
       "bounds": {
-        "x0": 307,
-        "y0": 154,
-        "x1": 461,
-        "y1": 307,
-        "width": 154,
-        "height": 153
+        "x0": 819,
+        "y0": 410,
+        "x1": 1229,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.1999,
-        "v0": 0.1003,
-        "u1": 0.3001,
-        "v1": 0.1999
+        "u0": 0.2,
+        "v0": 0.1001,
+        "u1": 0.3,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
-          "r": 211,
-          "g": 186,
+          "r": 210,
+          "g": 185,
           "b": 159
         },
-        "hue": 30.9,
-        "saturation": 0.366,
+        "hue": 30.7,
+        "saturation": 0.365,
         "lightness": 0.725,
         "brightness": 0.741,
-        "contrast": 0.096,
-        "edgeDensity": 0.071
+        "contrast": 0.102,
+        "edgeDensity": 0.016
       },
       "classification": {
         "category": "tile",
@@ -623,31 +623,31 @@
       "row": 1,
       "col": 3,
       "bounds": {
-        "x0": 461,
-        "y0": 154,
-        "x1": 614,
-        "y1": 307,
-        "width": 153,
-        "height": 153
+        "x0": 1229,
+        "y0": 410,
+        "x1": 1638,
+        "y1": 819,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.3001,
-        "v0": 0.1003,
-        "u1": 0.3997,
-        "v1": 0.1999
+        "u0": 0.3,
+        "v0": 0.1001,
+        "u1": 0.3999,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
           "r": 200,
-          "g": 181,
+          "g": 180,
           "b": 179
         },
-        "hue": 4.1,
-        "saturation": 0.161,
+        "hue": 2.5,
+        "saturation": 0.158,
         "lightness": 0.744,
-        "brightness": 0.724,
-        "contrast": 0.129,
-        "edgeDensity": 0.078
+        "brightness": 0.723,
+        "contrast": 0.137,
+        "edgeDensity": 0.032
       },
       "classification": {
         "category": "tile",
@@ -670,18 +670,18 @@
       "row": 1,
       "col": 4,
       "bounds": {
-        "x0": 614,
-        "y0": 154,
-        "x1": 768,
-        "y1": 307,
-        "width": 154,
-        "height": 153
+        "x0": 1638,
+        "y0": 410,
+        "x1": 2048,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.3997,
-        "v0": 0.1003,
+        "u0": 0.3999,
+        "v0": 0.1001,
         "u1": 0.5,
-        "v1": 0.1999
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
@@ -689,11 +689,11 @@
           "g": 163,
           "b": 163
         },
-        "hue": 20.4,
-        "saturation": 0.013,
-        "lightness": 0.643,
+        "hue": 15.3,
+        "saturation": 0.01,
+        "lightness": 0.642,
         "brightness": 0.642,
-        "contrast": 0.033,
+        "contrast": 0.037,
         "edgeDensity": 0
       },
       "classification": {
@@ -705,7 +705,7 @@
         ]
       },
       "kitchenFit": 0.83,
-      "description": "Cell 14: tile with orange bias, 64% brightness, kitchen fit 83%.",
+      "description": "Cell 14: tile with red bias, 64% brightness, kitchen fit 83%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -717,18 +717,18 @@
       "row": 1,
       "col": 5,
       "bounds": {
-        "x0": 768,
-        "y0": 154,
-        "x1": 922,
-        "y1": 307,
-        "width": 154,
-        "height": 153
+        "x0": 2048,
+        "y0": 410,
+        "x1": 2458,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.5,
-        "v0": 0.1003,
-        "u1": 0.6003,
-        "v1": 0.1999
+        "v0": 0.1001,
+        "u1": 0.6001,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
@@ -736,12 +736,12 @@
           "g": 160,
           "b": 133
         },
-        "hue": 17.4,
-        "saturation": 0.623,
+        "hue": 17.2,
+        "saturation": 0.627,
         "lightness": 0.706,
-        "brightness": 0.677,
-        "contrast": 0.076,
-        "edgeDensity": 0.036
+        "brightness": 0.676,
+        "contrast": 0.081,
+        "edgeDensity": 0.009
       },
       "classification": {
         "category": "tile",
@@ -764,18 +764,18 @@
       "row": 1,
       "col": 6,
       "bounds": {
-        "x0": 922,
-        "y0": 154,
-        "x1": 1075,
-        "y1": 307,
-        "width": 153,
-        "height": 153
+        "x0": 2458,
+        "y0": 410,
+        "x1": 2867,
+        "y1": 819,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.6003,
-        "v0": 0.1003,
-        "u1": 0.6999,
-        "v1": 0.1999
+        "u0": 0.6001,
+        "v0": 0.1001,
+        "u1": 0.7,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
@@ -783,12 +783,12 @@
           "g": 209,
           "b": 191
         },
-        "hue": 30.7,
+        "hue": 30.1,
         "saturation": 0.384,
-        "lightness": 0.817,
+        "lightness": 0.818,
         "brightness": 0.828,
-        "contrast": 0.064,
-        "edgeDensity": 0.033
+        "contrast": 0.074,
+        "edgeDensity": 0.015
       },
       "classification": {
         "category": "tile",
@@ -811,31 +811,31 @@
       "row": 1,
       "col": 7,
       "bounds": {
-        "x0": 1075,
-        "y0": 154,
-        "x1": 1229,
-        "y1": 307,
-        "width": 154,
-        "height": 153
+        "x0": 2867,
+        "y0": 410,
+        "x1": 3277,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.6999,
-        "v0": 0.1003,
-        "u1": 0.8001,
-        "v1": 0.1999
+        "u0": 0.7,
+        "v0": 0.1001,
+        "u1": 0.8,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
           "r": 184,
           "g": 159,
-          "b": 125
+          "b": 124
         },
-        "hue": 34.9,
+        "hue": 34.7,
         "saturation": 0.293,
         "lightness": 0.604,
-        "brightness": 0.634,
-        "contrast": 0.113,
-        "edgeDensity": 0.112
+        "brightness": 0.633,
+        "contrast": 0.126,
+        "edgeDensity": 0.023
       },
       "classification": {
         "category": "tile",
@@ -858,31 +858,31 @@
       "row": 1,
       "col": 8,
       "bounds": {
-        "x0": 1229,
-        "y0": 154,
-        "x1": 1382,
-        "y1": 307,
-        "width": 153,
-        "height": 153
+        "x0": 3277,
+        "y0": 410,
+        "x1": 3686,
+        "y1": 819,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.8001,
-        "v0": 0.1003,
-        "u1": 0.8997,
-        "v1": 0.1999
+        "u0": 0.8,
+        "v0": 0.1001,
+        "u1": 0.8999,
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
           "r": 182,
-          "g": 161,
-          "b": 137
+          "g": 160,
+          "b": 138
         },
-        "hue": 31.4,
+        "hue": 30.9,
         "saturation": 0.233,
-        "lightness": 0.626,
+        "lightness": 0.627,
         "brightness": 0.641,
-        "contrast": 0.091,
-        "edgeDensity": 0.045
+        "contrast": 0.096,
+        "edgeDensity": 0.015
       },
       "classification": {
         "category": "tile",
@@ -905,31 +905,31 @@
       "row": 1,
       "col": 9,
       "bounds": {
-        "x0": 1382,
-        "y0": 154,
-        "x1": 1536,
-        "y1": 307,
-        "width": 154,
-        "height": 153
+        "x0": 3686,
+        "y0": 410,
+        "x1": 4096,
+        "y1": 819,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.8997,
-        "v0": 0.1003,
+        "u0": 0.8999,
+        "v0": 0.1001,
         "u1": 1,
-        "v1": 0.1999
+        "v1": 0.2
       },
       "stats": {
         "averageColor": {
           "r": 230,
-          "g": 184,
-          "b": 97
+          "g": 183,
+          "b": 96
         },
-        "hue": 39.1,
-        "saturation": 0.729,
+        "hue": 38.9,
+        "saturation": 0.732,
         "lightness": 0.641,
         "brightness": 0.734,
-        "contrast": 0.09,
-        "edgeDensity": 0.017
+        "contrast": 0.094,
+        "edgeDensity": 0.006
       },
       "classification": {
         "category": "tile",
@@ -953,30 +953,30 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 307,
-        "x1": 154,
-        "y1": 461,
-        "width": 154,
-        "height": 154
+        "y0": 819,
+        "x1": 410,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0,
-        "v0": 0.1999,
-        "u1": 0.1003,
-        "v1": 0.3001
+        "v0": 0.2,
+        "u1": 0.1001,
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
-          "r": 186,
+          "r": 187,
           "g": 140,
           "b": 95
         },
-        "hue": 29.6,
-        "saturation": 0.399,
-        "lightness": 0.552,
-        "brightness": 0.576,
-        "contrast": 0.122,
-        "edgeDensity": 0.053
+        "hue": 29.3,
+        "saturation": 0.4,
+        "lightness": 0.553,
+        "brightness": 0.575,
+        "contrast": 0.127,
+        "edgeDensity": 0.019
       },
       "classification": {
         "category": "tile",
@@ -987,7 +987,7 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 20: tile with orange bias, 58% brightness, kitchen fit 75%.",
+      "description": "Cell 20: tile with orange bias, 57% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -999,31 +999,31 @@
       "row": 2,
       "col": 1,
       "bounds": {
-        "x0": 154,
-        "y0": 307,
-        "x1": 307,
-        "y1": 461,
-        "width": 153,
-        "height": 154
+        "x0": 410,
+        "y0": 819,
+        "x1": 819,
+        "y1": 1229,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1003,
-        "v0": 0.1999,
-        "u1": 0.1999,
-        "v1": 0.3001
+        "u0": 0.1001,
+        "v0": 0.2,
+        "u1": 0.2,
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
           "r": 178,
           "g": 131,
-          "b": 88
+          "b": 89
         },
-        "hue": 28.9,
+        "hue": 28.6,
         "saturation": 0.366,
-        "lightness": 0.522,
+        "lightness": 0.523,
         "brightness": 0.542,
-        "contrast": 0.109,
-        "edgeDensity": 0.026
+        "contrast": 0.113,
+        "edgeDensity": 0.007
       },
       "classification": {
         "category": "tile",
@@ -1046,18 +1046,18 @@
       "row": 2,
       "col": 2,
       "bounds": {
-        "x0": 307,
-        "y0": 307,
-        "x1": 461,
-        "y1": 461,
-        "width": 154,
-        "height": 154
+        "x0": 819,
+        "y0": 819,
+        "x1": 1229,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1999,
-        "v0": 0.1999,
-        "u1": 0.3001,
-        "v1": 0.3001
+        "u0": 0.2,
+        "v0": 0.2,
+        "u1": 0.3,
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
@@ -1065,12 +1065,12 @@
           "g": 191,
           "b": 125
         },
-        "hue": 45.4,
+        "hue": 45.5,
         "saturation": 0.5,
         "lightness": 0.661,
         "brightness": 0.747,
-        "contrast": 0.123,
-        "edgeDensity": 0.061
+        "contrast": 0.129,
+        "edgeDensity": 0.025
       },
       "classification": {
         "category": "wood",
@@ -1093,18 +1093,18 @@
       "row": 2,
       "col": 3,
       "bounds": {
-        "x0": 461,
-        "y0": 307,
-        "x1": 614,
-        "y1": 461,
-        "width": 153,
-        "height": 154
+        "x0": 1229,
+        "y0": 819,
+        "x1": 1638,
+        "y1": 1229,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3001,
-        "v0": 0.1999,
-        "u1": 0.3997,
-        "v1": 0.3001
+        "u0": 0.3,
+        "v0": 0.2,
+        "u1": 0.3999,
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
@@ -1112,11 +1112,11 @@
           "g": 74,
           "b": 35
         },
-        "hue": 24.7,
-        "saturation": 0.572,
+        "hue": 24.3,
+        "saturation": 0.57,
         "lightness": 0.323,
-        "brightness": 0.325,
-        "contrast": 0.059,
+        "brightness": 0.324,
+        "contrast": 0.063,
         "edgeDensity": 0.001
       },
       "classification": {
@@ -1128,7 +1128,7 @@
         ]
       },
       "kitchenFit": 0.9,
-      "description": "Cell 23: wood with orange bias, 33% brightness, kitchen fit 90%.",
+      "description": "Cell 23: wood with orange bias, 32% brightness, kitchen fit 90%.",
       "tags": [
         "wood",
         "warm",
@@ -1140,31 +1140,31 @@
       "row": 2,
       "col": 4,
       "bounds": {
-        "x0": 614,
-        "y0": 307,
-        "x1": 768,
-        "y1": 461,
-        "width": 154,
-        "height": 154
+        "x0": 1638,
+        "y0": 819,
+        "x1": 2048,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3997,
-        "v0": 0.1999,
+        "u0": 0.3999,
+        "v0": 0.2,
         "u1": 0.5,
-        "v1": 0.3001
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
           "r": 156,
           "g": 132,
-          "b": 111
+          "b": 112
         },
-        "hue": 27.6,
-        "saturation": 0.185,
-        "lightness": 0.524,
+        "hue": 27.3,
+        "saturation": 0.183,
+        "lightness": 0.525,
         "brightness": 0.532,
-        "contrast": 0.163,
-        "edgeDensity": 0.071
+        "contrast": 0.168,
+        "edgeDensity": 0.023
       },
       "classification": {
         "category": "tile",
@@ -1187,31 +1187,31 @@
       "row": 2,
       "col": 5,
       "bounds": {
-        "x0": 768,
-        "y0": 307,
-        "x1": 922,
-        "y1": 461,
-        "width": 154,
-        "height": 154
+        "x0": 2048,
+        "y0": 819,
+        "x1": 2458,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.5,
-        "v0": 0.1999,
-        "u1": 0.6003,
-        "v1": 0.3001
+        "v0": 0.2,
+        "u1": 0.6001,
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
           "r": 136,
-          "g": 96,
+          "g": 95,
           "b": 61
         },
-        "hue": 27.8,
-        "saturation": 0.383,
-        "lightness": 0.387,
-        "brightness": 0.4,
-        "contrast": 0.17,
-        "edgeDensity": 0.114
+        "hue": 27.6,
+        "saturation": 0.384,
+        "lightness": 0.386,
+        "brightness": 0.398,
+        "contrast": 0.176,
+        "edgeDensity": 0.038
       },
       "classification": {
         "category": "tile",
@@ -1234,18 +1234,18 @@
       "row": 2,
       "col": 6,
       "bounds": {
-        "x0": 922,
-        "y0": 307,
-        "x1": 1075,
-        "y1": 461,
-        "width": 153,
-        "height": 154
+        "x0": 2458,
+        "y0": 819,
+        "x1": 2867,
+        "y1": 1229,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6003,
-        "v0": 0.1999,
-        "u1": 0.6999,
-        "v1": 0.3001
+        "u0": 0.6001,
+        "v0": 0.2,
+        "u1": 0.7,
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
@@ -1253,12 +1253,12 @@
           "g": 107,
           "b": 62
         },
-        "hue": 31.6,
+        "hue": 31.3,
         "saturation": 0.408,
         "lightness": 0.41,
-        "brightness": 0.44,
-        "contrast": 0.132,
-        "edgeDensity": 0.051
+        "brightness": 0.439,
+        "contrast": 0.14,
+        "edgeDensity": 0.012
       },
       "classification": {
         "category": "tile",
@@ -1281,31 +1281,31 @@
       "row": 2,
       "col": 7,
       "bounds": {
-        "x0": 1075,
-        "y0": 307,
-        "x1": 1229,
-        "y1": 461,
-        "width": 154,
-        "height": 154
+        "x0": 2867,
+        "y0": 819,
+        "x1": 3277,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6999,
-        "v0": 0.1999,
-        "u1": 0.8001,
-        "v1": 0.3001
+        "u0": 0.7,
+        "v0": 0.2,
+        "u1": 0.8,
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
           "r": 180,
           "g": 173,
-          "b": 161
+          "b": 162
         },
-        "hue": 36.7,
-        "saturation": 0.113,
-        "lightness": 0.67,
+        "hue": 35.8,
+        "saturation": 0.112,
+        "lightness": 0.671,
         "brightness": 0.681,
-        "contrast": 0.15,
-        "edgeDensity": 0.188
+        "contrast": 0.161,
+        "edgeDensity": 0.057
       },
       "classification": {
         "category": "tile",
@@ -1315,8 +1315,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.73,
-      "description": "Cell 27: tile with orange bias, 68% brightness, kitchen fit 73%.",
+      "kitchenFit": 0.83,
+      "description": "Cell 27: tile with orange bias, 68% brightness, kitchen fit 83%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -1328,18 +1328,18 @@
       "row": 2,
       "col": 8,
       "bounds": {
-        "x0": 1229,
-        "y0": 307,
-        "x1": 1382,
-        "y1": 461,
-        "width": 153,
-        "height": 154
+        "x0": 3277,
+        "y0": 819,
+        "x1": 3686,
+        "y1": 1229,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8001,
-        "v0": 0.1999,
-        "u1": 0.8997,
-        "v1": 0.3001
+        "u0": 0.8,
+        "v0": 0.2,
+        "u1": 0.8999,
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
@@ -1347,12 +1347,12 @@
           "g": 100,
           "b": 68
         },
-        "hue": 27.5,
+        "hue": 27.2,
         "saturation": 0.339,
         "lightness": 0.405,
-        "brightness": 0.416,
-        "contrast": 0.194,
-        "edgeDensity": 0.187
+        "brightness": 0.415,
+        "contrast": 0.202,
+        "edgeDensity": 0.055
       },
       "classification": {
         "category": "tile",
@@ -1362,8 +1362,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 28: tile with orange bias, 42% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 28: tile with orange bias, 42% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -1375,18 +1375,18 @@
       "row": 2,
       "col": 9,
       "bounds": {
-        "x0": 1382,
-        "y0": 307,
-        "x1": 1536,
-        "y1": 461,
-        "width": 154,
-        "height": 154
+        "x0": 3686,
+        "y0": 819,
+        "x1": 4096,
+        "y1": 1229,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8997,
-        "v0": 0.1999,
+        "u0": 0.8999,
+        "v0": 0.2,
         "u1": 1,
-        "v1": 0.3001
+        "v1": 0.3
       },
       "stats": {
         "averageColor": {
@@ -1394,12 +1394,12 @@
           "g": 48,
           "b": 36
         },
-        "hue": 29.7,
-        "saturation": 0.26,
+        "hue": 28.9,
+        "saturation": 0.256,
         "lightness": 0.189,
-        "brightness": 0.196,
-        "contrast": 0.093,
-        "edgeDensity": 0.019
+        "brightness": 0.195,
+        "contrast": 0.095,
+        "edgeDensity": 0.001
       },
       "classification": {
         "category": "wood",
@@ -1423,17 +1423,17 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 461,
-        "x1": 154,
-        "y1": 614,
-        "width": 154,
-        "height": 153
+        "y0": 1229,
+        "x1": 410,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0,
-        "v0": 0.3001,
-        "u1": 0.1003,
-        "v1": 0.3997
+        "v0": 0.3,
+        "u1": 0.1001,
+        "v1": 0.3999
       },
       "stats": {
         "averageColor": {
@@ -1441,27 +1441,27 @@
           "g": 201,
           "b": 193
         },
-        "hue": 159.7,
-        "saturation": 0.193,
-        "lightness": 0.739,
-        "brightness": 0.766,
-        "contrast": 0.158,
-        "edgeDensity": 0.024
+        "hue": 160.6,
+        "saturation": 0.19,
+        "lightness": 0.738,
+        "brightness": 0.765,
+        "contrast": 0.162,
+        "edgeDensity": 0.009
       },
       "classification": {
-        "category": "fabric",
+        "category": "tile",
         "tags": [
-          "fabric",
-          "cloth",
-          "soft-surface"
+          "tile",
+          "cool-surface",
+          "ceramic"
         ]
       },
-      "kitchenFit": 0.6,
-      "description": "Cell 30: fabric with green bias, 77% brightness, kitchen fit 60%.",
+      "kitchenFit": 0.75,
+      "description": "Cell 30: tile with cyan bias, 77% brightness, kitchen fit 75%.",
       "tags": [
-        "fabric",
-        "cloth",
-        "soft-surface"
+        "tile",
+        "cool-surface",
+        "ceramic"
       ]
     },
     {
@@ -1469,31 +1469,31 @@
       "row": 3,
       "col": 1,
       "bounds": {
-        "x0": 154,
-        "y0": 461,
-        "x1": 307,
-        "y1": 614,
-        "width": 153,
-        "height": 153
+        "x0": 410,
+        "y0": 1229,
+        "x1": 819,
+        "y1": 1638,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.1003,
-        "v0": 0.3001,
-        "u1": 0.1999,
-        "v1": 0.3997
+        "u0": 0.1001,
+        "v0": 0.3,
+        "u1": 0.2,
+        "v1": 0.3999
       },
       "stats": {
         "averageColor": {
-          "r": 192,
+          "r": 193,
           "g": 140,
           "b": 90
         },
-        "hue": 29.4,
-        "saturation": 0.449,
-        "lightness": 0.553,
+        "hue": 29.1,
+        "saturation": 0.451,
+        "lightness": 0.554,
         "brightness": 0.578,
-        "contrast": 0.088,
-        "edgeDensity": 0.039
+        "contrast": 0.094,
+        "edgeDensity": 0.014
       },
       "classification": {
         "category": "tile",
@@ -1516,18 +1516,18 @@
       "row": 3,
       "col": 2,
       "bounds": {
-        "x0": 307,
-        "y0": 461,
-        "x1": 461,
-        "y1": 614,
-        "width": 154,
-        "height": 153
+        "x0": 819,
+        "y0": 1229,
+        "x1": 1229,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.1999,
-        "v0": 0.3001,
-        "u1": 0.3001,
-        "v1": 0.3997
+        "u0": 0.2,
+        "v0": 0.3,
+        "u1": 0.3,
+        "v1": 0.3999
       },
       "stats": {
         "averageColor": {
@@ -1535,12 +1535,12 @@
           "g": 171,
           "b": 153
         },
-        "hue": 27.9,
-        "saturation": 0.231,
-        "lightness": 0.675,
+        "hue": 27.5,
+        "saturation": 0.229,
+        "lightness": 0.676,
         "brightness": 0.682,
-        "contrast": 0.183,
-        "edgeDensity": 0.085
+        "contrast": 0.187,
+        "edgeDensity": 0.028
       },
       "classification": {
         "category": "tile",
@@ -1563,18 +1563,18 @@
       "row": 3,
       "col": 3,
       "bounds": {
-        "x0": 461,
-        "y0": 461,
-        "x1": 614,
-        "y1": 614,
-        "width": 153,
-        "height": 153
+        "x0": 1229,
+        "y0": 1229,
+        "x1": 1638,
+        "y1": 1638,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.3001,
-        "v0": 0.3001,
-        "u1": 0.3997,
-        "v1": 0.3997
+        "u0": 0.3,
+        "v0": 0.3,
+        "u1": 0.3999,
+        "v1": 0.3999
       },
       "stats": {
         "averageColor": {
@@ -1582,12 +1582,12 @@
           "g": 168,
           "b": 148
         },
-        "hue": 28.9,
-        "saturation": 0.238,
+        "hue": 28.5,
+        "saturation": 0.236,
         "lightness": 0.661,
-        "brightness": 0.67,
-        "contrast": 0.163,
-        "edgeDensity": 0.096
+        "brightness": 0.669,
+        "contrast": 0.17,
+        "edgeDensity": 0.03
       },
       "classification": {
         "category": "tile",
@@ -1610,31 +1610,31 @@
       "row": 3,
       "col": 4,
       "bounds": {
-        "x0": 614,
-        "y0": 461,
-        "x1": 768,
-        "y1": 614,
-        "width": 154,
-        "height": 153
+        "x0": 1638,
+        "y0": 1229,
+        "x1": 2048,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.3997,
-        "v0": 0.3001,
+        "u0": 0.3999,
+        "v0": 0.3,
         "u1": 0.5,
-        "v1": 0.3997
+        "v1": 0.3999
       },
       "stats": {
         "averageColor": {
           "r": 222,
-          "g": 162,
-          "b": 71
+          "g": 161,
+          "b": 70
         },
-        "hue": 36.2,
-        "saturation": 0.693,
+        "hue": 36.1,
+        "saturation": 0.697,
         "lightness": 0.573,
         "brightness": 0.658,
-        "contrast": 0.115,
-        "edgeDensity": 0.075
+        "contrast": 0.121,
+        "edgeDensity": 0.023
       },
       "classification": {
         "category": "tile",
@@ -1657,31 +1657,31 @@
       "row": 3,
       "col": 5,
       "bounds": {
-        "x0": 768,
-        "y0": 461,
-        "x1": 922,
-        "y1": 614,
-        "width": 154,
-        "height": 153
+        "x0": 2048,
+        "y0": 1229,
+        "x1": 2458,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.5,
-        "v0": 0.3001,
-        "u1": 0.6003,
-        "v1": 0.3997
+        "v0": 0.3,
+        "u1": 0.6001,
+        "v1": 0.3999
       },
       "stats": {
         "averageColor": {
           "r": 219,
-          "g": 197,
+          "g": 196,
           "b": 173
         },
-        "hue": 30.9,
-        "saturation": 0.391,
+        "hue": 30.5,
+        "saturation": 0.393,
         "lightness": 0.768,
-        "brightness": 0.783,
-        "contrast": 0.108,
-        "edgeDensity": 0.019
+        "brightness": 0.782,
+        "contrast": 0.111,
+        "edgeDensity": 0.004
       },
       "classification": {
         "category": "tile",
@@ -1704,18 +1704,18 @@
       "row": 3,
       "col": 6,
       "bounds": {
-        "x0": 922,
-        "y0": 461,
-        "x1": 1075,
-        "y1": 614,
-        "width": 153,
-        "height": 153
+        "x0": 2458,
+        "y0": 1229,
+        "x1": 2867,
+        "y1": 1638,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.6003,
-        "v0": 0.3001,
-        "u1": 0.6999,
-        "v1": 0.3997
+        "u0": 0.6001,
+        "v0": 0.3,
+        "u1": 0.7,
+        "v1": 0.3999
       },
       "stats": {
         "averageColor": {
@@ -1723,12 +1723,12 @@
           "g": 172,
           "b": 160
         },
-        "hue": 134,
-        "saturation": 0.087,
+        "hue": 134.8,
+        "saturation": 0.085,
         "lightness": 0.643,
         "brightness": 0.657,
-        "contrast": 0.168,
-        "edgeDensity": 0.196
+        "contrast": 0.18,
+        "edgeDensity": 0.065
       },
       "classification": {
         "category": "fabric",
@@ -1738,8 +1738,8 @@
           "soft-surface"
         ]
       },
-      "kitchenFit": 0.58,
-      "description": "Cell 36: fabric with green bias, 66% brightness, kitchen fit 58%.",
+      "kitchenFit": 0.68,
+      "description": "Cell 36: fabric with green bias, 66% brightness, kitchen fit 68%.",
       "tags": [
         "fabric",
         "cloth",
@@ -1751,18 +1751,18 @@
       "row": 3,
       "col": 7,
       "bounds": {
-        "x0": 1075,
-        "y0": 461,
-        "x1": 1229,
-        "y1": 614,
-        "width": 154,
-        "height": 153
+        "x0": 2867,
+        "y0": 1229,
+        "x1": 3277,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.6999,
-        "v0": 0.3001,
-        "u1": 0.8001,
-        "v1": 0.3997
+        "u0": 0.7,
+        "v0": 0.3,
+        "u1": 0.8,
+        "v1": 0.3999
       },
       "stats": {
         "averageColor": {
@@ -1770,12 +1770,12 @@
           "g": 171,
           "b": 171
         },
-        "hue": 35.6,
-        "saturation": 0.005,
+        "hue": 358.5,
+        "saturation": 0.003,
         "lightness": 0.671,
         "brightness": 0.671,
-        "contrast": 0.15,
-        "edgeDensity": 0.015
+        "contrast": 0.152,
+        "edgeDensity": 0.007
       },
       "classification": {
         "category": "tile",
@@ -1786,7 +1786,7 @@
         ]
       },
       "kitchenFit": 0.83,
-      "description": "Cell 37: tile with orange bias, 67% brightness, kitchen fit 83%.",
+      "description": "Cell 37: tile with red bias, 67% brightness, kitchen fit 83%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -1798,18 +1798,18 @@
       "row": 3,
       "col": 8,
       "bounds": {
-        "x0": 1229,
-        "y0": 461,
-        "x1": 1382,
-        "y1": 614,
-        "width": 153,
-        "height": 153
+        "x0": 3277,
+        "y0": 1229,
+        "x1": 3686,
+        "y1": 1638,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.8001,
-        "v0": 0.3001,
-        "u1": 0.8997,
-        "v1": 0.3997
+        "u0": 0.8,
+        "v0": 0.3,
+        "u1": 0.8999,
+        "v1": 0.3999
       },
       "stats": {
         "averageColor": {
@@ -1817,12 +1817,12 @@
           "g": 154,
           "b": 110
         },
-        "hue": 29.9,
-        "saturation": 0.442,
+        "hue": 29.8,
+        "saturation": 0.441,
         "lightness": 0.605,
         "brightness": 0.629,
-        "contrast": 0.163,
-        "edgeDensity": 0.035
+        "contrast": 0.167,
+        "edgeDensity": 0.012
       },
       "classification": {
         "category": "tile",
@@ -1845,18 +1845,18 @@
       "row": 3,
       "col": 9,
       "bounds": {
-        "x0": 1382,
-        "y0": 461,
-        "x1": 1536,
-        "y1": 614,
-        "width": 154,
-        "height": 153
+        "x0": 3686,
+        "y0": 1229,
+        "x1": 4096,
+        "y1": 1638,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.8997,
-        "v0": 0.3001,
+        "u0": 0.8999,
+        "v0": 0.3,
         "u1": 1,
-        "v1": 0.3997
+        "v1": 0.3999
       },
       "stats": {
         "averageColor": {
@@ -1864,12 +1864,12 @@
           "g": 154,
           "b": 132
         },
-        "hue": 27.4,
-        "saturation": 0.239,
+        "hue": 27.2,
+        "saturation": 0.238,
         "lightness": 0.612,
         "brightness": 0.619,
-        "contrast": 0.204,
-        "edgeDensity": 0.246
+        "contrast": 0.217,
+        "edgeDensity": 0.119
       },
       "classification": {
         "category": "tile",
@@ -1879,8 +1879,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 39: tile with orange bias, 62% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 39: tile with orange bias, 62% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -1893,30 +1893,30 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 614,
-        "x1": 154,
-        "y1": 768,
-        "width": 154,
-        "height": 154
+        "y0": 1638,
+        "x1": 410,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0,
-        "v0": 0.3997,
-        "u1": 0.1003,
+        "v0": 0.3999,
+        "u1": 0.1001,
         "v1": 0.5
       },
       "stats": {
         "averageColor": {
           "r": 153,
           "g": 169,
-          "b": 193
+          "b": 194
         },
-        "hue": 216,
-        "saturation": 0.242,
-        "lightness": 0.679,
+        "hue": 216.4,
+        "saturation": 0.247,
+        "lightness": 0.68,
         "brightness": 0.657,
-        "contrast": 0.197,
-        "edgeDensity": 0.228
+        "contrast": 0.207,
+        "edgeDensity": 0.088
       },
       "classification": {
         "category": "tile",
@@ -1926,8 +1926,8 @@
           "ceramic"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 40: tile with blue bias, 66% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 40: tile with blue bias, 66% brightness, kitchen fit 80%.",
       "tags": [
         "tile",
         "cool-surface",
@@ -1939,31 +1939,31 @@
       "row": 4,
       "col": 1,
       "bounds": {
-        "x0": 154,
-        "y0": 614,
-        "x1": 307,
-        "y1": 768,
-        "width": 153,
-        "height": 154
+        "x0": 410,
+        "y0": 1638,
+        "x1": 819,
+        "y1": 2048,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1003,
-        "v0": 0.3997,
-        "u1": 0.1999,
+        "u0": 0.1001,
+        "v0": 0.3999,
+        "u1": 0.2,
         "v1": 0.5
       },
       "stats": {
         "averageColor": {
-          "r": 114,
+          "r": 113,
           "g": 125,
           "b": 129
         },
-        "hue": 195.6,
-        "saturation": 0.064,
+        "hue": 196.5,
+        "saturation": 0.066,
         "lightness": 0.476,
         "brightness": 0.482,
-        "contrast": 0.227,
-        "edgeDensity": 0.164
+        "contrast": 0.238,
+        "edgeDensity": 0.068
       },
       "classification": {
         "category": "tile",
@@ -1973,8 +1973,8 @@
           "ceramic"
         ]
       },
-      "kitchenFit": 0.78,
-      "description": "Cell 41: tile with cyan bias, 48% brightness, kitchen fit 78%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 41: tile with cyan bias, 48% brightness, kitchen fit 88%.",
       "tags": [
         "tile",
         "cool-surface",
@@ -1986,17 +1986,17 @@
       "row": 4,
       "col": 2,
       "bounds": {
-        "x0": 307,
-        "y0": 614,
-        "x1": 461,
-        "y1": 768,
-        "width": 154,
-        "height": 154
+        "x0": 819,
+        "y0": 1638,
+        "x1": 1229,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1999,
-        "v0": 0.3997,
-        "u1": 0.3001,
+        "u0": 0.2,
+        "v0": 0.3999,
+        "u1": 0.3,
         "v1": 0.5
       },
       "stats": {
@@ -2005,12 +2005,12 @@
           "g": 129,
           "b": 127
         },
-        "hue": 61.1,
+        "hue": 60.2,
         "saturation": 0.008,
         "lightness": 0.501,
         "brightness": 0.505,
-        "contrast": 0.247,
-        "edgeDensity": 0.189
+        "contrast": 0.258,
+        "edgeDensity": 0.086
       },
       "classification": {
         "category": "concrete",
@@ -2020,8 +2020,8 @@
           "neutral-surface"
         ]
       },
-      "kitchenFit": 0.63,
-      "description": "Cell 42: concrete with yellow bias, 51% brightness, kitchen fit 63%.",
+      "kitchenFit": 0.73,
+      "description": "Cell 42: concrete with yellow bias, 51% brightness, kitchen fit 73%.",
       "tags": [
         "concrete",
         "stone",
@@ -2033,31 +2033,31 @@
       "row": 4,
       "col": 3,
       "bounds": {
-        "x0": 461,
-        "y0": 614,
-        "x1": 614,
-        "y1": 768,
-        "width": 153,
-        "height": 154
+        "x0": 1229,
+        "y0": 1638,
+        "x1": 1638,
+        "y1": 2048,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3001,
-        "v0": 0.3997,
-        "u1": 0.3997,
+        "u0": 0.3,
+        "v0": 0.3999,
+        "u1": 0.3999,
         "v1": 0.5
       },
       "stats": {
         "averageColor": {
-          "r": 154,
-          "g": 174,
+          "r": 153,
+          "g": 173,
           "b": 170
         },
-        "hue": 167.3,
+        "hue": 168.6,
         "saturation": 0.109,
-        "lightness": 0.642,
-        "brightness": 0.664,
-        "contrast": 0.165,
-        "edgeDensity": 0.148
+        "lightness": 0.641,
+        "brightness": 0.662,
+        "contrast": 0.18,
+        "edgeDensity": 0.051
       },
       "classification": {
         "category": "tile",
@@ -2080,16 +2080,16 @@
       "row": 4,
       "col": 4,
       "bounds": {
-        "x0": 614,
-        "y0": 614,
-        "x1": 768,
-        "y1": 768,
-        "width": 154,
-        "height": 154
+        "x0": 1638,
+        "y0": 1638,
+        "x1": 2048,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3997,
-        "v0": 0.3997,
+        "u0": 0.3999,
+        "v0": 0.3999,
         "u1": 0.5,
         "v1": 0.5
       },
@@ -2099,12 +2099,12 @@
           "g": 175,
           "b": 154
         },
-        "hue": 122.6,
-        "saturation": 0.12,
+        "hue": 123.8,
+        "saturation": 0.122,
         "lightness": 0.642,
         "brightness": 0.661,
-        "contrast": 0.198,
-        "edgeDensity": 0.15
+        "contrast": 0.207,
+        "edgeDensity": 0.06
       },
       "classification": {
         "category": "fabric",
@@ -2127,31 +2127,31 @@
       "row": 4,
       "col": 5,
       "bounds": {
-        "x0": 768,
-        "y0": 614,
-        "x1": 922,
-        "y1": 768,
-        "width": 154,
-        "height": 154
+        "x0": 2048,
+        "y0": 1638,
+        "x1": 2458,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.5,
-        "v0": 0.3997,
-        "u1": 0.6003,
+        "v0": 0.3999,
+        "u1": 0.6001,
         "v1": 0.5
       },
       "stats": {
         "averageColor": {
           "r": 145,
-          "g": 145,
+          "g": 144,
           "b": 143
         },
-        "hue": 44.6,
+        "hue": 25.3,
         "saturation": 0.01,
-        "lightness": 0.565,
-        "brightness": 0.567,
-        "contrast": 0.295,
-        "edgeDensity": 0.275
+        "lightness": 0.566,
+        "brightness": 0.566,
+        "contrast": 0.305,
+        "edgeDensity": 0.095
       },
       "classification": {
         "category": "tile",
@@ -2161,8 +2161,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.78,
-      "description": "Cell 45: tile with orange bias, 57% brightness, kitchen fit 78%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 45: tile with orange bias, 57% brightness, kitchen fit 88%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -2174,31 +2174,31 @@
       "row": 4,
       "col": 6,
       "bounds": {
-        "x0": 922,
-        "y0": 614,
-        "x1": 1075,
-        "y1": 768,
-        "width": 153,
-        "height": 154
+        "x0": 2458,
+        "y0": 1638,
+        "x1": 2867,
+        "y1": 2048,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6003,
-        "v0": 0.3997,
-        "u1": 0.6999,
+        "u0": 0.6001,
+        "v0": 0.3999,
+        "u1": 0.7,
         "v1": 0.5
       },
       "stats": {
         "averageColor": {
-          "r": 140,
+          "r": 139,
           "g": 150,
-          "b": 155
+          "b": 156
         },
-        "hue": 202,
-        "saturation": 0.074,
-        "lightness": 0.578,
+        "hue": 203.2,
+        "saturation": 0.08,
+        "lightness": 0.579,
         "brightness": 0.58,
-        "contrast": 0.195,
-        "edgeDensity": 0.181
+        "contrast": 0.203,
+        "edgeDensity": 0.057
       },
       "classification": {
         "category": "tile",
@@ -2208,8 +2208,8 @@
           "ceramic"
         ]
       },
-      "kitchenFit": 0.78,
-      "description": "Cell 46: tile with cyan bias, 58% brightness, kitchen fit 78%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 46: tile with cyan bias, 58% brightness, kitchen fit 88%.",
       "tags": [
         "tile",
         "cool-surface",
@@ -2221,31 +2221,31 @@
       "row": 4,
       "col": 7,
       "bounds": {
-        "x0": 1075,
-        "y0": 614,
-        "x1": 1229,
-        "y1": 768,
-        "width": 154,
-        "height": 154
+        "x0": 2867,
+        "y0": 1638,
+        "x1": 3277,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6999,
-        "v0": 0.3997,
-        "u1": 0.8001,
+        "u0": 0.7,
+        "v0": 0.3999,
+        "u1": 0.8,
         "v1": 0.5
       },
       "stats": {
         "averageColor": {
           "r": 141,
-          "g": 137,
+          "g": 136,
           "b": 134
         },
-        "hue": 24.6,
+        "hue": 20.9,
         "saturation": 0.029,
-        "lightness": 0.538,
+        "lightness": 0.539,
         "brightness": 0.538,
-        "contrast": 0.195,
-        "edgeDensity": 0.279
+        "contrast": 0.211,
+        "edgeDensity": 0.108
       },
       "classification": {
         "category": "tile",
@@ -2255,8 +2255,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.78,
-      "description": "Cell 47: tile with orange bias, 54% brightness, kitchen fit 78%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 47: tile with orange bias, 54% brightness, kitchen fit 88%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -2268,17 +2268,17 @@
       "row": 4,
       "col": 8,
       "bounds": {
-        "x0": 1229,
-        "y0": 614,
-        "x1": 1382,
-        "y1": 768,
-        "width": 153,
-        "height": 154
+        "x0": 3277,
+        "y0": 1638,
+        "x1": 3686,
+        "y1": 2048,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8001,
-        "v0": 0.3997,
-        "u1": 0.8997,
+        "u0": 0.8,
+        "v0": 0.3999,
+        "u1": 0.8999,
         "v1": 0.5
       },
       "stats": {
@@ -2287,12 +2287,12 @@
           "g": 161,
           "b": 146
         },
-        "hue": 121.2,
-        "saturation": 0.075,
+        "hue": 122.8,
+        "saturation": 0.076,
         "lightness": 0.6,
         "brightness": 0.613,
-        "contrast": 0.206,
-        "edgeDensity": 0.222
+        "contrast": 0.219,
+        "edgeDensity": 0.095
       },
       "classification": {
         "category": "fabric",
@@ -2302,8 +2302,8 @@
           "soft-surface"
         ]
       },
-      "kitchenFit": 0.63,
-      "description": "Cell 48: fabric with green bias, 61% brightness, kitchen fit 63%.",
+      "kitchenFit": 0.73,
+      "description": "Cell 48: fabric with green bias, 61% brightness, kitchen fit 73%.",
       "tags": [
         "fabric",
         "cloth",
@@ -2315,16 +2315,16 @@
       "row": 4,
       "col": 9,
       "bounds": {
-        "x0": 1382,
-        "y0": 614,
-        "x1": 1536,
-        "y1": 768,
-        "width": 154,
-        "height": 154
+        "x0": 3686,
+        "y0": 1638,
+        "x1": 4096,
+        "y1": 2048,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8997,
-        "v0": 0.3997,
+        "u0": 0.8999,
+        "v0": 0.3999,
         "u1": 1,
         "v1": 0.5
       },
@@ -2334,12 +2334,12 @@
           "g": 153,
           "b": 152
         },
-        "hue": 56.2,
-        "saturation": 0.007,
-        "lightness": 0.599,
+        "hue": 64.9,
+        "saturation": 0.005,
+        "lightness": 0.6,
         "brightness": 0.601,
-        "contrast": 0.278,
-        "edgeDensity": 0.362
+        "contrast": 0.294,
+        "edgeDensity": 0.143
       },
       "classification": {
         "category": "concrete",
@@ -2349,8 +2349,8 @@
           "neutral-surface"
         ]
       },
-      "kitchenFit": 0.63,
-      "description": "Cell 49: concrete with yellow bias, 60% brightness, kitchen fit 63%.",
+      "kitchenFit": 0.73,
+      "description": "Cell 49: concrete with yellow bias, 60% brightness, kitchen fit 73%.",
       "tags": [
         "concrete",
         "stone",
@@ -2363,30 +2363,30 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 768,
-        "x1": 154,
-        "y1": 922,
-        "width": 154,
-        "height": 154
+        "y0": 2048,
+        "x1": 410,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0,
         "v0": 0.5,
-        "u1": 0.1003,
-        "v1": 0.6003
+        "u1": 0.1001,
+        "v1": 0.6001
       },
       "stats": {
         "averageColor": {
-          "r": 241,
+          "r": 242,
           "g": 198,
-          "b": 100
+          "b": 99
         },
-        "hue": 41.7,
-        "saturation": 0.84,
-        "lightness": 0.669,
+        "hue": 41.5,
+        "saturation": 0.846,
+        "lightness": 0.67,
         "brightness": 0.786,
-        "contrast": 0.101,
-        "edgeDensity": 0.025
+        "contrast": 0.104,
+        "edgeDensity": 0.007
       },
       "classification": {
         "category": "tile",
@@ -2409,31 +2409,31 @@
       "row": 5,
       "col": 1,
       "bounds": {
-        "x0": 154,
-        "y0": 768,
-        "x1": 307,
-        "y1": 922,
-        "width": 153,
-        "height": 154
+        "x0": 410,
+        "y0": 2048,
+        "x1": 819,
+        "y1": 2458,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1003,
+        "u0": 0.1001,
         "v0": 0.5,
-        "u1": 0.1999,
-        "v1": 0.6003
+        "u1": 0.2,
+        "v1": 0.6001
       },
       "stats": {
         "averageColor": {
-          "r": 196,
+          "r": 197,
           "g": 169,
-          "b": 149
+          "b": 150
         },
-        "hue": 25.4,
-        "saturation": 0.286,
-        "lightness": 0.678,
+        "hue": 25.1,
+        "saturation": 0.287,
+        "lightness": 0.679,
         "brightness": 0.681,
-        "contrast": 0.179,
-        "edgeDensity": 0.168
+        "contrast": 0.188,
+        "edgeDensity": 0.061
       },
       "classification": {
         "category": "tile",
@@ -2443,8 +2443,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.65,
-      "description": "Cell 51: tile with orange bias, 68% brightness, kitchen fit 65%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 51: tile with orange bias, 68% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -2456,46 +2456,44 @@
       "row": 5,
       "col": 2,
       "bounds": {
-        "x0": 307,
-        "y0": 768,
-        "x1": 461,
-        "y1": 922,
-        "width": 154,
-        "height": 154
+        "x0": 819,
+        "y0": 2048,
+        "x1": 1229,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1999,
+        "u0": 0.2,
         "v0": 0.5,
-        "u1": 0.3001,
-        "v1": 0.6003
+        "u1": 0.3,
+        "v1": 0.6001
       },
       "stats": {
         "averageColor": {
           "r": 188,
           "g": 162,
-          "b": 175
+          "b": 176
         },
-        "hue": 329.2,
-        "saturation": 0.163,
+        "hue": 327.6,
+        "saturation": 0.166,
         "lightness": 0.686,
-        "brightness": 0.661,
-        "contrast": 0.165,
-        "edgeDensity": 0.219
+        "brightness": 0.66,
+        "contrast": 0.177,
+        "edgeDensity": 0.087
       },
       "classification": {
-        "category": "patterned",
+        "category": "generic",
         "tags": [
-          "patterned",
-          "decorative",
-          "busy"
+          "generic-surface",
+          "unclassified"
         ]
       },
-      "kitchenFit": 0.3,
-      "description": "Cell 52: patterned with magenta bias, 66% brightness, kitchen fit 30%.",
+      "kitchenFit": 0.6,
+      "description": "Cell 52: generic with magenta bias, 66% brightness, kitchen fit 60%.",
       "tags": [
-        "patterned",
-        "decorative",
-        "busy"
+        "generic-surface",
+        "unclassified"
       ]
     },
     {
@@ -2503,31 +2501,31 @@
       "row": 5,
       "col": 3,
       "bounds": {
-        "x0": 461,
-        "y0": 768,
-        "x1": 614,
-        "y1": 922,
-        "width": 153,
-        "height": 154
+        "x0": 1229,
+        "y0": 2048,
+        "x1": 1638,
+        "y1": 2458,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3001,
+        "u0": 0.3,
         "v0": 0.5,
-        "u1": 0.3997,
-        "v1": 0.6003
+        "u1": 0.3999,
+        "v1": 0.6001
       },
       "stats": {
         "averageColor": {
           "r": 208,
           "g": 158,
-          "b": 138
+          "b": 137
         },
-        "hue": 17.3,
-        "saturation": 0.425,
-        "lightness": 0.678,
+        "hue": 17.4,
+        "saturation": 0.428,
+        "lightness": 0.677,
         "brightness": 0.655,
-        "contrast": 0.281,
-        "edgeDensity": 0.106
+        "contrast": 0.286,
+        "edgeDensity": 0.039
       },
       "classification": {
         "category": "tile",
@@ -2550,31 +2548,31 @@
       "row": 5,
       "col": 4,
       "bounds": {
-        "x0": 614,
-        "y0": 768,
-        "x1": 768,
-        "y1": 922,
-        "width": 154,
-        "height": 154
+        "x0": 1638,
+        "y0": 2048,
+        "x1": 2048,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3997,
+        "u0": 0.3999,
         "v0": 0.5,
         "u1": 0.5,
-        "v1": 0.6003
+        "v1": 0.6001
       },
       "stats": {
         "averageColor": {
           "r": 198,
-          "g": 179,
+          "g": 178,
           "b": 154
         },
-        "hue": 33.6,
-        "saturation": 0.281,
+        "hue": 33.3,
+        "saturation": 0.282,
         "lightness": 0.69,
-        "brightness": 0.71,
-        "contrast": 0.177,
-        "edgeDensity": 0.125
+        "brightness": 0.709,
+        "contrast": 0.185,
+        "edgeDensity": 0.049
       },
       "classification": {
         "category": "tile",
@@ -2584,8 +2582,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 54: tile with orange bias, 71% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 54: tile with orange bias, 71% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -2597,18 +2595,18 @@
       "row": 5,
       "col": 5,
       "bounds": {
-        "x0": 768,
-        "y0": 768,
-        "x1": 922,
-        "y1": 922,
-        "width": 154,
-        "height": 154
+        "x0": 2048,
+        "y0": 2048,
+        "x1": 2458,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.5,
         "v0": 0.5,
-        "u1": 0.6003,
-        "v1": 0.6003
+        "u1": 0.6001,
+        "v1": 0.6001
       },
       "stats": {
         "averageColor": {
@@ -2616,12 +2614,12 @@
           "g": 120,
           "b": 83
         },
-        "hue": 26.9,
-        "saturation": 0.331,
+        "hue": 26.7,
+        "saturation": 0.333,
         "lightness": 0.488,
-        "brightness": 0.499,
-        "contrast": 0.185,
-        "edgeDensity": 0.181
+        "brightness": 0.498,
+        "contrast": 0.193,
+        "edgeDensity": 0.061
       },
       "classification": {
         "category": "tile",
@@ -2631,8 +2629,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 55: tile with orange bias, 50% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 55: tile with orange bias, 50% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -2644,31 +2642,31 @@
       "row": 5,
       "col": 6,
       "bounds": {
-        "x0": 922,
-        "y0": 768,
-        "x1": 1075,
-        "y1": 922,
-        "width": 153,
-        "height": 154
+        "x0": 2458,
+        "y0": 2048,
+        "x1": 2867,
+        "y1": 2458,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6003,
+        "u0": 0.6001,
         "v0": 0.5,
-        "u1": 0.6999,
-        "v1": 0.6003
+        "u1": 0.7,
+        "v1": 0.6001
       },
       "stats": {
         "averageColor": {
           "r": 199,
           "g": 163,
-          "b": 117
+          "b": 116
         },
-        "hue": 33.9,
-        "saturation": 0.422,
+        "hue": 33.7,
+        "saturation": 0.428,
         "lightness": 0.619,
-        "brightness": 0.657,
-        "contrast": 0.211,
-        "edgeDensity": 0.174
+        "brightness": 0.656,
+        "contrast": 0.22,
+        "edgeDensity": 0.065
       },
       "classification": {
         "category": "tile",
@@ -2678,8 +2676,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 56: tile with orange bias, 66% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 56: tile with orange bias, 66% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -2691,31 +2689,31 @@
       "row": 5,
       "col": 7,
       "bounds": {
-        "x0": 1075,
-        "y0": 768,
-        "x1": 1229,
-        "y1": 922,
-        "width": 154,
-        "height": 154
+        "x0": 2867,
+        "y0": 2048,
+        "x1": 3277,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6999,
+        "u0": 0.7,
         "v0": 0.5,
-        "u1": 0.8001,
-        "v1": 0.6003
+        "u1": 0.8,
+        "v1": 0.6001
       },
       "stats": {
         "averageColor": {
           "r": 192,
           "g": 177,
-          "b": 154
+          "b": 155
         },
-        "hue": 36.4,
-        "saturation": 0.232,
-        "lightness": 0.679,
+        "hue": 36,
+        "saturation": 0.231,
+        "lightness": 0.68,
         "brightness": 0.701,
-        "contrast": 0.214,
-        "edgeDensity": 0.305
+        "contrast": 0.228,
+        "edgeDensity": 0.116
       },
       "classification": {
         "category": "tile",
@@ -2725,8 +2723,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 57: tile with orange bias, 70% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 57: tile with orange bias, 70% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -2738,18 +2736,18 @@
       "row": 5,
       "col": 8,
       "bounds": {
-        "x0": 1229,
-        "y0": 768,
-        "x1": 1382,
-        "y1": 922,
-        "width": 153,
-        "height": 154
+        "x0": 3277,
+        "y0": 2048,
+        "x1": 3686,
+        "y1": 2458,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8001,
+        "u0": 0.8,
         "v0": 0.5,
-        "u1": 0.8997,
-        "v1": 0.6003
+        "u1": 0.8999,
+        "v1": 0.6001
       },
       "stats": {
         "averageColor": {
@@ -2757,12 +2755,12 @@
           "g": 206,
           "b": 163
         },
-        "hue": 38.9,
-        "saturation": 0.573,
+        "hue": 38.4,
+        "saturation": 0.578,
         "lightness": 0.77,
         "brightness": 0.816,
-        "contrast": 0.147,
-        "edgeDensity": 0.124
+        "contrast": 0.156,
+        "edgeDensity": 0.052
       },
       "classification": {
         "category": "tile",
@@ -2785,18 +2783,18 @@
       "row": 5,
       "col": 9,
       "bounds": {
-        "x0": 1382,
-        "y0": 768,
-        "x1": 1536,
-        "y1": 922,
-        "width": 154,
-        "height": 154
+        "x0": 3686,
+        "y0": 2048,
+        "x1": 4096,
+        "y1": 2458,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8997,
+        "u0": 0.8999,
         "v0": 0.5,
         "u1": 1,
-        "v1": 0.6003
+        "v1": 0.6001
       },
       "stats": {
         "averageColor": {
@@ -2804,12 +2802,12 @@
           "g": 150,
           "b": 105
         },
-        "hue": 27,
-        "saturation": 0.499,
+        "hue": 26.9,
+        "saturation": 0.504,
         "lightness": 0.608,
-        "brightness": 0.622,
-        "contrast": 0.185,
-        "edgeDensity": 0.243
+        "brightness": 0.621,
+        "contrast": 0.197,
+        "edgeDensity": 0.09
       },
       "classification": {
         "category": "tile",
@@ -2819,8 +2817,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 59: tile with orange bias, 62% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 59: tile with orange bias, 62% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -2833,30 +2831,30 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 922,
-        "x1": 154,
-        "y1": 1075,
-        "width": 154,
-        "height": 153
+        "y0": 2458,
+        "x1": 410,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0,
-        "v0": 0.6003,
-        "u1": 0.1003,
-        "v1": 0.6999
+        "v0": 0.6001,
+        "u1": 0.1001,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
           "r": 164,
-          "g": 148,
+          "g": 147,
           "b": 132
         },
-        "hue": 29.6,
+        "hue": 29.2,
         "saturation": 0.15,
         "lightness": 0.58,
         "brightness": 0.588,
-        "contrast": 0.212,
-        "edgeDensity": 0.321
+        "contrast": 0.227,
+        "edgeDensity": 0.114
       },
       "classification": {
         "category": "tile",
@@ -2866,8 +2864,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 60: tile with orange bias, 59% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 60: tile with orange bias, 59% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -2879,31 +2877,31 @@
       "row": 6,
       "col": 1,
       "bounds": {
-        "x0": 154,
-        "y0": 922,
-        "x1": 307,
-        "y1": 1075,
-        "width": 153,
-        "height": 153
+        "x0": 410,
+        "y0": 2458,
+        "x1": 819,
+        "y1": 2867,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.1003,
-        "v0": 0.6003,
-        "u1": 0.1999,
-        "v1": 0.6999
+        "u0": 0.1001,
+        "v0": 0.6001,
+        "u1": 0.2,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
           "r": 181,
           "g": 150,
-          "b": 115
+          "b": 116
         },
-        "hue": 32,
-        "saturation": 0.307,
+        "hue": 31.7,
+        "saturation": 0.309,
         "lightness": 0.582,
         "brightness": 0.606,
-        "contrast": 0.162,
-        "edgeDensity": 0.14
+        "contrast": 0.17,
+        "edgeDensity": 0.057
       },
       "classification": {
         "category": "tile",
@@ -2926,18 +2924,18 @@
       "row": 6,
       "col": 2,
       "bounds": {
-        "x0": 307,
-        "y0": 922,
-        "x1": 461,
-        "y1": 1075,
-        "width": 154,
-        "height": 153
+        "x0": 819,
+        "y0": 2458,
+        "x1": 1229,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.1999,
-        "v0": 0.6003,
-        "u1": 0.3001,
-        "v1": 0.6999
+        "u0": 0.2,
+        "v0": 0.6001,
+        "u1": 0.3,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
@@ -2946,11 +2944,11 @@
           "b": 68
         },
         "hue": 30.5,
-        "saturation": 0.375,
+        "saturation": 0.377,
         "lightness": 0.428,
-        "brightness": 0.453,
-        "contrast": 0.186,
-        "edgeDensity": 0.367
+        "brightness": 0.452,
+        "contrast": 0.204,
+        "edgeDensity": 0.136
       },
       "classification": {
         "category": "tile",
@@ -2960,8 +2958,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 62: tile with orange bias, 45% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 62: tile with orange bias, 45% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -2973,46 +2971,44 @@
       "row": 6,
       "col": 3,
       "bounds": {
-        "x0": 461,
-        "y0": 922,
-        "x1": 614,
-        "y1": 1075,
-        "width": 153,
-        "height": 153
+        "x0": 1229,
+        "y0": 2458,
+        "x1": 1638,
+        "y1": 2867,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.3001,
-        "v0": 0.6003,
-        "u1": 0.3997,
-        "v1": 0.6999
+        "u0": 0.3,
+        "v0": 0.6001,
+        "u1": 0.3999,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
-          "r": 190,
+          "r": 191,
           "g": 159,
-          "b": 172
+          "b": 173
         },
-        "hue": 334.9,
-        "saturation": 0.193,
+        "hue": 333.7,
+        "saturation": 0.194,
         "lightness": 0.686,
         "brightness": 0.655,
-        "contrast": 0.154,
-        "edgeDensity": 0.158
+        "contrast": 0.163,
+        "edgeDensity": 0.058
       },
       "classification": {
-        "category": "patterned",
+        "category": "generic",
         "tags": [
-          "patterned",
-          "decorative",
-          "busy"
+          "generic-surface",
+          "unclassified"
         ]
       },
-      "kitchenFit": 0.4,
-      "description": "Cell 63: patterned with magenta bias, 66% brightness, kitchen fit 40%.",
+      "kitchenFit": 0.6,
+      "description": "Cell 63: generic with magenta bias, 66% brightness, kitchen fit 60%.",
       "tags": [
-        "patterned",
-        "decorative",
-        "busy"
+        "generic-surface",
+        "unclassified"
       ]
     },
     {
@@ -3020,31 +3016,31 @@
       "row": 6,
       "col": 4,
       "bounds": {
-        "x0": 614,
-        "y0": 922,
-        "x1": 768,
-        "y1": 1075,
-        "width": 154,
-        "height": 153
+        "x0": 1638,
+        "y0": 2458,
+        "x1": 2048,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.3997,
-        "v0": 0.6003,
+        "u0": 0.3999,
+        "v0": 0.6001,
         "u1": 0.5,
-        "v1": 0.6999
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
           "r": 196,
           "g": 164,
-          "b": 117
+          "b": 116
         },
-        "hue": 35.9,
-        "saturation": 0.404,
+        "hue": 35.8,
+        "saturation": 0.405,
         "lightness": 0.613,
         "brightness": 0.657,
-        "contrast": 0.163,
-        "edgeDensity": 0.229
+        "contrast": 0.176,
+        "edgeDensity": 0.085
       },
       "classification": {
         "category": "tile",
@@ -3054,8 +3050,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.65,
-      "description": "Cell 64: tile with orange bias, 66% brightness, kitchen fit 65%.",
+      "kitchenFit": 0.75,
+      "description": "Cell 64: tile with orange bias, 66% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3067,31 +3063,31 @@
       "row": 6,
       "col": 5,
       "bounds": {
-        "x0": 768,
-        "y0": 922,
-        "x1": 922,
-        "y1": 1075,
-        "width": 154,
-        "height": 153
+        "x0": 2048,
+        "y0": 2458,
+        "x1": 2458,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.5,
-        "v0": 0.6003,
-        "u1": 0.6003,
-        "v1": 0.6999
+        "v0": 0.6001,
+        "u1": 0.6001,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
           "r": 140,
-          "g": 109,
-          "b": 82
+          "g": 108,
+          "b": 81
         },
-        "hue": 27.6,
-        "saturation": 0.264,
+        "hue": 27.4,
+        "saturation": 0.265,
         "lightness": 0.435,
         "brightness": 0.444,
-        "contrast": 0.207,
-        "edgeDensity": 0.236
+        "contrast": 0.219,
+        "edgeDensity": 0.075
       },
       "classification": {
         "category": "tile",
@@ -3101,8 +3097,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 65: tile with orange bias, 44% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 65: tile with orange bias, 44% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3114,31 +3110,31 @@
       "row": 6,
       "col": 6,
       "bounds": {
-        "x0": 922,
-        "y0": 922,
-        "x1": 1075,
-        "y1": 1075,
-        "width": 153,
-        "height": 153
+        "x0": 2458,
+        "y0": 2458,
+        "x1": 2867,
+        "y1": 2867,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.6003,
-        "v0": 0.6003,
-        "u1": 0.6999,
-        "v1": 0.6999
+        "u0": 0.6001,
+        "v0": 0.6001,
+        "u1": 0.7,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
-          "r": 189,
+          "r": 190,
           "g": 154,
           "b": 148
         },
-        "hue": 8.3,
-        "saturation": 0.237,
+        "hue": 7.9,
+        "saturation": 0.241,
         "lightness": 0.662,
         "brightness": 0.631,
-        "contrast": 0.19,
-        "edgeDensity": 0.212
+        "contrast": 0.203,
+        "edgeDensity": 0.08
       },
       "classification": {
         "category": "tile",
@@ -3148,8 +3144,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 66: tile with red bias, 63% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 66: tile with red bias, 63% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3161,18 +3157,18 @@
       "row": 6,
       "col": 7,
       "bounds": {
-        "x0": 1075,
-        "y0": 922,
-        "x1": 1229,
-        "y1": 1075,
-        "width": 154,
-        "height": 153
+        "x0": 2867,
+        "y0": 2458,
+        "x1": 3277,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.6999,
-        "v0": 0.6003,
-        "u1": 0.8001,
-        "v1": 0.6999
+        "u0": 0.7,
+        "v0": 0.6001,
+        "u1": 0.8,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
@@ -3180,27 +3176,25 @@
           "g": 161,
           "b": 133
         },
-        "hue": 59.6,
-        "saturation": 0.129,
+        "hue": 60.2,
+        "saturation": 0.127,
         "lightness": 0.576,
         "brightness": 0.622,
-        "contrast": 0.171,
-        "edgeDensity": 0.133
+        "contrast": 0.179,
+        "edgeDensity": 0.05
       },
       "classification": {
-        "category": "patterned",
+        "category": "generic",
         "tags": [
-          "patterned",
-          "decorative",
-          "busy"
+          "generic-surface",
+          "unclassified"
         ]
       },
-      "kitchenFit": 0.4,
-      "description": "Cell 67: patterned with yellow bias, 62% brightness, kitchen fit 40%.",
+      "kitchenFit": 0.6,
+      "description": "Cell 67: generic with yellow bias, 62% brightness, kitchen fit 60%.",
       "tags": [
-        "patterned",
-        "decorative",
-        "busy"
+        "generic-surface",
+        "unclassified"
       ]
     },
     {
@@ -3208,18 +3202,18 @@
       "row": 6,
       "col": 8,
       "bounds": {
-        "x0": 1229,
-        "y0": 922,
-        "x1": 1382,
-        "y1": 1075,
-        "width": 153,
-        "height": 153
+        "x0": 3277,
+        "y0": 2458,
+        "x1": 3686,
+        "y1": 2867,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.8001,
-        "v0": 0.6003,
-        "u1": 0.8997,
-        "v1": 0.6999
+        "u0": 0.8,
+        "v0": 0.6001,
+        "u1": 0.8999,
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
@@ -3227,12 +3221,12 @@
           "g": 193,
           "b": 178
         },
-        "hue": 37.2,
-        "saturation": 0.198,
-        "lightness": 0.746,
+        "hue": 36.7,
+        "saturation": 0.197,
+        "lightness": 0.747,
         "brightness": 0.762,
-        "contrast": 0.178,
-        "edgeDensity": 0.072
+        "contrast": 0.182,
+        "edgeDensity": 0.026
       },
       "classification": {
         "category": "tile",
@@ -3242,8 +3236,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.75,
-      "description": "Cell 68: tile with orange bias, 76% brightness, kitchen fit 75%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 68: tile with orange bias, 76% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3255,18 +3249,18 @@
       "row": 6,
       "col": 9,
       "bounds": {
-        "x0": 1382,
-        "y0": 922,
-        "x1": 1536,
-        "y1": 1075,
-        "width": 154,
-        "height": 153
+        "x0": 3686,
+        "y0": 2458,
+        "x1": 4096,
+        "y1": 2867,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.8997,
-        "v0": 0.6003,
+        "u0": 0.8999,
+        "v0": 0.6001,
         "u1": 1,
-        "v1": 0.6999
+        "v1": 0.7
       },
       "stats": {
         "averageColor": {
@@ -3274,12 +3268,12 @@
           "g": 141,
           "b": 115
         },
-        "hue": 30.7,
-        "saturation": 0.226,
-        "lightness": 0.553,
-        "brightness": 0.568,
-        "contrast": 0.211,
-        "edgeDensity": 0.247
+        "hue": 30.4,
+        "saturation": 0.227,
+        "lightness": 0.552,
+        "brightness": 0.567,
+        "contrast": 0.222,
+        "edgeDensity": 0.096
       },
       "classification": {
         "category": "tile",
@@ -3289,8 +3283,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 69: tile with orange bias, 57% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 69: tile with orange bias, 57% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3303,30 +3297,30 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 1075,
-        "x1": 154,
-        "y1": 1229,
-        "width": 154,
-        "height": 154
+        "y0": 2867,
+        "x1": 410,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0,
-        "v0": 0.6999,
-        "u1": 0.1003,
-        "v1": 0.8001
+        "v0": 0.7,
+        "u1": 0.1001,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
           "r": 144,
-          "g": 132,
+          "g": 131,
           "b": 128
         },
-        "hue": 14.6,
-        "saturation": 0.065,
+        "hue": 13.8,
+        "saturation": 0.066,
         "lightness": 0.532,
-        "brightness": 0.526,
-        "contrast": 0.232,
-        "edgeDensity": 0.324
+        "brightness": 0.524,
+        "contrast": 0.25,
+        "edgeDensity": 0.132
       },
       "classification": {
         "category": "tile",
@@ -3336,8 +3330,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.78,
-      "description": "Cell 70: tile with red bias, 53% brightness, kitchen fit 78%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 70: tile with red bias, 52% brightness, kitchen fit 88%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3349,18 +3343,18 @@
       "row": 7,
       "col": 1,
       "bounds": {
-        "x0": 154,
-        "y0": 1075,
-        "x1": 307,
-        "y1": 1229,
-        "width": 153,
-        "height": 154
+        "x0": 410,
+        "y0": 2867,
+        "x1": 819,
+        "y1": 3277,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1003,
-        "v0": 0.6999,
-        "u1": 0.1999,
-        "v1": 0.8001
+        "u0": 0.1001,
+        "v0": 0.7,
+        "u1": 0.2,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
@@ -3368,12 +3362,12 @@
           "g": 174,
           "b": 161
         },
-        "hue": 117.4,
-        "saturation": 0.077,
-        "lightness": 0.656,
+        "hue": 118.9,
+        "saturation": 0.075,
+        "lightness": 0.657,
         "brightness": 0.668,
-        "contrast": 0.218,
-        "edgeDensity": 0.206
+        "contrast": 0.229,
+        "edgeDensity": 0.08
       },
       "classification": {
         "category": "fabric",
@@ -3383,8 +3377,8 @@
           "soft-surface"
         ]
       },
-      "kitchenFit": 0.63,
-      "description": "Cell 71: fabric with green bias, 67% brightness, kitchen fit 63%.",
+      "kitchenFit": 0.73,
+      "description": "Cell 71: fabric with green bias, 67% brightness, kitchen fit 73%.",
       "tags": [
         "fabric",
         "cloth",
@@ -3396,18 +3390,18 @@
       "row": 7,
       "col": 2,
       "bounds": {
-        "x0": 307,
-        "y0": 1075,
-        "x1": 461,
-        "y1": 1229,
-        "width": 154,
-        "height": 154
+        "x0": 819,
+        "y0": 2867,
+        "x1": 1229,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1999,
-        "v0": 0.6999,
-        "u1": 0.3001,
-        "v1": 0.8001
+        "u0": 0.2,
+        "v0": 0.7,
+        "u1": 0.3,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
@@ -3415,12 +3409,12 @@
           "g": 165,
           "b": 126
         },
-        "hue": 33.1,
-        "saturation": 0.387,
+        "hue": 33,
+        "saturation": 0.386,
         "lightness": 0.634,
-        "brightness": 0.665,
-        "contrast": 0.142,
-        "edgeDensity": 0.075
+        "brightness": 0.664,
+        "contrast": 0.148,
+        "edgeDensity": 0.03
       },
       "classification": {
         "category": "tile",
@@ -3431,7 +3425,7 @@
         ]
       },
       "kitchenFit": 0.75,
-      "description": "Cell 72: tile with orange bias, 67% brightness, kitchen fit 75%.",
+      "description": "Cell 72: tile with orange bias, 66% brightness, kitchen fit 75%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3443,18 +3437,18 @@
       "row": 7,
       "col": 3,
       "bounds": {
-        "x0": 461,
-        "y0": 1075,
-        "x1": 614,
-        "y1": 1229,
-        "width": 153,
-        "height": 154
+        "x0": 1229,
+        "y0": 2867,
+        "x1": 1638,
+        "y1": 3277,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3001,
-        "v0": 0.6999,
-        "u1": 0.3997,
-        "v1": 0.8001
+        "u0": 0.3,
+        "v0": 0.7,
+        "u1": 0.3999,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
@@ -3462,12 +3456,12 @@
           "g": 153,
           "b": 124
         },
-        "hue": 27.6,
-        "saturation": 0.317,
-        "lightness": 0.61,
-        "brightness": 0.62,
-        "contrast": 0.207,
-        "edgeDensity": 0.189
+        "hue": 27.4,
+        "saturation": 0.319,
+        "lightness": 0.609,
+        "brightness": 0.619,
+        "contrast": 0.217,
+        "edgeDensity": 0.075
       },
       "classification": {
         "category": "tile",
@@ -3477,8 +3471,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 73: tile with orange bias, 62% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 73: tile with orange bias, 62% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3490,46 +3484,46 @@
       "row": 7,
       "col": 4,
       "bounds": {
-        "x0": 614,
-        "y0": 1075,
-        "x1": 768,
-        "y1": 1229,
-        "width": 154,
-        "height": 154
+        "x0": 1638,
+        "y0": 2867,
+        "x1": 2048,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3997,
-        "v0": 0.6999,
+        "u0": 0.3999,
+        "v0": 0.7,
         "u1": 0.5,
-        "v1": 0.8001
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
-          "r": 176,
+          "r": 175,
           "g": 177,
-          "b": 166
+          "b": 167
         },
-        "hue": 67.5,
-        "saturation": 0.064,
-        "lightness": 0.673,
-        "brightness": 0.69,
-        "contrast": 0.179,
-        "edgeDensity": 0.116
+        "hue": 71.2,
+        "saturation": 0.06,
+        "lightness": 0.674,
+        "brightness": 0.689,
+        "contrast": 0.186,
+        "edgeDensity": 0.044
       },
       "classification": {
-        "category": "concrete",
+        "category": "fabric",
         "tags": [
-          "concrete",
-          "stone",
-          "neutral-surface"
+          "fabric",
+          "cloth",
+          "soft-surface"
         ]
       },
-      "kitchenFit": 0.68,
-      "description": "Cell 74: concrete with yellow bias, 69% brightness, kitchen fit 68%.",
+      "kitchenFit": 0.73,
+      "description": "Cell 74: fabric with green bias, 69% brightness, kitchen fit 73%.",
       "tags": [
-        "concrete",
-        "stone",
-        "neutral-surface"
+        "fabric",
+        "cloth",
+        "soft-surface"
       ]
     },
     {
@@ -3537,31 +3531,31 @@
       "row": 7,
       "col": 5,
       "bounds": {
-        "x0": 768,
-        "y0": 1075,
-        "x1": 922,
-        "y1": 1229,
-        "width": 154,
-        "height": 154
+        "x0": 2048,
+        "y0": 2867,
+        "x1": 2458,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.5,
-        "v0": 0.6999,
-        "u1": 0.6003,
-        "v1": 0.8001
+        "v0": 0.7,
+        "u1": 0.6001,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
-          "r": 201,
+          "r": 202,
           "g": 160,
           "b": 154
         },
-        "hue": 7.8,
-        "saturation": 0.303,
-        "lightness": 0.696,
-        "brightness": 0.66,
-        "contrast": 0.174,
-        "edgeDensity": 0.178
+        "hue": 7.4,
+        "saturation": 0.31,
+        "lightness": 0.697,
+        "brightness": 0.659,
+        "contrast": 0.186,
+        "edgeDensity": 0.077
       },
       "classification": {
         "category": "tile",
@@ -3571,8 +3565,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.65,
-      "description": "Cell 75: tile with red bias, 66% brightness, kitchen fit 65%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 75: tile with red bias, 66% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3584,31 +3578,31 @@
       "row": 7,
       "col": 6,
       "bounds": {
-        "x0": 922,
-        "y0": 1075,
-        "x1": 1075,
-        "y1": 1229,
-        "width": 153,
-        "height": 154
+        "x0": 2458,
+        "y0": 2867,
+        "x1": 2867,
+        "y1": 3277,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6003,
-        "v0": 0.6999,
-        "u1": 0.6999,
-        "v1": 0.8001
+        "u0": 0.6001,
+        "v0": 0.7,
+        "u1": 0.7,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
           "r": 150,
-          "g": 165,
-          "b": 168
+          "g": 166,
+          "b": 169
         },
-        "hue": 188.7,
-        "saturation": 0.096,
-        "lightness": 0.623,
-        "brightness": 0.636,
-        "contrast": 0.215,
-        "edgeDensity": 0.293
+        "hue": 189.5,
+        "saturation": 0.099,
+        "lightness": 0.624,
+        "brightness": 0.637,
+        "contrast": 0.232,
+        "edgeDensity": 0.119
       },
       "classification": {
         "category": "tile",
@@ -3618,8 +3612,8 @@
           "ceramic"
         ]
       },
-      "kitchenFit": 0.78,
-      "description": "Cell 76: tile with cyan bias, 64% brightness, kitchen fit 78%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 76: tile with cyan bias, 64% brightness, kitchen fit 88%.",
       "tags": [
         "tile",
         "cool-surface",
@@ -3631,31 +3625,31 @@
       "row": 7,
       "col": 7,
       "bounds": {
-        "x0": 1075,
-        "y0": 1075,
-        "x1": 1229,
-        "y1": 1229,
-        "width": 154,
-        "height": 154
+        "x0": 2867,
+        "y0": 2867,
+        "x1": 3277,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6999,
-        "v0": 0.6999,
-        "u1": 0.8001,
-        "v1": 0.8001
+        "u0": 0.7,
+        "v0": 0.7,
+        "u1": 0.8,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
           "r": 184,
           "g": 168,
-          "b": 167
+          "b": 168
         },
-        "hue": 1.7,
-        "saturation": 0.102,
-        "lightness": 0.688,
+        "hue": 359.4,
+        "saturation": 0.103,
+        "lightness": 0.689,
         "brightness": 0.671,
-        "contrast": 0.18,
-        "edgeDensity": 0.162
+        "contrast": 0.19,
+        "edgeDensity": 0.062
       },
       "classification": {
         "category": "tile",
@@ -3665,8 +3659,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.73,
-      "description": "Cell 77: tile with red bias, 67% brightness, kitchen fit 73%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 77: tile with red bias, 67% brightness, kitchen fit 88%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3678,31 +3672,31 @@
       "row": 7,
       "col": 8,
       "bounds": {
-        "x0": 1229,
-        "y0": 1075,
-        "x1": 1382,
-        "y1": 1229,
-        "width": 153,
-        "height": 154
+        "x0": 3277,
+        "y0": 2867,
+        "x1": 3686,
+        "y1": 3277,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8001,
-        "v0": 0.6999,
-        "u1": 0.8997,
-        "v1": 0.8001
+        "u0": 0.8,
+        "v0": 0.7,
+        "u1": 0.8999,
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
           "r": 209,
           "g": 187,
-          "b": 151
+          "b": 150
         },
-        "hue": 37.8,
-        "saturation": 0.385,
+        "hue": 37.7,
+        "saturation": 0.39,
         "lightness": 0.705,
         "brightness": 0.742,
-        "contrast": 0.19,
-        "edgeDensity": 0.162
+        "contrast": 0.203,
+        "edgeDensity": 0.07
       },
       "classification": {
         "category": "tile",
@@ -3712,8 +3706,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 78: tile with orange bias, 74% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 78: tile with orange bias, 74% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -3725,18 +3719,18 @@
       "row": 7,
       "col": 9,
       "bounds": {
-        "x0": 1382,
-        "y0": 1075,
-        "x1": 1536,
-        "y1": 1229,
-        "width": 154,
-        "height": 154
+        "x0": 3686,
+        "y0": 2867,
+        "x1": 4096,
+        "y1": 3277,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8997,
-        "v0": 0.6999,
+        "u0": 0.8999,
+        "v0": 0.7,
         "u1": 1,
-        "v1": 0.8001
+        "v1": 0.8
       },
       "stats": {
         "averageColor": {
@@ -3744,27 +3738,25 @@
           "g": 183,
           "b": 192
         },
-        "hue": 337.3,
-        "saturation": 0.187,
+        "hue": 336.2,
+        "saturation": 0.192,
         "lightness": 0.762,
-        "brightness": 0.739,
-        "contrast": 0.146,
-        "edgeDensity": 0.132
+        "brightness": 0.738,
+        "contrast": 0.157,
+        "edgeDensity": 0.056
       },
       "classification": {
-        "category": "patterned",
+        "category": "generic",
         "tags": [
-          "patterned",
-          "decorative",
-          "busy"
+          "generic-surface",
+          "unclassified"
         ]
       },
-      "kitchenFit": 0.4,
-      "description": "Cell 79: patterned with magenta bias, 74% brightness, kitchen fit 40%.",
+      "kitchenFit": 0.6,
+      "description": "Cell 79: generic with magenta bias, 74% brightness, kitchen fit 60%.",
       "tags": [
-        "patterned",
-        "decorative",
-        "busy"
+        "generic-surface",
+        "unclassified"
       ]
     },
     {
@@ -3773,45 +3765,45 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 1229,
-        "x1": 154,
-        "y1": 1382,
-        "width": 154,
-        "height": 153
+        "y0": 3277,
+        "x1": 410,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0,
-        "v0": 0.8001,
-        "u1": 0.1003,
-        "v1": 0.8997
+        "v0": 0.8,
+        "u1": 0.1001,
+        "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 209,
+          "r": 208,
           "g": 208,
           "b": 208
         },
-        "hue": 25.5,
-        "saturation": 0.006,
-        "lightness": 0.817,
-        "brightness": 0.817,
-        "contrast": 0.141,
-        "edgeDensity": 0.123
+        "hue": 57.5,
+        "saturation": 0.003,
+        "lightness": 0.816,
+        "brightness": 0.816,
+        "contrast": 0.147,
+        "edgeDensity": 0.032
       },
       "classification": {
-        "category": "tile",
+        "category": "plaster",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "wall",
+          "paint",
+          "light-surface"
         ]
       },
-      "kitchenFit": 0.73,
-      "description": "Cell 80: tile with orange bias, 82% brightness, kitchen fit 73%.",
+      "kitchenFit": 0.78,
+      "description": "Cell 80: plaster with yellow bias, 82% brightness, kitchen fit 78%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "wall",
+        "paint",
+        "light-surface"
       ]
     },
     {
@@ -3819,31 +3811,31 @@
       "row": 8,
       "col": 1,
       "bounds": {
-        "x0": 154,
-        "y0": 1229,
-        "x1": 307,
-        "y1": 1382,
-        "width": 153,
-        "height": 153
+        "x0": 410,
+        "y0": 3277,
+        "x1": 819,
+        "y1": 3686,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.1003,
-        "v0": 0.8001,
-        "u1": 0.1999,
-        "v1": 0.8997
+        "u0": 0.1001,
+        "v0": 0.8,
+        "u1": 0.2,
+        "v1": 0.8999
       },
       "stats": {
         "averageColor": {
           "r": 209,
           "g": 199,
-          "b": 186
+          "b": 185
         },
-        "hue": 35,
-        "saturation": 0.202,
+        "hue": 34.7,
+        "saturation": 0.205,
         "lightness": 0.774,
-        "brightness": 0.786,
-        "contrast": 0.074,
-        "edgeDensity": 0.03
+        "brightness": 0.785,
+        "contrast": 0.078,
+        "edgeDensity": 0.009
       },
       "classification": {
         "category": "tile",
@@ -3866,46 +3858,46 @@
       "row": 8,
       "col": 2,
       "bounds": {
-        "x0": 307,
-        "y0": 1229,
-        "x1": 461,
-        "y1": 1382,
-        "width": 154,
-        "height": 153
+        "x0": 819,
+        "y0": 3277,
+        "x1": 1229,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.1999,
-        "v0": 0.8001,
-        "u1": 0.3001,
-        "v1": 0.8997
+        "u0": 0.2,
+        "v0": 0.8,
+        "u1": 0.3,
+        "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 187,
+          "r": 188,
           "g": 186,
           "b": 186
         },
-        "hue": 2.2,
-        "saturation": 0.011,
+        "hue": 338.5,
+        "saturation": 0.013,
         "lightness": 0.732,
-        "brightness": 0.731,
-        "contrast": 0.136,
-        "edgeDensity": 0.146
+        "brightness": 0.73,
+        "contrast": 0.144,
+        "edgeDensity": 0.045
       },
       "classification": {
-        "category": "tile",
+        "category": "plaster",
         "tags": [
-          "warm-surface",
-          "ceramic",
-          "paint"
+          "wall",
+          "paint",
+          "light-surface"
         ]
       },
-      "kitchenFit": 0.83,
-      "description": "Cell 82: tile with red bias, 73% brightness, kitchen fit 83%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 82: plaster with magenta bias, 73% brightness, kitchen fit 88%.",
       "tags": [
-        "warm-surface",
-        "ceramic",
-        "paint"
+        "wall",
+        "paint",
+        "light-surface"
       ]
     },
     {
@@ -3913,18 +3905,18 @@
       "row": 8,
       "col": 3,
       "bounds": {
-        "x0": 461,
-        "y0": 1229,
-        "x1": 614,
-        "y1": 1382,
-        "width": 153,
-        "height": 153
+        "x0": 1229,
+        "y0": 3277,
+        "x1": 1638,
+        "y1": 3686,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.3001,
-        "v0": 0.8001,
-        "u1": 0.3997,
-        "v1": 0.8997
+        "u0": 0.3,
+        "v0": 0.8,
+        "u1": 0.3999,
+        "v1": 0.8999
       },
       "stats": {
         "averageColor": {
@@ -3932,12 +3924,12 @@
           "g": 139,
           "b": 143
         },
-        "hue": 197.8,
-        "saturation": 0.061,
+        "hue": 199.1,
+        "saturation": 0.062,
         "lightness": 0.533,
         "brightness": 0.537,
-        "contrast": 0.173,
-        "edgeDensity": 0.143
+        "contrast": 0.182,
+        "edgeDensity": 0.053
       },
       "classification": {
         "category": "tile",
@@ -3947,8 +3939,8 @@
           "ceramic"
         ]
       },
-      "kitchenFit": 0.83,
-      "description": "Cell 83: tile with cyan bias, 54% brightness, kitchen fit 83%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 83: tile with cyan bias, 54% brightness, kitchen fit 88%.",
       "tags": [
         "tile",
         "cool-surface",
@@ -3960,18 +3952,18 @@
       "row": 8,
       "col": 4,
       "bounds": {
-        "x0": 614,
-        "y0": 1229,
-        "x1": 768,
-        "y1": 1382,
-        "width": 154,
-        "height": 153
+        "x0": 1638,
+        "y0": 3277,
+        "x1": 2048,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.3997,
-        "v0": 0.8001,
+        "u0": 0.3999,
+        "v0": 0.8,
         "u1": 0.5,
-        "v1": 0.8997
+        "v1": 0.8999
       },
       "stats": {
         "averageColor": {
@@ -3979,12 +3971,12 @@
           "g": 190,
           "b": 164
         },
-        "hue": 36.2,
-        "saturation": 0.317,
+        "hue": 35.8,
+        "saturation": 0.322,
         "lightness": 0.729,
-        "brightness": 0.754,
-        "contrast": 0.049,
-        "edgeDensity": 0.005
+        "brightness": 0.753,
+        "contrast": 0.052,
+        "edgeDensity": 0.002
       },
       "classification": {
         "category": "tile",
@@ -4007,18 +3999,18 @@
       "row": 8,
       "col": 5,
       "bounds": {
-        "x0": 768,
-        "y0": 1229,
-        "x1": 922,
-        "y1": 1382,
-        "width": 154,
-        "height": 153
+        "x0": 2048,
+        "y0": 3277,
+        "x1": 2458,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
         "u0": 0.5,
-        "v0": 0.8001,
-        "u1": 0.6003,
-        "v1": 0.8997
+        "v0": 0.8,
+        "u1": 0.6001,
+        "v1": 0.8999
       },
       "stats": {
         "averageColor": {
@@ -4026,12 +4018,12 @@
           "g": 181,
           "b": 162
         },
-        "hue": 33.9,
+        "hue": 33.5,
         "saturation": 0.218,
-        "lightness": 0.699,
+        "lightness": 0.7,
         "brightness": 0.715,
-        "contrast": 0.188,
-        "edgeDensity": 0.139
+        "contrast": 0.196,
+        "edgeDensity": 0.058
       },
       "classification": {
         "category": "tile",
@@ -4054,31 +4046,31 @@
       "row": 8,
       "col": 6,
       "bounds": {
-        "x0": 922,
-        "y0": 1229,
-        "x1": 1075,
-        "y1": 1382,
-        "width": 153,
-        "height": 153
+        "x0": 2458,
+        "y0": 3277,
+        "x1": 2867,
+        "y1": 3686,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.6003,
-        "v0": 0.8001,
-        "u1": 0.6999,
-        "v1": 0.8997
+        "u0": 0.6001,
+        "v0": 0.8,
+        "u1": 0.7,
+        "v1": 0.8999
       },
       "stats": {
         "averageColor": {
-          "r": 205,
+          "r": 204,
           "g": 203,
-          "b": 200
+          "b": 199
         },
-        "hue": 42.4,
+        "hue": 41.9,
         "saturation": 0.047,
-        "lightness": 0.793,
-        "brightness": 0.797,
-        "contrast": 0.138,
-        "edgeDensity": 0.096
+        "lightness": 0.792,
+        "brightness": 0.796,
+        "contrast": 0.145,
+        "edgeDensity": 0.031
       },
       "classification": {
         "category": "tile",
@@ -4101,18 +4093,18 @@
       "row": 8,
       "col": 7,
       "bounds": {
-        "x0": 1075,
-        "y0": 1229,
-        "x1": 1229,
-        "y1": 1382,
-        "width": 154,
-        "height": 153
+        "x0": 2867,
+        "y0": 3277,
+        "x1": 3277,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.6999,
-        "v0": 0.8001,
-        "u1": 0.8001,
-        "v1": 0.8997
+        "u0": 0.7,
+        "v0": 0.8,
+        "u1": 0.8,
+        "v1": 0.8999
       },
       "stats": {
         "averageColor": {
@@ -4120,12 +4112,12 @@
           "g": 141,
           "b": 119
         },
-        "hue": 30.3,
+        "hue": 29.9,
         "saturation": 0.193,
-        "lightness": 0.552,
+        "lightness": 0.553,
         "brightness": 0.565,
-        "contrast": 0.221,
-        "edgeDensity": 0.107
+        "contrast": 0.226,
+        "edgeDensity": 0.037
       },
       "classification": {
         "category": "tile",
@@ -4148,31 +4140,31 @@
       "row": 8,
       "col": 8,
       "bounds": {
-        "x0": 1229,
-        "y0": 1229,
-        "x1": 1382,
-        "y1": 1382,
-        "width": 153,
-        "height": 153
+        "x0": 3277,
+        "y0": 3277,
+        "x1": 3686,
+        "y1": 3686,
+        "width": 409,
+        "height": 409
       },
       "uv": {
-        "u0": 0.8001,
-        "v0": 0.8001,
-        "u1": 0.8997,
-        "v1": 0.8997
+        "u0": 0.8,
+        "v0": 0.8,
+        "u1": 0.8999,
+        "v1": 0.8999
       },
       "stats": {
         "averageColor": {
           "r": 154,
           "g": 145,
-          "b": 134
+          "b": 135
         },
-        "hue": 33.1,
+        "hue": 32.6,
         "saturation": 0.086,
         "lightness": 0.565,
         "brightness": 0.573,
-        "contrast": 0.181,
-        "edgeDensity": 0.222
+        "contrast": 0.195,
+        "edgeDensity": 0.104
       },
       "classification": {
         "category": "tile",
@@ -4182,8 +4174,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.78,
-      "description": "Cell 88: tile with orange bias, 57% brightness, kitchen fit 78%.",
+      "kitchenFit": 0.88,
+      "description": "Cell 88: tile with orange bias, 57% brightness, kitchen fit 88%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4195,31 +4187,31 @@
       "row": 8,
       "col": 9,
       "bounds": {
-        "x0": 1382,
-        "y0": 1229,
-        "x1": 1536,
-        "y1": 1382,
-        "width": 154,
-        "height": 153
+        "x0": 3686,
+        "y0": 3277,
+        "x1": 4096,
+        "y1": 3686,
+        "width": 410,
+        "height": 409
       },
       "uv": {
-        "u0": 0.8997,
-        "v0": 0.8001,
+        "u0": 0.8999,
+        "v0": 0.8,
         "u1": 1,
-        "v1": 0.8997
+        "v1": 0.8999
       },
       "stats": {
         "averageColor": {
           "r": 148,
-          "g": 166,
+          "g": 165,
           "b": 152
         },
-        "hue": 135.8,
-        "saturation": 0.092,
+        "hue": 135.9,
+        "saturation": 0.091,
         "lightness": 0.614,
-        "brightness": 0.631,
-        "contrast": 0.164,
-        "edgeDensity": 0.071
+        "brightness": 0.63,
+        "contrast": 0.17,
+        "edgeDensity": 0.028
       },
       "classification": {
         "category": "fabric",
@@ -4243,16 +4235,16 @@
       "col": 0,
       "bounds": {
         "x0": 0,
-        "y0": 1382,
-        "x1": 154,
-        "y1": 1536,
-        "width": 154,
-        "height": 154
+        "y0": 3686,
+        "x1": 410,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0,
-        "v0": 0.8997,
-        "u1": 0.1003,
+        "v0": 0.8999,
+        "u1": 0.1001,
         "v1": 1
       },
       "stats": {
@@ -4261,12 +4253,12 @@
           "g": 131,
           "b": 119
         },
-        "hue": 14.8,
+        "hue": 14.4,
         "saturation": 0.228,
-        "lightness": 0.565,
-        "brightness": 0.543,
-        "contrast": 0.225,
-        "edgeDensity": 0.409
+        "lightness": 0.564,
+        "brightness": 0.542,
+        "contrast": 0.245,
+        "edgeDensity": 0.168
       },
       "classification": {
         "category": "tile",
@@ -4289,17 +4281,17 @@
       "row": 9,
       "col": 1,
       "bounds": {
-        "x0": 154,
-        "y0": 1382,
-        "x1": 307,
-        "y1": 1536,
-        "width": 153,
-        "height": 154
+        "x0": 410,
+        "y0": 3686,
+        "x1": 819,
+        "y1": 4096,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1003,
-        "v0": 0.8997,
-        "u1": 0.1999,
+        "u0": 0.1001,
+        "v0": 0.8999,
+        "u1": 0.2,
         "v1": 1
       },
       "stats": {
@@ -4308,12 +4300,12 @@
           "g": 176,
           "b": 175
         },
-        "hue": 57.9,
-        "saturation": 0.003,
+        "hue": 59.3,
+        "saturation": 0.002,
         "lightness": 0.688,
-        "brightness": 0.688,
-        "contrast": 0.201,
-        "edgeDensity": 0.139
+        "brightness": 0.689,
+        "contrast": 0.207,
+        "edgeDensity": 0.017
       },
       "classification": {
         "category": "concrete",
@@ -4336,17 +4328,17 @@
       "row": 9,
       "col": 2,
       "bounds": {
-        "x0": 307,
-        "y0": 1382,
-        "x1": 461,
-        "y1": 1536,
-        "width": 154,
-        "height": 154
+        "x0": 819,
+        "y0": 3686,
+        "x1": 1229,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.1999,
-        "v0": 0.8997,
-        "u1": 0.3001,
+        "u0": 0.2,
+        "v0": 0.8999,
+        "u1": 0.3,
         "v1": 1
       },
       "stats": {
@@ -4355,12 +4347,12 @@
           "g": 147,
           "b": 116
         },
-        "hue": 48.5,
+        "hue": 48.2,
         "saturation": 0.162,
         "lightness": 0.53,
-        "brightness": 0.575,
-        "contrast": 0.179,
-        "edgeDensity": 0.115
+        "brightness": 0.574,
+        "contrast": 0.187,
+        "edgeDensity": 0.045
       },
       "classification": {
         "category": "generic",
@@ -4369,8 +4361,8 @@
           "unclassified"
         ]
       },
-      "kitchenFit": 0.6,
-      "description": "Cell 92: generic with yellow bias, 57% brightness, kitchen fit 60%.",
+      "kitchenFit": 0.65,
+      "description": "Cell 92: generic with yellow bias, 57% brightness, kitchen fit 65%.",
       "tags": [
         "generic-surface",
         "unclassified"
@@ -4381,31 +4373,31 @@
       "row": 9,
       "col": 3,
       "bounds": {
-        "x0": 461,
-        "y0": 1382,
-        "x1": 614,
-        "y1": 1536,
-        "width": 153,
-        "height": 154
+        "x0": 1229,
+        "y0": 3686,
+        "x1": 1638,
+        "y1": 4096,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3001,
-        "v0": 0.8997,
-        "u1": 0.3997,
+        "u0": 0.3,
+        "v0": 0.8999,
+        "u1": 0.3999,
         "v1": 1
       },
       "stats": {
         "averageColor": {
-          "r": 167,
+          "r": 168,
           "g": 146,
-          "b": 112
+          "b": 113
         },
-        "hue": 36.7,
-        "saturation": 0.237,
-        "lightness": 0.548,
-        "brightness": 0.58,
-        "contrast": 0.289,
-        "edgeDensity": 0.115
+        "hue": 36.4,
+        "saturation": 0.239,
+        "lightness": 0.549,
+        "brightness": 0.581,
+        "contrast": 0.294,
+        "edgeDensity": 0.052
       },
       "classification": {
         "category": "tile",
@@ -4428,16 +4420,16 @@
       "row": 9,
       "col": 4,
       "bounds": {
-        "x0": 614,
-        "y0": 1382,
-        "x1": 768,
-        "y1": 1536,
-        "width": 154,
-        "height": 154
+        "x0": 1638,
+        "y0": 3686,
+        "x1": 2048,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.3997,
-        "v0": 0.8997,
+        "u0": 0.3999,
+        "v0": 0.8999,
         "u1": 0.5,
         "v1": 1
       },
@@ -4445,14 +4437,14 @@
         "averageColor": {
           "r": 207,
           "g": 201,
-          "b": 185
+          "b": 186
         },
-        "hue": 43.2,
-        "saturation": 0.178,
-        "lightness": 0.769,
-        "brightness": 0.787,
-        "contrast": 0.183,
-        "edgeDensity": 0.226
+        "hue": 43,
+        "saturation": 0.176,
+        "lightness": 0.77,
+        "brightness": 0.788,
+        "contrast": 0.199,
+        "edgeDensity": 0.105
       },
       "classification": {
         "category": "tile",
@@ -4462,8 +4454,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 94: tile with orange bias, 79% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 94: tile with orange bias, 79% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4475,46 +4467,44 @@
       "row": 9,
       "col": 5,
       "bounds": {
-        "x0": 768,
-        "y0": 1382,
-        "x1": 922,
-        "y1": 1536,
-        "width": 154,
-        "height": 154
+        "x0": 2048,
+        "y0": 3686,
+        "x1": 2458,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
       },
       "uv": {
         "u0": 0.5,
-        "v0": 0.8997,
-        "u1": 0.6003,
+        "v0": 0.8999,
+        "u1": 0.6001,
         "v1": 1
       },
       "stats": {
         "averageColor": {
           "r": 186,
-          "g": 163,
-          "b": 187
+          "g": 162,
+          "b": 188
         },
-        "hue": 298.1,
-        "saturation": 0.152,
+        "hue": 297.2,
+        "saturation": 0.159,
         "lightness": 0.685,
-        "brightness": 0.664,
-        "contrast": 0.153,
-        "edgeDensity": 0.152
+        "brightness": 0.663,
+        "contrast": 0.161,
+        "edgeDensity": 0.061
       },
       "classification": {
-        "category": "patterned",
+        "category": "generic",
         "tags": [
-          "patterned",
-          "decorative",
-          "busy"
+          "generic-surface",
+          "unclassified"
         ]
       },
-      "kitchenFit": 0.4,
-      "description": "Cell 95: patterned with purple bias, 66% brightness, kitchen fit 40%.",
+      "kitchenFit": 0.6,
+      "description": "Cell 95: generic with purple bias, 66% brightness, kitchen fit 60%.",
       "tags": [
-        "patterned",
-        "decorative",
-        "busy"
+        "generic-surface",
+        "unclassified"
       ]
     },
     {
@@ -4522,31 +4512,31 @@
       "row": 9,
       "col": 6,
       "bounds": {
-        "x0": 922,
-        "y0": 1382,
-        "x1": 1075,
-        "y1": 1536,
-        "width": 153,
-        "height": 154
+        "x0": 2458,
+        "y0": 3686,
+        "x1": 2867,
+        "y1": 4096,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6003,
-        "v0": 0.8997,
-        "u1": 0.6999,
+        "u0": 0.6001,
+        "v0": 0.8999,
+        "u1": 0.7,
         "v1": 1
       },
       "stats": {
         "averageColor": {
           "r": 87,
-          "g": 90,
+          "g": 89,
           "b": 93
         },
-        "hue": 214.3,
-        "saturation": 0.034,
+        "hue": 217.7,
+        "saturation": 0.035,
         "lightness": 0.353,
-        "brightness": 0.35,
-        "contrast": 0.16,
-        "edgeDensity": 0.134
+        "brightness": 0.349,
+        "contrast": 0.167,
+        "edgeDensity": 0.038
       },
       "classification": {
         "category": "tile",
@@ -4569,31 +4559,31 @@
       "row": 9,
       "col": 7,
       "bounds": {
-        "x0": 1075,
-        "y0": 1382,
-        "x1": 1229,
-        "y1": 1536,
-        "width": 154,
-        "height": 154
+        "x0": 2867,
+        "y0": 3686,
+        "x1": 3277,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.6999,
-        "v0": 0.8997,
-        "u1": 0.8001,
+        "u0": 0.7,
+        "v0": 0.8999,
+        "u1": 0.8,
         "v1": 1
       },
       "stats": {
         "averageColor": {
-          "r": 143,
+          "r": 142,
           "g": 157,
           "b": 140
         },
-        "hue": 111.7,
-        "saturation": 0.08,
+        "hue": 112.4,
+        "saturation": 0.079,
         "lightness": 0.583,
-        "brightness": 0.6,
-        "contrast": 0.214,
-        "edgeDensity": 0.179
+        "brightness": 0.599,
+        "contrast": 0.224,
+        "edgeDensity": 0.067
       },
       "classification": {
         "category": "fabric",
@@ -4603,8 +4593,8 @@
           "soft-surface"
         ]
       },
-      "kitchenFit": 0.63,
-      "description": "Cell 97: fabric with green bias, 60% brightness, kitchen fit 63%.",
+      "kitchenFit": 0.73,
+      "description": "Cell 97: fabric with green bias, 60% brightness, kitchen fit 73%.",
       "tags": [
         "fabric",
         "cloth",
@@ -4616,17 +4606,17 @@
       "row": 9,
       "col": 8,
       "bounds": {
-        "x0": 1229,
-        "y0": 1382,
-        "x1": 1382,
-        "y1": 1536,
-        "width": 153,
-        "height": 154
+        "x0": 3277,
+        "y0": 3686,
+        "x1": 3686,
+        "y1": 4096,
+        "width": 409,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8001,
-        "v0": 0.8997,
-        "u1": 0.8997,
+        "u0": 0.8,
+        "v0": 0.8999,
+        "u1": 0.8999,
         "v1": 1
       },
       "stats": {
@@ -4635,12 +4625,12 @@
           "g": 152,
           "b": 109
         },
-        "hue": 31.9,
-        "saturation": 0.377,
+        "hue": 31.7,
+        "saturation": 0.379,
         "lightness": 0.586,
-        "brightness": 0.615,
-        "contrast": 0.192,
-        "edgeDensity": 0.317
+        "brightness": 0.614,
+        "contrast": 0.209,
+        "edgeDensity": 0.144
       },
       "classification": {
         "category": "tile",
@@ -4650,8 +4640,8 @@
           "paint"
         ]
       },
-      "kitchenFit": 0.7,
-      "description": "Cell 98: tile with orange bias, 62% brightness, kitchen fit 70%.",
+      "kitchenFit": 0.8,
+      "description": "Cell 98: tile with orange bias, 61% brightness, kitchen fit 80%.",
       "tags": [
         "warm-surface",
         "ceramic",
@@ -4663,31 +4653,31 @@
       "row": 9,
       "col": 9,
       "bounds": {
-        "x0": 1382,
-        "y0": 1382,
-        "x1": 1536,
-        "y1": 1536,
-        "width": 154,
-        "height": 154
+        "x0": 3686,
+        "y0": 3686,
+        "x1": 4096,
+        "y1": 4096,
+        "width": 410,
+        "height": 410
       },
       "uv": {
-        "u0": 0.8997,
-        "v0": 0.8997,
+        "u0": 0.8999,
+        "v0": 0.8999,
         "u1": 1,
         "v1": 1
       },
       "stats": {
         "averageColor": {
-          "r": 167,
+          "r": 166,
           "g": 195,
-          "b": 205
+          "b": 206
         },
-        "hue": 196.2,
-        "saturation": 0.281,
-        "lightness": 0.729,
-        "brightness": 0.744,
-        "contrast": 0.161,
-        "edgeDensity": 0.131
+        "hue": 196.8,
+        "saturation": 0.287,
+        "lightness": 0.73,
+        "brightness": 0.743,
+        "contrast": 0.171,
+        "edgeDensity": 0.053
       },
       "classification": {
         "category": "tile",
