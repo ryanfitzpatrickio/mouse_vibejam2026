@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Mouse } from '../entities/Mouse.js';
 import { Bunny } from '../entities/Bunny.js';
+import { Cat } from '../entities/Cat.js';
 import { PredatorManager } from '../entities/PredatorManager.js';
 import { Room } from '../world/Room.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
@@ -106,6 +107,7 @@ async function createWebGPURenderer(canvas) {
 const isMobile = typeof window !== 'undefined'
   && (window.matchMedia?.('(pointer: coarse)')?.matches || navigator.maxTouchPoints > 0);
 const ENABLE_BUNNY_PREDATOR = false;
+const ENABLE_CAT_PREDATOR = true;
 
 export async function createGameSession({ canvas, mode = 'webgl', roomId = 'default' } = {}) {
   const scene = new THREE.Scene();
@@ -181,7 +183,8 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   };
 
   // --- Predators ---
-  const predatorManager = ENABLE_BUNNY_PREDATOR
+  const hasAnyPredator = ENABLE_BUNNY_PREDATOR || ENABLE_CAT_PREDATOR;
+  const predatorManager = hasAnyPredator
     ? new PredatorManager({
       scene,
       controller,
@@ -193,6 +196,47 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   if (bunny && predatorManager) {
     await bunny.ready;
     predatorManager.add(bunny, new THREE.Vector3(5, 0, 5));
+  }
+
+  const cat = ENABLE_CAT_PREDATOR ? new Cat() : null;
+  if (cat && predatorManager) {
+    await cat.ready;
+    predatorManager.add(cat, new THREE.Vector3(-5, 0, -5));
+  }
+
+  // --- Dev placement mode ---
+  let placementMode = null;
+  if (import.meta.env.DEV) {
+    const { PlacementMode } = await import('../dev/PlacementMode.js');
+    placementMode = new PlacementMode({ domElement: canvas });
+
+    const placeables = [];
+    if (cat?.eyeAnimator?.group) {
+      placeables.push({ label: 'CatEyes', target: cat.eyeAnimator.group, owner: cat.eyeAnimator });
+    }
+
+    let placementIndex = -1;
+    window.startPlacement = (target, opts) => {
+      if (target) {
+        placementMode.activate(target, opts);
+      } else {
+        placementIndex = (placementIndex + 1) % (placeables.length || 1);
+        const p = placeables[placementIndex];
+        if (p) {
+          placementMode.activate(p.target, {
+            label: p.label,
+            onDone: (placement) => {
+              if (p.owner?.setPlacement) {
+                p.owner.setPlacement(placement);
+              }
+            },
+          });
+        }
+      }
+    };
+
+    if (cat) window.cat = cat;
+    window.mouse = mouse;
   }
 
   const hud = new HUD();
@@ -439,6 +483,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     }
 
     predatorManager?.update(deltaSeconds);
+    placementMode?.update(deltaSeconds);
     room.updateLoot(timeMs);
 
     if (net.connected) {
@@ -459,6 +504,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   }
 
   function dispose() {
+    placementMode?.deactivate();
     net.disconnect();
     remotePlayerManager.dispose();
     predatorManager?.dispose();
@@ -475,7 +521,9 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     room,
     mouse,
     bunny,
+    cat,
     predatorManager,
+    placementMode,
     thirdPersonCamera,
     controller,
     hud,
