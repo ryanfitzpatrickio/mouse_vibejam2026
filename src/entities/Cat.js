@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { Predator } from './Predator.js';
 import { MouseEyeAtlasAnimator } from '../animation/MouseEyeAtlasAnimator.js';
 import { assetUrl } from '../utils/assetUrl.js';
@@ -53,7 +54,8 @@ export class Cat extends Predator {
 
   async _load() {
     const loader = new GLTFLoader();
-    const gltf = await loader.loadAsync(assetUrl('cat.glb'));
+    loader.setMeshoptDecoder(MeshoptDecoder);
+    const gltf = await loader.loadAsync(assetUrl('models/cat.glb'));
     this._attachModel(gltf, { height: 1.6, groundOffset: -0.1 });
     this.playAnimation('Idle', { fadeIn: 0, loop: true });
 

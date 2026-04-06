@@ -12,7 +12,8 @@ import {
 import sharp from 'sharp';
 import { MeshoptEncoder } from 'meshoptimizer';
 import path from 'node:path';
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
+import fsCb from 'node:fs';
 import { isAssetBuildUpToDate, markAssetBuildCurrent } from './build-cache.mjs';
 
 const REGISTRY_PATH = path.resolve('public/levels/glb-registry.json');
@@ -42,7 +43,7 @@ async function main() {
 
   for (const asset of assets) {
     const inputPath = path.resolve(asset.sourcePath);
-    const outputPath = path.resolve(asset.publicPath);
+    const outputPath = path.resolve('public', asset.publicPath);
 
     const scriptPath = path.join(process.cwd(), 'scripts', 'optimize-custom-glbs.mjs');
     const upToDate = await isAssetBuildUpToDate({
@@ -76,7 +77,7 @@ async function main() {
     }
 
     console.log(`Optimizing ${asset.filename}...`);
-    const inputSize = fs.statSync(inputPath).size;
+    const inputSize = (await fs.stat(inputPath)).size;
     console.log(`  Input: ${(inputSize / 1024).toFixed(0)} KB`);
 
     try {
@@ -118,7 +119,7 @@ async function main() {
         inputs: [inputPath, scriptPath],
       });
 
-      const outputSize = fs.statSync(outputPath).size;
+      const outputSize = (await fs.stat(outputPath)).size;
       console.log(`  Output: ${(outputSize / 1024).toFixed(0)} KB (${((1 - outputSize / inputSize) * 100).toFixed(1)}% saved)`);
     } catch (err) {
       console.warn(`  Failed to optimize ${asset.filename}: ${err.message}`);
