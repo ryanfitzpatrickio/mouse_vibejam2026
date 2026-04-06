@@ -205,6 +205,13 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   const predictionState = createPlayerState('local');
   let lastReconciledSeq = -2;
 
+  // Visual smoothing: render position lerps toward prediction to hide small corrections
+  const renderPos = new THREE.Vector3();
+  let renderPosInitialized = false;
+  const RECONCILE_SNAP_THRESHOLD = 3.0; // teleport if error > this
+  const RECONCILE_SKIP_THRESHOLD = 0.001; // ignore corrections smaller than this
+  const RECONCILE_SMOOTH_RATE = 20; // lerp speed for corrections
+
   function copyServerToPrediction(ss) {
     predictionState.position.x = ss.position.x;
     predictionState.position.y = ss.position.y;
@@ -236,6 +243,11 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     const ss = net.serverState;
     if (!ss) return;
 
+    // Save pre-reconciliation predicted position
+    const prevX = predictionState.position.x;
+    const prevY = predictionState.position.y;
+    const prevZ = predictionState.position.z;
+
     copyServerToPrediction(ss);
 
     const dt = 1 / 30;
@@ -243,12 +255,32 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     for (const input of net.pendingInputs) {
       simulateTick(predictionState, input, dt, CLIENT_BOUNDS, colliders);
     }
+
+    // Measure correction magnitude
+    const dx = predictionState.position.x - prevX;
+    const dy = predictionState.position.y - prevY;
+    const dz = predictionState.position.z - prevZ;
+    const errorSq = dx * dx + dy * dy + dz * dz;
+
+    if (errorSq < RECONCILE_SKIP_THRESHOLD * RECONCILE_SKIP_THRESHOLD) {
+      // Correction is negligible — revert to pre-reconciliation to avoid micro-jitter
+      predictionState.position.x = prevX;
+      predictionState.position.y = prevY;
+      predictionState.position.z = prevZ;
+    }
   }
 
   net.on((data) => {
     if (data.type === 'init' && data.players?.[net.localId]) {
       copyServerToPrediction(data.players[net.localId]);
       lastReconciledSeq = -2;
+      // Snap render position to spawn
+      renderPos.set(
+        predictionState.position.x,
+        predictionState.position.y + mouse.groundOffset,
+        predictionState.position.z,
+      );
+      renderPosInitialized = true;
     }
   });
 
@@ -317,9 +349,35 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       const colliders = room.getCollisionColliders();
       simulateTick(predictionState, input, PHYSICS_STEP, CLIENT_BOUNDS, colliders);
 
-      mouse.position.x = predictionState.position.x;
-      mouse.position.y = predictionState.position.y + mouse.groundOffset;
-      mouse.position.z = predictionState.position.z;
+      // Update render position with smoothing to hide reconciliation corrections
+      const targetX = predictionState.position.x;
+      const targetY = predictionState.position.y + mouse.groundOffset;
+      const targetZ = predictionState.position.z;
+
+      if (!renderPosInitialized) {
+        renderPos.set(targetX, targetY, targetZ);
+        renderPosInitialized = true;
+      } else {
+        const errX = targetX - renderPos.x;
+        const errY = targetY - renderPos.y;
+        const errZ = targetZ - renderPos.z;
+        const errSq = errX * errX + errY * errY + errZ * errZ;
+
+        if (errSq > RECONCILE_SNAP_THRESHOLD * RECONCILE_SNAP_THRESHOLD) {
+          // Large error (teleport/spawn) — snap immediately
+          renderPos.set(targetX, targetY, targetZ);
+        } else {
+          // Smooth toward prediction target
+          const t = 1 - Math.exp(-RECONCILE_SMOOTH_RATE * PHYSICS_STEP);
+          renderPos.x += errX * t;
+          renderPos.y += errY * t;
+          renderPos.z += errZ * t;
+        }
+      }
+
+      mouse.position.x = renderPos.x;
+      mouse.position.y = renderPos.y;
+      mouse.position.z = renderPos.z;
 
       controller.velocity.set(
         predictionState.velocity.x,

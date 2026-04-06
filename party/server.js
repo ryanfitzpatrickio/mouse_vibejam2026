@@ -23,8 +23,8 @@ const BOUNDS = Object.freeze({
 export default class GameServer {
   /** @type {Map<string, ReturnType<typeof createPlayerState>>} */
   players = new Map();
-  /** @type {Map<string, object>} */
-  pendingInputs = new Map();
+  /** @type {Map<string, object[]>} queued inputs per player */
+  inputQueues = new Map();
   tickInterval = null;
   levelColliders = buildRoomCollidersFromLayout(kitchenLayout, { scaleFactor: 1 });
 
@@ -50,7 +50,7 @@ export default class GameServer {
     state.position.z = Math.sin(angle) * 2;
 
     this.players.set(conn.id, state);
-    this.pendingInputs.set(conn.id, { moveX: 0, moveZ: 0, sprint: false, jump: false, crouch: false, rotation: 0, seq: 0 });
+    this.inputQueues.set(conn.id, []);
 
     conn.send(JSON.stringify({
       type: 'init',
@@ -73,21 +73,27 @@ export default class GameServer {
     }
 
     if (data.type === 'input') {
-      this.pendingInputs.set(sender.id, {
-        moveX: data.moveX ?? 0,
-        moveZ: data.moveZ ?? 0,
-        sprint: !!data.sprint,
-        jump: !!data.jump,
-        crouch: !!data.crouch,
-        rotation: data.rotation ?? 0,
-        seq: data.seq ?? 0,
-      });
+      const queue = this.inputQueues.get(sender.id);
+      if (queue) {
+        // Cap queue length to prevent flooding (max ~4 ticks worth)
+        if (queue.length < 8) {
+          queue.push({
+            moveX: data.moveX ?? 0,
+            moveZ: data.moveZ ?? 0,
+            sprint: !!data.sprint,
+            jump: !!data.jump,
+            crouch: !!data.crouch,
+            rotation: data.rotation ?? 0,
+            seq: data.seq ?? 0,
+          });
+        }
+      }
     }
   }
 
   onClose(conn) {
     this.players.delete(conn.id);
-    this.pendingInputs.delete(conn.id);
+    this.inputQueues.delete(conn.id);
     this.broadcast(JSON.stringify({
       type: 'player-left',
       id: conn.id,
@@ -99,17 +105,25 @@ export default class GameServer {
 
     const dt = TICK_MS / 1000;
 
-    // Simulate each player with their latest input
+    // Simulate each player — process ALL queued inputs, not just the latest
     const seqs = {};
     for (const [id, state] of this.players) {
-      const input = this.pendingInputs.get(id);
-      if (input) {
-        // Clear one-shot inputs after applying
-        const tickInput = { ...input };
-        simulateTick(state, tickInput, dt, BOUNDS, this.levelColliders);
-        seqs[id] = input.seq;
-        // Reset one-shot flags so they don't repeat next tick
-        input.jump = false;
+      const queue = this.inputQueues.get(id);
+      if (!queue || queue.length === 0) {
+        // No new input — simulate with idle input to keep physics consistent
+        simulateTick(state, { moveX: 0, moveZ: 0, sprint: false, jump: false, crouch: false, rotation: state.rotation }, dt, BOUNDS, this.levelColliders);
+        seqs[id] = this._lastSeq?.get(id) ?? 0;
+      } else {
+        // Process every queued input with one tick each
+        for (const input of queue) {
+          simulateTick(state, input, dt, BOUNDS, this.levelColliders);
+          seqs[id] = input.seq;
+        }
+        // Track last seq for idle ticks
+        if (!this._lastSeq) this._lastSeq = new Map();
+        this._lastSeq.set(id, seqs[id]);
+        // Drain the queue
+        queue.length = 0;
       }
     }
 
