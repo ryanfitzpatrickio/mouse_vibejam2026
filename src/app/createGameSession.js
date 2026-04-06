@@ -174,7 +174,10 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   });
 
   controller.onEmote = () => {
-    emoteWheel.toggle();
+    emoteWheel.show();
+  };
+  controller.onEmoteEnd = () => {
+    emoteWheel.confirm();
   };
 
   // --- Predators ---

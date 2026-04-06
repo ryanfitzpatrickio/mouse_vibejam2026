@@ -1,8 +1,12 @@
 import { EMOTES } from './EmoteManager.js';
+import { measureText } from '../utils/textLayout.js';
 
 const SLOT_COUNT = EMOTES.length;
 const SECTOR_ANGLE = (2 * Math.PI) / SLOT_COUNT;
 const DEAD_ZONE_PX = 30;
+const SLOT_FONT = '10px monospace';
+const SLOT_WIDTH = 52;
+const SLOT_LINE_HEIGHT = 12;
 
 export class EmoteWheel {
   constructor({ onSelect }) {
@@ -91,13 +95,15 @@ export class EmoteWheel {
       const cx = 140 + Math.cos(angle) * radius - 28;
       const cy = 140 + Math.sin(angle) * radius - 28;
 
+      const measured = measureText(emote.label, SLOT_FONT, SLOT_WIDTH, SLOT_LINE_HEIGHT);
+
       const slot = document.createElement('div');
       Object.assign(slot.style, {
         position: 'absolute',
         left: `${cx}px`,
         top: `${cy}px`,
         width: '56px',
-        height: '56px',
+        height: `${Math.max(56, measured.height + 4)}px`,
         borderRadius: '12px',
         display: 'flex',
         alignItems: 'center',
@@ -108,7 +114,7 @@ export class EmoteWheel {
         fontFamily: 'monospace',
         fontSize: '10px',
         textAlign: 'center',
-        lineHeight: '1.2',
+        lineHeight: `${SLOT_LINE_HEIGHT}px`,
         padding: '2px',
         userSelect: 'none',
         pointerEvents: 'none',
@@ -152,6 +158,10 @@ export class EmoteWheel {
   }
 
   _handleMouseUp() {
+    this.confirm();
+  }
+
+  confirm() {
     if (!this.visible) return;
     if (this.selectedIndex >= 0) {
       this._select(this.selectedIndex);

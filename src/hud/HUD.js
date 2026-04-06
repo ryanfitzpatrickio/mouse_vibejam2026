@@ -1,3 +1,9 @@
+import { measureText } from '../utils/textLayout.js';
+
+const FONT = '10px monospace';
+const BAR_WIDTH = 160;
+const LINE_HEIGHT = 14;
+
 export class HUD {
   constructor({ container = document.body } = {}) {
     this.container = container;
@@ -28,6 +34,8 @@ export class HUD {
       marginTop: '4px',
       textShadow: '1px 1px 2px #000',
     });
+    const pingMeasured = measureText('-- ms', FONT, BAR_WIDTH, LINE_HEIGHT);
+    this.pingLabel.style.height = `${pingMeasured.height}px`;
     this.element.appendChild(this.pingLabel);
 
     this.container.appendChild(this.element);
@@ -48,6 +56,8 @@ export class HUD {
       marginBottom: '2px',
       textShadow: '1px 1px 2px #000',
     });
+    const labelMeasured = measureText(label, FONT, BAR_WIDTH, LINE_HEIGHT);
+    lbl.style.height = `${labelMeasured.height}px`;
 
     const bg = document.createElement('div');
     Object.assign(bg.style, {
@@ -80,7 +90,10 @@ export class HUD {
       this.healthBar.style.width = `${Math.max(0, Math.min(1, health)) * 100}%`;
     }
     if (ping !== undefined) {
-      this.pingLabel.textContent = `${Math.round(ping)} ms`;
+      const text = `${Math.round(ping)} ms`;
+      this.pingLabel.textContent = text;
+      const measured = measureText(text, FONT, BAR_WIDTH, LINE_HEIGHT);
+      this.pingLabel.style.height = `${measured.height}px`;
     }
   }
 

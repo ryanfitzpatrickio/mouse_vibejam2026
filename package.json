@@ -16,6 +16,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@chenglou/pretext": "^0.0.4",
     "nipplejs": "^1.0.1",
     "partysocket": "^1.1.16",
     "three": "^0.183.2"

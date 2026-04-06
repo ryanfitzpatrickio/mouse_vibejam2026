@@ -100,6 +100,8 @@ export class CharacterController {
     this.onSqueak = null;
     this.onDeath = null;
     this.onEmote = null;
+    this.onEmoteEnd = null;
+    this._emoteKeyWasPressed = false;
 
     this._bindInput();
   }
@@ -389,10 +391,14 @@ export class CharacterController {
       this.keys[this.keyBindings.drop] = false;
       this.dropItem();
     }
-    if (this.keys[this.keyBindings.emote]) {
-      this.keys[this.keyBindings.emote] = false;
-      this.openEmoteWheel();
+    const emoteKey = this.keyBindings.emote;
+    const isEmotePressed = !!this.keys[emoteKey];
+    if (isEmotePressed && !this._emoteKeyWasPressed) {
+      if (this.onEmote) this.onEmote(this);
+    } else if (!isEmotePressed && this._emoteKeyWasPressed) {
+      if (this.onEmoteEnd) this.onEmoteEnd(this);
     }
+    this._emoteKeyWasPressed = isEmotePressed;
   }
 
   interact() {
@@ -403,9 +409,6 @@ export class CharacterController {
     if (this.onSqueak) this.onSqueak(this);
   }
 
-  openEmoteWheel() {
-    if (this.onEmote) this.onEmote(this);
-  }
 
   carryItem(item) {
     if (this.carriedItem) return false;

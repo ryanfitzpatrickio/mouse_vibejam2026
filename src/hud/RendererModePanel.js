@@ -1,5 +1,9 @@
+import { measureText } from '../utils/textLayout.js';
+
 const STORAGE_KEY = 'mouse-renderer-mode-v2';
 const DEFAULT_MODE = 'webgl';
+const METRICS_FONT = '12px monospace';
+const METRICS_LINE_HEIGHT = 16;
 
 function isValidMode(mode) {
   return mode === 'webgl' || mode === 'webgpu';
@@ -346,10 +350,18 @@ export class RendererModePanel {
     drawLine((sample) => sample.fps, '#9ee8b2');
     drawLine((sample) => sample.drawCalls, '#ffd97a');
 
+    const fpsText = `Avg FPS: ${avgFps.toFixed(1)}`;
+    const dcText = `Draw calls/frame: ${avgDrawCalls.toFixed(1)}`;
+    const dcsText = `Draw calls/sec: ${drawCallsPerSecond.toFixed(1)}`;
+
+    const fpsMeasured = measureText(fpsText, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
+    const dcMeasured = measureText(dcText, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
+    const dcsMeasured = measureText(dcsText, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
+
     this.metrics.innerHTML = `
-      <div>Avg FPS: <span style="color:#9ee8b2">${avgFps.toFixed(1)}</span></div>
-      <div>Draw calls/frame: <span style="color:#ffd97a">${avgDrawCalls.toFixed(1)}</span></div>
-      <div>Draw calls/sec: <span style="color:#ffd97a">${drawCallsPerSecond.toFixed(1)}</span></div>
+      <div style="height:${fpsMeasured.height}px">Avg FPS: <span style="color:#9ee8b2">${avgFps.toFixed(1)}</span></div>
+      <div style="height:${dcMeasured.height}px">Draw calls/frame: <span style="color:#ffd97a">${avgDrawCalls.toFixed(1)}</span></div>
+      <div style="height:${dcsMeasured.height}px">Draw calls/sec: <span style="color:#ffd97a">${drawCallsPerSecond.toFixed(1)}</span></div>
     `;
   }
 

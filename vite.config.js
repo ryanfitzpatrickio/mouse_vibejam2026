@@ -134,6 +134,14 @@ export default defineConfig({
   base: './',
   root: '.',
   publicDir: 'public',
+  resolve: {
+    alias: {
+      '@chenglou/pretext': path.resolve(process.cwd(), 'node_modules/@chenglou/pretext/src/layout.ts'),
+    },
+  },
+  optimizeDeps: {
+    include: ['@chenglou/pretext'],
+  },
   build: {
     target: 'esnext',
     modulePreload: { polyfill: false },
