@@ -323,8 +323,8 @@
             "z": 2
           },
           "texture": {
-            "atlas": "textures",
-            "cell": 0,
+            "atlas": "textures3",
+            "cell": 13,
             "repeat": {
               "x": 1,
               "y": 1
@@ -333,8 +333,8 @@
           },
           "faceTextures": {},
           "material": {
-            "color": "#8B4513",
-            "roughness": 0.8,
+            "color": "#ffffff",
+            "roughness": 0,
             "metalness": 0
           },
           "prefabInstanceOrigin": null,
@@ -348,7 +348,7 @@
           "type": "box",
           "position": {
             "x": 0,
-            "y": 3.1578947368421053,
+            "y": 2.5717,
             "z": 0.875
           },
           "rotation": {
@@ -358,12 +358,12 @@
           },
           "scale": {
             "x": 2,
-            "y": 1.6842,
+            "y": 1.75,
             "z": 0.25
           },
           "texture": {
-            "atlas": "textures",
-            "cell": 0,
+            "atlas": "textures3",
+            "cell": 13,
             "repeat": {
               "x": 1,
               "y": 1
@@ -372,8 +372,8 @@
           },
           "faceTextures": {},
           "material": {
-            "color": "#8B4513",
-            "roughness": 0.8,
+            "color": "#ffffff",
+            "roughness": 0,
             "metalness": 0
           },
           "prefabInstanceOrigin": null,
@@ -568,8 +568,8 @@
             "z": 1.8947
           },
           "texture": {
-            "atlas": "textures",
-            "cell": 0,
+            "atlas": "textures3",
+            "cell": 52,
             "repeat": {
               "x": 1,
               "y": 1
@@ -593,8 +593,8 @@
           "type": "box",
           "position": {
             "x": 0,
-            "y": 2.8333333333333335,
-            "z": -0.7894736842105263
+            "y": 2.1821,
+            "z": -0.6967
           },
           "rotation": {
             "x": 0,
@@ -602,13 +602,13 @@
             "z": 0
           },
           "scale": {
-            "x": 1.8947,
+            "x": 2,
             "y": 2,
-            "z": 0.4211
+            "z": 0.5
           },
           "texture": {
-            "atlas": "textures",
-            "cell": 0,
+            "atlas": "textures3",
+            "cell": 52,
             "repeat": {
               "x": 1,
               "y": 1
@@ -631,9 +631,9 @@
           "name": "couch_arm_left",
           "type": "box",
           "position": {
-            "x": -0.894736842105263,
-            "y": 2,
-            "z": 0.052631578947368404
+            "x": -0.8947,
+            "y": 1.0239,
+            "z": 0.0526
           },
           "rotation": {
             "x": 0,
@@ -641,13 +641,13 @@
             "z": 0
           },
           "scale": {
-            "x": 0.2105,
+            "x": 0.25,
             "y": 2,
-            "z": 1.8947
+            "z": 2
           },
           "texture": {
-            "atlas": "textures",
-            "cell": 0,
+            "atlas": "textures3",
+            "cell": 52,
             "repeat": {
               "x": 1,
               "y": 1
@@ -670,9 +670,9 @@
           "name": "couch_arm_right",
           "type": "box",
           "position": {
-            "x": 0.894736842105263,
-            "y": 2,
-            "z": 0.052631578947368404
+            "x": 0.8947,
+            "y": 1.0013,
+            "z": 0.0526
           },
           "rotation": {
             "x": 0,
@@ -680,13 +680,180 @@
             "z": 0
           },
           "scale": {
-            "x": 0.2105,
+            "x": 0.25,
             "y": 2,
-            "z": 1.8947
+            "z": 2
           },
           "texture": {
-            "atlas": "textures",
-            "cell": 0,
+            "atlas": "textures3",
+            "cell": 52,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#606060",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
+    },
+    {
+      "id": "prefab-mnnaenht-mwjw5",
+      "name": "couch 3 seat",
+      "size": {
+        "x": 3,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "prefab-part-mnnaenht-26uc5",
+          "name": "couch_base",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.8333,
+            "z": 0.0526
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 5.75,
+            "y": 1.25,
+            "z": 2
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 52,
+            "repeat": {
+              "x": 3,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#606060",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnnaenht-jyagy",
+          "name": "couch_back",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 2.1821,
+            "z": -0.6967
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 6,
+            "y": 2,
+            "z": 0.5
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 52,
+            "repeat": {
+              "x": 3,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#606060",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnnaenht-j2n0p",
+          "name": "couch_arm_left",
+          "type": "box",
+          "position": {
+            "x": -2.8642,
+            "y": 1.0239,
+            "z": 0.0526
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.25,
+            "y": 2,
+            "z": 2
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 52,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#606060",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnnaenht-1zuzg",
+          "name": "couch_arm_right",
+          "type": "box",
+          "position": {
+            "x": 2.8955,
+            "y": 1.0013,
+            "z": 0.0526
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.25,
+            "y": 2,
+            "z": 2
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 52,
             "repeat": {
               "x": 1,
               "y": 1
