@@ -119,10 +119,6 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     rendererMode: mode,
   });
   scene.add(mouse);
-  await mouse.ready;
-  mouse.position.set(0, mouse.groundOffset, 0);
-  mouse.setViewCamera(camera);
-  attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
 
   let room;
   let renderer;
@@ -143,7 +139,10 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       rendererToolkit: gpu,
     });
     scene.add(room.getGroup());
-    await room.ready;
+    await Promise.all([mouse.ready, room.ready]);
+    mouse.position.set(0, mouse.groundOffset, 0);
+    mouse.setViewCamera(camera);
+    attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
     addLighting(scene, room);
     attachEdgeOutlines(room.getGroup(), { color: '#090909', thresholdAngle: 22, opacity: 0.9 });
     mouse.setRendererMode('webgpu', gpu);
@@ -152,7 +151,10 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     renderer = createWebGLRenderer(canvas);
     room = new Room({ width: 48, depth: 48, height: 4, scale: 1 });
     scene.add(room.getGroup());
-    await room.ready;
+    await Promise.all([mouse.ready, room.ready]);
+    mouse.position.set(0, mouse.groundOffset, 0);
+    mouse.setViewCamera(camera);
+    attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
     addLighting(scene, room);
     attachEdgeOutlines(room.getGroup(), { color: '#090909', thresholdAngle: 22, opacity: 0.9 });
     render = () => renderer.render(scene, camera);

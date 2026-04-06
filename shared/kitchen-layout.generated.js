@@ -1213,7 +1213,7 @@ export default {
       "prefabInstanceId": "prefab-instance-mnn842j8-vz10x",
       "prefabInstanceOrigin": {
         "x": 20.1716,
-        "y": 0.1553,
+        "y": -0.1147,
         "z": 14.2283
       },
       "prefabInstanceRotation": {
@@ -1276,7 +1276,7 @@ export default {
       "prefabInstanceId": "prefab-instance-mnn842j8-vz10x",
       "prefabInstanceOrigin": {
         "x": 20.1716,
-        "y": 0.1553,
+        "y": -0.1147,
         "z": 14.2283
       },
       "prefabInstanceRotation": {
@@ -1333,7 +1333,7 @@ export default {
       "prefabId": "prefab-mnn87pdj-nntjz",
       "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
       "prefabInstanceOrigin": {
-        "x": -9.6157,
+        "x": -7.3186,
         "y": 0,
         "z": -0.7014
       },
@@ -1391,7 +1391,7 @@ export default {
       "prefabId": "prefab-mnn87pdj-nntjz",
       "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
       "prefabInstanceOrigin": {
-        "x": -9.6157,
+        "x": -7.3186,
         "y": 0,
         "z": -0.7014
       },
@@ -1449,7 +1449,7 @@ export default {
       "prefabId": "prefab-mnn87pdj-nntjz",
       "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
       "prefabInstanceOrigin": {
-        "x": -9.6157,
+        "x": -7.3186,
         "y": 0,
         "z": -0.7014
       },
@@ -1507,7 +1507,7 @@ export default {
       "prefabId": "prefab-mnn87pdj-nntjz",
       "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
       "prefabInstanceOrigin": {
-        "x": -9.6157,
+        "x": -7.3186,
         "y": 0,
         "z": -0.7014
       },
@@ -1567,7 +1567,7 @@ export default {
       "prefabInstanceOrigin": {
         "x": -1,
         "y": 0,
-        "z": 9
+        "z": 9.7499
       },
       "prefabInstanceRotation": {
         "x": 3.1416,
@@ -1625,7 +1625,7 @@ export default {
       "prefabInstanceOrigin": {
         "x": -1,
         "y": 0,
-        "z": 9
+        "z": 9.7499
       },
       "prefabInstanceRotation": {
         "x": 3.1416,
@@ -1683,7 +1683,7 @@ export default {
       "prefabInstanceOrigin": {
         "x": -1,
         "y": 0,
-        "z": 9
+        "z": 9.7499
       },
       "prefabInstanceRotation": {
         "x": 3.1416,
@@ -1741,7 +1741,7 @@ export default {
       "prefabInstanceOrigin": {
         "x": -1,
         "y": 0,
-        "z": 9
+        "z": 9.7499
       },
       "prefabInstanceRotation": {
         "x": 3.1416,
@@ -2164,6 +2164,434 @@ export default {
         "x": 1,
         "y": 1,
         "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnnjlrpu-6ycu7",
+      "name": "plane-3ng",
+      "type": "plane",
+      "position": {
+        "x": -4,
+        "y": 1.5,
+        "z": -14
+      },
+      "rotation": {
+        "x": -1.5707963267948966,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 16,
+        "y": 6,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 83,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#000000",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnnjsxyz-kdd7m",
+      "name": "plane-p8c",
+      "type": "plane",
+      "position": {
+        "x": 0,
+        "y": 12,
+        "z": 0
+      },
+      "rotation": {
+        "x": -1.5707963267948966,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 48,
+        "y": 48,
+        "z": 0.1
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 22,
+        "repeat": {
+          "x": 12,
+          "y": 12
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnnk4jh8-u6fpp",
+      "name": "plane-5qx-copy",
+      "type": "plane",
+      "position": {
+        "x": 12,
+        "y": 0,
+        "z": -18
+      },
+      "rotation": {
+        "x": -1.5707963267948966,
+        "y": 1.5707963267948966,
+        "z": 0
+      },
+      "scale": {
+        "x": 24,
+        "y": 12,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 16,
+        "repeat": {
+          "x": 1,
+          "y": 1.5
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnkj1o1-et1xz-part-1",
+      "name": "end table-Table Top",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 3.6006,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 1,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 23,
+        "repeat": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnke7ov-78eek",
+      "prefabInstanceId": "prefab-instance-mnnkj1o1-et1xz",
+      "prefabInstanceOrigin": {
+        "x": -0.8672,
+        "y": 0.054,
+        "z": 0.1144
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnkj1o1-et1xz-part-2",
+      "name": "end table-Table Base",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 1.8868,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 3.5,
+        "y": 4,
+        "z": 3.5
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 4,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffc9a3",
+        "roughness": 0,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnke7ov-78eek",
+      "prefabInstanceId": "prefab-instance-mnnkj1o1-et1xz",
+      "prefabInstanceOrigin": {
+        "x": -0.8672,
+        "y": 0.054,
+        "z": 0.1144
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnklpov-s1u74-part-1",
+      "name": "lamp-Lamp Base",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 0.4,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 3.3334,
+        "y": 0.8,
+        "z": 3.3334
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 27,
+        "repeat": {
+          "x": 1,
+          "y": 0.6
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnkgoos-5j0jz",
+      "prefabInstanceId": "prefab-instance-mnnklpov-s1u74",
+      "prefabInstanceOrigin": {
+        "x": -0.5581,
+        "y": 4.123,
+        "z": 0.5675
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 0.4825,
+        "y": 0.4598,
+        "z": 0.4945
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnklpov-s1u74-part-2",
+      "name": "lamp-Lamp Stem",
+      "type": "cylinder",
+      "position": {
+        "x": 0,
+        "y": 2.8,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.6666,
+        "y": 4,
+        "z": 0.6666
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 27,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnkgoos-5j0jz",
+      "prefabInstanceId": "prefab-instance-mnnklpov-s1u74",
+      "prefabInstanceOrigin": {
+        "x": -0.5581,
+        "y": 4.123,
+        "z": 0.5675
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 0.4825,
+        "y": 0.4598,
+        "z": 0.4945
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnklpov-s1u74-part-3",
+      "name": "lamp-Lamp Shade",
+      "type": "cylinder",
+      "position": {
+        "x": 0,
+        "y": 6.4,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 3.2,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 13,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#F5DEB3",
+        "roughness": 0.9,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnkgoos-5j0jz",
+      "prefabInstanceId": "prefab-instance-mnnklpov-s1u74",
+      "prefabInstanceOrigin": {
+        "x": -0.5581,
+        "y": 4.123,
+        "z": 0.5675
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 0.4825,
+        "y": 0.4598,
+        "z": 0.4945
       },
       "collider": true,
       "colliderClearance": 0,

@@ -277,10 +277,11 @@ export class Room {
     this.ready = Promise.all([
       this._loadTextureAtlas(),
       this._loadEditableLayout(),
-    ]).then(() => this._loadGlbModels()).then(() => {
+    ]).then(() => {
       this._applyLoadedEditableLayout();
       this._applyTextureAtlas();
       this._rebuildEditableLayout();
+      this.streamGlbModels();
       return this;
     }).catch(() => this);
 
@@ -328,17 +329,16 @@ export class Room {
   }
 
   async _loadTextureAtlas() {
-    const loaded = [];
-    for (const [atlas, url] of Object.entries(this.textureAtlasUrls)) {
+    const entries = Object.entries(this.textureAtlasUrls);
+    const results = await Promise.all(entries.map(async ([atlas, url]) => {
       try {
-        loaded.push([atlas, await loadImage(url)]);
+        return [atlas, await loadImage(url)];
       } catch (error) {
-        if (atlas === DEFAULT_TEXTURE_ATLAS) {
-          throw error;
-        }
+        if (atlas === DEFAULT_TEXTURE_ATLAS) throw error;
+        return null;
       }
-    }
-    this.textureAtlasImages = new Map(loaded);
+    }));
+    this.textureAtlasImages = new Map(results.filter(Boolean));
     this.textureAtlasImage = this.textureAtlasImages.get(DEFAULT_TEXTURE_ATLAS) ?? null;
     return this.textureAtlasImage;
   }
@@ -525,6 +525,16 @@ export class Room {
     if (!glbPrimitives.length) return;
     const assetIds = [...new Set(glbPrimitives.map((p) => p.glbAssetId))];
     await Promise.all(assetIds.map((id) => this._loadGlbModelByAssetId(id)));
+  }
+
+  streamGlbModels() {
+    const glbPrimitives = this.loadedEditableLayout.primitives.filter((p) => p.type === 'glb' && p.glbAssetId);
+    if (!glbPrimitives.length) return;
+    const assetIds = [...new Set(glbPrimitives.map((p) => p.glbAssetId))];
+    Promise.all(assetIds.map(async (id) => {
+      await this._loadGlbModelByAssetId(id);
+      this._rebuildEditableLayout();
+    }));
   }
 
   _normalizePrimitive(entry = {}) {
