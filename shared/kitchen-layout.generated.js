@@ -87,6 +87,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -132,6 +133,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -177,6 +179,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -222,6 +225,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -267,6 +271,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -312,6 +317,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
       "deleted": false
@@ -357,6 +363,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
       "deleted": false
@@ -402,6 +409,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
       "deleted": false
@@ -447,6 +455,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -492,6 +501,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -537,6 +547,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
       "deleted": false
@@ -582,6 +593,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -627,6 +639,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -672,6 +685,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -717,6 +731,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -762,6 +777,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -807,6 +823,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -881,6 +898,7 @@ export default {
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -938,6 +956,7 @@ export default {
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -995,6 +1014,7 @@ export default {
         "z": 1
       },
       "collider": false,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": false,
       "deleted": false
@@ -1052,6 +1072,7 @@ export default {
         "z": 1
       },
       "collider": false,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": false,
       "deleted": false
@@ -1097,6 +1118,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1142,6 +1164,7 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1204,6 +1227,7 @@ export default {
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1266,6 +1290,7 @@ export default {
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1323,6 +1348,7 @@ export default {
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1380,6 +1406,7 @@ export default {
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1437,6 +1464,7 @@ export default {
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1494,6 +1522,7 @@ export default {
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1504,8 +1533,8 @@ export default {
       "type": "box",
       "position": {
         "x": 0,
-        "y": 1.6666,
-        "z": 0.1052
+        "y": 1.75,
+        "z": 0
       },
       "rotation": {
         "x": 0,
@@ -1546,11 +1575,12 @@ export default {
         "z": 3.1416
       },
       "prefabInstanceScale": {
-        "x": 1,
-        "y": 1,
+        "x": 1.0006,
+        "y": 0.9974,
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 2,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1603,11 +1633,12 @@ export default {
         "z": 3.1416
       },
       "prefabInstanceScale": {
-        "x": 1,
-        "y": 1,
+        "x": 1.0006,
+        "y": 0.9974,
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1660,11 +1691,12 @@ export default {
         "z": 3.1416
       },
       "prefabInstanceScale": {
-        "x": 1,
-        "y": 1,
+        "x": 1.0006,
+        "y": 0.9974,
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1717,11 +1749,12 @@ export default {
         "z": 3.1416
       },
       "prefabInstanceScale": {
-        "x": 1,
-        "y": 1,
+        "x": 1.0006,
+        "y": 0.9974,
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1767,6 +1800,373 @@ export default {
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 1,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnniuzxe-kymf6-part-1",
+      "name": "tv_on_stand-TV Stand Base",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 1.7391304347826089,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 3.4782,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 55,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "right": {
+          "atlas": "textures3",
+          "cell": 4
+        },
+        "left": {
+          "atlas": "textures3",
+          "cell": 4
+        },
+        "top": {
+          "atlas": "textures3",
+          "cell": 6
+        }
+      },
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnijml3-8mgeb",
+      "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
+      "prefabInstanceOrigin": {
+        "x": -19.612,
+        "y": 0,
+        "z": 8.8498
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 1.5468,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnniuzxe-kymf6-part-2",
+      "name": "tv_on_stand-TV Screen",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 8.3298,
+        "z": 0.2666
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 7.5,
+        "y": 3,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 41,
+        "repeat": {
+          "x": 0.8,
+          "y": 0.4
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.1,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnijml3-8mgeb",
+      "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
+      "prefabInstanceOrigin": {
+        "x": -19.612,
+        "y": 0,
+        "z": 8.8498
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 1.5468,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnniuzxe-kymf6-part-3",
+      "name": "tv_on_stand-stand",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 3.6608,
+        "z": 0.2054
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1.5,
+        "y": 0.5,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 24,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "top": {
+          "atlas": "textures",
+          "cell": 5
+        }
+      },
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnijml3-8mgeb",
+      "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
+      "prefabInstanceOrigin": {
+        "x": -19.612,
+        "y": 0,
+        "z": 8.8498
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 1.5468,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnniuzxe-kymf6-part-4",
+      "name": "tv_on_stand-TV Screen-copy",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 5.3398,
+        "z": 0.2666
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": -3.141592653589793
+      },
+      "scale": {
+        "x": 7.5,
+        "y": 3,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 41,
+        "repeat": {
+          "x": 0.8,
+          "y": 0.4
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.1,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnijml3-8mgeb",
+      "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
+      "prefabInstanceOrigin": {
+        "x": -19.612,
+        "y": 0,
+        "z": 8.8498
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 1.5468,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnniuzxe-kymf6-part-5",
+      "name": "tv_on_stand-plane-part",
+      "type": "plane",
+      "position": {
+        "x": 0,
+        "y": 6.8288,
+        "z": 0.543
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 6.5,
+        "y": 5,
+        "z": 2
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 34,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#610000",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnijml3-8mgeb",
+      "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
+      "prefabInstanceOrigin": {
+        "x": -19.612,
+        "y": 0,
+        "z": 8.8498
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 1.5468,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnniuzxe-kymf6-part-6",
+      "name": "tv_on_stand-plane-part-copy",
+      "type": "plane",
+      "position": {
+        "x": 0.0044,
+        "y": 6.8288,
+        "z": -0.1532
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 6.5,
+        "y": 5,
+        "z": 2
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 34,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#610000",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnijml3-8mgeb",
+      "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
+      "prefabInstanceOrigin": {
+        "x": -19.612,
+        "y": 0,
+        "z": 8.8498
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 1.5468,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false

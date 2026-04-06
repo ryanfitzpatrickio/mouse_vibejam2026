@@ -1,93 +1,13 @@
 import * as THREE from 'three';
 import { PrefabEditorDialog } from './PrefabEditorDialog.js';
 import { DEFAULT_PREFAB_LIBRARY, normalizePrefabLibrary } from './prefabRegistry.js';
+import { clamp, createAtlasButtonStyle, deepClone } from './editorShared.js';
+import { createDefaultPrimitive, createPrimitiveId, loadPrefabLibraryFromAsset } from './buildModeSupport.js';
 import { loadTextureAtlases, TEXTURE_ATLASES } from './textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
 
 const RAD_TO_DEG = 180 / Math.PI;
 const DEG_TO_RAD = Math.PI / 180;
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function deepClone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function createPrimitiveId() {
-  return `primitive-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-}
-
-function createDefaultPrimitive(type, app) {
-  const grid = app.room.getBuildGridConfig();
-  const forward = new THREE.Vector3();
-  app.camera.getWorldDirection(forward);
-  forward.y = 0;
-  if (forward.lengthSq() < 0.0001) {
-    forward.set(0, 0, -1);
-  }
-  forward.normalize();
-
-  const spawn = app.mouse.position.clone().add(forward.multiplyScalar(2.25));
-  spawn.y = Math.max(app.mouse.position.y, 0.6);
-
-  const primitive = {
-    id: createPrimitiveId(),
-    name: `${type}-${Math.random().toString(36).slice(2, 5)}`,
-    type,
-    position: {
-      x: Number(spawn.x.toFixed(3)),
-      y: Number(spawn.y.toFixed(3)),
-      z: Number(spawn.z.toFixed(3)),
-    },
-    rotation: { x: 0, y: 0, z: 0 },
-    scale: { x: 1, y: 1, z: 1 },
-    texture: {
-      atlas: 'textures',
-      cell: 0,
-      repeat: { x: 1, y: 1 },
-      rotation: 0,
-    },
-    material: {
-      color: '#ffffff',
-      roughness: 0.88,
-      metalness: 0.04,
-    },
-    prefabId: null,
-    collider: true,
-    castShadow: true,
-    receiveShadow: true,
-  };
-
-  if (type === 'plane') {
-    primitive.rotation.x = -Math.PI * 0.5;
-    primitive.scale = { x: 1, y: 1, z: 1 };
-  }
-
-  if (type === 'cylinder') {
-    primitive.scale = { x: 1, y: 1.5, z: 1 };
-  }
-
-  if (type === 'box') {
-    primitive.scale = { x: 1, y: 1, z: 1 };
-  }
-
-  return app.room.snapPrimitiveToGrid(primitive, { snapY: true, snapScale: true });
-}
-
-function createAtlasButtonStyle(index, atlasUrl, columns = 10, rows = 10) {
-  const col = index % columns;
-  const row = Math.floor(index / columns);
-  const x = columns > 1 ? (col / (columns - 1)) * 100 : 0;
-  const y = rows > 1 ? (row / (rows - 1)) * 100 : 0;
-
-  return {
-    backgroundImage: `url('${atlasUrl}')`,
-    backgroundSize: `${columns * 100}% ${rows * 100}%`,
-    backgroundPosition: `${x}% ${y}%`,
-  };
-}
 
 class BuildModeEditor {
   constructor(app, textureAtlases, prefabLibrary, OrbitControls, TransformControls) {
@@ -1501,24 +1421,11 @@ class BuildModeEditor {
   }
 }
 
-async function loadManifest() {
-  return loadTextureAtlases();
-}
-
-async function loadPrefabLibrary() {
-  try {
-    const response = await fetch(assetUrl('levels/prefabs.json'), { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const payload = await response.json();
-    return normalizePrefabLibrary(payload);
-  } catch {
-    return normalizePrefabLibrary(DEFAULT_PREFAB_LIBRARY);
-  }
-}
-
 export async function installBuildMode(app) {
-  const textureAtlases = await loadManifest();
-  const prefabLibrary = await loadPrefabLibrary();
+  const textureAtlases = await loadTextureAtlases();
+  const prefabLibrary = normalizePrefabLibrary(
+    await loadPrefabLibraryFromAsset(assetUrl('levels/prefabs.json')) ?? DEFAULT_PREFAB_LIBRARY,
+  );
   const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
   const { TransformControls } = await import('three/addons/controls/TransformControls.js');
   return new BuildModeEditor(app, textureAtlases, prefabLibrary, OrbitControls, TransformControls);

@@ -872,6 +872,486 @@
           "receiveShadow": true
         }
       ]
+    },
+    {
+      "id": "prefab-mnnijml3-8mgeb",
+      "name": "tv_on_stand",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "tv_stand_base",
+          "name": "TV Stand Base",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.8695652173913044,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1.7391,
+            "z": 2
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 55,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {
+            "right": {
+              "atlas": "textures3",
+              "cell": 4
+            },
+            "left": {
+              "atlas": "textures3",
+              "cell": 4
+            },
+            "top": {
+              "atlas": "textures3",
+              "cell": 6
+            }
+          },
+          "material": {
+            "color": "#ffffff",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "tv_screen",
+          "name": "TV Screen",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 4.1649,
+            "z": 0.1333
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.75,
+            "y": 1.5,
+            "z": 0.25
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 41,
+            "repeat": {
+              "x": 0.8,
+              "y": 0.4
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#ffffff",
+            "roughness": 0.1,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnnika4v-butzj",
+          "name": "stand",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 1.8304,
+            "z": 0.1027
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.75,
+            "y": 0.25,
+            "z": 0.25
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 24,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {
+            "top": {
+              "atlas": "textures",
+              "cell": 5
+            }
+          },
+          "material": {
+            "color": "#ffffff",
+            "roughness": 0.88,
+            "metalness": 0.04
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnnimzbg-6ks1l",
+          "name": "TV Screen-copy",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 2.6699,
+            "z": 0.1333
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": -3.141592653589793
+          },
+          "scale": {
+            "x": 3.75,
+            "y": 1.5,
+            "z": 0.25
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 41,
+            "repeat": {
+              "x": 0.8,
+              "y": 0.4
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#ffffff",
+            "roughness": 0.1,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnnioxid-s75ap",
+          "name": "plane-part",
+          "type": "plane",
+          "position": {
+            "x": 0,
+            "y": 3.4144,
+            "z": 0.2715
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.25,
+            "y": 2.5,
+            "z": 1
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 34,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#610000",
+            "roughness": 0.88,
+            "metalness": 0.04
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "prefab-part-mnnirj16-2eu5e",
+          "name": "plane-part-copy",
+          "type": "plane",
+          "position": {
+            "x": 0.0022,
+            "y": 3.4144,
+            "z": -0.0766
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 3.25,
+            "y": 2.5,
+            "z": 1
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 34,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#610000",
+            "roughness": 0.88,
+            "metalness": 0.04
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
+    },
+    {
+      "id": "prefab-mnnke7ov-78eek",
+      "name": "end table",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "table_top",
+          "name": "Table Top",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 1.8003,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 0.5,
+            "z": 2
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 23,
+            "repeat": {
+              "x": 0.5,
+              "y": 0.5
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#ffffff",
+            "roughness": 0,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "table_base",
+          "name": "Table Base",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.9434,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.75,
+            "y": 2,
+            "z": 1.75
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 4,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#ffc9a3",
+            "roughness": 0,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
+    },
+    {
+      "id": "prefab-mnnkgoos-5j0jz",
+      "name": "lamp",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "lamp-base",
+          "name": "Lamp Base",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.2,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.6667,
+            "y": 0.4,
+            "z": 1.6667
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 27,
+            "repeat": {
+              "x": 1,
+              "y": 0.6
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#ffffff",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "lamp-stem",
+          "name": "Lamp Stem",
+          "type": "cylinder",
+          "position": {
+            "x": 0,
+            "y": 1.4,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.3333,
+            "y": 2,
+            "z": 0.3333
+          },
+          "texture": {
+            "atlas": "textures2",
+            "cell": 27,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#ffffff",
+            "roughness": 0,
+            "metalness": 0.04
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "lamp-shade",
+          "name": "Lamp Shade",
+          "type": "cylinder",
+          "position": {
+            "x": 0,
+            "y": 3.2,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1.6,
+            "z": 2
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 13,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#F5DEB3",
+            "roughness": 0.9,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
     }
   ]
 }

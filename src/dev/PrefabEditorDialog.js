@@ -3,232 +3,28 @@ import {
   DEFAULT_PREFAB_LIBRARY,
   FACE_TEXTURE_SLOTS,
   createPrefabId,
-  createPrefabPartId,
   normalizePrefab,
   normalizePrefabLibrary,
   normalizePrefabPrimitive,
 } from './prefabRegistry.js';
 import { DEFAULT_TEXTURE_ATLAS, TEXTURE_ATLASES } from './textureAtlasRegistry.js';
+import {
+  clamp,
+  createAtlasButtonStyle,
+  deepClone,
+  getStoredString,
+  setStoredString,
+  titleCase,
+} from './editorShared.js';
+import {
+  createLocalPrimitive,
+  createPrimitiveGeometry,
+} from './prefabGeneration.js';
+import { generatePrefabFromPrompt } from './prefabAIGenerator.js';
 import { assetUrl } from '../utils/assetUrl.js';
 
 const RAD_TO_DEG = 180 / Math.PI;
 const DEG_TO_RAD = Math.PI / 180;
-
-function deepClone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function createAtlasButtonStyle(index, atlasUrl, columns = 10, rows = 10) {
-  const col = index % columns;
-  const row = Math.floor(index / columns);
-  const x = columns > 1 ? (col / (columns - 1)) * 100 : 0;
-  const y = rows > 1 ? (row / (rows - 1)) * 100 : 0;
-
-  return {
-    backgroundImage: `url('${atlasUrl}')`,
-    backgroundSize: `${columns * 100}% ${rows * 100}%`,
-    backgroundPosition: `${x}% ${y}%`,
-  };
-}
-
-function titleCase(value) {
-  return String(value).charAt(0).toUpperCase() + String(value).slice(1);
-}
-
-function stripJsonCodeFence(text) {
-  return String(text)
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/```$/i, '')
-    .trim();
-}
-
-function safeParseJson(text) {
-  const cleaned = stripJsonCodeFence(text);
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    // Try to recover truncated JSON by closing open brackets/braces.
-    let patched = cleaned
-      .replace(/,\s*$/, '')
-      .replace(/,\s*([}\]])/, '$1');
-    let opens = 0;
-    let openArrays = 0;
-    for (const ch of patched) {
-      if (ch === '{') opens++;
-      else if (ch === '}') opens--;
-      else if (ch === '[') openArrays++;
-      else if (ch === ']') openArrays--;
-    }
-    while (openArrays > 0) { patched += ']'; openArrays--; }
-    while (opens > 0) { patched += '}'; opens--; }
-    return JSON.parse(patched);
-  }
-}
-
-function getStoredString(key, fallback = '') {
-  try {
-    return window.localStorage.getItem(key) ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function setStoredString(key, value) {
-  try {
-    window.localStorage.setItem(key, value);
-  } catch {
-    // Ignore storage failures in private mode or restricted contexts.
-  }
-}
-
-function createLocalPrimitive(type, grid) {
-  const primitive = normalizePrefabPrimitive({
-    id: createPrefabPartId(),
-    name: `${type}-part`,
-    type,
-    position: { x: 0, y: grid.verticalStep * 0.5, z: 0 },
-    scale: {
-      x: grid.cellWidth,
-      y: Math.max(grid.verticalStep, 0.5),
-      z: grid.cellDepth,
-    },
-    texture: {
-      atlas: DEFAULT_TEXTURE_ATLAS,
-      cell: 0,
-      repeat: { x: 1, y: 1 },
-      rotation: 0,
-    },
-  });
-
-  if (type === 'plane') {
-    primitive.rotation.x = -Math.PI * 0.5;
-    primitive.position.y = 0;
-    primitive.scale = { x: 1, y: 1, z: 1 };
-    primitive.receiveShadow = true;
-  } else if (type === 'cylinder') {
-    primitive.scale = { x: 1, y: grid.verticalStep * 2, z: 1 };
-    primitive.position.y = primitive.scale.y * 0.5;
-  }
-
-  return primitive;
-}
-
-function createPrimitiveGeometry(type) {
-  switch (type) {
-    case 'plane':
-      return new THREE.PlaneGeometry(1, 1);
-    case 'cylinder':
-      return new THREE.CylinderGeometry(0.5, 0.5, 1, 24, 1);
-    case 'box':
-    default:
-      return new THREE.BoxGeometry(1, 1, 1);
-  }
-}
-
-function capGeneratedScale(value, max = 4) {
-  return Number(Math.min(max, Math.max(0.05, value)).toFixed(4));
-}
-
-function fitGeneratedPrefabToEditorSpace(prefab, { footprint = 2, maxHeight = 2, totalHeight = 4 } = {}) {
-  const primitives = Array.isArray(prefab.primitives) ? prefab.primitives : [];
-  if (!primitives.length) {
-    return prefab;
-  }
-
-  const bounds = primitives.reduce((acc, primitive) => {
-    const position = primitive.position ?? { x: 0, y: 0, z: 0 };
-    const scale = primitive.scale ?? { x: 1, y: 1, z: 1 };
-    const halfX = Math.abs(scale.x ?? 1) * 0.5;
-    const halfY = Math.abs(scale.y ?? 1) * 0.5;
-    const halfZ = Math.abs(scale.z ?? 1) * 0.5;
-
-    acc.minX = Math.min(acc.minX, position.x - halfX);
-    acc.maxX = Math.max(acc.maxX, position.x + halfX);
-    acc.minY = Math.min(acc.minY, position.y - halfY);
-    acc.maxY = Math.max(acc.maxY, position.y + halfY);
-    acc.minZ = Math.min(acc.minZ, position.z - halfZ);
-    acc.maxZ = Math.max(acc.maxZ, position.z + halfZ);
-    return acc;
-  }, {
-    minX: Infinity,
-    maxX: -Infinity,
-    minY: Infinity,
-    maxY: -Infinity,
-    minZ: Infinity,
-    maxZ: -Infinity,
-  });
-
-  const width = Math.max(0.001, bounds.maxX - bounds.minX);
-  const depth = Math.max(0.001, bounds.maxZ - bounds.minZ);
-  const height = Math.max(0.001, bounds.maxY - bounds.minY);
-  const centerX = (bounds.minX + bounds.maxX) * 0.5;
-  const centerZ = (bounds.minZ + bounds.maxZ) * 0.5;
-  const fitX = footprint / width;
-  const fitY = totalHeight / height;
-  const fitZ = footprint / depth;
-
-  return {
-    ...prefab,
-    size: { x: 1, y: 1, z: 1 },
-    primitives: primitives.map((primitive) => normalizePrefabPrimitive({
-      ...primitive,
-      position: {
-        x: ((primitive.position?.x ?? 0) - centerX) * fitX,
-        y: ((primitive.position?.y ?? 0) - bounds.minY) * fitY,
-        z: ((primitive.position?.z ?? 0) - centerZ) * fitZ,
-      },
-      scale: {
-        x: capGeneratedScale((primitive.scale?.x ?? 1) * fitX, footprint),
-        y: capGeneratedScale(Math.min(maxHeight, (primitive.scale?.y ?? 1) * fitY), maxHeight),
-        z: capGeneratedScale((primitive.scale?.z ?? 1) * fitZ, footprint),
-      },
-    })),
-  };
-}
-
-function makeGeneratedPart({
-  name,
-  type = 'box',
-  position = { x: 0, y: 0.5, z: 0 },
-  rotation = { x: 0, y: 0, z: 0 },
-  scale = { x: 1, y: 1, z: 1 },
-  texture = {},
-  material = {},
-  collider = true,
-  castShadow = true,
-  receiveShadow = true,
-}) {
-  return normalizePrefabPrimitive({
-    id: createPrefabPartId(),
-    name: name ?? `${type}-part`,
-    type,
-    position,
-    rotation,
-    scale: {
-      x: capGeneratedScale(scale.x ?? 1),
-      y: capGeneratedScale(scale.y ?? 1),
-      z: capGeneratedScale(scale.z ?? 1),
-    },
-    texture: {
-      atlas: texture.atlas ?? DEFAULT_TEXTURE_ATLAS,
-      cell: Number.isFinite(texture.cell) ? texture.cell : 0,
-      repeat: texture.repeat ?? { x: 1, y: 1 },
-      rotation: texture.rotation ?? 0,
-    },
-    material: {
-      color: material.color ?? '#ffffff',
-      roughness: material.roughness ?? 0.82,
-      metalness: material.metalness ?? 0.06,
-    },
-    collider,
-    castShadow,
-    receiveShadow,
-  });
-}
 
 export class PrefabEditorDialog {
   constructor({
@@ -1326,82 +1122,12 @@ export class PrefabEditorDialog {
     setStoredString('mouse-trouble.openrouter.key', apiKey);
     this.aiNote.textContent = `Generating "${prompt}"...`;
 
-    const atlasIds = this.textureAtlases.map((atlas) => atlas.id).join(', ');
-    const systemPrompt = [
-      'You are generating prefab geometry for a 3D kitchen game.',
-      'Return JSON only. No markdown, no commentary, no code fences.',
-      'The JSON must match this shape:',
-      '{ name: string, size: { x: number, y: number, z: number }, primitives: Array<primitive> }',
-      'Default to a 1x1 prefab size in metadata and express footprint only through primitive scale.',
-      'The prefab editor volume should read like a 2x2 base footprint with a square silhouette.',
-      'The total prefab can be up to 4 units tall.',
-      'Keep each primitive height at or below 2.',
-      'Prefer a composition of two stacked 2x2x2-ish masses inside that volume instead of one square column.',
-      'Do not collapse the object into a single square fridge-like block unless the prompt explicitly asks for a monolith.',
-      'Use a stable, blocky silhouette. Do not make thin poles, long spires, or giant flat panels unless the prompt clearly asks for them.',
-      'Each primitive must use only these fields:',
-      '{ id, name, type, position:{x,y,z}, rotation:{x,y,z}, scale:{x,y,z}, texture:{atlas,cell,repeat:{x,y},rotation}, material:{color,roughness,metalness}, collider, castShadow, receiveShadow }',
-      'Allowed primitive types: box, plane, cylinder.',
-      'Keep the object simple, compact, and valid for a 1x1 or small multi-cell prefab.',
-      'Use the smallest sensible number of primitives. Favor boxes and cylinders.',
-      `Available texture atlases: ${atlasIds}. Use atlas ids only if texture assignment is helpful.`,
-      'Do not include duplicate parts, negative scales, or huge coordinates.',
-      'The user prompt is the desired object, for example "chair".',
-    ].join('\n');
-
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Mouse Trouble Prefab Editor',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: prompt },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.3,
-          max_completion_tokens: 4096,
-        }),
+      const prefab = await generatePrefabFromPrompt({
+        prompt,
+        apiKey,
+        textureAtlases: this.textureAtlases,
       });
-
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.error?.message || response.statusText || 'OpenRouter request failed');
-      }
-
-      const content = payload?.choices?.[0]?.message?.content ?? '';
-      const parsed = safeParseJson(content);
-      let prefab = normalizePrefab({
-        name: parsed.name || prompt,
-        size: { x: 1, y: 1, z: 1 },
-        primitives: Array.isArray(parsed.primitives) ? parsed.primitives : [],
-      });
-
-      prefab.primitives = prefab.primitives.map((primitive) => normalizePrefabPrimitive({
-        ...primitive,
-        texture: {
-          atlas: primitive.texture?.atlas ?? DEFAULT_TEXTURE_ATLAS,
-          cell: Number.isFinite(primitive.texture?.cell) ? primitive.texture.cell : 0,
-          repeat: primitive.texture?.repeat ?? { x: 1, y: 1 },
-          rotation: primitive.texture?.rotation ?? 0,
-        },
-      }));
-      prefab.primitives = prefab.primitives.map((primitive) => normalizePrefabPrimitive({
-        ...primitive,
-        scale: {
-          x: capGeneratedScale(primitive.scale.x ?? 1),
-          y: capGeneratedScale(primitive.scale.y ?? 1, 2),
-          z: capGeneratedScale(primitive.scale.z ?? 1),
-        },
-      }));
-
-      prefab = fitGeneratedPrefabToEditorSpace(prefab, { footprint: 2, maxHeight: 2, totalHeight: 4 });
 
       if (!prefab.primitives.length) {
         throw new Error('Model returned no primitives.');
