@@ -1121,6 +1121,128 @@
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnn842j8-vz10x-part-1",
+      "name": "fridge-fridge_bottom",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 2,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 4,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 41,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "front": {
+          "atlas": "textures3",
+          "cell": 40
+        }
+      },
+      "material": {
+        "color": "#D3D3D3",
+        "roughness": 0.5,
+        "metalness": 0.8
+      },
+      "prefabId": "prefab-mnn7zhdy-mzl5t",
+      "prefabInstanceId": "prefab-instance-mnn842j8-vz10x",
+      "prefabInstanceOrigin": {
+        "x": 20.1716,
+        "y": 0.1553,
+        "z": 14.2283
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1416,
+        "y": -1.542,
+        "z": 3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnn842j8-vz10x-part-2",
+      "name": "fridge-fridge_top",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 6,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 4,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 31,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "front": {
+          "atlas": "textures3",
+          "cell": 30
+        }
+      },
+      "material": {
+        "color": "#D3D3D3",
+        "roughness": 0.5,
+        "metalness": 0.8
+      },
+      "prefabId": "prefab-mnn7zhdy-mzl5t",
+      "prefabInstanceId": "prefab-instance-mnn842j8-vz10x",
+      "prefabInstanceOrigin": {
+        "x": 20.1716,
+        "y": 0.1553,
+        "z": 14.2283
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1416,
+        "y": -1.542,
+        "z": 3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
     }
   ]
 }

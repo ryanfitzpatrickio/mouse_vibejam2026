@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { isAssetBuildUpToDate, markAssetBuildCurrent } from './build-cache.mjs';
 
 const ROOT = process.cwd();
 const SOURCE_DIR = path.join(ROOT, 'assets', 'source');
 const OUTPUT_FILE = path.join(ROOT, 'src', 'dev', 'textureAtlasRegistry.generated.js');
+const CACHE_NAME = 'generate-texture-atlas-registry';
 
 function atlasIdFromFilename(filename) {
   const match = /^textures(?:(\d+))?\.webp$/i.exec(filename);
@@ -36,6 +38,21 @@ async function main() {
       return aNum - bNum;
     });
 
+  const inputs = [
+    path.join(ROOT, 'scripts', 'generate-texture-atlas-registry.mjs'),
+    path.join(ROOT, 'scripts', 'build-cache.mjs'),
+    ...atlases.map((atlas) => atlas.input),
+  ];
+
+  if (await isAssetBuildUpToDate({
+    cacheName: CACHE_NAME,
+    inputs,
+    outputs: [OUTPUT_FILE],
+  })) {
+    console.log(`Skipped ${path.relative(ROOT, OUTPUT_FILE)} (up to date)`);
+    return;
+  }
+
   const body = `import { assetUrl } from '../utils/assetUrl.js';
 
 export const GENERATED_TEXTURE_ATLASES = Object.freeze([
@@ -49,6 +66,10 @@ ${atlases.map((atlas) => `  Object.freeze({
 `;
 
   await fs.writeFile(OUTPUT_FILE, body);
+  await markAssetBuildCurrent({
+    cacheName: CACHE_NAME,
+    inputs,
+  });
   console.log(`Wrote ${path.relative(ROOT, OUTPUT_FILE)}`);
 }
 

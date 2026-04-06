@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { isAssetBuildUpToDate, markAssetBuildCurrent } from './build-cache.mjs';
 
 const DEFAULT_RIGGED = 'assets/source/mouse.glb';
 const DEFAULT_SKIN = 'assets/source/mouse-skin.glb';
@@ -205,6 +206,17 @@ async function main() {
     return;
   }
 
+  const scriptPath = path.join(process.cwd(), 'scripts', 'apply-mouse-skin.mjs');
+  const cachePath = path.join(process.cwd(), 'scripts', 'build-cache.mjs');
+  if (await isAssetBuildUpToDate({
+    cacheName: 'apply-mouse-skin',
+    inputs: [options.rigged, options.skin, scriptPath, cachePath],
+    outputs: [options.output],
+  })) {
+    console.log(`Skipped ${path.resolve(options.output)} (up to date)`);
+    return;
+  }
+
   const [riggedBuffer, skinBuffer] = await Promise.all([
     fs.readFile(options.rigged),
     fs.readFile(options.skin),
@@ -219,6 +231,11 @@ async function main() {
   const tempPath = `${outputPath}.tmp`;
   await fs.writeFile(tempPath, outputBuffer);
   await fs.rename(tempPath, outputPath);
+
+  await markAssetBuildCurrent({
+    cacheName: 'apply-mouse-skin',
+    inputs: [options.rigged, options.skin, scriptPath, cachePath],
+  });
 
   console.log(`Wrote ${outputPath}`);
   console.log(`  rigged: ${options.rigged}`);

@@ -129,28 +129,105 @@ function createPrimitiveGeometry(type) {
   }
 }
 
-function scaleAiPrefabFootprint(prefab, factor = 2) {
-  const safeFactor = Number.isFinite(factor) && factor > 0 ? factor : 1;
-  prefab.size.x = Math.max(2, Math.round((prefab.size.x ?? 1) * safeFactor));
-  prefab.size.z = Math.max(2, Math.round((prefab.size.z ?? 1) * safeFactor));
+function capGeneratedScale(value, max = 4) {
+  return Number(Math.min(max, Math.max(0.05, value)).toFixed(4));
+}
 
-  prefab.primitives = prefab.primitives.map((part) => {
-    const next = deepClone(part);
-    next.position.x = Number((next.position.x * safeFactor).toFixed(4));
-    next.position.z = Number((next.position.z * safeFactor).toFixed(4));
+function fitGeneratedPrefabToEditorSpace(prefab, { footprint = 2, maxHeight = 2, totalHeight = 4 } = {}) {
+  const primitives = Array.isArray(prefab.primitives) ? prefab.primitives : [];
+  if (!primitives.length) {
+    return prefab;
+  }
 
-    if (next.type === 'plane') {
-      next.scale.x = Number((next.scale.x * safeFactor).toFixed(4));
-      next.scale.y = Number((next.scale.y * safeFactor).toFixed(4));
-    } else {
-      next.scale.x = Number((next.scale.x * safeFactor).toFixed(4));
-      next.scale.z = Number((next.scale.z * safeFactor).toFixed(4));
-    }
+  const bounds = primitives.reduce((acc, primitive) => {
+    const position = primitive.position ?? { x: 0, y: 0, z: 0 };
+    const scale = primitive.scale ?? { x: 1, y: 1, z: 1 };
+    const halfX = Math.abs(scale.x ?? 1) * 0.5;
+    const halfY = Math.abs(scale.y ?? 1) * 0.5;
+    const halfZ = Math.abs(scale.z ?? 1) * 0.5;
 
-    return next;
+    acc.minX = Math.min(acc.minX, position.x - halfX);
+    acc.maxX = Math.max(acc.maxX, position.x + halfX);
+    acc.minY = Math.min(acc.minY, position.y - halfY);
+    acc.maxY = Math.max(acc.maxY, position.y + halfY);
+    acc.minZ = Math.min(acc.minZ, position.z - halfZ);
+    acc.maxZ = Math.max(acc.maxZ, position.z + halfZ);
+    return acc;
+  }, {
+    minX: Infinity,
+    maxX: -Infinity,
+    minY: Infinity,
+    maxY: -Infinity,
+    minZ: Infinity,
+    maxZ: -Infinity,
   });
 
-  return prefab;
+  const width = Math.max(0.001, bounds.maxX - bounds.minX);
+  const depth = Math.max(0.001, bounds.maxZ - bounds.minZ);
+  const height = Math.max(0.001, bounds.maxY - bounds.minY);
+  const centerX = (bounds.minX + bounds.maxX) * 0.5;
+  const centerZ = (bounds.minZ + bounds.maxZ) * 0.5;
+  const fitX = footprint / width;
+  const fitY = totalHeight / height;
+  const fitZ = footprint / depth;
+
+  return {
+    ...prefab,
+    size: { x: 1, y: 1, z: 1 },
+    primitives: primitives.map((primitive) => normalizePrefabPrimitive({
+      ...primitive,
+      position: {
+        x: ((primitive.position?.x ?? 0) - centerX) * fitX,
+        y: ((primitive.position?.y ?? 0) - bounds.minY) * fitY,
+        z: ((primitive.position?.z ?? 0) - centerZ) * fitZ,
+      },
+      scale: {
+        x: capGeneratedScale((primitive.scale?.x ?? 1) * fitX, footprint),
+        y: capGeneratedScale(Math.min(maxHeight, (primitive.scale?.y ?? 1) * fitY), maxHeight),
+        z: capGeneratedScale((primitive.scale?.z ?? 1) * fitZ, footprint),
+      },
+    })),
+  };
+}
+
+function makeGeneratedPart({
+  name,
+  type = 'box',
+  position = { x: 0, y: 0.5, z: 0 },
+  rotation = { x: 0, y: 0, z: 0 },
+  scale = { x: 1, y: 1, z: 1 },
+  texture = {},
+  material = {},
+  collider = true,
+  castShadow = true,
+  receiveShadow = true,
+}) {
+  return normalizePrefabPrimitive({
+    id: createPrefabPartId(),
+    name: name ?? `${type}-part`,
+    type,
+    position,
+    rotation,
+    scale: {
+      x: capGeneratedScale(scale.x ?? 1),
+      y: capGeneratedScale(scale.y ?? 1),
+      z: capGeneratedScale(scale.z ?? 1),
+    },
+    texture: {
+      atlas: texture.atlas ?? DEFAULT_TEXTURE_ATLAS,
+      cell: Number.isFinite(texture.cell) ? texture.cell : 0,
+      repeat: texture.repeat ?? { x: 1, y: 1 },
+      rotation: texture.rotation ?? 0,
+    },
+    material: {
+      color: material.color ?? '#ffffff',
+      roughness: material.roughness ?? 0.82,
+      metalness: material.metalness ?? 0.06,
+    },
+    collider,
+    castShadow,
+    receiveShadow,
+  });
 }
 
 export class PrefabEditorDialog {
@@ -1255,7 +1332,13 @@ export class PrefabEditorDialog {
       'Return JSON only. No markdown, no commentary, no code fences.',
       'The JSON must match this shape:',
       '{ name: string, size: { x: number, y: number, z: number }, primitives: Array<primitive> }',
-      'Default to a 2x2 footprint unless the prompt clearly requests smaller.',
+      'Default to a 1x1 prefab size in metadata and express footprint only through primitive scale.',
+      'The prefab editor volume should read like a 2x2 base footprint with a square silhouette.',
+      'The total prefab can be up to 4 units tall.',
+      'Keep each primitive height at or below 2.',
+      'Prefer a composition of two stacked 2x2x2-ish masses inside that volume instead of one square column.',
+      'Do not collapse the object into a single square fridge-like block unless the prompt explicitly asks for a monolith.',
+      'Use a stable, blocky silhouette. Do not make thin poles, long spires, or giant flat panels unless the prompt clearly asks for them.',
       'Each primitive must use only these fields:',
       '{ id, name, type, position:{x,y,z}, rotation:{x,y,z}, scale:{x,y,z}, texture:{atlas,cell,repeat:{x,y},rotation}, material:{color,roughness,metalness}, collider, castShadow, receiveShadow }',
       'Allowed primitive types: box, plane, cylinder.',
@@ -1294,9 +1377,9 @@ export class PrefabEditorDialog {
 
       const content = payload?.choices?.[0]?.message?.content ?? '';
       const parsed = safeParseJson(content);
-      const prefab = normalizePrefab({
+      let prefab = normalizePrefab({
         name: parsed.name || prompt,
-        size: parsed.size,
+        size: { x: 1, y: 1, z: 1 },
         primitives: Array.isArray(parsed.primitives) ? parsed.primitives : [],
       });
 
@@ -1309,8 +1392,16 @@ export class PrefabEditorDialog {
           rotation: primitive.texture?.rotation ?? 0,
         },
       }));
+      prefab.primitives = prefab.primitives.map((primitive) => normalizePrefabPrimitive({
+        ...primitive,
+        scale: {
+          x: capGeneratedScale(primitive.scale.x ?? 1),
+          y: capGeneratedScale(primitive.scale.y ?? 1, 2),
+          z: capGeneratedScale(primitive.scale.z ?? 1),
+        },
+      }));
 
-      scaleAiPrefabFootprint(prefab, 2);
+      prefab = fitGeneratedPrefabToEditorSpace(prefab, { footprint: 2, maxHeight: 2, totalHeight: 4 });
 
       if (!prefab.primitives.length) {
         throw new Error('Model returned no primitives.');

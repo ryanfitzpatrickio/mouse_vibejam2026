@@ -194,6 +194,517 @@
           "receiveShadow": false
         }
       ]
+    },
+    {
+      "id": "prefab-mnn7zhdy-mzl5t",
+      "name": "fridge",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "fridge_bottom",
+          "name": "fridge_bottom",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 1,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 2,
+            "z": 2
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 41,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {
+            "front": {
+              "atlas": "textures3",
+              "cell": 40
+            }
+          },
+          "material": {
+            "color": "#D3D3D3",
+            "roughness": 0.5,
+            "metalness": 0.8
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "fridge_top",
+          "name": "fridge_top",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 3,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 2,
+            "z": 2
+          },
+          "texture": {
+            "atlas": "textures3",
+            "cell": 31,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {
+            "front": {
+              "atlas": "textures3",
+              "cell": 30
+            }
+          },
+          "material": {
+            "color": "#D3D3D3",
+            "roughness": 0.5,
+            "metalness": 0.8
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
+    },
+    {
+      "id": "prefab-mnn86nok-gz783",
+      "name": "chair",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "chair_seat",
+          "name": "seat",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 1.5789473684210527,
+            "z": 0
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 0.2105,
+            "z": 2
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "chair_back",
+          "name": "back",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 3.1578947368421053,
+            "z": 0.875
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 2,
+            "y": 1.6842,
+            "z": 0.25
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "chair_leg_fl",
+          "name": "front_left_leg",
+          "type": "box",
+          "position": {
+            "x": -0.75,
+            "y": 0.7368421052631579,
+            "z": -0.75
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.25,
+            "y": 1.4737,
+            "z": 0.25
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "chair_leg_fr",
+          "name": "front_right_leg",
+          "type": "box",
+          "position": {
+            "x": 0.75,
+            "y": 0.7368421052631579,
+            "z": -0.75
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.25,
+            "y": 1.4737,
+            "z": 0.25
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "chair_leg_bl",
+          "name": "back_left_leg",
+          "type": "box",
+          "position": {
+            "x": -0.75,
+            "y": 0.7368421052631579,
+            "z": 0.75
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.25,
+            "y": 1.4737,
+            "z": 0.25
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "chair_leg_br",
+          "name": "back_right_leg",
+          "type": "box",
+          "position": {
+            "x": 0.75,
+            "y": 0.7368421052631579,
+            "z": 0.75
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.25,
+            "y": 1.4737,
+            "z": 0.25
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#8B4513",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
+    },
+    {
+      "id": "prefab-mnn87pdj-nntjz",
+      "name": "couch",
+      "size": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "primitives": [
+        {
+          "id": "couch_base",
+          "name": "couch_base",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 0.8333333333333334,
+            "z": 0.052631578947368404
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.8947,
+            "y": 1.6667,
+            "z": 1.8947
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#606060",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "couch_back",
+          "name": "couch_back",
+          "type": "box",
+          "position": {
+            "x": 0,
+            "y": 2.8333333333333335,
+            "z": -0.7894736842105263
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 1.8947,
+            "y": 2,
+            "z": 0.4211
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#606060",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "couch_arm_left",
+          "name": "couch_arm_left",
+          "type": "box",
+          "position": {
+            "x": -0.894736842105263,
+            "y": 2,
+            "z": 0.052631578947368404
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2105,
+            "y": 2,
+            "z": 1.8947
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#606060",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        },
+        {
+          "id": "couch_arm_right",
+          "name": "couch_arm_right",
+          "type": "box",
+          "position": {
+            "x": 0.894736842105263,
+            "y": 2,
+            "z": 0.052631578947368404
+          },
+          "rotation": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "scale": {
+            "x": 0.2105,
+            "y": 2,
+            "z": 1.8947
+          },
+          "texture": {
+            "atlas": "textures",
+            "cell": 0,
+            "repeat": {
+              "x": 1,
+              "y": 1
+            },
+            "rotation": 0
+          },
+          "faceTextures": {},
+          "material": {
+            "color": "#606060",
+            "roughness": 0.8,
+            "metalness": 0
+          },
+          "prefabInstanceOrigin": null,
+          "collider": true,
+          "castShadow": true,
+          "receiveShadow": true
+        }
+      ]
     }
   ]
 }

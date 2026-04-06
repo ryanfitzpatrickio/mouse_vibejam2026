@@ -24,11 +24,22 @@ import sharp from 'sharp';
 import { MeshoptEncoder } from 'meshoptimizer';
 import path from 'node:path';
 import fs from 'node:fs';
+import { isAssetBuildUpToDate, markAssetBuildCurrent } from './build-cache.mjs';
 
 const INPUT = path.resolve('assets/source/mouse-skinned.glb');
 const OUTPUT = path.resolve('public/mouse-skinned.optimized.glb');
 
 async function main() {
+  const scriptPath = path.join(process.cwd(), 'scripts', 'optimize-glb.mjs');
+  if (await isAssetBuildUpToDate({
+    cacheName: 'optimize-glb',
+    inputs: [INPUT, scriptPath, path.join(process.cwd(), 'scripts', 'build-cache.mjs')],
+    outputs: [OUTPUT],
+  })) {
+    console.log(`Skipped ${OUTPUT} (up to date)`);
+    return;
+  }
+
   await MeshoptEncoder.ready;
 
   const io = new NodeIO()
@@ -99,6 +110,11 @@ async function main() {
   // 7. Write output.
   console.log('> Writing optimized GLB...');
   await io.write(OUTPUT, document);
+
+  await markAssetBuildCurrent({
+    cacheName: 'optimize-glb',
+    inputs: [INPUT, scriptPath, path.join(process.cwd(), 'scripts', 'build-cache.mjs')],
+  });
 
   const outputSize = fs.statSync(OUTPUT).size;
   console.log(`\nOutput: ${(outputSize / 1024).toFixed(0)} KB`);

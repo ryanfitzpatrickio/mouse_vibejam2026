@@ -2,6 +2,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
+import { isAssetBuildUpToDate, markAssetBuildCurrent } from './build-cache.mjs';
 
 const ROOT = process.cwd();
 const SOURCE_DIR = path.join(ROOT, 'assets', 'source');
@@ -79,7 +80,26 @@ async function main() {
   ];
 
   for (const entry of [...atlasSources, ...otherSources]) {
+    const inputs = [
+      entry.input,
+      path.join(ROOT, 'scripts', 'optimize-runtime-images.mjs'),
+      path.join(ROOT, 'scripts', 'build-cache.mjs'),
+    ];
+    if (await isAssetBuildUpToDate({
+      cacheName: `optimize-runtime-image-${path.basename(entry.output)}`,
+      inputs,
+      outputs: [entry.output],
+    })) {
+      console.log(`Skipped ${path.relative(ROOT, entry.output)} (up to date)`);
+      continue;
+    }
+
     await optimizeImage(entry);
+
+    await markAssetBuildCurrent({
+      cacheName: `optimize-runtime-image-${path.basename(entry.output)}`,
+      inputs,
+    });
   }
 }
 

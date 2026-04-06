@@ -237,7 +237,10 @@ export class MobileControls {
   }
 
   _bindHoldButton(button, onDown, onUp) {
+    let heldPointerId = null;
+
     const end = () => {
+      heldPointerId = null;
       button.dataset.active = 'false';
       onUp?.();
     };
@@ -245,17 +248,24 @@ export class MobileControls {
     button.addEventListener('pointerdown', (event) => {
       event.preventDefault();
       event.stopPropagation();
+      heldPointerId = event.pointerId;
+      button.setPointerCapture(event.pointerId);
       button.dataset.active = 'true';
       onDown?.();
     });
     button.addEventListener('pointerup', (event) => {
+      if (event.pointerId !== heldPointerId) return;
       event.preventDefault();
       event.stopPropagation();
       end();
     });
-    button.addEventListener('pointercancel', end);
-    button.addEventListener('pointerleave', (event) => {
-      if (event.buttons === 0) end();
+    button.addEventListener('pointercancel', (event) => {
+      if (event.pointerId !== heldPointerId) return;
+      end();
+    });
+    button.addEventListener('lostpointercapture', (event) => {
+      if (event.pointerId !== heldPointerId) return;
+      end();
     });
   }
 
@@ -263,6 +273,7 @@ export class MobileControls {
     button.addEventListener('pointerdown', (event) => {
       event.preventDefault();
       event.stopPropagation();
+      button.setPointerCapture(event.pointerId);
       button.dataset.active = 'true';
       onTap?.();
     });
@@ -272,6 +283,9 @@ export class MobileControls {
       button.dataset.active = 'false';
     });
     button.addEventListener('pointercancel', () => {
+      button.dataset.active = 'false';
+    });
+    button.addEventListener('lostpointercapture', () => {
       button.dataset.active = 'false';
     });
   }

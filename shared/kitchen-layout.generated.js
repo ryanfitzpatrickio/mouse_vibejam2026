@@ -39,6 +39,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": false,
       "castShadow": false,
       "receiveShadow": true,
@@ -81,6 +83,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -123,6 +127,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -165,6 +171,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -207,6 +215,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -249,6 +259,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -291,6 +303,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": false,
       "receiveShadow": true,
@@ -333,6 +347,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": false,
       "receiveShadow": true,
@@ -375,6 +391,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": false,
       "receiveShadow": true,
@@ -385,7 +403,7 @@ export default {
       "name": "left-copy-copy",
       "type": "plane",
       "position": {
-        "x": -6,
+        "x": -8,
         "y": 6,
         "z": -4
       },
@@ -396,7 +414,7 @@ export default {
       },
       "scale": {
         "x": 12,
-        "y": 34,
+        "y": 32,
         "z": 24
       },
       "texture": {
@@ -417,6 +435,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -459,6 +479,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -501,6 +523,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": false,
       "receiveShadow": true,
@@ -543,6 +567,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -555,7 +581,7 @@ export default {
       "position": {
         "x": -22,
         "y": 6,
-        "z": 6
+        "z": 8
       },
       "rotation": {
         "x": 1.5770810612818084e-15,
@@ -564,7 +590,7 @@ export default {
       },
       "scale": {
         "x": 12,
-        "y": 34,
+        "y": 28,
         "z": 24
       },
       "texture": {
@@ -585,6 +611,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -627,6 +655,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -669,6 +699,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -711,6 +743,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -753,6 +787,8 @@ export default {
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -763,9 +799,9 @@ export default {
       "name": "stove-stove_base",
       "type": "box",
       "position": {
-        "x": 20.0786,
+        "x": 0,
         "y": 1.983,
-        "z": 9.9396
+        "z": 0
       },
       "rotation": {
         "x": 0,
@@ -816,6 +852,16 @@ export default {
         "y": 0,
         "z": 9.9396
       },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": -1.5676,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -826,9 +872,9 @@ export default {
       "name": "stove-stove_top",
       "type": "box",
       "position": {
-        "x": 20.0786,
+        "x": 0,
         "y": 3.7926,
-        "z": 9.9396
+        "z": 0
       },
       "rotation": {
         "x": 0,
@@ -862,6 +908,16 @@ export default {
         "y": 0,
         "z": 9.9396
       },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": -1.5676,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
@@ -872,9 +928,9 @@ export default {
       "name": "stove-knob1",
       "type": "cylinder",
       "position": {
-        "x": 21.6056,
+        "x": 1.527,
         "y": 3.6316,
-        "z": 11.7682
+        "z": 1.8286
       },
       "rotation": {
         "x": 1.5707963267948966,
@@ -908,6 +964,16 @@ export default {
         "y": 0,
         "z": 9.9396
       },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": -1.5676,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
       "collider": false,
       "castShadow": true,
       "receiveShadow": false,
@@ -918,9 +984,9 @@ export default {
       "name": "stove-knob1-copy",
       "type": "cylinder",
       "position": {
-        "x": 21.008,
+        "x": 0.9294,
         "y": 3.6316,
-        "z": 11.7682
+        "z": 1.8286
       },
       "rotation": {
         "x": 1.5707963267948966,
@@ -954,9 +1020,107 @@ export default {
         "y": 0,
         "z": 9.9396
       },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": -1.5676,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
       "collider": false,
       "castShadow": true,
       "receiveShadow": false,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnmexycj-6nvte",
+      "name": "plane-5qx",
+      "type": "plane",
+      "position": {
+        "x": 12,
+        "y": 0,
+        "z": -6
+      },
+      "rotation": {
+        "x": -1.5707963267948966,
+        "y": 1.5707963267948966,
+        "z": 0
+      },
+      "scale": {
+        "x": 24,
+        "y": 4,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 16,
+        "repeat": {
+          "x": 1,
+          "y": 0.5
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnmf42ni-fbi90",
+      "name": "left-copy-copy-copy",
+      "type": "plane",
+      "position": {
+        "x": 10,
+        "y": 6,
+        "z": -4
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 1.5707963267948966
+      },
+      "scale": {
+        "x": 10,
+        "y": 4,
+        "z": 22
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 16,
+        "repeat": {
+          "x": 0.5,
+          "y": 0.7
+        },
+        "rotation": 4.71238898038469
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "prefabId": null,
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
       "deleted": false
     }
   ]

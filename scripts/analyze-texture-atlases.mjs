@@ -2,6 +2,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { isAssetBuildUpToDate, markAssetBuildCurrent } from './build-cache.mjs';
 
 const ROOT = process.cwd();
 const SOURCE_DIR = path.join(ROOT, 'assets', 'source');
@@ -50,12 +51,32 @@ async function main() {
   for (const atlas of atlases) {
     const manifest = path.join(OUTPUT_DIR, `${atlas.id}.manifest.json`);
     const sheet = path.join(SHEET_DIR, `${atlas.id}-contact-sheet.png`);
+    const inputs = [
+      path.join(ROOT, 'scripts', 'analyze-texture-atlases.mjs'),
+      path.join(ROOT, 'scripts', 'build-cache.mjs'),
+      ANALYZE_SCRIPT,
+      atlas.input,
+    ];
+    if (await isAssetBuildUpToDate({
+      cacheName: `analyze-texture-atlas-${atlas.id}`,
+      inputs,
+      outputs: [manifest, sheet],
+    })) {
+      console.log(`Skipped ${path.relative(ROOT, manifest)} and ${path.relative(ROOT, sheet)} (up to date)`);
+      continue;
+    }
+
     await run('node', [
       ANALYZE_SCRIPT,
       '--input', atlas.input,
       '--output', manifest,
       '--sheet', sheet,
     ]);
+
+    await markAssetBuildCurrent({
+      cacheName: `analyze-texture-atlas-${atlas.id}`,
+      inputs,
+    });
   }
 }
 
