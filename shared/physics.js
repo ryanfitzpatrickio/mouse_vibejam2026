@@ -57,6 +57,7 @@ export function createPlayerState(id) {
     canDoubleJump: false,
     hasDoubleJumped: false,
     animState: 'idle',
+    deathTime: 0,
   };
 }
 
@@ -157,6 +158,32 @@ function resolvePlayerCollisions(state, colliders, options) {
   } else {
     state.grounded = false;
   }
+}
+
+export function respawnPlayer(state, spawnX, spawnZ) {
+  state.position.x = spawnX;
+  state.position.y = 0;
+  state.position.z = spawnZ;
+  state.velocity.x = 0;
+  state.velocity.y = 0;
+  state.velocity.z = 0;
+  state.rotation = 0;
+  state.grounded = true;
+  state.stamina = PHYSICS.maxStamina;
+  state.staminaRegenTimer = 0;
+  state.health = PHYSICS.maxHealth;
+  state.alive = true;
+  state.sprinting = false;
+  state.crouching = false;
+  state.sliding = false;
+  state.slideTimer = 0;
+  state.slideCooldownTimer = 0;
+  state.slideDirX = 0;
+  state.slideDirZ = 0;
+  state.canDoubleJump = false;
+  state.hasDoubleJumped = false;
+  state.animState = 'idle';
+  state.deathTime = 0;
 }
 
 /**

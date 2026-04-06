@@ -1,18 +1,13 @@
-/**
- * Mouse Trouble — authoritative game server (Phase 2)
- *
- * Server owns all player physics. Clients send inputs,
- * server simulates and broadcasts authoritative state.
- */
-import { createPlayerState, simulateTick } from '../shared/physics.js';
+import { createPlayerState, simulateTick, respawnPlayer } from '../shared/physics.js';
+import { createPredatorState, simulatePredatorTick, serializePredatorState } from '../shared/predator.js';
 import { buildRoomCollidersFromLayout } from '../shared/roomCollision.js';
 import kitchenLayout from '../shared/kitchen-layout.generated.js';
 
 const TICK_RATE = 30;
 const TICK_MS = 1000 / TICK_RATE;
 const MAX_PLAYERS = 8;
+const RESPAWN_SECONDS = 10;
 
-// Room bounds (matches Room default: width=48, depth=48, scale=1 → half = 24)
 const BOUNDS = Object.freeze({
   minX: -24,
   maxX: 24,
@@ -21,15 +16,24 @@ const BOUNDS = Object.freeze({
 });
 
 export default class GameServer {
-  /** @type {Map<string, ReturnType<typeof createPlayerState>>} */
   players = new Map();
-  /** @type {Map<string, object[]>} queued inputs per player */
   inputQueues = new Map();
   tickInterval = null;
   levelColliders = buildRoomCollidersFromLayout(kitchenLayout, { scaleFactor: 1 });
 
   constructor(room) {
     this.room = room;
+    this.predators = [];
+    this._initPredators();
+  }
+
+  _initPredators() {
+    this.predators.push(createPredatorState({
+      id: 'cat-0',
+      type: 'cat',
+      spawnX: -5,
+      spawnZ: -5,
+    }));
   }
 
   onStart() {
@@ -44,7 +48,6 @@ export default class GameServer {
     }
 
     const state = createPlayerState(conn.id);
-    // Spread spawn positions so players don't stack
     const angle = this.players.size * (Math.PI * 2 / MAX_PLAYERS);
     state.position.x = Math.cos(angle) * 2;
     state.position.z = Math.sin(angle) * 2;
@@ -56,6 +59,7 @@ export default class GameServer {
       type: 'init',
       id: conn.id,
       players: Object.fromEntries(this.players),
+      predators: this.predators.map(serializePredatorState),
     }));
 
     this.broadcast(JSON.stringify({
@@ -75,7 +79,6 @@ export default class GameServer {
     if (data.type === 'input') {
       const queue = this.inputQueues.get(sender.id);
       if (queue) {
-        // Cap queue length to prevent flooding (max ~4 ticks worth)
         if (queue.length < 8) {
           queue.push({
             moveX: data.moveX ?? 0,
@@ -101,29 +104,57 @@ export default class GameServer {
   }
 
   tick() {
-    if (this.players.size === 0) return;
+    if (this.players.size === 0 && this.predators.length === 0) return;
 
     const dt = TICK_MS / 1000;
 
-    // Simulate each player — process ALL queued inputs, not just the latest
     const seqs = {};
+    const now = Date.now() / 1000;
     for (const [id, state] of this.players) {
+      if (!state.alive) {
+        if (state.deathTime <= 0) {
+          state.deathTime = now;
+        } else if (now - state.deathTime >= RESPAWN_SECONDS) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 2 + Math.random() * 8;
+          respawnPlayer(state, Math.cos(angle) * dist, Math.sin(angle) * dist);
+          seqs[id] = this._lastSeq?.get(id) ?? 0;
+          continue;
+        }
+        seqs[id] = this._lastSeq?.get(id) ?? 0;
+        continue;
+      }
+
       const queue = this.inputQueues.get(id);
       if (!queue || queue.length === 0) {
-        // No new input — simulate with idle input to keep physics consistent
         simulateTick(state, { moveX: 0, moveZ: 0, sprint: false, jump: false, crouch: false, rotation: state.rotation }, dt, BOUNDS, this.levelColliders);
         seqs[id] = this._lastSeq?.get(id) ?? 0;
       } else {
-        // Process every queued input with one tick each
         for (const input of queue) {
           simulateTick(state, input, dt, BOUNDS, this.levelColliders);
           seqs[id] = input.seq;
         }
-        // Track last seq for idle ticks
         if (!this._lastSeq) this._lastSeq = new Map();
         this._lastSeq.set(id, seqs[id]);
-        // Drain the queue
         queue.length = 0;
+      }
+    }
+
+    const playersObj = Object.fromEntries(this.players);
+    for (const pred of this.predators) {
+      const hit = simulatePredatorTick(pred, playersObj, dt, this.levelColliders);
+      if (hit) {
+        const target = this.players.get(hit.playerId);
+        if (target && target.alive) {
+          target.health -= hit.damage;
+          if (target.health <= 0) {
+            target.health = 0;
+            target.alive = false;
+            target.animState = 'death';
+          }
+          target.velocity.x += hit.knockbackX;
+          target.velocity.z += hit.knockbackZ;
+        }
       }
     }
 
@@ -131,7 +162,8 @@ export default class GameServer {
       type: 'snapshot',
       tick: Date.now(),
       seqs,
-      players: Object.fromEntries(this.players),
+      players: playersObj,
+      predators: this.predators.map(serializePredatorState),
     };
     this.broadcast(JSON.stringify(snapshot));
   }

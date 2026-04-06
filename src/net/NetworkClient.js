@@ -20,6 +20,9 @@ export class NetworkClient {
   /** @type {Map<string, object>} */
   remotePlayers = new Map();
 
+  /** @type {Map<string, object>} predator snapshots keyed by id */
+  remotePredators = new Map();
+
   /** Sequence counter for inputs */
   seq = 0;
   /** Pending inputs not yet confirmed by server (for reconciliation) */
@@ -109,10 +112,14 @@ export class NetworkClient {
             this.remotePlayers.set(id, player);
           }
         }
-        // Store initial local state
         if (data.players[this.localId]) {
           this.serverState = data.players[this.localId];
           this.serverSeq = -1;
+        }
+        if (Array.isArray(data.predators)) {
+          for (const pred of data.predators) {
+            this.remotePredators.set(pred.id, pred);
+          }
         }
         break;
 
@@ -146,6 +153,12 @@ export class NetworkClient {
         for (const id of this.remotePlayers.keys()) {
           if (!(id in data.players)) {
             this.remotePlayers.delete(id);
+          }
+        }
+
+        if (Array.isArray(data.predators)) {
+          for (const pred of data.predators) {
+            this.remotePredators.set(pred.id, pred);
           }
         }
         break;

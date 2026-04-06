@@ -23,6 +23,8 @@ const AI_STATE_TO_EXPRESSION = Object.freeze({
   death: 'shocked',
 });
 
+const LERP_SPEED = 12;
+
 export class Cat extends Predator {
   constructor(options = {}) {
     super({
@@ -48,6 +50,14 @@ export class Cat extends Predator {
     this.eyeAnimator = new MouseEyeAtlasAnimator({
       stateToExpression: AI_STATE_TO_EXPRESSION,
     });
+
+    this._targetPos = new THREE.Vector3();
+    this._targetRot = 0;
+    this._serverAiState = 'idle';
+    this._prevAiState = 'idle';
+    this._serverAlive = true;
+    this._serverHealth = 4;
+    this._initialized = false;
 
     this.ready = this._load();
   }
@@ -79,56 +89,89 @@ export class Cat extends Predator {
       localScale: new THREE.Vector3(EYE_PLACEMENT.scale.x, EYE_PLACEMENT.scale.y, EYE_PLACEMENT.scale.z),
       hideTargets: [],
     });
-    this.eyeAnimator.setState(this.aiState, { immediate: true });
+    this.eyeAnimator.setState('idle', { immediate: true });
   }
 
-  _animateForState(state) {
-    this.eyeAnimator?.setState(state);
+  applyServerState(snapshot) {
+    if (!snapshot) return;
 
-    switch (state) {
+    this._targetPos.set(snapshot.px ?? 0, snapshot.py ?? 0, snapshot.pz ?? 0);
+    this._targetRot = snapshot.ry ?? 0;
+    this._serverAiState = snapshot.ai ?? 'idle';
+    this._serverAlive = snapshot.alive ?? true;
+    this._serverHealth = snapshot.hp ?? 0;
+
+    if (!this._initialized) {
+      this._initialized = true;
+      this.position.copy(this._targetPos);
+      this.rotation.y = this._targetRot;
+    }
+  }
+
+  _animateForAiState(aiState) {
+    this.eyeAnimator?.setState(aiState);
+
+    switch (aiState) {
       case 'idle':
         this.playAnimation('Idle');
         break;
-
       case 'patrol':
         this.playAnimation('Walk');
         break;
-
       case 'alert':
         this.playAnimation('Idle Alert');
         break;
-
       case 'roar':
         this.playAnimation('Bite', { loop: false, clampWhenFinished: true });
         break;
-
       case 'chase':
         this.playAnimation('Run');
         break;
-
       case 'attack':
         this.playAnimation('Bite', { loop: false, clampWhenFinished: true });
         break;
-
       case 'cooldown':
         this.playAnimation('Idle');
         break;
-
       case 'stunned':
         this.playAnimation('Jump', { loop: false, clampWhenFinished: true });
         break;
-
       case 'death':
         this.playAnimation('Death', { loop: false, clampWhenFinished: true });
         break;
-
       default:
         this.playAnimation('Idle');
     }
   }
 
   update(dt) {
-    super.update(dt);
+    if (!this.alive && !this._serverAlive) {
+      this.mixer?.update(dt);
+      this.eyeAnimator?.update(dt);
+      return;
+    }
+
+    this.alive = this._serverAlive;
+    this.health = this._serverHealth;
+
+    if (this._serverAiState !== this._prevAiState) {
+      this._prevAiState = this._serverAiState;
+      this._animateForAiState(this._serverAiState);
+    }
+
+    if (this._initialized) {
+      const t = 1 - Math.exp(-LERP_SPEED * dt);
+      this.position.x += (this._targetPos.x - this.position.x) * t;
+      this.position.y += (this._targetPos.y - this.position.y) * t;
+      this.position.z += (this._targetPos.z - this.position.z) * t;
+
+      let diff = this._targetRot - this.rotation.y;
+      if (diff > Math.PI) diff -= Math.PI * 2;
+      if (diff < -Math.PI) diff += Math.PI * 2;
+      this.rotation.y += diff * t;
+    }
+
+    this.mixer?.update(dt);
     this.eyeAnimator?.update(dt);
   }
 }

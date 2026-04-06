@@ -38,6 +38,35 @@ export class HUD {
     this.pingLabel.style.height = `${pingMeasured.height}px`;
     this.element.appendChild(this.pingLabel);
 
+    this.respawnOverlay = document.createElement('div');
+    this.respawnOverlay.style.display = 'none';
+    Object.assign(this.respawnOverlay.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100%',
+      height: '100%',
+      background: 'rgba(0,0,0,0.5)',
+      zIndex: '99',
+      pointerEvents: 'none',
+      fontFamily: 'monospace',
+      userSelect: 'none',
+    });
+
+    this.respawnLabel = document.createElement('div');
+    this.respawnLabel.textContent = 'RESPAWNING IN 10';
+    Object.assign(this.respawnLabel.style, {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      color: '#ff4444',
+      fontSize: '24px',
+      textShadow: '2px 2px 4px #000',
+    });
+    this.respawnOverlay.appendChild(this.respawnLabel);
+    this.container.appendChild(this.respawnOverlay);
+
     this.container.appendChild(this.element);
   }
 
@@ -82,7 +111,7 @@ export class HUD {
     return fg;
   }
 
-  update({ stamina, health, ping } = {}) {
+  update({ stamina, health, ping, alive = true, respawnCountdown = 0 } = {}) {
     if (stamina !== undefined) {
       this.staminaBar.style.width = `${Math.max(0, Math.min(1, stamina)) * 100}%`;
     }
@@ -94,6 +123,14 @@ export class HUD {
       this.pingLabel.textContent = text;
       const measured = measureText(text, FONT, BAR_WIDTH, LINE_HEIGHT);
       this.pingLabel.style.height = `${measured.height}px`;
+    }
+
+    if (!alive && respawnCountdown > 0) {
+      this.respawnOverlay.style.display = 'block';
+      const seconds = Math.ceil(respawnCountdown);
+      this.respawnLabel.textContent = `RESPAWNING IN ${seconds}`;
+    } else {
+      this.respawnOverlay.style.display = 'none';
     }
   }
 

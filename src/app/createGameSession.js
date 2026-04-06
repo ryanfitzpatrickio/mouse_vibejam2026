@@ -183,8 +183,8 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   };
 
   // --- Predators ---
-  const hasAnyPredator = ENABLE_BUNNY_PREDATOR || ENABLE_CAT_PREDATOR;
-  const predatorManager = hasAnyPredator
+  const bunny = ENABLE_BUNNY_PREDATOR ? new Bunny() : null;
+  const predatorManager = ENABLE_BUNNY_PREDATOR
     ? new PredatorManager({
       scene,
       controller,
@@ -192,16 +192,15 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     })
     : null;
 
-  const bunny = ENABLE_BUNNY_PREDATOR ? new Bunny() : null;
   if (bunny && predatorManager) {
     await bunny.ready;
     predatorManager.add(bunny, new THREE.Vector3(5, 0, 5));
   }
 
   const cat = ENABLE_CAT_PREDATOR ? new Cat() : null;
-  if (cat && predatorManager) {
+  if (cat) {
     await cat.ready;
-    predatorManager.add(cat, new THREE.Vector3(-5, 0, -5));
+    scene.add(cat);
   }
 
   // --- Dev placement mode ---
@@ -305,6 +304,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     predictionState.slideDirZ = ss.slideDirZ;
     predictionState.canDoubleJump = ss.canDoubleJump;
     predictionState.hasDoubleJumped = ss.hasDoubleJumped;
+    predictionState.deathTime = ss.deathTime ?? 0;
   }
 
   function reconcileWithServer() {
@@ -483,6 +483,13 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     }
 
     predatorManager?.update(deltaSeconds);
+
+    if (cat && net.connected) {
+      const serverCat = net.remotePredators.get('cat-0');
+      if (serverCat) cat.applyServerState(serverCat);
+    }
+    cat?.update(deltaSeconds);
+
     placementMode?.update(deltaSeconds);
     room.updateLoot(timeMs);
 
@@ -491,10 +498,18 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       remotePlayerManager.update(deltaSeconds);
     }
 
+    const isAlive = controller.alive;
+    const deathTime = net.serverState?.deathTime ?? 0;
+    const respawnCountdown = !isAlive && deathTime > 0
+      ? Math.max(0, 10 - (Date.now() / 1000 - deathTime))
+      : 0;
+
     hud.update({
       stamina: controller.staminaPercent,
       health: controller.healthPercent,
       ping: net.ping,
+      alive: isAlive,
+      respawnCountdown,
     });
     occlusionFader.update(deltaSeconds);
     render();
