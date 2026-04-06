@@ -296,19 +296,32 @@ export class Room {
     textureRepeat = 1,
     roughness = 0.92,
     metalness = 0.04,
+    side = THREE.FrontSide,
     } = {}) {
+    // Deduplicate materials with identical parameters
+    const repeatKey = typeof textureRepeat === 'object'
+      ? `${textureRepeat.x ?? 1},${textureRepeat.y ?? 1},${textureRepeat.rotation ?? 0}`
+      : `${textureRepeat},${textureRepeat},0`;
+    const cacheKey = `${baseColor}|${textureCell}|${textureAtlas}|${repeatKey}|${roughness}|${metalness}|${side}`;
+
+    if (!this._materialCache) this._materialCache = new Map();
+    const cached = this._materialCache.get(cacheKey);
+    if (cached) return cached;
+
     const material = new THREE.MeshStandardMaterial({
       color: new THREE.Color(baseColor),
       roughness,
       metalness,
+      side,
     });
 
-      material.dithering = true;
-      material.userData.textureAtlas = textureAtlas;
-      material.userData.textureCell = textureCell;
-      material.userData.textureRepeat = textureRepeat;
-      this.surfaceMaterials.add(material);
-      return material;
+    material.dithering = true;
+    material.userData.textureAtlas = textureAtlas;
+    material.userData.textureCell = textureCell;
+    material.userData.textureRepeat = textureRepeat;
+    this.surfaceMaterials.add(material);
+    this._materialCache.set(cacheKey, material);
+    return material;
   }
 
   async _loadTextureAtlas() {
@@ -636,11 +649,8 @@ export class Room {
       ...materialOptions,
       textureCell: definition.texture.cell,
       textureAtlas: definition.texture.atlas ?? DEFAULT_TEXTURE_ATLAS,
+      side: definition.type === 'plane' ? THREE.DoubleSide : THREE.FrontSide,
     });
-
-    if (definition.type === 'plane') {
-      material.side = THREE.DoubleSide;
-    }
 
     return material;
   }

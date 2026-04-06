@@ -118,7 +118,7 @@ export class RemotePlayerManager {
       groundY,
       data.position?.z ?? 0,
     );
-    attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95 });
+    attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
     this.scene.add(mouse);
 
     this.players.set(id, {

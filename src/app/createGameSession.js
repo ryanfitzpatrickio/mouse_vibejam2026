@@ -118,7 +118,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   await mouse.ready;
   mouse.position.set(0, mouse.groundOffset, 0);
   mouse.setViewCamera(camera);
-  attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95 });
+  attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
 
   let room;
   let renderer;

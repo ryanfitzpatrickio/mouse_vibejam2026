@@ -97,6 +97,7 @@ export function attachEdgeOutlines(sourceRoot, {
   thresholdAngle = 28,
   opacity = 0.95,
   skinnedScale = 1.035,
+  batch = true,
 } = {}) {
   const outlineMaterial = new THREE.LineBasicMaterial({
     color: new THREE.Color(color),
@@ -107,6 +108,9 @@ export function attachEdgeOutlines(sourceRoot, {
   });
 
   const outlinedMeshes = [];
+  const edgeGeometries = [];
+
+  sourceRoot.updateMatrixWorld(true);
 
   sourceRoot.traverse((child) => {
     if (!child.isMesh || !child.geometry || child.userData?.skipOutline || child.userData?.edgeOutlineAttached) {
@@ -130,19 +134,71 @@ export function attachEdgeOutlines(sourceRoot, {
       return;
     }
 
-    const outline = new THREE.LineSegments(
-      new THREE.EdgesGeometry(child.geometry, thresholdAngle),
-      outlineMaterial.clone(),
-    );
-    outline.name = `${child.name || 'mesh'}_edgeOutline`;
-    outline.renderOrder = 4;
-    outline.frustumCulled = false;
-    outline.userData.skipOutline = true;
-    outline.userData.editorHelper = child.userData?.editorHelper === true;
-    child.add(outline);
     child.userData.edgeOutlineAttached = true;
-    outlinedMeshes.push(outline);
+
+    if (batch) {
+      // Collect edge geometry in world space for batched merge
+      const edges = new THREE.EdgesGeometry(child.geometry, thresholdAngle);
+      const cloned = edges.clone();
+      cloned.applyMatrix4(child.matrixWorld);
+      edgeGeometries.push(cloned);
+      edges.dispose();
+    } else {
+      const outline = new THREE.LineSegments(
+        new THREE.EdgesGeometry(child.geometry, thresholdAngle),
+        outlineMaterial.clone(),
+      );
+      outline.name = `${child.name || 'mesh'}_edgeOutline`;
+      outline.renderOrder = 4;
+      outline.frustumCulled = false;
+      outline.userData.skipOutline = true;
+      outline.userData.editorHelper = child.userData?.editorHelper === true;
+      child.add(outline);
+      outlinedMeshes.push(outline);
+    }
   });
 
+  // Merge all static edge geometries into a single LineSegments draw call
+  if (batch && edgeGeometries.length > 0) {
+    const merged = mergeEdgeGeometries(edgeGeometries);
+    edgeGeometries.forEach((g) => g.dispose());
+
+    // Transform geometry from world space into sourceRoot's local space
+    const inverseParent = sourceRoot.matrixWorld.clone().invert();
+    merged.applyMatrix4(inverseParent);
+
+    const batchedOutline = new THREE.LineSegments(merged, outlineMaterial);
+    batchedOutline.name = `${sourceRoot.name || 'root'}_batchedEdgeOutline`;
+    batchedOutline.renderOrder = 4;
+    batchedOutline.frustumCulled = false;
+    batchedOutline.userData.skipOutline = true;
+    sourceRoot.add(batchedOutline);
+    outlinedMeshes.push(batchedOutline);
+  }
+
   return outlinedMeshes;
+}
+
+/**
+ * Merge an array of EdgesGeometry (already in world space) into one BufferGeometry.
+ */
+function mergeEdgeGeometries(geometries) {
+  let totalVerts = 0;
+  for (const g of geometries) {
+    totalVerts += g.getAttribute('position').count;
+  }
+
+  const positions = new Float32Array(totalVerts * 3);
+  let offset = 0;
+
+  for (const g of geometries) {
+    const pos = g.getAttribute('position');
+    const arr = pos.array;
+    positions.set(arr instanceof Float32Array ? arr : new Float32Array(arr), offset);
+    offset += arr.length;
+  }
+
+  const merged = new THREE.BufferGeometry();
+  merged.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  return merged;
 }
