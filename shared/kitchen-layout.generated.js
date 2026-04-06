@@ -80,6 +80,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -124,6 +125,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -168,6 +170,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -212,6 +215,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -256,6 +260,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -300,6 +305,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -344,6 +350,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -388,6 +395,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -432,6 +440,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -476,6 +485,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -520,6 +530,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -564,6 +575,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -608,6 +620,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -652,6 +665,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -696,6 +710,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -740,6 +755,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -784,6 +800,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -845,6 +862,7 @@ export default {
         "roughness": 0.5,
         "metalness": 0.1
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
@@ -901,6 +919,7 @@ export default {
         "roughness": 0.2,
         "metalness": 0.8
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
@@ -957,6 +976,7 @@ export default {
         "roughness": 0.8,
         "metalness": 0.28
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
@@ -1013,6 +1033,7 @@ export default {
         "roughness": 0.8,
         "metalness": 0.28
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
@@ -1069,6 +1090,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -1113,6 +1135,7 @@ export default {
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -1162,6 +1185,7 @@ export default {
         "roughness": 0.5,
         "metalness": 0.8
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnn7zhdy-mzl5t",
       "prefabInstanceId": "prefab-instance-mnn842j8-vz10x",
       "prefabInstanceOrigin": {
@@ -1223,6 +1247,7 @@ export default {
         "roughness": 0.5,
         "metalness": 0.8
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnn7zhdy-mzl5t",
       "prefabInstanceId": "prefab-instance-mnn842j8-vz10x",
       "prefabInstanceOrigin": {
@@ -1240,6 +1265,507 @@ export default {
         "y": 1,
         "z": 1
       },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnah2ak-po1cx-part-1",
+      "name": "couch-couch_base",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 1.6666666666666667,
+        "z": 0.10526315789473681
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 3.7894,
+        "y": 3.3334,
+        "z": 3.7894
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#606060",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnn87pdj-nntjz",
+      "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
+      "prefabInstanceOrigin": {
+        "x": -9.6157,
+        "y": 0,
+        "z": -0.7014
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnah2ak-po1cx-part-2",
+      "name": "couch-couch_back",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 4.3642,
+        "z": -1.3934
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 4,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#606060",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnn87pdj-nntjz",
+      "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
+      "prefabInstanceOrigin": {
+        "x": -9.6157,
+        "y": 0,
+        "z": -0.7014
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnah2ak-po1cx-part-3",
+      "name": "couch-couch_arm_left",
+      "type": "box",
+      "position": {
+        "x": -1.7894,
+        "y": 2.0478,
+        "z": 0.1052
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 4,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#606060",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnn87pdj-nntjz",
+      "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
+      "prefabInstanceOrigin": {
+        "x": -9.6157,
+        "y": 0,
+        "z": -0.7014
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnah2ak-po1cx-part-4",
+      "name": "couch-couch_arm_right",
+      "type": "box",
+      "position": {
+        "x": 1.7894,
+        "y": 2.0026,
+        "z": 0.1052
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 4,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#606060",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnn87pdj-nntjz",
+      "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
+      "prefabInstanceOrigin": {
+        "x": -9.6157,
+        "y": 0,
+        "z": -0.7014
+      },
+      "prefabInstanceRotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnah6e0-nuyyj-part-1",
+      "name": "couch 3 seat-couch_base",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 1.6666,
+        "z": 0.1052
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 11.5,
+        "y": 2.5,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 3,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#606060",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnaenht-mwjw5",
+      "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
+      "prefabInstanceOrigin": {
+        "x": -1,
+        "y": 0,
+        "z": 9
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1416,
+        "y": -1.5485,
+        "z": 3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnah6e0-nuyyj-part-2",
+      "name": "couch 3 seat-couch_back",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 4.3642,
+        "z": -1.3934
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 12,
+        "y": 4,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 3,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#606060",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnaenht-mwjw5",
+      "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
+      "prefabInstanceOrigin": {
+        "x": -1,
+        "y": 0,
+        "z": 9
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1416,
+        "y": -1.5485,
+        "z": 3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnah6e0-nuyyj-part-3",
+      "name": "couch 3 seat-couch_arm_left",
+      "type": "box",
+      "position": {
+        "x": -5.7284,
+        "y": 2.0478,
+        "z": 0.1052
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 4,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#606060",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnaenht-mwjw5",
+      "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
+      "prefabInstanceOrigin": {
+        "x": -1,
+        "y": 0,
+        "z": 9
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1416,
+        "y": -1.5485,
+        "z": 3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnah6e0-nuyyj-part-4",
+      "name": "couch 3 seat-couch_arm_right",
+      "type": "box",
+      "position": {
+        "x": 5.791,
+        "y": 2.0026,
+        "z": 0.1052
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 4,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 52,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#606060",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnaenht-mwjw5",
+      "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
+      "prefabInstanceOrigin": {
+        "x": -1,
+        "y": 0,
+        "z": 9
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1416,
+        "y": -1.5485,
+        "z": 3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnnc9987-zfbym",
+      "name": "car-template",
+      "type": "glb",
+      "position": {
+        "x": -4,
+        "y": 0,
+        "z": -14
+      },
+      "rotation": {
+        "x": -3.141592653589641,
+        "y": 1.5699947555034353,
+        "z": 3.141592653589641
+      },
+      "scale": {
+        "x": 4,
+        "y": 4,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": null,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": "asset-mnnc9723-f5tn1",
+      "prefabId": null,
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,

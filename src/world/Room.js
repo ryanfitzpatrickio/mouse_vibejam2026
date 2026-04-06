@@ -239,6 +239,9 @@ export class Room {
     this.lootItems = []; // Array of loot meshes
     this.climbables = []; // Surfaces player can climb
     this.runnables = []; // Surfaces player can run on
+    this.glbLoader = null;
+    this.glbModelCache = new Map();
+    this.glbRegistry = null;
 
     // Room dimensions
     this.width = options.width ?? 48;
@@ -274,7 +277,7 @@ export class Room {
     this.ready = Promise.all([
       this._loadTextureAtlas(),
       this._loadEditableLayout(),
-    ]).then(() => {
+    ]).then(() => this._loadGlbModels()).then(() => {
       this._applyLoadedEditableLayout();
       this._applyTextureAtlas();
       this._rebuildEditableLayout();
@@ -428,8 +431,58 @@ export class Room {
     return this.loadedEditableLayout;
   }
 
+  async _loadGlbRegistry() {
+    if (this.glbRegistry) return this.glbRegistry;
+    try {
+      const response = await fetch(assetUrl('levels/glb-registry.json'), { cache: 'no-store' });
+      if (!response.ok) return { assets: [] };
+      this.glbRegistry = await response.json();
+      return this.glbRegistry;
+    } catch {
+      return { assets: [] };
+    }
+  }
+
+  async _initGlbLoader() {
+    if (this.glbLoader) return;
+    const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+    const { MeshoptDecoder } = await import('three/examples/jsm/libs/meshopt_decoder.module.js');
+    this.glbLoader = new GLTFLoader();
+    this.glbLoader.setMeshoptDecoder(MeshoptDecoder);
+  }
+
+  async _loadGlbModelByAssetId(assetId) {
+    if (this.glbModelCache.has(assetId)) return this.glbModelCache.get(assetId);
+    const registry = await this._loadGlbRegistry();
+    const entry = registry.assets?.find((a) => a.id === assetId);
+    if (!entry) return null;
+    await this._initGlbLoader();
+    const url = assetUrl(entry.publicPath);
+    try {
+      const gltf = await this.glbLoader.loadAsync(url);
+      const scene = gltf.scene;
+      scene.updateMatrixWorld(true);
+      this.glbModelCache.set(assetId, scene);
+      return scene;
+    } catch (err) {
+      console.warn(`Failed to load GLB asset ${assetId}:`, err);
+      return null;
+    }
+  }
+
+  async loadGlbModel(assetId) {
+    return this._loadGlbModelByAssetId(assetId);
+  }
+
+  async _loadGlbModels() {
+    const glbPrimitives = this.loadedEditableLayout.primitives.filter((p) => p.type === 'glb' && p.glbAssetId);
+    if (!glbPrimitives.length) return;
+    const assetIds = [...new Set(glbPrimitives.map((p) => p.glbAssetId))];
+    await Promise.all(assetIds.map((id) => this._loadGlbModelByAssetId(id)));
+  }
+
   _normalizePrimitive(entry = {}) {
-    const type = entry.type === 'plane' || entry.type === 'cylinder' ? entry.type : 'box';
+    const type = entry.type === 'plane' || entry.type === 'cylinder' || entry.type === 'glb' ? entry.type : 'box';
     const defaults = EDITABLE_TYPE_DEFAULTS[type] ?? EDITABLE_TYPE_DEFAULTS.box;
     const texture = typeof entry.texture === 'number' ? { cell: entry.texture } : (entry.texture ?? {});
     const atlas = normalizeTextureAtlasId(texture.atlas);
@@ -456,6 +509,7 @@ export class Room {
         roughness: entry.material?.roughness ?? 0.88,
         metalness: entry.material?.metalness ?? 0.04,
       },
+      glbAssetId: entry.glbAssetId ?? null,
       prefabId: entry.prefabId ?? null,
       prefabInstanceId: entry.prefabInstanceId ?? null,
       prefabInstanceOrigin: entry.prefabInstanceOrigin ? cloneVectorLike(entry.prefabInstanceOrigin, { x: 0, y: 0, z: 0 }) : null,
@@ -702,6 +756,14 @@ export class Room {
     this._removeEditableColliders();
 
     this.editableGroup.traverse((child) => {
+      if (child.userData?.isGlbClone) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((material) => material?.dispose?.());
+        } else if (child.material) {
+          child.material.dispose?.();
+        }
+        return;
+      }
       if (child.geometry) child.geometry.dispose();
       if (Array.isArray(child.material)) {
         child.material.forEach((material) => material?.dispose?.());
@@ -722,6 +784,44 @@ export class Room {
         bucket.push(primitive);
         groupedPrimitives.set(primitive.prefabInstanceId, bucket);
         this.prefabInstanceIdByPrimitiveId.set(primitive.id, primitive.prefabInstanceId);
+        continue;
+      }
+
+      if (primitive.type === 'glb') {
+        const cachedModel = this.glbModelCache.get(primitive.glbAssetId);
+        if (!cachedModel) continue;
+        const clone = cachedModel.clone(true);
+        clone.traverse((child) => {
+          if (child.isMesh && child.material) {
+            child.material = Array.isArray(child.material)
+              ? child.material.map((m) => m.clone())
+              : child.material.clone();
+          }
+        });
+        clone.name = primitive.name;
+        clone.position.set(primitive.position.x, primitive.position.y, primitive.position.z);
+        clone.rotation.set(primitive.rotation.x, primitive.rotation.y, primitive.rotation.z);
+        clone.scale.set(primitive.scale.x, primitive.scale.y, primitive.scale.z);
+        clone.castShadow = primitive.castShadow;
+        clone.receiveShadow = primitive.receiveShadow;
+        clone.visible = !primitive.deleted;
+        clone.userData.editablePrimitive = true;
+        clone.userData.primitiveId = primitive.id;
+        clone.userData.colliderEnabled = primitive.collider;
+        clone.userData.isGlbClone = true;
+        clone.traverse((child) => { child.userData.isGlbClone = true; });
+        this.editableGroup.add(clone);
+        this.editableMeshes.set(primitive.id, clone);
+
+        if (primitive.collider) {
+          clone.updateMatrixWorld(true);
+          this.colliders.push({
+            mesh: clone,
+            aabb: AABB.fromMesh(clone),
+            type: 'furniture',
+            metadata: { source: 'editable', primitiveId: primitive.id },
+          });
+        }
         continue;
       }
 

@@ -108,6 +108,8 @@ class BuildModeEditor {
     this.currentHit = null;
     this._suppressTransformSync = false;
     this.transformMode = 'translate';
+    this.glbRegistry = null;
+    this._glbFileInput = null;
 
     this._createUI();
     this._createProbeVisuals();
@@ -234,6 +236,7 @@ class BuildModeEditor {
     this._createTransformSection();
     this._createMaterialSection();
     this._createPrefabSection();
+    this._createGlbSection();
     this._createPaletteSection();
 
     this.status = document.createElement('div');
@@ -335,6 +338,7 @@ class BuildModeEditor {
         ? this.layout.primitives.find((entry) => entry.id === primitiveId)
         : null;
       const mode = this.transformMode || this.transformControls?.mode || 'translate';
+      const isGlb = primitive?.type === 'glb';
       const next = primitive
         ? this.app.room.snapPrimitiveToGrid({
           ...deepClone(primitive),
@@ -356,7 +360,7 @@ class BuildModeEditor {
         }, {
           snapY: true,
           snapPosition: mode !== 'scale',
-          snapScale: mode === 'scale',
+          snapScale: mode === 'scale' && !isGlb,
           allowEdgeOverflow: true,
         })
         : {
@@ -414,10 +418,14 @@ class BuildModeEditor {
     canvas.addEventListener('dblclick', (event) => {
       if (!this.visible) return;
       event.preventDefault();
-      if (!this.currentHit?.object?.userData?.primitiveId) return;
-      this.selectedId = this.currentHit.object.userData.primitiveId;
+      let hitObject = this.currentHit?.object;
+      while (hitObject && !hitObject.userData?.primitiveId) {
+        hitObject = hitObject.parent;
+      }
+      if (!hitObject?.userData?.primitiveId) return;
+      this.selectedId = hitObject.userData.primitiveId;
       this._syncForm();
-      this._setStatus(`Selected ${this.currentHit.object.name}.`);
+      this._setStatus(`Selected ${hitObject.name || 'object'}.`);
     });
   }
 
@@ -444,7 +452,11 @@ class BuildModeEditor {
     position.needsUpdate = true;
     this.pointerLine.visible = true;
 
-    const primitiveId = hit.object.userData?.primitiveId;
+    let hitObject = hit.object;
+    while (hitObject && !hitObject.userData?.primitiveId) {
+      hitObject = hitObject.parent;
+    }
+    const primitiveId = hitObject?.userData?.primitiveId;
     const primitive = primitiveId
       ? this.layout.primitives.find((entry) => entry.id === primitiveId)
       : null;
@@ -453,7 +465,7 @@ class BuildModeEditor {
     this.hitTooltip.style.left = `${this.pointerScreen.x + 14}px`;
     this.hitTooltip.style.top = `${this.pointerScreen.y + 14}px`;
     this.hitTooltip.textContent = [
-      hit.object.name || 'unnamed',
+      hitObject?.name || hit.object.name || 'unnamed',
       gridCell ? `grid ${gridCell.col + 1}, ${gridCell.row + 1}` : '',
       primitive ? `cell ${primitive.texture.cell ?? 'none'}` : '',
       `x ${hit.point.x.toFixed(2)} y ${hit.point.y.toFixed(2)} z ${hit.point.z.toFixed(2)}`,
@@ -676,6 +688,206 @@ class BuildModeEditor {
       gap: '6px',
     });
     section.appendChild(this.paletteGrid);
+  }
+
+  _createGlbSection() {
+    const section = this._createSection('GLB Models');
+
+    this._glbFileInput = document.createElement('input');
+    this._glbFileInput.type = 'file';
+    this._glbFileInput.accept = '.glb';
+    this._glbFileInput.style.display = 'none';
+    this._glbFileInput.addEventListener('change', () => this._handleGlbUpload());
+    document.body.appendChild(this._glbFileInput);
+
+    const uploadRow = document.createElement('div');
+    Object.assign(uploadRow.style, {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+      gap: '8px',
+    });
+    section.appendChild(uploadRow);
+
+    this._addInlineButton(uploadRow, 'Upload GLB', () => this._glbFileInput.click());
+    this._addInlineButton(uploadRow, 'Refresh', () => this._loadGlbRegistry());
+
+    this.glbSelect = document.createElement('select');
+    this._styleField(this.glbSelect);
+    this.glbSelect.style.marginTop = '8px';
+    section.appendChild(this.glbSelect);
+
+    this._addInlineButton(section, 'Place GLB', () => this._placeSelectedGlb(), '#23472d');
+    this._addInlineButton(section, 'Delete Asset', () => this._deleteSelectedGlb(), '#5d221f');
+
+    this.glbStatus = document.createElement('div');
+    Object.assign(this.glbStatus.style, {
+      color: '#d8c3a8',
+      marginTop: '8px',
+      fontSize: '11px',
+      lineHeight: '1.35',
+      whiteSpace: 'pre-wrap',
+    });
+    section.appendChild(this.glbStatus);
+
+    this._loadGlbRegistry();
+  }
+
+  async _loadGlbRegistry() {
+    try {
+      const response = await fetch(assetUrl('levels/glb-registry.json'), { cache: 'no-store' });
+      if (!response.ok) {
+        this.glbRegistry = { assets: [] };
+      } else {
+        this.glbRegistry = await response.json();
+      }
+    } catch {
+      this.glbRegistry = { assets: [] };
+    }
+    this._syncGlbSection();
+  }
+
+  _syncGlbSection() {
+    if (!this.glbSelect) return;
+    const currentValue = this.glbSelect.value;
+    this.glbSelect.innerHTML = '';
+    const assets = this.glbRegistry?.assets ?? [];
+    if (!assets.length) {
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = 'No GLB models uploaded';
+      this.glbSelect.appendChild(option);
+    } else {
+      assets.forEach((asset) => {
+        const option = document.createElement('option');
+        option.value = asset.id;
+        option.textContent = `${asset.name} (${(asset.size / 1024).toFixed(0)} KB)`;
+        this.glbSelect.appendChild(option);
+      });
+      if (currentValue && assets.some((a) => a.id === currentValue)) {
+        this.glbSelect.value = currentValue;
+      }
+    }
+
+    const selected = this._selectedGlbAsset();
+    if (this.glbStatus) {
+      if (!selected) {
+        this.glbStatus.textContent = 'Upload a .glb file to add custom models.';
+      } else {
+        this.glbStatus.textContent = [
+          `File: ${selected.filename}`,
+          `Size: ${(selected.size / 1024).toFixed(0)} KB`,
+          `Uploaded: ${selected.uploadedAt ? new Date(selected.uploadedAt).toLocaleString() : 'unknown'}`,
+        ].join('\n');
+      }
+    }
+  }
+
+  _selectedGlbAsset() {
+    const id = this.glbSelect?.value;
+    if (!id) return null;
+    return (this.glbRegistry?.assets ?? []).find((a) => a.id === id) ?? null;
+  }
+
+  async _handleGlbUpload() {
+    const file = this._glbFileInput?.files?.[0];
+    if (!file) return;
+    this._setStatus(`Uploading ${file.name}...`);
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const response = await fetch(`/__dev/upload-glb?name=${encodeURIComponent(file.name)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/octet-stream' },
+        body: buffer,
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        this._setStatus(`Upload failed: ${result.error || response.statusText}`, true);
+        return;
+      }
+
+      this.app.room.glbRegistry = null;
+      const preloaded = await this.app.room.loadGlbModel(result.entry.id);
+      if (!preloaded) {
+        this._setStatus(`Uploaded ${result.entry.name} but model preload failed.`, true);
+      } else {
+        this._setStatus(`Uploaded ${result.entry.name}.`);
+      }
+    } catch (err) {
+      this._setStatus(`Upload error: ${err.message}`, true);
+    }
+
+    await this._loadGlbRegistry();
+    this._glbFileInput.value = '';
+  }
+
+  async _placeSelectedGlb() {
+    const asset = this._selectedGlbAsset();
+    if (!asset) return;
+    this._setStatus(`Loading ${asset.name}...`);
+
+    const model = await this.app.room.loadGlbModel(asset.id);
+    if (!model) {
+      this._setStatus(`Failed to load GLB: ${asset.name}`, true);
+      return;
+    }
+
+    const box = new THREE.Box3().setFromObject(model);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const maxDim = Math.max(size.x, size.y, size.z, 0.001);
+    const autoScale = 1 / maxDim;
+
+    const grid = this.app.room.getBuildGridConfig();
+    const forward = new THREE.Vector3();
+    this.app.camera.getWorldDirection(forward);
+    forward.y = 0;
+    if (forward.lengthSq() < 0.0001) forward.set(0, 0, -1);
+    forward.normalize();
+    const spawn = this.app.mouse.position.clone().add(forward.multiplyScalar(2.25));
+    spawn.y = Math.max(this.app.mouse.position.y, 0);
+
+    const primitive = {
+      id: createPrimitiveId(),
+      name: asset.name,
+      type: 'glb',
+      glbAssetId: asset.id,
+      position: {
+        x: Number(spawn.x.toFixed(4)),
+        y: Number(spawn.y.toFixed(4)),
+        z: Number(spawn.z.toFixed(4)),
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: { x: autoScale, y: autoScale, z: autoScale },
+      texture: { atlas: 'textures', cell: null, repeat: { x: 1, y: 1 }, rotation: 0 },
+      material: { color: '#ffffff', roughness: 0.88, metalness: 0.04 },
+      collider: true,
+      castShadow: true,
+      receiveShadow: true,
+    };
+
+    this.app.room.upsertEditablePrimitive(primitive);
+    this.layout = this.app.room.getEditableLayout();
+    this.selectedId = primitive.id;
+    this._syncForm();
+    this._attachTransformControls();
+    this._setStatus(`Placed ${asset.name} (auto-scaled ${autoScale.toFixed(3)}x).`);
+  }
+
+  async _deleteSelectedGlb() {
+    const asset = this._selectedGlbAsset();
+    if (!asset) return;
+    this.glbRegistry.assets = this.glbRegistry.assets.filter((a) => a.id !== asset.id);
+    try {
+      await fetch('/__dev/save-glb-registry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(this.glbRegistry),
+      });
+    } catch {}
+    this.app.room.glbRegistry = null;
+    this._syncGlbSection();
+    this._setStatus(`Removed ${asset.name} from registry. File still on disk.`);
   }
 
   _renderPalette() {

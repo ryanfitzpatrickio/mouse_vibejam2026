@@ -1,0 +1,13 @@
+{
+  "assets": [
+    {
+      "id": "asset-mnnc9723-f5tn1",
+      "name": "car-template",
+      "filename": "car-template.glb",
+      "sourcePath": "assets/source/custom/car-template.glb",
+      "publicPath": "models/car-template.glb",
+      "size": 7039892,
+      "uploadedAt": "2026-04-06T15:21:50.331Z"
+    }
+  ]
+}

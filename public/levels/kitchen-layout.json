@@ -79,6 +79,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -123,6 +124,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -167,6 +169,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -211,6 +214,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -255,6 +259,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -299,6 +304,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -343,6 +349,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -387,6 +394,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -431,6 +439,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -475,6 +484,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -519,6 +529,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -563,6 +574,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -607,6 +619,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -651,6 +664,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -695,6 +709,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -739,6 +754,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -783,6 +799,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -844,6 +861,7 @@
         "roughness": 0.5,
         "metalness": 0.1
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
@@ -900,6 +918,7 @@
         "roughness": 0.2,
         "metalness": 0.8
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
@@ -956,6 +975,7 @@
         "roughness": 0.8,
         "metalness": 0.28
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
@@ -1012,6 +1032,7 @@
         "roughness": 0.8,
         "metalness": 0.28
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
@@ -1068,6 +1089,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -1112,6 +1134,7 @@
         "roughness": 0.88,
         "metalness": 0.04
       },
+      "glbAssetId": null,
       "prefabId": null,
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
@@ -1161,6 +1184,7 @@
         "roughness": 0.5,
         "metalness": 0.8
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnn7zhdy-mzl5t",
       "prefabInstanceId": "prefab-instance-mnn842j8-vz10x",
       "prefabInstanceOrigin": {
@@ -1222,6 +1246,7 @@
         "roughness": 0.5,
         "metalness": 0.8
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnn7zhdy-mzl5t",
       "prefabInstanceId": "prefab-instance-mnn842j8-vz10x",
       "prefabInstanceOrigin": {
@@ -1278,6 +1303,7 @@
         "roughness": 0.8,
         "metalness": 0
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnn87pdj-nntjz",
       "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
       "prefabInstanceOrigin": {
@@ -1334,6 +1360,7 @@
         "roughness": 0.8,
         "metalness": 0
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnn87pdj-nntjz",
       "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
       "prefabInstanceOrigin": {
@@ -1390,6 +1417,7 @@
         "roughness": 0.8,
         "metalness": 0
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnn87pdj-nntjz",
       "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
       "prefabInstanceOrigin": {
@@ -1446,6 +1474,7 @@
         "roughness": 0.8,
         "metalness": 0
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnn87pdj-nntjz",
       "prefabInstanceId": "prefab-instance-mnnah2ak-po1cx",
       "prefabInstanceOrigin": {
@@ -1502,6 +1531,7 @@
         "roughness": 0.8,
         "metalness": 0
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnnaenht-mwjw5",
       "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
       "prefabInstanceOrigin": {
@@ -1558,6 +1588,7 @@
         "roughness": 0.8,
         "metalness": 0
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnnaenht-mwjw5",
       "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
       "prefabInstanceOrigin": {
@@ -1614,6 +1645,7 @@
         "roughness": 0.8,
         "metalness": 0
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnnaenht-mwjw5",
       "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
       "prefabInstanceOrigin": {
@@ -1670,6 +1702,7 @@
         "roughness": 0.8,
         "metalness": 0
       },
+      "glbAssetId": null,
       "prefabId": "prefab-mnnaenht-mwjw5",
       "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
       "prefabInstanceOrigin": {
@@ -1687,6 +1720,51 @@
         "y": 1,
         "z": 1
       },
+      "collider": true,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnnc9987-zfbym",
+      "name": "car-template",
+      "type": "glb",
+      "position": {
+        "x": -4,
+        "y": 0,
+        "z": -14
+      },
+      "rotation": {
+        "x": -3.141592653589641,
+        "y": 1.5699947555034353,
+        "z": 3.141592653589641
+      },
+      "scale": {
+        "x": 4,
+        "y": 4,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": null,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": "asset-mnnc9723-f5tn1",
+      "prefabId": null,
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "castShadow": true,
       "receiveShadow": true,
