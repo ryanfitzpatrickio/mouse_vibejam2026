@@ -12,12 +12,12 @@ const TICK_RATE = 30;
 const TICK_MS = 1000 / TICK_RATE;
 const MAX_PLAYERS = 8;
 
-// Room bounds (matches Room default: width=8, depth=8, scale=4 → half = 16)
+// Room bounds (matches Room default: width=48, depth=48, scale=1 → half = 24)
 const BOUNDS = Object.freeze({
-  minX: -16,
-  maxX: 16,
-  minZ: -16,
-  maxZ: 16,
+  minX: -24,
+  maxX: 24,
+  minZ: -24,
+  maxZ: 24,
 });
 
 export default class GameServer {
@@ -26,7 +26,7 @@ export default class GameServer {
   /** @type {Map<string, object>} */
   pendingInputs = new Map();
   tickInterval = null;
-  levelColliders = buildRoomCollidersFromLayout(kitchenLayout, { scaleFactor: 4 });
+  levelColliders = buildRoomCollidersFromLayout(kitchenLayout, { scaleFactor: 1 });
 
   constructor(room) {
     this.room = room;

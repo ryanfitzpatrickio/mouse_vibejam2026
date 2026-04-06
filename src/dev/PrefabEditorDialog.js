@@ -48,7 +48,25 @@ function stripJsonCodeFence(text) {
 
 function safeParseJson(text) {
   const cleaned = stripJsonCodeFence(text);
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Try to recover truncated JSON by closing open brackets/braces.
+    let patched = cleaned
+      .replace(/,\s*$/, '')
+      .replace(/,\s*([}\]])/, '$1');
+    let opens = 0;
+    let openArrays = 0;
+    for (const ch of patched) {
+      if (ch === '{') opens++;
+      else if (ch === '}') opens--;
+      else if (ch === '[') openArrays++;
+      else if (ch === ']') openArrays--;
+    }
+    while (openArrays > 0) { patched += ']'; openArrays--; }
+    while (opens > 0) { patched += '}'; opens--; }
+    return JSON.parse(patched);
+  }
 }
 
 function getStoredString(key, fallback = '') {
@@ -89,10 +107,10 @@ function createLocalPrimitive(type, grid) {
   if (type === 'plane') {
     primitive.rotation.x = -Math.PI * 0.5;
     primitive.position.y = 0;
-    primitive.scale = { x: grid.cellWidth, y: grid.cellDepth, z: 1 };
+    primitive.scale = { x: 1, y: 1, z: 1 };
     primitive.receiveShadow = true;
   } else if (type === 'cylinder') {
-    primitive.scale = { x: grid.cellWidth, y: grid.verticalStep * 2, z: grid.cellDepth };
+    primitive.scale = { x: 1, y: grid.verticalStep * 2, z: 1 };
     primitive.position.y = primitive.scale.y * 0.5;
   }
 
@@ -109,6 +127,30 @@ function createPrimitiveGeometry(type) {
     default:
       return new THREE.BoxGeometry(1, 1, 1);
   }
+}
+
+function scaleAiPrefabFootprint(prefab, factor = 2) {
+  const safeFactor = Number.isFinite(factor) && factor > 0 ? factor : 1;
+  prefab.size.x = Math.max(2, Math.round((prefab.size.x ?? 1) * safeFactor));
+  prefab.size.z = Math.max(2, Math.round((prefab.size.z ?? 1) * safeFactor));
+
+  prefab.primitives = prefab.primitives.map((part) => {
+    const next = deepClone(part);
+    next.position.x = Number((next.position.x * safeFactor).toFixed(4));
+    next.position.z = Number((next.position.z * safeFactor).toFixed(4));
+
+    if (next.type === 'plane') {
+      next.scale.x = Number((next.scale.x * safeFactor).toFixed(4));
+      next.scale.y = Number((next.scale.y * safeFactor).toFixed(4));
+    } else {
+      next.scale.x = Number((next.scale.x * safeFactor).toFixed(4));
+      next.scale.z = Number((next.scale.z * safeFactor).toFixed(4));
+    }
+
+    return next;
+  });
+
+  return prefab;
 }
 
 export class PrefabEditorDialog {
@@ -795,6 +837,8 @@ export class PrefabEditorDialog {
       const input = document.createElement('input');
       input.type = 'number';
       Object.assign(input, attrs);
+      input.removeAttribute('max');
+      input.removeAttribute('min');
       this._styleField(input);
       input.addEventListener('input', () => onChange(axis, Number(input.value || 0)));
       grid.appendChild(input);
@@ -827,6 +871,8 @@ export class PrefabEditorDialog {
       const input = document.createElement('input');
       input.type = 'number';
       Object.assign(input, attrs);
+      input.removeAttribute('max');
+      input.removeAttribute('min');
       this._styleField(input);
       input.addEventListener('input', () => onChange(axis, Number(input.value || 0)));
       grid.appendChild(input);
@@ -847,6 +893,8 @@ export class PrefabEditorDialog {
     const input = document.createElement('input');
     input.type = 'number';
     Object.assign(input, attrs);
+    input.removeAttribute('max');
+    input.removeAttribute('min');
     this._styleField(input);
     input.addEventListener('input', () => onChange(input.value === '' ? null : Number(input.value)));
     wrap.appendChild(input);
@@ -1207,6 +1255,7 @@ export class PrefabEditorDialog {
       'Return JSON only. No markdown, no commentary, no code fences.',
       'The JSON must match this shape:',
       '{ name: string, size: { x: number, y: number, z: number }, primitives: Array<primitive> }',
+      'Default to a 2x2 footprint unless the prompt clearly requests smaller.',
       'Each primitive must use only these fields:',
       '{ id, name, type, position:{x,y,z}, rotation:{x,y,z}, scale:{x,y,z}, texture:{atlas,cell,repeat:{x,y},rotation}, material:{color,roughness,metalness}, collider, castShadow, receiveShadow }',
       'Allowed primitive types: box, plane, cylinder.',
@@ -1234,7 +1283,7 @@ export class PrefabEditorDialog {
           ],
           response_format: { type: 'json_object' },
           temperature: 0.3,
-          max_completion_tokens: 1400,
+          max_completion_tokens: 4096,
         }),
       });
 
@@ -1260,6 +1309,8 @@ export class PrefabEditorDialog {
           rotation: primitive.texture?.rotation ?? 0,
         },
       }));
+
+      scaleAiPrefabFootprint(prefab, 2);
 
       if (!prefab.primitives.length) {
         throw new Error('Model returned no primitives.');

@@ -131,10 +131,10 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     renderPipeline.outputNode = gpu.toonOutlinePass(scene, camera);
 
     room = new Room({
-      width: 8,
-      depth: 8,
+      width: 48,
+      depth: 48,
       height: 4,
-      scale: 4,
+      scale: 1,
       rendererMode: 'webgpu',
       rendererToolkit: gpu,
     });
@@ -146,7 +146,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     render = () => renderPipeline.render();
   } else {
     renderer = createWebGLRenderer(canvas);
-    room = new Room({ width: 8, depth: 8, height: 4, scale: 4 });
+    room = new Room({ width: 48, depth: 48, height: 4, scale: 1 });
     scene.add(room.getGroup());
     await room.ready;
     addLighting(scene, room);
@@ -201,7 +201,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   // --- Client-side prediction using shared physics ---
   // Uses simulateTick (same code as server) so prediction matches server exactly,
   // eliminating rubberbanding from divergent physics.
-  const CLIENT_BOUNDS = Object.freeze({ minX: -16, maxX: 16, minZ: -16, maxZ: 16 });
+  const CLIENT_BOUNDS = Object.freeze({ minX: -24, maxX: 24, minZ: -24, maxZ: 24 });
   const predictionState = createPlayerState('local');
   let lastReconciledSeq = -2;
 

@@ -5,8 +5,8 @@ import { assetUrl } from '../utils/assetUrl.js';
 
 const ATLAS_GRID = 10;
 const ATLAS_CELL_MARGIN_PX = 3;
-const BUILD_GRID_COLUMNS = 6;
-const BUILD_GRID_ROWS = 6;
+const BUILD_GRID_COLUMNS = 24;
+const BUILD_GRID_ROWS = 24;
 const BUILD_GRID_VERTICAL_STEP = 0.25;
 const ROOM_TEXTURE_CELLS = Object.freeze({
   floor: 0,
@@ -89,6 +89,32 @@ function cloneVectorLike(source, fallback) {
     y: source?.y ?? fallback.y,
     z: source?.z ?? fallback.z,
   };
+}
+
+function roundVectorLike(source, fallback) {
+  return {
+    x: Number((source?.x ?? fallback.x).toFixed(4)),
+    y: Number((source?.y ?? fallback.y).toFixed(4)),
+    z: Number((source?.z ?? fallback.z).toFixed(4)),
+  };
+}
+
+function worldToLocalPrefabPosition(position, origin, rotation, scale) {
+  const local = new THREE.Vector3(
+    position.x - origin.x,
+    position.y - origin.y,
+    position.z - origin.z,
+  );
+  const inverseRotation = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(rotation.x ?? 0, rotation.y ?? 0, rotation.z ?? 0),
+  ).invert();
+  local.applyQuaternion(inverseRotation);
+  local.divide(new THREE.Vector3(
+    Math.abs(scale.x) > 1e-6 ? scale.x : 1,
+    Math.abs(scale.y) > 1e-6 ? scale.y : 1,
+    Math.abs(scale.z) > 1e-6 ? scale.z : 1,
+  ));
+  return roundVectorLike(local, { x: 0, y: 0, z: 0 });
 }
 
 function normalizeTextureAtlasId(value) {
@@ -215,8 +241,8 @@ export class Room {
     this.runnables = []; // Surfaces player can run on
 
     // Room dimensions
-    this.width = options.width ?? 8;
-    this.depth = options.depth ?? 8;
+    this.width = options.width ?? 48;
+    this.depth = options.depth ?? 48;
     this.height = options.height ?? 4;
     this.scaleFactor = options.scale ?? 1;
     this.group.scale.setScalar(this.scaleFactor);
@@ -420,6 +446,8 @@ export class Room {
       prefabId: entry.prefabId ?? null,
       prefabInstanceId: entry.prefabInstanceId ?? null,
       prefabInstanceOrigin: entry.prefabInstanceOrigin ? cloneVectorLike(entry.prefabInstanceOrigin, { x: 0, y: 0, z: 0 }) : null,
+      prefabInstanceRotation: entry.prefabInstanceRotation ? cloneVectorLike(entry.prefabInstanceRotation, { x: 0, y: 0, z: 0 }) : null,
+      prefabInstanceScale: entry.prefabInstanceScale ? cloneVectorLike(entry.prefabInstanceScale, { x: 1, y: 1, z: 1 }) : null,
       collider: entry.collider !== false,
       castShadow: entry.castShadow !== false,
       receiveShadow: entry.receiveShadow !== false,
@@ -511,6 +539,8 @@ export class Room {
       prefabId: entry.primitive.prefabId ?? null,
       prefabInstanceId: entry.primitive.prefabInstanceId ?? null,
       prefabInstanceOrigin: entry.primitive.prefabInstanceOrigin ?? null,
+      prefabInstanceRotation: entry.primitive.prefabInstanceRotation ?? null,
+      prefabInstanceScale: entry.primitive.prefabInstanceScale ?? null,
       collider: mesh.userData.colliderEnabled !== false,
       castShadow: mesh.castShadow !== false,
       receiveShadow: mesh.receiveShadow !== false,
@@ -578,6 +608,8 @@ export class Room {
       version: this.loadedEditableLayout.version ?? 1,
       primitives: customPrimitives,
     };
+
+    this._normalizePrefabInstanceTransforms();
   }
 
   _createEditablePrimitiveMaterial(definition) {
@@ -611,6 +643,43 @@ export class Room {
     }
 
     return material;
+  }
+
+  _normalizePrefabInstanceTransforms() {
+    const groupedPrimitives = new Map();
+
+    for (const primitive of this.editableLayout.primitives) {
+      if (!primitive.prefabInstanceId) continue;
+      const bucket = groupedPrimitives.get(primitive.prefabInstanceId) ?? [];
+      bucket.push(primitive);
+      groupedPrimitives.set(primitive.prefabInstanceId, bucket);
+    }
+
+    groupedPrimitives.forEach((primitives) => {
+      const anchor = primitives[0];
+      if (!anchor) return;
+
+      const origin = cloneVectorLike(anchor.prefabInstanceOrigin ?? anchor.position, { x: 0, y: 0, z: 0 });
+      const rotation = cloneVectorLike(anchor.prefabInstanceRotation ?? { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 });
+      const scale = cloneVectorLike(anchor.prefabInstanceScale ?? { x: 1, y: 1, z: 1 }, { x: 1, y: 1, z: 1 });
+      const needsMigration = primitives.some((primitive) => !primitive.prefabInstanceOrigin || !primitive.prefabInstanceRotation || !primitive.prefabInstanceScale);
+
+      if (needsMigration) {
+        primitives.forEach((primitive) => {
+          primitive.position = worldToLocalPrefabPosition(primitive.position, origin, rotation, scale);
+          primitive.prefabInstanceOrigin = cloneVectorLike(origin, { x: 0, y: 0, z: 0 });
+          primitive.prefabInstanceRotation = cloneVectorLike(rotation, { x: 0, y: 0, z: 0 });
+          primitive.prefabInstanceScale = cloneVectorLike(scale, { x: 1, y: 1, z: 1 });
+        });
+        return;
+      }
+
+      primitives.forEach((primitive) => {
+        primitive.prefabInstanceOrigin = cloneVectorLike(origin, { x: 0, y: 0, z: 0 });
+        primitive.prefabInstanceRotation = cloneVectorLike(rotation, { x: 0, y: 0, z: 0 });
+        primitive.prefabInstanceScale = cloneVectorLike(scale, { x: 1, y: 1, z: 1 });
+      });
+    });
   }
 
   _removeEditableColliders() {
@@ -679,16 +748,22 @@ export class Room {
       const anchor = primitives[0];
       if (!anchor) continue;
       const origin = anchor.prefabInstanceOrigin ?? anchor.position;
+      const rotation = anchor.prefabInstanceRotation ?? { x: 0, y: 0, z: 0 };
+      const scale = anchor.prefabInstanceScale ?? { x: 1, y: 1, z: 1 };
 
       const group = new THREE.Group();
       group.name = `PrefabInstance-${instanceId}`;
       group.position.set(origin.x, origin.y, origin.z);
+      group.rotation.set(rotation.x, rotation.y, rotation.z);
+      group.scale.set(scale.x, scale.y, scale.z);
       group.userData.editablePrimitive = true;
       group.userData.prefabInstanceId = instanceId;
       this.editableGroup.add(group);
       this.prefabInstanceGroups.set(instanceId, {
         group,
         origin,
+        rotation,
+        scale,
         primitiveIds: primitives.map((primitive) => primitive.id),
       });
 
@@ -698,9 +773,9 @@ export class Room {
         const mesh = new THREE.Mesh(geometry, material);
         mesh.name = primitive.name;
         mesh.position.set(
-          primitive.position.x - origin.x,
-          primitive.position.y - origin.y,
-          primitive.position.z - origin.z,
+          primitive.position.x,
+          primitive.position.y,
+          primitive.position.z,
         );
         mesh.rotation.set(primitive.rotation.x, primitive.rotation.y, primitive.rotation.z);
         mesh.scale.set(primitive.scale.x, primitive.scale.y, primitive.scale.z);
@@ -881,29 +956,23 @@ export class Room {
     const primitives = this.editableLayout.primitives.filter((entry) => entry.prefabInstanceId === instanceId);
     if (!primitives.length) return null;
 
-    if (!transform.position) {
+    if (!transform.position && !transform.rotation && !transform.scale) {
       return primitives[0];
     }
 
     const anchor = primitives[0].prefabInstanceOrigin ?? primitives[0].position;
-    const nextAnchor = cloneVectorLike(transform.position, anchor);
-    const delta = {
-      x: nextAnchor.x - anchor.x,
-      y: nextAnchor.y - anchor.y,
-      z: nextAnchor.z - anchor.z,
-    };
+    const nextAnchor = transform.position ? cloneVectorLike(transform.position, anchor) : cloneVectorLike(anchor, { x: 0, y: 0, z: 0 });
+    const nextRotation = transform.rotation
+      ? cloneVectorLike(transform.rotation, primitives[0].prefabInstanceRotation ?? { x: 0, y: 0, z: 0 })
+      : cloneVectorLike(primitives[0].prefabInstanceRotation ?? { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 });
+    const nextScale = transform.scale
+      ? cloneVectorLike(transform.scale, primitives[0].prefabInstanceScale ?? { x: 1, y: 1, z: 1 })
+      : cloneVectorLike(primitives[0].prefabInstanceScale ?? { x: 1, y: 1, z: 1 }, { x: 1, y: 1, z: 1 });
 
     primitives.forEach((primitive) => {
-      primitive.position = {
-        x: Number((primitive.position.x + delta.x).toFixed(4)),
-        y: Number((primitive.position.y + delta.y).toFixed(4)),
-        z: Number((primitive.position.z + delta.z).toFixed(4)),
-      };
-      primitive.prefabInstanceOrigin = {
-        x: Number((anchor.x + delta.x).toFixed(4)),
-        y: Number((anchor.y + delta.y).toFixed(4)),
-        z: Number((anchor.z + delta.z).toFixed(4)),
-      };
+      primitive.prefabInstanceOrigin = roundVectorLike(nextAnchor, { x: 0, y: 0, z: 0 });
+      primitive.prefabInstanceRotation = roundVectorLike(nextRotation, { x: 0, y: 0, z: 0 });
+      primitive.prefabInstanceScale = roundVectorLike(nextScale, { x: 1, y: 1, z: 1 });
     });
 
     this.editableLayout.primitives = this.editableLayout.primitives.map((entry) => (
@@ -915,17 +984,19 @@ export class Room {
     const instanceEntry = this.prefabInstanceGroups.get(instanceId);
     if (instanceEntry) {
       const newOrigin = primitives[0].prefabInstanceOrigin ?? primitives[0].position;
+      const newRotation = primitives[0].prefabInstanceRotation ?? { x: 0, y: 0, z: 0 };
+      const newScale = primitives[0].prefabInstanceScale ?? { x: 1, y: 1, z: 1 };
       instanceEntry.group.position.set(newOrigin.x, newOrigin.y, newOrigin.z);
+      instanceEntry.group.rotation.set(newRotation.x, newRotation.y, newRotation.z);
+      instanceEntry.group.scale.set(newScale.x, newScale.y, newScale.z);
       instanceEntry.origin = cloneVectorLike(newOrigin, { x: 0, y: 0, z: 0 });
+      instanceEntry.rotation = cloneVectorLike(newRotation, { x: 0, y: 0, z: 0 });
+      instanceEntry.scale = cloneVectorLike(newScale, { x: 1, y: 1, z: 1 });
 
       primitives.forEach((primitive) => {
         const mesh = this.editableMeshes.get(primitive.id);
         if (mesh) {
-          mesh.position.set(
-            primitive.position.x - newOrigin.x,
-            primitive.position.y - newOrigin.y,
-            primitive.position.z - newOrigin.z,
-          );
+          mesh.position.set(primitive.position.x, primitive.position.y, primitive.position.z);
         }
       });
 
@@ -995,11 +1066,10 @@ export class Room {
     return Math.max(cellSize, Math.round(value / cellSize) * cellSize);
   }
 
-  _snapGridAxisPosition(value, footprint, totalSize, cellSize) {
+  _snapGridAxisPosition(value, footprint, totalSize, cellSize, allowOverflow = false) {
     const halfRoom = totalSize * 0.5;
-    const clampedFootprint = Math.min(Math.max(footprint, cellSize), totalSize);
-    const min = -halfRoom + (clampedFootprint * 0.5);
-    const max = halfRoom - (clampedFootprint * 0.5);
+    const min = allowOverflow ? -halfRoom : -halfRoom + (Math.min(Math.max(footprint, cellSize), totalSize) * 0.5);
+    const max = allowOverflow ? halfRoom : halfRoom - (Math.min(Math.max(footprint, cellSize), totalSize) * 0.5);
 
     if (max <= min) {
       return 0;
@@ -1009,7 +1079,12 @@ export class Room {
     return THREE.MathUtils.clamp(snapped, min, max);
   }
 
-  snapPrimitiveToGrid(definition, { snapY = false, snapScale = false, snapPosition = true } = {}) {
+  snapPrimitiveToGrid(definition, {
+    snapY = false,
+    snapScale = false,
+    snapPosition = true,
+    allowEdgeOverflow = false,
+  } = {}) {
     const primitive = this._normalizePrimitive(definition);
     const grid = this.getBuildGridConfig();
 
@@ -1030,12 +1105,14 @@ export class Room {
         footprint.width,
         grid.roomWidth,
         grid.cellWidth,
+        allowEdgeOverflow,
       );
       primitive.position.z = this._snapGridAxisPosition(
         primitive.position.z,
         footprint.depth,
         grid.roomDepth,
         grid.cellDepth,
+        allowEdgeOverflow,
       );
     }
 
@@ -1055,6 +1132,7 @@ export class Room {
   instantiatePrefab(prefab, {
     col = 0,
     row = 0,
+    scale: placeScale = 2,
     instanceId = `prefab-instance-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
   } = {}) {
     if (!prefab?.id || !Array.isArray(prefab.primitives)) {
@@ -1075,14 +1153,29 @@ export class Room {
         id: `${instanceId}-part-${index + 1}`,
         name: `${prefab.name}-${part.name ?? `part-${index + 1}`}`,
         position: {
-          x: anchor.x + (part.position?.x ?? 0),
-          y: part.position?.y ?? 0,
-          z: anchor.z + (part.position?.z ?? 0),
+          x: (part.position?.x ?? 0) * placeScale,
+          y: (part.position?.y ?? 0) * placeScale,
+          z: (part.position?.z ?? 0) * placeScale,
+        },
+        scale: {
+          x: (part.scale?.x ?? 1) * placeScale,
+          y: (part.scale?.y ?? 1) * placeScale,
+          z: (part.scale?.z ?? 1) * placeScale,
         },
         prefabInstanceOrigin: {
           x: anchor.x,
           y: anchor.y,
           z: anchor.z,
+        },
+        prefabInstanceRotation: {
+          x: 0,
+          y: 0,
+          z: 0,
+        },
+        prefabInstanceScale: {
+          x: 1,
+          y: 1,
+          z: 1,
         },
         prefabId: prefab.id,
         prefabInstanceId: instanceId,
@@ -1096,8 +1189,6 @@ export class Room {
 
   buildRoom() {
     this.buildFloorAndWalls();
-    this.buildFurniture();
-    this.buildLoot();
   }
 
   buildFloorAndWalls() {
@@ -1107,12 +1198,6 @@ export class Room {
       roughness: 0.98,
       metalness: 0.02,
     });
-    const wallMat = this._createSurfaceMaterial(this.wallColor, {
-      textureCell: ROOM_TEXTURE_CELLS.wall,
-      textureRepeat: 1,
-      roughness: 1,
-      metalness: 0,
-    });
 
     // Floor
     const floorGeo = new THREE.PlaneGeometry(this.width, this.depth);
@@ -1121,6 +1206,8 @@ export class Room {
     floor.position.y = 0;
     floor.name = 'Floor';
     floor.receiveShadow = true;
+    floor.userData.surfaceType = 'floor';
+    floor.userData.cameraOccluder = false;
     this.group.add(floor);
     const floorCollider = {
       mesh: floor,
@@ -1147,624 +1234,6 @@ export class Room {
       castShadow: false,
       receiveShadow: true,
     }, floorCollider);
-
-    // Walls: back, front, left, right
-    const wallThickness = 0.2;
-
-    // Back wall
-    const backWallGeo = new THREE.BoxGeometry(this.width, this.height, wallThickness);
-    const backWall = new THREE.Mesh(backWallGeo, wallMat);
-    backWall.position.set(0, this.height * 0.5, -this.depth * 0.5);
-    backWall.name = 'BackWall';
-    backWall.castShadow = true;
-    backWall.receiveShadow = true;
-    this.group.add(backWall);
-    const backWallCollider = {
-      mesh: backWall,
-      aabb: AABB.fromMesh(backWall),
-      type: 'wall',
-    };
-    this.colliders.push(backWallCollider);
-    this._registerBuiltInPrimitive(backWall, {
-      id: 'builtin-back-wall',
-      name: backWall.name,
-      type: 'box',
-      position: { x: 0, y: this.height * 0.5, z: -this.depth * 0.5 },
-      rotation: { x: 0, y: 0, z: 0 },
-      scale: { x: this.width, y: this.height, z: wallThickness },
-      texture: {
-        cell: wallMat.userData.textureCell,
-        repeat: normalizeTextureSettings(wallMat.userData.textureRepeat),
-        rotation: 0,
-      },
-      material: materialToEditableSurface(wallMat, this.wallColor),
-      collider: true,
-    }, backWallCollider);
-
-    // Front wall
-    const frontWall = new THREE.Mesh(backWallGeo, wallMat);
-    frontWall.position.set(0, this.height * 0.5, this.depth * 0.5);
-    frontWall.name = 'FrontWall';
-    frontWall.castShadow = true;
-    frontWall.receiveShadow = true;
-    this.group.add(frontWall);
-    const frontWallCollider = {
-      mesh: frontWall,
-      aabb: AABB.fromMesh(frontWall),
-      type: 'wall',
-    };
-    this.colliders.push(frontWallCollider);
-    this._registerBuiltInPrimitive(frontWall, {
-      id: 'builtin-front-wall',
-      name: frontWall.name,
-      type: 'box',
-      position: { x: 0, y: this.height * 0.5, z: this.depth * 0.5 },
-      rotation: { x: 0, y: 0, z: 0 },
-      scale: { x: this.width, y: this.height, z: wallThickness },
-      texture: {
-        cell: wallMat.userData.textureCell,
-        repeat: normalizeTextureSettings(wallMat.userData.textureRepeat),
-        rotation: 0,
-      },
-      material: materialToEditableSurface(wallMat, this.wallColor),
-      collider: true,
-    }, frontWallCollider);
-
-    // Left wall
-    const sideWallGeo = new THREE.BoxGeometry(wallThickness, this.height, this.depth);
-    const leftWall = new THREE.Mesh(sideWallGeo, wallMat);
-    leftWall.position.set(-this.width * 0.5, this.height * 0.5, 0);
-    leftWall.name = 'LeftWall';
-    leftWall.castShadow = true;
-    leftWall.receiveShadow = true;
-    this.group.add(leftWall);
-    const leftWallCollider = {
-      mesh: leftWall,
-      aabb: AABB.fromMesh(leftWall),
-      type: 'wall',
-    };
-    this.colliders.push(leftWallCollider);
-    this._registerBuiltInPrimitive(leftWall, {
-      id: 'builtin-left-wall',
-      name: leftWall.name,
-      type: 'box',
-      position: { x: -this.width * 0.5, y: this.height * 0.5, z: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      scale: { x: wallThickness, y: this.height, z: this.depth },
-      texture: {
-        cell: wallMat.userData.textureCell,
-        repeat: normalizeTextureSettings(wallMat.userData.textureRepeat),
-        rotation: 0,
-      },
-      material: materialToEditableSurface(wallMat, this.wallColor),
-      collider: true,
-    }, leftWallCollider);
-
-    // Right wall
-    const rightWall = new THREE.Mesh(sideWallGeo, wallMat);
-    rightWall.position.set(this.width * 0.5, this.height * 0.5, 0);
-    rightWall.name = 'RightWall';
-    rightWall.castShadow = true;
-    rightWall.receiveShadow = true;
-    this.group.add(rightWall);
-    const rightWallCollider = {
-      mesh: rightWall,
-      aabb: AABB.fromMesh(rightWall),
-      type: 'wall',
-    };
-    this.colliders.push(rightWallCollider);
-    this._registerBuiltInPrimitive(rightWall, {
-      id: 'builtin-right-wall',
-      name: rightWall.name,
-      type: 'box',
-      position: { x: this.width * 0.5, y: this.height * 0.5, z: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      scale: { x: wallThickness, y: this.height, z: this.depth },
-      texture: {
-        cell: wallMat.userData.textureCell,
-        repeat: normalizeTextureSettings(wallMat.userData.textureRepeat),
-        rotation: 0,
-      },
-      material: materialToEditableSurface(wallMat, this.wallColor),
-      collider: true,
-    }, rightWallCollider);
-
-    // Ceiling
-    const ceilingGeo = new THREE.PlaneGeometry(this.width, this.depth);
-    const ceiling = new THREE.Mesh(ceilingGeo, wallMat);
-    ceiling.rotation.x = Math.PI * 0.5;
-    ceiling.position.y = this.height;
-    ceiling.name = 'Ceiling';
-    ceiling.receiveShadow = true;
-    this.group.add(ceiling);
-    const ceilingCollider = {
-      mesh: ceiling,
-      aabb: AABB.fromMesh(ceiling),
-      type: 'surface',
-    };
-    this.colliders.push(ceilingCollider);
-    this._registerBuiltInPrimitive(ceiling, {
-      id: 'builtin-ceiling',
-      name: ceiling.name,
-      type: 'plane',
-      position: { x: 0, y: this.height, z: 0 },
-      rotation: { x: ceiling.rotation.x, y: ceiling.rotation.y, z: ceiling.rotation.z },
-      scale: { x: this.width, y: this.depth, z: 1 },
-      texture: {
-        cell: wallMat.userData.textureCell,
-        repeat: normalizeTextureSettings(wallMat.userData.textureRepeat),
-        rotation: 0,
-      },
-      material: materialToEditableSurface(wallMat, this.wallColor),
-      collider: true,
-      castShadow: false,
-      receiveShadow: true,
-    }, ceilingCollider);
-  }
-
-  buildFurniture() {
-    const addBox = ({
-      name,
-      width,
-      height,
-      depth,
-      material,
-      position,
-      rotation = [0, 0, 0],
-      type = 'furniture',
-      collider = true,
-      runnable = false,
-      climbable = false,
-      parent = this.group,
-      userData = {},
-    }) => {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
-      mesh.position.set(position[0], position[1], position[2]);
-      mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
-      mesh.name = name;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      Object.assign(mesh.userData, userData);
-      parent.add(mesh);
-
-      let colliderEntry = null;
-      if (collider) {
-        colliderEntry = {
-          mesh,
-          aabb: AABB.fromMesh(mesh),
-          type,
-          metadata: { runnable, climbable, ...userData },
-        };
-        this.colliders.push(colliderEntry);
-      }
-
-      if (runnable) this.runnables.push(mesh);
-      if (climbable) this.climbables.push(mesh);
-      this._registerBuiltInPrimitive(mesh, {
-        id: `builtin-${name}`,
-        name,
-        type: 'box',
-        position: { x: position[0], y: position[1], z: position[2] },
-        rotation: { x: rotation[0], y: rotation[1], z: rotation[2] },
-        scale: { x: width, y: height, z: depth },
-        texture: {
-          cell: mesh.material?.userData?.textureCell ?? null,
-          repeat: normalizeTextureSettings(mesh.material?.userData?.textureRepeat ?? 1),
-          rotation: 0,
-        },
-        material: materialToEditableSurface(mesh.material, '#ffffff'),
-        collider,
-        castShadow: mesh.castShadow,
-        receiveShadow: mesh.receiveShadow,
-      }, colliderEntry);
-      return mesh;
-    };
-
-    const woodMat = this._createSurfaceMaterial(this.furnitureColor, {
-      textureCell: ROOM_TEXTURE_CELLS.cabinet,
-      textureRepeat: 1.5,
-      roughness: 0.92,
-      metalness: 0.04,
-    });
-    const woodAltMat = this._createSurfaceMaterial(this.furnitureColor, {
-      textureCell: ROOM_TEXTURE_CELLS.cabinetDark,
-      textureRepeat: 1,
-      roughness: 0.95,
-      metalness: 0.03,
-    });
-    const counterMat = this._createSurfaceMaterial('#d7c6af', {
-      textureCell: ROOM_TEXTURE_CELLS.counter,
-      textureRepeat: 1.25,
-      roughness: 0.72,
-      metalness: 0.08,
-    });
-    const backsplashMat = this._createSurfaceMaterial('#dfeaf4', {
-      textureCell: ROOM_TEXTURE_CELLS.tile,
-      textureRepeat: 2,
-      roughness: 0.8,
-      metalness: 0.05,
-    });
-    const applianceMat = this._createSurfaceMaterial('#d8d8d8', {
-      textureCell: ROOM_TEXTURE_CELLS.appliance,
-      textureRepeat: 1,
-      roughness: 0.52,
-      metalness: 0.18,
-    });
-    const fridgeMat = this._createSurfaceMaterial('#d8d8d8', {
-      textureCell: ROOM_TEXTURE_CELLS.fridge,
-      textureRepeat: 1,
-      roughness: 0.48,
-      metalness: 0.14,
-    });
-    const fabricMat = this._createSurfaceMaterial('#eadfbc', {
-      textureCell: ROOM_TEXTURE_CELLS.fabric,
-      textureRepeat: 1.5,
-      roughness: 1,
-      metalness: 0,
-    });
-
-    // Back-wall counter run with stove, sink, and cabinets.
-    const counterY = 0.9;
-    const counterZ = -this.depth * 0.5 + 0.55;
-    const baseDepth = 0.72;
-
-    addBox({
-      name: 'BackCounterLeft',
-      width: 1.4,
-      height: 0.9,
-      depth: baseDepth,
-      material: woodMat,
-      position: [-2.05, counterY * 0.5, counterZ],
-    });
-
-    addBox({
-      name: 'BackCounterSink',
-      width: 1.7,
-      height: 0.9,
-      depth: baseDepth,
-      material: woodMat,
-      position: [-0.25, counterY * 0.5, counterZ],
-    });
-
-    addBox({
-      name: 'BackCounterRight',
-      width: 1.45,
-      height: 0.9,
-      depth: baseDepth,
-      material: woodMat,
-      position: [1.7, counterY * 0.5, counterZ],
-    });
-
-    const counterTop = addBox({
-      name: 'BackCounterTop',
-      width: 4.8,
-      height: 0.12,
-      depth: 0.78,
-      material: counterMat,
-      position: [0, counterY + 0.06, counterZ],
-      type: 'surface',
-      runnable: true,
-    });
-
-    addBox({
-      name: 'CounterBacksplash',
-      width: 4.8,
-      height: 0.56,
-      depth: 0.08,
-      material: backsplashMat,
-      position: [0, 1.34, this.depth * -0.5 + 0.47],
-      type: 'wall',
-    });
-
-    addBox({
-      name: 'UpperCabinetLeft',
-      width: 1.35,
-      height: 0.65,
-      depth: 0.42,
-      material: woodAltMat,
-      position: [-2.05, 1.83, this.depth * -0.5 + 0.45],
-    });
-    addBox({
-      name: 'UpperCabinetCenter',
-      width: 1.8,
-      height: 0.65,
-      depth: 0.42,
-      material: woodAltMat,
-      position: [-0.2, 1.83, this.depth * -0.5 + 0.45],
-    });
-    addBox({
-      name: 'UpperCabinetRight',
-      width: 1.55,
-      height: 0.65,
-      depth: 0.42,
-      material: woodAltMat,
-      position: [1.7, 1.83, this.depth * -0.5 + 0.45],
-    });
-
-    addBox({
-      name: 'StoveOven',
-      width: 1.05,
-      height: 0.95,
-      depth: 0.62,
-      material: applianceMat,
-      position: [-2.02, 0.48, counterZ + 0.02],
-      type: 'wall',
-    });
-
-    addBox({
-      name: 'StoveTop',
-      width: 1.08,
-      height: 0.08,
-      depth: 0.64,
-      material: new THREE.MeshBasicMaterial({ color: '#111111' }),
-      position: [-2.02, 0.91, counterZ + 0.02],
-      type: 'wall',
-      collider: false,
-    });
-
-    const knobPositions = [-2.23, -2.02, -1.81];
-    knobPositions.forEach((x, i) => {
-      addBox({
-        name: `StoveKnob${i}`,
-        width: 0.08,
-        height: 0.04,
-        depth: 0.05,
-        material: new THREE.MeshBasicMaterial({ color: '#2b2b2b' }),
-        position: [x, 0.79, counterZ + 0.33],
-        type: 'furniture',
-        collider: false,
-      });
-    });
-
-    const sink = addBox({
-      name: 'SinkBasin',
-      width: 0.72,
-      height: 0.2,
-      depth: 0.5,
-      material: applianceMat,
-      position: [-0.35, 0.78, counterZ + 0.02],
-      type: 'wall',
-    });
-
-    addBox({
-      name: 'SinkFaucet',
-      width: 0.08,
-      height: 0.45,
-      depth: 0.08,
-      material: applianceMat,
-      position: [-0.18, 1.0, counterZ + 0.18],
-      type: 'wall',
-      collider: false,
-    });
-
-    addBox({
-      name: 'Microwave',
-      width: 0.8,
-      height: 0.42,
-      depth: 0.5,
-      material: applianceMat,
-      position: [1.45, 1.15, counterZ + 0.04],
-      type: 'furniture',
-    });
-
-    addBox({
-      name: 'Fridge',
-      width: 1.0,
-      height: 2.05,
-      depth: 0.8,
-      material: fridgeMat,
-      position: [2.95, 1.025, -2.55],
-      type: 'wall',
-    });
-    addBox({
-      name: 'FridgeHandle',
-      width: 0.06,
-      height: 1.2,
-      depth: 0.05,
-      material: new THREE.MeshBasicMaterial({ color: '#e0e0e0' }),
-      position: [3.43, 1.1, -2.15],
-      type: 'furniture',
-      collider: false,
-    });
-
-    addBox({
-      name: 'TrashCan',
-      width: 0.38,
-      height: 0.62,
-      depth: 0.38,
-      material: new THREE.MeshBasicMaterial({ color: '#7f7f7f' }),
-      position: [2.6, 0.31, 1.8],
-      type: 'furniture',
-      collider: true,
-    });
-
-    // Dining table with chairs.
-    const tableHeight = 0.78;
-    const tableTop = addBox({
-      name: 'DiningTableTop',
-      width: 2.25,
-      height: 0.1,
-      depth: 1.35,
-      material: woodMat,
-      position: [-1.9, tableHeight, 1.2],
-      type: 'surface',
-      runnable: true,
-    });
-
-    const tableLegPositions = [
-      [-2.8, tableHeight * 0.5, 0.55],
-      [-1.0, tableHeight * 0.5, 0.55],
-      [-2.8, tableHeight * 0.5, 1.85],
-      [-1.0, tableHeight * 0.5, 1.85],
-    ];
-
-    tableLegPositions.forEach((position, i) => {
-      addBox({
-        name: `DiningTableLeg${i}`,
-        width: 0.12,
-        height: tableHeight,
-        depth: 0.12,
-        material: woodMat,
-        position,
-        type: 'climbable',
-        climbable: true,
-      });
-    });
-
-    const chairPositions = [
-      [-2.9, 0, 0.6, 0],
-      [-0.9, 0, 0.6, 0],
-      [-2.9, 0, 1.85, Math.PI],
-      [-0.9, 0, 1.85, Math.PI],
-    ];
-
-    chairPositions.forEach((entry, i) => {
-      const [x, , z, rotationY] = entry;
-      addBox({
-        name: `DiningChairSeat${i}`,
-        width: 0.5,
-        height: 0.1,
-        depth: 0.5,
-        material: fabricMat,
-        position: [x, 0.45, z],
-        rotation: [0, rotationY, 0],
-        type: 'surface',
-        runnable: true,
-      });
-      addBox({
-        name: `DiningChairBack${i}`,
-        width: 0.5,
-        height: 0.75,
-        depth: 0.1,
-        material: woodAltMat,
-        position: [x, 0.82, z - 0.22],
-        rotation: [0, rotationY, 0],
-        type: 'wall',
-      });
-    });
-
-    // Closed doors for later interaction.
-    this.closedDoors = [];
-    const frontDoor = addBox({
-      name: 'FrontDoor',
-      width: 0.95,
-      height: 2.1,
-      depth: 0.12,
-      material: woodMat,
-      position: [3.0, 1.05, this.depth * 0.5 - 0.09],
-      type: 'wall',
-      userData: { openable: true, closed: true, hinge: 'left' },
-    });
-    this.closedDoors.push(frontDoor);
-
-    const pantryDoor = addBox({
-      name: 'PantryDoor',
-      width: 0.82,
-      height: 2.0,
-      depth: 0.12,
-      material: woodMat,
-      position: [-this.width * 0.5 + 0.09, 1.0, 1.1],
-      rotation: [0, Math.PI * 0.5, 0],
-      type: 'wall',
-      userData: { openable: true, closed: true, hinge: 'right' },
-    });
-    this.closedDoors.push(pantryDoor);
-
-    // Decorative kitchen window above the sink.
-    addBox({
-      name: 'KitchenWindowFrame',
-      width: 1.8,
-      height: 1.0,
-      depth: 0.08,
-      material: new THREE.MeshBasicMaterial({ color: '#e6d2b0' }),
-      position: [-0.35, 1.85, this.depth * -0.5 + 0.5],
-      type: 'furniture',
-      collider: false,
-    });
-    addBox({
-      name: 'KitchenWindowGlass',
-      width: 1.45,
-      height: 0.72,
-      depth: 0.03,
-      material: new THREE.MeshBasicMaterial({ color: '#a7d8ff', transparent: true, opacity: 0.55 }),
-      position: [-0.35, 1.83, this.depth * -0.5 + 0.46],
-      type: 'furniture',
-      collider: false,
-    });
-
-    // Back-counter accessories.
-    addBox({
-      name: 'DishRack',
-      width: 0.6,
-      height: 0.15,
-      depth: 0.42,
-      material: new THREE.MeshBasicMaterial({ color: '#d9d9d9' }),
-      position: [0.95, 1.0, counterZ + 0.12],
-      type: 'furniture',
-      collider: false,
-    });
-    addBox({
-      name: 'DishTowel',
-      width: 0.28,
-      height: 0.55,
-      depth: 0.05,
-      material: fabricMat,
-      position: [1.55, 0.88, counterZ + 0.36],
-      type: 'furniture',
-      collider: false,
-    });
-
-    // Keep references for future interaction.
-    this.kitchenFixtures = {
-      counterTop,
-      sink,
-      tableTop,
-      fridge: this.group.getObjectByName('Fridge'),
-    };
-  }
-
-  buildLoot() {
-    // Cheese wedge: glowing loot item on countertop
-    const cheeseGeo = new THREE.TetrahedronGeometry(0.25, 0);
-    const cheeseMat = this._createSurfaceMaterial('#ffdd66');
-    cheeseMat.emissive = new THREE.Color('#ffcc00');
-    cheeseMat.emissiveIntensity = 0.8;
-
-    const counterTop = this.kitchenFixtures?.counterTop;
-    const lootY = counterTop ? counterTop.position.y + 0.32 : 1.25;
-    const lootZ = counterTop ? counterTop.position.z : -this.depth * 0.35;
-
-    const cheese = new THREE.Mesh(cheeseGeo, cheeseMat);
-    cheese.position.set(0.5, lootY, lootZ); // On top of counter
-    cheese.name = 'CheeseLoot';
-    cheese.castShadow = true;
-    cheese.receiveShadow = true;
-    cheese.userData.baseY = cheese.position.y;
-    this.group.add(cheese);
-
-    this.lootItems.push(cheese);
-    this.colliders.push({
-      mesh: cheese,
-      aabb: AABB.fromMesh(cheese),
-      type: 'loot',
-      metadata: { itemId: 'cheese', carried: false },
-    });
-
-    // Particle sparkle effect (simple glow around cheese)
-    const sparkleGeo = new THREE.SphereGeometry(0.35, 8, 8);
-    const sparkleMat = new THREE.MeshBasicMaterial({
-      color: '#ffdd88',
-      transparent: true,
-      opacity: 0.3,
-      wireframe: true,
-    });
-    const sparkle = new THREE.Mesh(sparkleGeo, sparkleMat);
-    sparkle.position.copy(cheese.position);
-    sparkle.name = 'CheeseSparkle';
-    this.group.add(sparkle);
-
-    // Store sparkle for animation
-    cheese.userData.sparkle = sparkle;
   }
 
   /**

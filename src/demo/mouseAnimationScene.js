@@ -42,10 +42,10 @@ export async function createMouseAnimationScene({ canvas, forceWebGL = false } =
 
   // Create room
   const room = new Room({
-    width: 8,
-    depth: 8,
+    width: 48,
+    depth: 48,
     height: 4,
-    scale: 4,
+    scale: 1,
   });
   scene.add(room.getGroup());
   await room.ready;

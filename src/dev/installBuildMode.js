@@ -62,15 +62,15 @@ function createDefaultPrimitive(type, app) {
 
   if (type === 'plane') {
     primitive.rotation.x = -Math.PI * 0.5;
-    primitive.scale = { x: grid.cellWidth, y: grid.cellDepth, z: 1 };
+    primitive.scale = { x: 1, y: 1, z: 1 };
   }
 
   if (type === 'cylinder') {
-    primitive.scale = { x: grid.cellWidth, y: 1.5, z: grid.cellDepth };
+    primitive.scale = { x: 1, y: 1.5, z: 1 };
   }
 
   if (type === 'box') {
-    primitive.scale = { x: grid.cellWidth, y: 1, z: grid.cellDepth };
+    primitive.scale = { x: 1, y: 1, z: 1 };
   }
 
   return app.room.snapPrimitiveToGrid(primitive, { snapY: true, snapScale: true });
@@ -357,6 +357,7 @@ class BuildModeEditor {
           snapY: true,
           snapPosition: mode !== 'scale',
           snapScale: mode === 'scale',
+          allowEdgeOverflow: true,
         })
         : {
           position: {
@@ -835,6 +836,8 @@ class BuildModeEditor {
       const input = document.createElement('input');
       input.type = 'number';
       Object.assign(input, attrs);
+      input.removeAttribute('max');
+      input.removeAttribute('min');
       this._styleField(input);
       input.addEventListener('input', () => {
         onChange(axis, Number(input.value || 0));
@@ -869,6 +872,8 @@ class BuildModeEditor {
       const input = document.createElement('input');
       input.type = 'number';
       Object.assign(input, attrs);
+      input.removeAttribute('max');
+      input.removeAttribute('min');
       this._styleField(input);
       input.addEventListener('input', () => {
         onChange(axis, Number(input.value || 0));
@@ -891,6 +896,8 @@ class BuildModeEditor {
     const input = document.createElement('input');
     input.type = 'number';
     Object.assign(input, attrs);
+    input.removeAttribute('max');
+    input.removeAttribute('min');
     this._styleField(input);
     input.addEventListener('input', () => {
       onChange(input.value === '' ? null : Number(input.value));
@@ -1186,6 +1193,7 @@ class BuildModeEditor {
       snapY,
       snapPosition,
       snapScale,
+      allowEdgeOverflow: true,
     });
     this.app.room.upsertEditablePrimitive(snapped);
     this.layout = this.app.room.getEditableLayout();
@@ -1212,7 +1220,7 @@ class BuildModeEditor {
     copy.name = `${primitive.name}-copy`;
     copy.position.x += grid.cellWidth;
     copy.position.z += grid.cellDepth;
-    const snapped = this.app.room.snapPrimitiveToGrid(copy, { snapY: true });
+    const snapped = this.app.room.snapPrimitiveToGrid(copy, { snapY: true, allowEdgeOverflow: true });
     this.app.room.upsertEditablePrimitive(snapped);
     this.layout = this.app.room.getEditableLayout();
     this.selectedId = snapped.id;

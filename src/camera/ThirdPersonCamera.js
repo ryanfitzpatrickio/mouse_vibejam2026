@@ -60,6 +60,7 @@ export class ThirdPersonCamera {
     this._targetPosition = new THREE.Vector3();
     this._pivot = new THREE.Vector3();
     this._smoothedPivot = new THREE.Vector3();
+    this._firstUpdate = true;
     this._velocity = new THREE.Vector3();
 
     this._raycaster = new THREE.Raycaster();
@@ -210,7 +211,14 @@ export class ThirdPersonCamera {
     const dt = Math.max(0.0001, delta || 0.016);
 
     this._pivot.copy(targetPosition).add(this.shoulderOffset);
-    this._smoothedPivot.lerp(this._pivot, 1 - Math.exp(-this.stiffness * dt));
+
+    const snap = this._firstUpdate;
+    if (snap) {
+      this._smoothedPivot.copy(this._pivot);
+      this._firstUpdate = false;
+    } else {
+      this._smoothedPivot.lerp(this._pivot, 1 - Math.exp(-this.stiffness * dt));
+    }
 
     this._rotationEuler.set(this.pitch, this.yaw, 0);
     this._desiredQuaternion.setFromEuler(this._rotationEuler);
@@ -228,8 +236,12 @@ export class ThirdPersonCamera {
       .addScaledVector(this._lookDirection, collisionResult.armLength)
       .add(this._collisionCorrection);
 
-    const alpha = 1 - Math.exp(-this.stiffness * dt);
-    this._currentPosition.lerp(this._targetPosition, alpha);
+    if (snap) {
+      this._currentPosition.copy(this._targetPosition);
+    } else {
+      const alpha = 1 - Math.exp(-this.stiffness * dt);
+      this._currentPosition.lerp(this._targetPosition, alpha);
+    }
     this.camera.position.copy(this._currentPosition);
     this._actualArmLength = this.camera.position.distanceTo(this._smoothedPivot);
 
@@ -293,19 +305,27 @@ export class ThirdPersonCamera {
       this._raycaster.set(pivot, sampleDirection);
       this._raycaster.far = sampleDistance;
 
-      const intersections = this._raycaster.intersectObjects(objects, true);
+      const intersections = this._raycaster.intersectObjects(objects, false)
+        .filter((intersection) => {
+          const object = intersection.object;
+          const surfaceType = object?.userData?.surfaceType;
+          if (object?.userData?.cameraOccluder === false) return false;
+          if (surfaceType === 'floor') return false;
+          if (object?.userData?.runnable === true) return false;
+          return true;
+        });
       if (!intersections.length) continue;
       const hit = intersections[0];
+      const hitIsPlane = hit.object?.geometry?.type === 'PlaneGeometry'
+        || hit.object?.geometry?.isPlaneGeometry === true
+        || hit.object?.userData?.surfaceType === 'plane';
+      const surfacePadding = hitIsPlane ? 0.28 : 0.18;
 
-      const projectedDistance = Math.max(
-        0,
-        this._tempVectorA.copy(hit.point).sub(pivot).dot(forward),
-      );
-      const collisionDistance = Math.max(this.minArmLength, projectedDistance - 0.32);
+      const collisionDistance = Math.max(this.minArmLength, hit.distance - surfacePadding);
       safeArm = Math.min(safeArm, collisionDistance);
 
-      if (!bestHit || projectedDistance < bestHit.projectedDistance) {
-        bestHit = { hit, projectedDistance };
+      if (!bestHit || hit.distance < bestHit.hit.distance) {
+        bestHit = { hit };
       }
     }
 
@@ -318,7 +338,11 @@ export class ThirdPersonCamera {
         .normalize();
       const wallPoint = this._tempVectorC.copy(bestHit.hit.point);
       const signedDistance = wallNormal.dot(this._tempVectorD.copy(candidateCamera).sub(wallPoint));
-      const wallClearance = 0.06;
+      const wallClearance = bestHit.hit.object?.geometry?.type === 'PlaneGeometry'
+        || bestHit.hit.object?.geometry?.isPlaneGeometry === true
+        || bestHit.hit.object?.userData?.surfaceType === 'plane'
+        ? 0.18
+        : 0.06;
 
       if (signedDistance < wallClearance) {
         correction.copy(wallNormal).multiplyScalar(wallClearance - signedDistance);

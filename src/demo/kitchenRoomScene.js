@@ -41,10 +41,10 @@ export async function createKitchenRoomScene({ canvas, forceWebGL = false } = {}
 
   // Create the kitchen room
   const room = new Room({
-    width: 8,
-    depth: 8,
+    width: 48,
+    depth: 48,
     height: 4,
-    scale: 4,
+    scale: 1,
     floorColor: '#d4a574',
     wallColor: '#e8dcc8',
     furnitureColor: '#8b6f47',

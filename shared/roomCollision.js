@@ -1,5 +1,5 @@
 export const ROOM_COLLISION_CONFIG = Object.freeze({
-  scaleFactor: 4,
+  scaleFactor: 1,
 });
 
 function scaleVec3(value = {}, scaleFactor = 1) {
