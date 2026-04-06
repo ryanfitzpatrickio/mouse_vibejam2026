@@ -18,6 +18,11 @@ export class MouseAnimationManager {
     this.actions = new Map();
     this.currentAction = null;
     this.currentState = 'idle';
+    this._emoteActive = false;
+  }
+
+  get emoteActive() {
+    return this._emoteActive;
   }
 
   attach(root, clips = []) {
@@ -67,6 +72,35 @@ export class MouseAnimationManager {
         previous.fadeOut(this.fadeDuration);
         action.crossFadeFrom(previous, this.fadeDuration, false);
       }
+    }
+  }
+
+  playEmoteClip(clipName) {
+    if (!this.mixer) return;
+    const action = this.actions.get(clipName);
+    if (!action) return;
+
+    this._emoteActive = true;
+
+    const previous = this.currentAction;
+    this.currentAction = action;
+    action.enabled = true;
+    action.reset();
+    action.setLoop(THREE.LoopOnce, 1);
+    action.clampWhenFinished = true;
+    action.play();
+
+    if (previous && previous !== action) {
+      previous.fadeOut(this.fadeDuration);
+      action.crossFadeFrom(previous, this.fadeDuration, false);
+    }
+  }
+
+  stopEmote() {
+    if (!this._emoteActive) return;
+    this._emoteActive = false;
+    if (this.currentAction) {
+      this.currentAction.fadeOut(this.fadeDuration);
     }
   }
 

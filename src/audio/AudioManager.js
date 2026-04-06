@@ -172,6 +172,161 @@ const SoundSynth = {
 
     return maxGain;
   },
+
+  emoteWave(audioContext) {
+    const now = audioContext.currentTime;
+    const notes = [500, 700, 500, 700];
+    let maxGain = null;
+    notes.forEach((freq, i) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = 'sine';
+      const delay = i * 0.12;
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(0.18, now + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.1);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.1);
+      if (!maxGain) maxGain = gain;
+    });
+    return maxGain;
+  },
+
+  emoteDance(audioContext) {
+    const now = audioContext.currentTime;
+    const bass = [200, 250, 300, 250, 200];
+    let maxGain = null;
+    bass.forEach((freq, i) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = 'triangle';
+      const delay = i * 0.15;
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(0.2, now + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.12);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.12);
+      if (!maxGain) maxGain = gain;
+    });
+    return maxGain;
+  },
+
+  emoteLaugh(audioContext) {
+    const now = audioContext.currentTime;
+    for (let i = 0; i < 4; i++) {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = 'sine';
+      const delay = i * 0.1;
+      const freq = 600 + (i % 2) * 200;
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(0.15, now + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.08);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.08);
+    }
+    return null;
+  },
+
+  emoteCry(audioContext) {
+    const now = audioContext.currentTime;
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.6);
+    osc.frequency.exponentialRampToValueAtTime(350, now + 1.0);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.linearRampToValueAtTime(0.2, now + 0.3);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(now);
+    osc.stop(now + 0.8);
+    return gain;
+  },
+
+  emoteAngry(audioContext) {
+    const now = audioContext.currentTime;
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.exponentialRampToValueAtTime(350, now + 0.2);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.5);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(now);
+    osc.stop(now + 0.5);
+    return gain;
+  },
+
+  emoteLove(audioContext) {
+    const now = audioContext.currentTime;
+    [523, 659, 784].forEach((freq, i) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = 'sine';
+      const delay = i * 0.15;
+      osc.frequency.setValueAtTime(freq, now + delay);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.2, now + delay + 0.2);
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(0.18, now + delay + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.25);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.25);
+    });
+    return null;
+  },
+
+  emoteThumbsup(audioContext) {
+    const now = audioContext.currentTime;
+    [400, 600, 800].forEach((freq, i) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = 'sine';
+      const delay = i * 0.08;
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gain.gain.setValueAtTime(0, now + delay);
+      gain.gain.linearRampToValueAtTime(0.15, now + delay + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.15);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.15);
+    });
+    return null;
+  },
+
+  emoteScream(audioContext) {
+    const now = audioContext.currentTime;
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(900, now + 0.15);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.4);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(now);
+    osc.stop(now + 0.5);
+    return gain;
+  },
 };
 
 /**
@@ -226,18 +381,16 @@ export class AudioManager {
     const maxDistance = 20;
     const volume = Math.max(0, 1 - distance / maxDistance);
 
-    if (volume <= 0) return; // Too far to hear
+    if (volume <= 0) return;
 
-    // Spatial panning
     const direction = new THREE.Vector3().subVectors(position, cameraPosition);
     const angle = Math.atan2(direction.x, direction.z);
-    const pan = Math.sin(angle); // -1 to 1
+    const pan = Math.sin(angle);
 
     const panNode = this.audioContext.createStereoPanner();
     panNode.pan.value = Math.min(1, Math.max(-1, pan));
     panNode.connect(this.sfxContext);
 
-    // Play effect based on type
     let sound;
     switch (type) {
       case 'squeak':
@@ -262,11 +415,43 @@ export class AudioManager {
         sound = SoundSynth.beep(this.audioContext, 500, 0.08);
     }
 
-    // Apply volume based on distance
     sound.gain.value *= volume;
     sound.connect(panNode);
 
     this.spatialSounds.push({ sound, panNode, position, type });
+  }
+
+  playEmote(soundName, position) {
+    const camPos = this.listener.position;
+    if (!camPos) return;
+
+    const distance = position.distanceTo(camPos);
+    const maxDistance = 20;
+    const volume = Math.max(0, 1 - distance / maxDistance);
+    if (volume <= 0) return;
+
+    const direction = new THREE.Vector3().subVectors(position, camPos);
+    const angle = Math.atan2(direction.x, direction.z);
+    const panNode = this.audioContext.createStereoPanner();
+    panNode.pan.value = Math.min(1, Math.max(-1, Math.sin(angle)));
+    panNode.connect(this.sfxContext);
+
+    const synthFn = {
+      wave: 'emoteWave',
+      dance: 'emoteDance',
+      laugh: 'emoteLaugh',
+      cry: 'emoteCry',
+      angry: 'emoteAngry',
+      love: 'emoteLove',
+      thumbsup: 'emoteThumbsup',
+      scream: 'emoteScream',
+    }[soundName];
+
+    const sound = synthFn ? SoundSynth[synthFn]?.(this.audioContext) : null;
+    if (sound) {
+      sound.gain.value *= volume;
+      sound.connect(panNode);
+    }
   }
 
   /**

@@ -3,7 +3,9 @@
  */
 import * as THREE from 'three';
 import { Mouse } from '../entities/Mouse.js';
+import { EmoteManager } from '../emote/EmoteManager.js';
 import { attachEdgeOutlines } from '../materials/index.js';
+import { getAudioManager } from '../audio/AudioManager.js';
 
 const LERP_SPEED = 12;
 
@@ -32,7 +34,6 @@ export class RemotePlayerManager {
       if (!this.players.has(id) && !this._spawning.has(id)) {
         this._spawn(id, data);
       } else if (this.players.has(id)) {
-        // Update targets for interpolation
         const entry = this.players.get(id);
         entry.targetPos.set(
           data.position?.x ?? 0,
@@ -40,6 +41,11 @@ export class RemotePlayerManager {
           data.position?.z ?? 0,
         );
         entry.targetRot = data.rotation ?? 0;
+        if (data.emote && !entry.emoteManager.isPlaying) {
+          entry.emoteManager.play(data.emote);
+        } else if (!data.emote && entry.emoteManager.isPlaying) {
+          entry.emoteManager.cancel();
+        }
       }
     }
 
@@ -78,15 +84,22 @@ export class RemotePlayerManager {
       const speed = dt > 0 ? Math.sqrt(dx * dx + dz * dz) / dt : 0;
 
       let animState;
-      if (speed > 5) animState = 'run';
-      else if (speed > 0.5) animState = 'walk';
-      else animState = 'idle';
+      if (entry.emoteManager.isPlaying) {
+        animState = entry.animState;
+      } else if (speed > 5) {
+        animState = 'run';
+      } else if (speed > 0.5) {
+        animState = 'walk';
+      } else {
+        animState = 'idle';
+      }
 
       if (animState !== entry.animState) {
         entry.animState = animState;
         entry.mouse.setAnimationState(animState);
       }
 
+      entry.emoteManager.update(dt);
       entry.mouse.update(dt);
     }
   }
@@ -121,8 +134,12 @@ export class RemotePlayerManager {
     attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
     this.scene.add(mouse);
 
+    const audioManager = getAudioManager();
+    const emoteManager = new EmoteManager({ mouse, audioManager });
+
     this.players.set(id, {
       mouse,
+      emoteManager,
       targetPos: new THREE.Vector3(
         data.position?.x ?? 0,
         groundY,

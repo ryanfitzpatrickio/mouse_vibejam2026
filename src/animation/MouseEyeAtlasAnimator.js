@@ -98,6 +98,7 @@ export class MouseEyeAtlasAnimator {
     this._frameDurationMultiplier = 1.5;
     this.loaded = false;
     this.opacity = 1;
+    this._expressionOverride = null;
   }
 
   async load() {
@@ -229,7 +230,7 @@ export class MouseEyeAtlasAnimator {
   }
 
   setState(state, { immediate = false } = {}) {
-    const expression = this.stateToExpression[state] ?? 'idle';
+    const expression = this._expressionOverride ?? this.stateToExpression[state] ?? 'idle';
     this.currentState = state;
 
     if (expression !== this.currentExpression) {
@@ -247,6 +248,28 @@ export class MouseEyeAtlasAnimator {
       this.frameTimer = 0;
       this._applyFrame();
     }
+  }
+
+  setExpressionOverride(expression) {
+    this._expressionOverride = expression;
+    const row = STATE_TO_ROW[expression];
+    if (row != null && row !== this.currentRow) {
+      this.currentExpression = expression;
+      this.currentRow = row;
+      this.currentFrame = 0;
+      this.frameTimer = 0;
+      this._applyFrame();
+    }
+  }
+
+  clearExpressionOverride() {
+    this._expressionOverride = null;
+    const expression = this.stateToExpression[this.currentState] ?? 'idle';
+    this.currentExpression = expression;
+    this.currentRow = STATE_TO_ROW[expression] ?? 0;
+    this.currentFrame = 0;
+    this.frameTimer = 0;
+    this._applyFrame();
   }
 
   update(delta) {

@@ -451,6 +451,51 @@ export class Room {
     this.glbLoader.setMeshoptDecoder(MeshoptDecoder);
   }
 
+  _applyGlbChromaKey(scene) {
+    const processed = new Set();
+    scene.traverse((child) => {
+      if (!child.isMesh) return;
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      materials.forEach((material) => {
+        if (!material?.map || processed.has(material.map)) return;
+        const texture = material.map;
+        const image = texture.image;
+        if (!image || processed.has(image)) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width || image.videoWidth || 1;
+        canvas.height = image.height || image.videoHeight || 1;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(image, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        let changed = false;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          if (g > 200 && r < 80 && b < 80) {
+            data[i + 3] = 0;
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          ctx.putImageData(imageData, 0, 0);
+          texture.image = canvas;
+          texture.needsUpdate = true;
+          material.transparent = true;
+          material.alphaTest = 0.1;
+          material.needsUpdate = true;
+        }
+
+        processed.add(texture);
+        processed.add(image);
+      });
+    });
+  }
+
   async _loadGlbModelByAssetId(assetId) {
     if (this.glbModelCache.has(assetId)) return this.glbModelCache.get(assetId);
     const registry = await this._loadGlbRegistry();
@@ -461,6 +506,7 @@ export class Room {
     try {
       const gltf = await this.glbLoader.loadAsync(url);
       const scene = gltf.scene;
+      this._applyGlbChromaKey(scene);
       scene.updateMatrixWorld(true);
       this.glbModelCache.set(assetId, scene);
       return scene;
@@ -516,6 +562,7 @@ export class Room {
       prefabInstanceRotation: entry.prefabInstanceRotation ? cloneVectorLike(entry.prefabInstanceRotation, { x: 0, y: 0, z: 0 }) : null,
       prefabInstanceScale: entry.prefabInstanceScale ? cloneVectorLike(entry.prefabInstanceScale, { x: 1, y: 1, z: 1 }) : null,
       collider: entry.collider !== false,
+      colliderClearance: entry.colliderClearance ?? 0,
       castShadow: entry.castShadow !== false,
       receiveShadow: entry.receiveShadow !== false,
       deleted: entry.deleted === true,
@@ -808,6 +855,7 @@ export class Room {
         clone.userData.editablePrimitive = true;
         clone.userData.primitiveId = primitive.id;
         clone.userData.colliderEnabled = primitive.collider;
+        clone.userData.colliderClearance = primitive.colliderClearance ?? 0;
         clone.userData.isGlbClone = true;
         clone.traverse((child) => { child.userData.isGlbClone = true; });
         this.editableGroup.add(clone);
@@ -815,11 +863,15 @@ export class Room {
 
         if (primitive.collider) {
           clone.updateMatrixWorld(true);
+          const aabb = AABB.fromMesh(clone);
+          if (primitive.colliderClearance > 0) {
+            aabb.min.y = Math.max(aabb.min.y, aabb.min.y + primitive.colliderClearance);
+          }
           this.colliders.push({
             mesh: clone,
-            aabb: AABB.fromMesh(clone),
+            aabb,
             type: 'furniture',
-            metadata: { source: 'editable', primitiveId: primitive.id },
+            metadata: { source: 'editable', primitiveId: primitive.id, colliderClearance: primitive.colliderClearance },
           });
         }
         continue;
@@ -1125,6 +1177,10 @@ export class Room {
         return;
       }
       collider.aabb = AABB.fromMesh(collider.mesh);
+      const clearance = collider.metadata?.colliderClearance ?? collider.mesh?.userData?.colliderClearance ?? 0;
+      if (clearance > 0) {
+        collider.aabb.min.y += clearance;
+      }
       active.push(collider);
     });
     return active;

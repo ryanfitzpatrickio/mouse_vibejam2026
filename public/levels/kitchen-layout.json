@@ -86,6 +86,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -131,6 +132,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -176,6 +178,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -221,6 +224,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -266,6 +270,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -311,6 +316,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
       "deleted": false
@@ -356,6 +362,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
       "deleted": false
@@ -401,6 +408,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
       "deleted": false
@@ -446,6 +454,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -491,6 +500,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -536,6 +546,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
       "deleted": false
@@ -581,6 +592,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -626,6 +638,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -671,6 +684,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -716,6 +730,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -761,6 +776,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -806,6 +822,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -880,6 +897,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -937,6 +955,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -994,6 +1013,7 @@
         "z": 1
       },
       "collider": false,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": false,
       "deleted": false
@@ -1051,6 +1071,7 @@
         "z": 1
       },
       "collider": false,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": false,
       "deleted": false
@@ -1096,6 +1117,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1141,6 +1163,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1203,6 +1226,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1265,6 +1289,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1322,6 +1347,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1379,6 +1405,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1436,6 +1463,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1493,6 +1521,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1503,8 +1532,8 @@
       "type": "box",
       "position": {
         "x": 0,
-        "y": 1.6666,
-        "z": 0.1052
+        "y": 1.75,
+        "z": 0
       },
       "rotation": {
         "x": 0,
@@ -1550,6 +1579,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 2,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1607,6 +1637,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1664,6 +1695,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1721,6 +1753,7 @@
         "z": 1
       },
       "collider": true,
+      "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
@@ -1766,6 +1799,7 @@
       "prefabInstanceRotation": null,
       "prefabInstanceScale": null,
       "collider": true,
+      "colliderClearance": 0.5,
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false

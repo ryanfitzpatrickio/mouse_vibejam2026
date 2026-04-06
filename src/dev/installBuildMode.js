@@ -545,6 +545,12 @@ class BuildModeEditor {
         primitive.receiveShadow = checked;
       });
     });
+
+    this.clearanceInput = this._createRangeField(section, 'Clearance', 0, 2, 0.05, (value) => {
+      this._updateSelected((primitive) => {
+        primitive.colliderClearance = value;
+      });
+    });
   }
 
   _createTransformSection() {
@@ -862,6 +868,7 @@ class BuildModeEditor {
       texture: { atlas: 'textures', cell: null, repeat: { x: 1, y: 1 }, rotation: 0 },
       material: { color: '#ffffff', roughness: 0.88, metalness: 0.04 },
       collider: true,
+      colliderClearance: 0,
       castShadow: true,
       receiveShadow: true,
     };
@@ -1232,6 +1239,7 @@ class BuildModeEditor {
       this.colliderToggle,
       this.castShadowToggle,
       this.receiveShadowToggle,
+      this.clearanceInput,
       this.prefabSelect,
     ].forEach((field) => {
       field.disabled = disabled;
@@ -1266,6 +1274,8 @@ class BuildModeEditor {
     this.colliderToggle.checked = primitive.collider;
     this.castShadowToggle.checked = primitive.castShadow;
     this.receiveShadowToggle.checked = primitive.receiveShadow;
+    this.clearanceInput.value = primitive.colliderClearance ?? 0;
+    this.clearanceInput._output.textContent = (primitive.colliderClearance ?? 0).toFixed(2);
     this.prefabSelect.value = primitive.prefabId ?? '';
     this._highlightPalette();
   }

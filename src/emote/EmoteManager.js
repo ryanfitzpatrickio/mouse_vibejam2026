@@ -1,0 +1,59 @@
+const EMOTE_DEFS = [
+  { id: 'wave',     label: 'Wave',      eyeRow: 'surprised', sound: 'wave',     clip: 'Bite',       duration: 1.4 },
+  { id: 'dance',    label: 'Dance',     eyeRow: 'idle',      sound: 'dance',    clip: 'Run',        duration: 2.4 },
+  { id: 'laugh',    label: 'Laugh',     eyeRow: 'surprised', sound: 'laugh',    clip: 'Bite',       duration: 1.2 },
+  { id: 'cry',      label: 'Cry',       eyeRow: 'shocked',   sound: 'cry',      clip: 'Walk',       duration: 2.0 },
+  { id: 'angry',    label: 'Angry',     eyeRow: 'angry',     sound: 'angry',    clip: 'Bite',       duration: 1.0 },
+  { id: 'love',     label: 'Love',      eyeRow: 'surprised', sound: 'love',     clip: 'Idle Alert', duration: 1.8 },
+  { id: 'thumbsup', label: 'Thumbs Up', eyeRow: 'idle',      sound: 'thumbsup', clip: 'Idle Alert', duration: 1.2 },
+  { id: 'scream',   label: 'Scream',    eyeRow: 'shocked',   sound: 'scream',   clip: 'Death',      duration: 1.4 },
+];
+
+export const EMOTES = Object.freeze(EMOTE_DEFS);
+export const EMOTE_MAP = Object.freeze(Object.fromEntries(EMOTE_DEFS.map((e) => [e.id, e])));
+
+export class EmoteManager {
+  constructor({ mouse, audioManager }) {
+    this.mouse = mouse;
+    this.audioManager = audioManager;
+    this.activeEmote = null;
+    this.emoteTimer = 0;
+  }
+
+  play(emoteId) {
+    const def = EMOTE_MAP[emoteId];
+    if (!def) return false;
+    if (this.activeEmote) this.cancel();
+
+    this.activeEmote = def;
+    this.emoteTimer = def.duration;
+
+    this.mouse?.animationManager?.playEmoteClip(def.clip);
+    this.mouse?.eyeAnimator?.setExpressionOverride(def.eyeRow);
+
+    if (this.audioManager && this.mouse?.position) {
+      this.audioManager.playEmote(def.sound, this.mouse.position);
+    }
+    return true;
+  }
+
+  cancel() {
+    if (!this.activeEmote) return;
+    this.activeEmote = null;
+    this.emoteTimer = 0;
+    this.mouse?.animationManager?.stopEmote();
+    this.mouse?.eyeAnimator?.clearExpressionOverride();
+  }
+
+  update(dt) {
+    if (!this.activeEmote) return;
+    this.emoteTimer -= dt;
+    if (this.emoteTimer <= 0) {
+      this.cancel();
+    }
+  }
+
+  get isPlaying() {
+    return this.activeEmote != null;
+  }
+}

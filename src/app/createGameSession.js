@@ -9,6 +9,10 @@ import { HUD } from '../hud/HUD.js';
 import { attachEdgeOutlines } from '../materials/index.js';
 import { NetworkClient } from '../net/NetworkClient.js';
 import { RemotePlayerManager } from '../net/RemotePlayerManager.js';
+import { EmoteManager } from '../emote/EmoteManager.js';
+import { EmoteWheel } from '../emote/EmoteWheel.js';
+import { getAudioManager } from '../audio/AudioManager.js';
+import { OcclusionFader } from '../utils/OcclusionFader.js';
 import { simulateTick, createPlayerState } from '../../shared/physics.js';
 
 function createLightMarker(color) {
@@ -167,6 +171,10 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     collisionQuery: () => room.getCollisionColliders(),
   });
 
+  controller.onEmote = () => {
+    emoteWheel.toggle();
+  };
+
   // --- Predators ---
   const predatorManager = ENABLE_BUNNY_PREDATOR
     ? new PredatorManager({
@@ -183,6 +191,20 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   }
 
   const hud = new HUD();
+
+  const audioManager = getAudioManager();
+  const emoteManager = new EmoteManager({ mouse, audioManager });
+  const emoteWheel = new EmoteWheel({
+    onSelect: (emoteId) => {
+      emoteManager.play(emoteId);
+    },
+  });
+
+  const occlusionFader = new OcclusionFader({
+    scene,
+    camera,
+    getPlayer: () => mouse,
+  });
 
   // --- Multiplayer ---
   const net = new NetworkClient(roomId);
@@ -395,9 +417,14 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       controller._updateAnimation(PHYSICS_STEP);
       controller._updateCamera(PHYSICS_STEP);
       controller._handleAbilities();
+      emoteManager.update(PHYSICS_STEP);
 
       if (net.connected) {
-        net.sendInput(input);
+        const inputWithEmote = { ...input };
+        if (emoteManager.isPlaying && emoteManager.activeEmote) {
+          inputWithEmote.emote = emoteManager.activeEmote.id;
+        }
+        net.sendInput(inputWithEmote);
         reconcileWithServer();
       }
     }
@@ -419,6 +446,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       health: controller.healthPercent,
       ping: net.ping,
     });
+    occlusionFader.update(deltaSeconds);
     render();
     return {
       drawCalls: renderer.info?.render?.calls ?? 0,
@@ -429,6 +457,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     net.disconnect();
     remotePlayerManager.dispose();
     predatorManager?.dispose();
+    emoteWheel.dispose();
     hud.dispose();
     renderer.dispose();
   }
@@ -446,6 +475,8 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     controller,
     hud,
     net,
+    emoteManager,
+    emoteWheel,
     resize,
     update,
     dispose,

@@ -11,6 +11,7 @@ const DEFAULT_KEY_BINDINGS = Object.freeze({
   crouch: 'ControlLeft',
   interact: 'KeyE',
   drop: 'KeyG',
+  emote: 'KeyF',
 });
 
 const CONFIG = Object.freeze({
@@ -98,6 +99,7 @@ export class CharacterController {
     this.onInteract = null;
     this.onSqueak = null;
     this.onDeath = null;
+    this.onEmote = null;
 
     this._bindInput();
   }
@@ -341,6 +343,11 @@ export class CharacterController {
   _updateAnimation(dt) {
     if (!this.mouse?.update) return;
 
+    if (this.mouse.animationManager?.emoteActive) {
+      this.mouse.update(dt);
+      return;
+    }
+
     let state = 'idle';
     if (!this.alive) {
       state = 'death';
@@ -382,6 +389,10 @@ export class CharacterController {
       this.keys[this.keyBindings.drop] = false;
       this.dropItem();
     }
+    if (this.keys[this.keyBindings.emote]) {
+      this.keys[this.keyBindings.emote] = false;
+      this.openEmoteWheel();
+    }
   }
 
   interact() {
@@ -390,6 +401,10 @@ export class CharacterController {
 
   squeak() {
     if (this.onSqueak) this.onSqueak(this);
+  }
+
+  openEmoteWheel() {
+    if (this.onEmote) this.onEmote(this);
   }
 
   carryItem(item) {
