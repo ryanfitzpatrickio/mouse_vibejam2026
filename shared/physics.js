@@ -61,6 +61,12 @@ export function createPlayerState(id) {
   };
 }
 
+/**
+ * Maximum height difference that can be automatically stepped up.
+ * When walking into a short ledge, the player steps up instead of being blocked.
+ */
+const MAX_STEP_HEIGHT = 0.35;
+
 function getColliderBox(collider) {
   return collider?.aabb ?? collider?.box ?? null;
 }
@@ -79,16 +85,25 @@ function getSupportHeight(state, colliders, radius, groundSnapDistance, baseGrou
     const box = getColliderBox(collider);
     if (!box) continue;
 
-    const isSurface = collider.type === 'surface' || collider.metadata?.runnable;
-    if (!isSurface) continue;
-
     const withinX = state.position.x >= box.min.x - radius && state.position.x <= box.max.x + radius;
     const withinZ = state.position.z >= box.min.z - radius && state.position.z <= box.max.z + radius;
     if (!withinX || !withinZ) continue;
 
+    const isSurface = collider.type === 'surface' || collider.metadata?.runnable;
     const surfaceY = box.max.y;
-    if (state.position.y >= surfaceY - groundSnapDistance) {
-      supportY = Math.max(supportY, surfaceY);
+
+    if (isSurface) {
+      // Explicit surfaces (planes, runnable floors) — snap when near
+      if (state.position.y >= surfaceY - groundSnapDistance) {
+        supportY = Math.max(supportY, surfaceY);
+      }
+    } else {
+      // Furniture / solid boxes — land on top when player is at or above the top face
+      // Use a slightly larger snap window so small gaps don't prevent landing
+      const snapWindow = groundSnapDistance * 1.5;
+      if (state.position.y >= surfaceY - snapWindow && state.velocity.y <= 0.01) {
+        supportY = Math.max(supportY, surfaceY);
+      }
     }
   }
 
@@ -100,6 +115,7 @@ function resolveAgainstBox(state, box, radius, height) {
   const capsuleMinY = pos.y;
   const capsuleMaxY = pos.y + height;
 
+  // Early-out when capsule is entirely above or below the box
   if (capsuleMaxY < box.min.y || capsuleMinY > box.max.y) {
     return false;
   }
@@ -115,13 +131,27 @@ function resolveAgainstBox(state, box, radius, height) {
     return false;
   }
 
+  // --- Penetration depths for all 6 faces ---
   const distLeft = pos.x - expandedMinX;
   const distRight = expandedMaxX - pos.x;
   const distBack = pos.z - expandedMinZ;
   const distFront = expandedMaxZ - pos.z;
-  const minDist = Math.min(distLeft, distRight, distBack, distFront);
 
-  if (minDist === distLeft) {
+  // Y-axis penetration depths (using raw capsule bottom/top vs box faces)
+  const distUp = box.max.y - capsuleMinY;   // push player up (landed from above)
+  const distDown = capsuleMaxY - box.min.y; // push player down (hit ceiling)
+
+  const minDist = Math.min(distLeft, distRight, distBack, distFront, distUp, distDown);
+
+  if (minDist === distUp && distUp >= 0) {
+    // Player entered from above — push up to stand on top of the box
+    pos.y = box.max.y;
+    if (vel) vel.y = Math.max(vel.y, 0);
+  } else if (minDist === distDown && distDown >= 0) {
+    // Player hit the bottom of the box (ceiling) — push down
+    pos.y = box.min.y - height;
+    if (vel) vel.y = Math.min(vel.y, 0);
+  } else if (minDist === distLeft) {
     pos.x = expandedMinX;
     if (vel) vel.x = Math.min(vel.x, 0);
   } else if (minDist === distRight) {
@@ -141,10 +171,35 @@ function resolveAgainstBox(state, box, radius, height) {
 function resolvePlayerCollisions(state, colliders, options) {
   const { radius, height, groundSnapDistance, baseGroundY = 0 } = options;
 
+  // Auto step-up: if the player is walking into a short ledge, step up onto it
+  // instead of being blocked horizontally. Only applies when grounded and
+  // the obstacle is short enough relative to current foot position.
   for (const collider of colliders ?? []) {
     const box = getColliderBox(collider);
     if (!box) continue;
     if (shouldSkipSurfaceCollider(collider, baseGroundY)) continue;
+
+    // Check for step-up opportunity before resolving collision
+    const capsuleMinY = state.position.y;
+    const ledgeHeight = box.max.y - capsuleMinY;
+    const isShortLedge = ledgeHeight > 0 && ledgeHeight <= MAX_STEP_HEIGHT;
+
+    const expandedMinX = box.min.x - radius;
+    const expandedMaxX = box.max.x + radius;
+    const expandedMinZ = box.min.z - radius;
+    const expandedMaxZ = box.max.z + radius;
+    const insideX = state.position.x >= expandedMinX && state.position.x <= expandedMaxX;
+    const insideZ = state.position.z >= expandedMinZ && state.position.z <= expandedMaxZ;
+    const capsuleMaxY = state.position.y + height;
+    const inYRange = capsuleMaxY >= box.min.y && capsuleMinY <= box.max.y;
+
+    if (isShortLedge && insideX && insideZ && inYRange && state.grounded) {
+      // Step up onto the ledge instead of being pushed sideways
+      state.position.y = box.max.y;
+      state.velocity.y = 0;
+      continue;
+    }
+
     resolveAgainstBox(state, box, radius, height);
   }
 

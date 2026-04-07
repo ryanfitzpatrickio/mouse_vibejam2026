@@ -24,9 +24,6 @@ export class UprightCapsuleCollider {
       const box = collider?.aabb;
       if (!box) continue;
 
-      const isSurface = collider.type === 'surface' || collider.metadata?.runnable;
-      if (!isSurface) continue;
-
       const withinX = this.position.x >= box.min.x - this.radius
         && this.position.x <= box.max.x + this.radius;
       const withinZ = this.position.z >= box.min.z - this.radius
@@ -34,9 +31,19 @@ export class UprightCapsuleCollider {
 
       if (!withinX || !withinZ) continue;
 
+      const isSurface = collider.type === 'surface' || collider.metadata?.runnable;
       const surfaceY = box.max.y;
-      if (this.position.y >= surfaceY - this.groundSnapDistance) {
-        supportY = Math.max(supportY, surfaceY);
+
+      if (isSurface) {
+        if (this.position.y >= surfaceY - this.groundSnapDistance) {
+          supportY = Math.max(supportY, surfaceY);
+        }
+      } else {
+        // Furniture / solid boxes — land on top when near the top face
+        const snapWindow = this.groundSnapDistance * 1.5;
+        if (this.position.y >= surfaceY - snapWindow) {
+          supportY = Math.max(supportY, surfaceY);
+        }
       }
     }
 
@@ -63,27 +70,36 @@ export class UprightCapsuleCollider {
       return false;
     }
 
-    this._expandedBox.min.set(expandedMinX, box.min.y, expandedMinZ);
-    this._expandedBox.max.set(expandedMaxX, box.max.y, expandedMaxZ);
+    const distLeft = this.position.x - expandedMinX;
+    const distRight = expandedMaxX - this.position.x;
+    const distBack = this.position.z - expandedMinZ;
+    const distFront = expandedMaxZ - this.position.z;
 
-    const distLeft = this.position.x - this._expandedBox.min.x;
-    const distRight = this._expandedBox.max.x - this.position.x;
-    const distBack = this.position.z - this._expandedBox.min.z;
-    const distFront = this._expandedBox.max.z - this.position.z;
+    // Y-axis penetration depths
+    const distUp = box.max.y - capsuleMinY;   // push player up (landed from above)
+    const distDown = capsuleMaxY - box.min.y; // push player down (hit ceiling)
 
-    const minDist = Math.min(distLeft, distRight, distBack, distFront);
+    const minDist = Math.min(distLeft, distRight, distBack, distFront, distUp, distDown);
 
-    if (minDist === distLeft) {
-      this.position.x = this._expandedBox.min.x;
+    if (minDist === distUp && distUp >= 0) {
+      // Player entered from above — push up to stand on top
+      this.position.y = box.max.y;
+      if (velocity) velocity.y = Math.max(velocity.y, 0);
+    } else if (minDist === distDown && distDown >= 0) {
+      // Player hit ceiling — push down
+      this.position.y = box.min.y - this.height;
+      if (velocity) velocity.y = Math.min(velocity.y, 0);
+    } else if (minDist === distLeft) {
+      this.position.x = expandedMinX;
       if (velocity) velocity.x = Math.min(velocity.x, 0);
     } else if (minDist === distRight) {
-      this.position.x = this._expandedBox.max.x;
+      this.position.x = expandedMaxX;
       if (velocity) velocity.x = Math.max(velocity.x, 0);
     } else if (minDist === distBack) {
-      this.position.z = this._expandedBox.min.z;
+      this.position.z = expandedMinZ;
       if (velocity) velocity.z = Math.min(velocity.z, 0);
     } else {
-      this.position.z = this._expandedBox.max.z;
+      this.position.z = expandedMaxZ;
       if (velocity) velocity.z = Math.max(velocity.z, 0);
     }
 

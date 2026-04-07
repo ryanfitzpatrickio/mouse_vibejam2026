@@ -60,7 +60,7 @@ export function buildRoomCollidersFromLayout(layout, {
       primitiveId: primitive.id ?? null,
       prefabId: primitive.prefabId ?? null,
       prefabInstanceId: primitive.prefabInstanceId ?? null,
-      runnable: colliderType === 'surface' && isGroundPlane(primitive),
+      runnable: colliderType === 'surface',
     };
 
     if (primitive.type === 'plane') {

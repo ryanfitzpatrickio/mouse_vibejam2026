@@ -2597,6 +2597,484 @@
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnxdd5f-39zcn-part-1",
+      "name": "yellow shelf table-shelf_top",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 6.1156,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 1,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 89,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#FFFF00",
+        "roughness": 0.6,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnw1tv7-7giwr",
+      "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
+      "prefabInstanceOrigin": {
+        "x": 19.1403,
+        "y": 0,
+        "z": 5.5314
+      },
+      "prefabInstanceRotation": {
+        "x": -3.1416,
+        "y": 0.0022,
+        "z": -3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnxdd5f-39zcn-part-2",
+      "name": "yellow shelf table-shelf_bottom",
+      "type": "box",
+      "position": {
+        "x": 0,
+        "y": 1.4894,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 1,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 89,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#FFFF00",
+        "roughness": 0.6,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnw1tv7-7giwr",
+      "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
+      "prefabInstanceOrigin": {
+        "x": 19.1403,
+        "y": 0,
+        "z": 5.5314
+      },
+      "prefabInstanceRotation": {
+        "x": -3.1416,
+        "y": 0.0022,
+        "z": -3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnxdd5f-39zcn-part-3",
+      "name": "yellow shelf table-leg_front_left",
+      "type": "box",
+      "position": {
+        "x": -1.7778,
+        "y": 4,
+        "z": -1.7778
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 8,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 37,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#FFFF00",
+        "roughness": 0.6,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnw1tv7-7giwr",
+      "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
+      "prefabInstanceOrigin": {
+        "x": 19.1403,
+        "y": 0,
+        "z": 5.5314
+      },
+      "prefabInstanceRotation": {
+        "x": -3.1416,
+        "y": 0.0022,
+        "z": -3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnxdd5f-39zcn-part-4",
+      "name": "yellow shelf table-leg_front_right",
+      "type": "box",
+      "position": {
+        "x": 1.7778,
+        "y": 4,
+        "z": -1.7778
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 8,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 37,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#FFFF00",
+        "roughness": 0.6,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnw1tv7-7giwr",
+      "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
+      "prefabInstanceOrigin": {
+        "x": 19.1403,
+        "y": 0,
+        "z": 5.5314
+      },
+      "prefabInstanceRotation": {
+        "x": -3.1416,
+        "y": 0.0022,
+        "z": -3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnxdd5f-39zcn-part-5",
+      "name": "yellow shelf table-leg_back_left",
+      "type": "box",
+      "position": {
+        "x": -1.7778,
+        "y": 4,
+        "z": 1.7778
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 8,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 37,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#FFFF00",
+        "roughness": 0.6,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnw1tv7-7giwr",
+      "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
+      "prefabInstanceOrigin": {
+        "x": 19.1403,
+        "y": 0,
+        "z": 5.5314
+      },
+      "prefabInstanceRotation": {
+        "x": -3.1416,
+        "y": 0.0022,
+        "z": -3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnxdd5f-39zcn-part-6",
+      "name": "yellow shelf table-leg_back_right",
+      "type": "box",
+      "position": {
+        "x": 1.7778,
+        "y": 4,
+        "z": 1.7778
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.5,
+        "y": 8,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 37,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#FFFF00",
+        "roughness": 0.6,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnw1tv7-7giwr",
+      "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
+      "prefabInstanceOrigin": {
+        "x": 19.1403,
+        "y": 0,
+        "z": 5.5314
+      },
+      "prefabInstanceRotation": {
+        "x": -3.1416,
+        "y": 0.0022,
+        "z": -3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnxdd5f-39zcn-part-7",
+      "name": "yellow shelf table-cylinder-part",
+      "type": "cylinder",
+      "position": {
+        "x": 2.279,
+        "y": 0.5,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 2,
+        "y": 1,
+        "z": 2
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 87,
+        "repeat": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "side": {
+          "atlas": "textures2",
+          "cell": 76
+        },
+        "top": {
+          "atlas": "textures2",
+          "cell": 58
+        }
+      },
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.14,
+        "metalness": 0.43
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnw1tv7-7giwr",
+      "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
+      "prefabInstanceOrigin": {
+        "x": 19.1403,
+        "y": 0,
+        "z": 5.5314
+      },
+      "prefabInstanceRotation": {
+        "x": -3.1416,
+        "y": 0.0022,
+        "z": -3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnnxdd5f-39zcn-part-8",
+      "name": "yellow shelf table-box-part",
+      "type": "box",
+      "position": {
+        "x": -1.1728,
+        "y": 2.6804,
+        "z": -0.0002
+      },
+      "rotation": {
+        "x": 0,
+        "y": 1.5707963267948966,
+        "z": 0
+      },
+      "scale": {
+        "x": 3,
+        "y": 1.5,
+        "z": 1.5
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 37,
+        "repeat": {
+          "x": 0.8,
+          "y": 0.4
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "top": {
+          "atlas": "textures3",
+          "cell": 25
+        }
+      },
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.13,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnnw1tv7-7giwr",
+      "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
+      "prefabInstanceOrigin": {
+        "x": 19.1403,
+        "y": 0,
+        "z": 5.5314
+      },
+      "prefabInstanceRotation": {
+        "x": -3.1416,
+        "y": 0.0022,
+        "z": -3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
     }
   ]
 }
