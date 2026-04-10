@@ -10,6 +10,29 @@ const PARTYKIT_HOST =
 
 /** Max pending inputs to keep for reconciliation */
 const MAX_PENDING = 120;
+const PLAYER_KEY_STORAGE = 'mouseTrouble.playerKey.v1';
+
+function createPlayerKey() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+
+  const bytes = new Uint8Array(16);
+  globalThis.crypto?.getRandomValues?.(bytes);
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function getOrCreatePlayerKey() {
+  try {
+    const existing = localStorage.getItem(PLAYER_KEY_STORAGE);
+    if (existing) return existing;
+    const created = createPlayerKey();
+    localStorage.setItem(PLAYER_KEY_STORAGE, created);
+    return created;
+  } catch {
+    return createPlayerKey();
+  }
+}
 
 export class NetworkClient {
   /** @type {PartySocket | null} */
@@ -35,6 +58,8 @@ export class NetworkClient {
 
   /** RTT in ms (smoothed) */
   ping = 0;
+  /** Stable anonymous browser/install id used for aggregate server stats. */
+  playerKey = getOrCreatePlayerKey();
   /** Maps seq -> send timestamp for RTT measurement */
   _sendTimes = new Map();
 
@@ -58,6 +83,10 @@ export class NetworkClient {
 
     this.ws.addEventListener('open', () => {
       this.connected = true;
+      this.ws?.send(JSON.stringify({
+        type: 'hello',
+        playerKey: this.playerKey,
+      }));
       console.log('[net] connected to room:', this.roomId);
     });
 

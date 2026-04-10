@@ -49,8 +49,25 @@ npm run deploy:cf
 
 The Wrangler config lives in [wrangler.jsonc](/Users/personal/source/vibejam2026/wrangler.jsonc) and serves the built `dist` directory with SPA fallback.
 
+The same Worker also owns the aggregate stats API:
+- `POST /api/stats/event` accepts signed stat batches from PartyKit.
+- `GET /api/stats` returns aggregate stats when called with the admin bearer token or `?token=...`.
+
+PartyKit accounts without custom Cloudflare bindings cannot attach KV directly, so production stats flow through this Worker and its `GAME_STATS` KV binding.
+
 ## Environment
 
 ```bash
 VITE_PARTYKIT_HOST=mouse-trouble.username.partykit.dev
 ```
+
+Production stats require matching secrets on the Cloudflare Worker and PartyKit server:
+
+```bash
+npx wrangler secret put STATS_COLLECTOR_TOKEN
+npx wrangler secret put STATS_ADMIN_TOKEN
+npx partykit env add STATS_COLLECTOR_URL
+npx partykit env add STATS_COLLECTOR_TOKEN
+```
+
+Set `STATS_COLLECTOR_URL` to the deployed Worker endpoint, for example `https://mouse.ryanfitzpatrick.io/api/stats/event`. Use the same `STATS_COLLECTOR_TOKEN` value in Wrangler and PartyKit.

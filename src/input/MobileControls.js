@@ -1,9 +1,42 @@
+const NON_PASSIVE = { passive: false };
+const CAPTURE_NON_PASSIVE = { passive: false, capture: true };
+
+function preventGesture(event) {
+  if (event.cancelable) event.preventDefault();
+}
+
+function consumeControlEvent(event) {
+  preventGesture(event);
+  event.stopPropagation();
+}
+
+function setPointerCaptureSafe(element, pointerId) {
+  try {
+    element.setPointerCapture(pointerId);
+  } catch {
+    // Android can throw if a pointer is canceled between dispatch and capture.
+  }
+}
+
+function releasePointerCaptureSafe(element, pointerId) {
+  try {
+    if (element.hasPointerCapture?.(pointerId)) {
+      element.releasePointerCapture(pointerId);
+    }
+  } catch {
+    // Ignore stale pointer capture state.
+  }
+}
+
 function createButton(label, accent = '#d9a56c') {
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = label;
+  button.ariaLabel = label;
+  button.draggable = false;
   Object.assign(button.style, {
     appearance: 'none',
+    WebkitAppearance: 'none',
     border: '1px solid rgba(255,255,255,0.22)',
     borderRadius: '999px',
     background: `linear-gradient(180deg, rgba(255,255,255,0.14), rgba(0,0,0,0.22)), ${accent}`,
@@ -19,6 +52,8 @@ function createButton(label, accent = '#d9a56c') {
     touchAction: 'none',
     userSelect: 'none',
     WebkitUserSelect: 'none',
+    WebkitTouchCallout: 'none',
+    WebkitTapHighlightColor: 'transparent',
     cursor: 'pointer',
   });
   return button;
@@ -40,8 +75,11 @@ export class MobileControls {
       zIndex: '25',
       pointerEvents: 'none',
       touchAction: 'none',
+      overscrollBehavior: 'none',
       userSelect: 'none',
       WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
+      WebkitTapHighlightColor: 'transparent',
       fontFamily: 'system-ui, sans-serif',
     });
 
@@ -49,11 +87,15 @@ export class MobileControls {
     Object.assign(this.joystickZone.style, {
       position: 'absolute',
       left: '16px',
-      bottom: '16px',
+      bottom: 'calc(16px + env(safe-area-inset-bottom))',
+      zIndex: '2',
       width: '150px',
       height: '150px',
       pointerEvents: 'auto',
       touchAction: 'none',
+      WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
+      WebkitTapHighlightColor: 'transparent',
       borderRadius: '50%',
       background: 'rgba(255,255,255,0.08)',
       border: '2px solid rgba(255,255,255,0.18)',
@@ -81,20 +123,28 @@ export class MobileControls {
       left: '0',
       right: '0',
       bottom: '200px',
+      zIndex: '1',
       pointerEvents: 'auto',
       touchAction: 'none',
+      WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
+      WebkitTapHighlightColor: 'transparent',
     });
 
     this.buttonStack = document.createElement('div');
     Object.assign(this.buttonStack.style, {
       position: 'absolute',
-      right: '18px',
-      bottom: '18px',
+      right: 'calc(18px + env(safe-area-inset-right))',
+      bottom: 'calc(18px + env(safe-area-inset-bottom))',
+      zIndex: '3',
       display: 'grid',
       gridTemplateColumns: 'repeat(2, minmax(72px, 1fr))',
       gap: '10px',
       pointerEvents: 'auto',
       touchAction: 'none',
+      WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
+      WebkitTapHighlightColor: 'transparent',
       alignItems: 'end',
     });
 
@@ -124,9 +174,19 @@ export class MobileControls {
     this._joystickCenterX = 0;
     this._joystickCenterY = 0;
     this._joystickMaxDist = 45;
+    this._previousViewportStyles = null;
+    this._viewportLocked = false;
+    this._preventDocumentTouch = (event) => {
+      if (this.root.style.display === 'none') return;
+      preventGesture(event);
+    };
+    this._preventRootTouch = (event) => {
+      preventGesture(event);
+    };
   }
 
   async init() {
+    this._installViewportGestureGuards();
     this._installJoystick();
     this._installCameraTouch();
     this._installButtons();
@@ -136,9 +196,9 @@ export class MobileControls {
   _installJoystick() {
     this.joystickZone.addEventListener('pointerdown', (e) => {
       if (this._joystickTouchId !== null) return;
-      e.preventDefault();
+      consumeControlEvent(e);
       this._joystickTouchId = e.pointerId;
-      this.joystickZone.setPointerCapture(e.pointerId);
+      setPointerCaptureSafe(this.joystickZone, e.pointerId);
       const rect = this.joystickZone.getBoundingClientRect();
       this._joystickCenterX = rect.left + rect.width * 0.5;
       this._joystickCenterY = rect.top + rect.height * 0.5;
@@ -147,12 +207,14 @@ export class MobileControls {
 
     this.joystickZone.addEventListener('pointermove', (e) => {
       if (e.pointerId !== this._joystickTouchId) return;
-      e.preventDefault();
+      consumeControlEvent(e);
       this._updateJoystick(e.clientX, e.clientY);
     });
 
     const endJoystick = (e) => {
       if (e.pointerId !== this._joystickTouchId) return;
+      consumeControlEvent(e);
+      releasePointerCaptureSafe(this.joystickZone, e.pointerId);
       this._joystickTouchId = null;
       this.moveX = 0;
       this.moveZ = 0;
@@ -178,14 +240,16 @@ export class MobileControls {
   _installCameraTouch() {
     this.cameraZone.addEventListener('pointerdown', (e) => {
       if (this._cameraTouchId !== null) return;
+      consumeControlEvent(e);
       this._cameraTouchId = e.pointerId;
       this._cameraLastX = e.clientX;
       this._cameraLastY = e.clientY;
-      this.cameraZone.setPointerCapture(e.pointerId);
+      setPointerCaptureSafe(this.cameraZone, e.pointerId);
     });
 
     this.cameraZone.addEventListener('pointermove', (e) => {
       if (e.pointerId !== this._cameraTouchId) return;
+      consumeControlEvent(e);
       const cam = this.thirdPersonCamera;
       if (!cam) return;
       const dx = e.clientX - this._cameraLastX;
@@ -199,6 +263,8 @@ export class MobileControls {
 
     const endCamera = (e) => {
       if (e.pointerId === this._cameraTouchId) {
+        consumeControlEvent(e);
+        releasePointerCaptureSafe(this.cameraZone, e.pointerId);
         this._cameraTouchId = null;
       }
     };
@@ -242,66 +308,172 @@ export class MobileControls {
   _bindHoldButton(button, onDown, onUp) {
     let heldPointerId = null;
 
-    const end = () => {
+    const end = (pointerId = heldPointerId) => {
+      if (heldPointerId === null) return;
+      releasePointerCaptureSafe(button, pointerId);
       heldPointerId = null;
       button.dataset.active = 'false';
       onUp?.();
     };
 
     button.addEventListener('pointerdown', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
+      consumeControlEvent(event);
+      if (heldPointerId !== null) return;
       heldPointerId = event.pointerId;
-      button.setPointerCapture(event.pointerId);
+      setPointerCaptureSafe(button, event.pointerId);
       button.dataset.active = 'true';
       onDown?.();
     });
     button.addEventListener('pointerup', (event) => {
       if (event.pointerId !== heldPointerId) return;
-      event.preventDefault();
-      event.stopPropagation();
-      end();
+      consumeControlEvent(event);
+      end(event.pointerId);
     });
     button.addEventListener('pointercancel', (event) => {
       if (event.pointerId !== heldPointerId) return;
-      end();
+      consumeControlEvent(event);
+      end(event.pointerId);
     });
     button.addEventListener('lostpointercapture', (event) => {
       if (event.pointerId !== heldPointerId) return;
-      end();
+      end(event.pointerId);
     });
   }
 
   _bindTapButton(button, onTap) {
+    let activePointerId = null;
+
+    const clear = (pointerId = activePointerId) => {
+      if (activePointerId === null) return;
+      releasePointerCaptureSafe(button, pointerId);
+      activePointerId = null;
+      button.dataset.active = 'false';
+    };
+
     button.addEventListener('pointerdown', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      button.setPointerCapture(event.pointerId);
+      consumeControlEvent(event);
+      if (activePointerId !== null) return;
+      activePointerId = event.pointerId;
+      setPointerCaptureSafe(button, event.pointerId);
       button.dataset.active = 'true';
       onTap?.();
     });
     button.addEventListener('pointerup', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      button.dataset.active = 'false';
+      if (event.pointerId !== activePointerId) return;
+      consumeControlEvent(event);
+      clear(event.pointerId);
     });
-    button.addEventListener('pointercancel', () => {
-      button.dataset.active = 'false';
+    button.addEventListener('pointercancel', (event) => {
+      if (event.pointerId !== activePointerId) return;
+      consumeControlEvent(event);
+      clear(event.pointerId);
     });
-    button.addEventListener('lostpointercapture', () => {
-      button.dataset.active = 'false';
+    button.addEventListener('lostpointercapture', (event) => {
+      if (event.pointerId !== activePointerId) return;
+      clear(event.pointerId);
     });
+  }
+
+  _installViewportGestureGuards() {
+    this._applyViewportLock();
+    this.root.addEventListener('touchstart', this._preventRootTouch, CAPTURE_NON_PASSIVE);
+    this.root.addEventListener('touchmove', this._preventRootTouch, CAPTURE_NON_PASSIVE);
+    this.root.addEventListener('touchend', this._preventRootTouch, CAPTURE_NON_PASSIVE);
+    this.root.addEventListener('touchcancel', this._preventRootTouch, CAPTURE_NON_PASSIVE);
+    document.addEventListener('touchmove', this._preventDocumentTouch, NON_PASSIVE);
+    window.addEventListener('gesturestart', this._preventDocumentTouch, NON_PASSIVE);
+    window.addEventListener('gesturechange', this._preventDocumentTouch, NON_PASSIVE);
+    window.addEventListener('contextmenu', this._preventDocumentTouch, NON_PASSIVE);
+  }
+
+  _applyViewportLock() {
+    if (this._viewportLocked) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const canvas = document.getElementById('canvas');
+    this._previousViewportStyles = {
+      html: {
+        touchAction: html.style.touchAction,
+        overscrollBehavior: html.style.overscrollBehavior,
+        userSelect: html.style.userSelect,
+        WebkitUserSelect: html.style.WebkitUserSelect,
+        WebkitTouchCallout: html.style.WebkitTouchCallout,
+      },
+      body: {
+        touchAction: body.style.touchAction,
+        overscrollBehavior: body.style.overscrollBehavior,
+        userSelect: body.style.userSelect,
+        WebkitUserSelect: body.style.WebkitUserSelect,
+        WebkitTouchCallout: body.style.WebkitTouchCallout,
+      },
+      canvas: canvas ? {
+        touchAction: canvas.style.touchAction,
+        userSelect: canvas.style.userSelect,
+        WebkitUserSelect: canvas.style.WebkitUserSelect,
+        WebkitTapHighlightColor: canvas.style.WebkitTapHighlightColor,
+      } : null,
+    };
+
+    Object.assign(html.style, {
+      touchAction: 'none',
+      overscrollBehavior: 'none',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
+    });
+    Object.assign(body.style, {
+      touchAction: 'none',
+      overscrollBehavior: 'none',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
+    });
+    if (canvas) {
+      Object.assign(canvas.style, {
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTapHighlightColor: 'transparent',
+      });
+    }
+
+    this._viewportLocked = true;
+  }
+
+  _releaseViewportLock() {
+    if (!this._viewportLocked || !this._previousViewportStyles) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const canvas = document.getElementById('canvas');
+    Object.assign(html.style, this._previousViewportStyles.html);
+    Object.assign(body.style, this._previousViewportStyles.body);
+    if (canvas && this._previousViewportStyles.canvas) {
+      Object.assign(canvas.style, this._previousViewportStyles.canvas);
+    }
+    this._previousViewportStyles = null;
+    this._viewportLocked = false;
   }
 
   show() {
     this.root.style.display = 'block';
+    this._applyViewportLock();
   }
 
   hide() {
     this.root.style.display = 'none';
+    this._releaseViewportLock();
   }
 
   dispose() {
+    this.root.removeEventListener('touchstart', this._preventRootTouch, true);
+    this.root.removeEventListener('touchmove', this._preventRootTouch, true);
+    this.root.removeEventListener('touchend', this._preventRootTouch, true);
+    this.root.removeEventListener('touchcancel', this._preventRootTouch, true);
+    document.removeEventListener('touchmove', this._preventDocumentTouch);
+    window.removeEventListener('gesturestart', this._preventDocumentTouch);
+    window.removeEventListener('gesturechange', this._preventDocumentTouch);
+    window.removeEventListener('contextmenu', this._preventDocumentTouch);
+    this._releaseViewportLock();
     this.root.remove();
   }
 }

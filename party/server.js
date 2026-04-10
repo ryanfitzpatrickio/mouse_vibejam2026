@@ -4,6 +4,7 @@ import { buildRoomCollidersFromLayout } from '../shared/roomCollision.js';
 import kitchenLayout from '../shared/kitchen-layout.generated.js';
 import kitchenNavMesh from '../shared/kitchen-navmesh.generated.js';
 import { collectSpawnPointsFromLayout } from '../shared/spawnPoints.js';
+import { StatsTracker } from './stats.js';
 
 const TICK_RATE = 30;
 const TICK_MS = 1000 / TICK_RATE;
@@ -25,9 +26,11 @@ export default class GameServer {
   levelColliders = buildRoomCollidersFromLayout(kitchenLayout, { scaleFactor: 1 });
   levelNavMesh = kitchenNavMesh;
   spawnPoints = collectSpawnPointsFromLayout(kitchenLayout);
+  stats = null;
 
   constructor(room) {
     this.room = room;
+    this.stats = new StatsTracker(room);
     this.predators = [];
     this._applyLayout(kitchenLayout, { resetPredators: true });
   }
@@ -83,7 +86,8 @@ export default class GameServer {
     };
   }
 
-  onStart() {
+  async onStart() {
+    await this.stats?.ready;
     this.tickInterval = setInterval(() => this.tick(), TICK_MS);
   }
 
@@ -103,6 +107,7 @@ export default class GameServer {
 
     this.players.set(conn.id, state);
     this.inputQueues.set(conn.id, []);
+    this.stats?.recordConnect(conn.id, this.players.size);
 
     conn.send(JSON.stringify({
       type: 'init',
@@ -117,11 +122,20 @@ export default class GameServer {
     }), [conn.id]);
   }
 
-  onMessage(message, sender) {
+  async onMessage(message, sender) {
     let data;
     try {
       data = JSON.parse(/** @type {string} */ (message));
     } catch {
+      return;
+    }
+
+    if (data.type === 'hello') {
+      try {
+        await this.stats?.identifyConnection(sender.id, data.playerKey);
+      } catch (error) {
+        console.warn('[stats] failed to identify player:', error);
+      }
       return;
     }
 
@@ -151,6 +165,7 @@ export default class GameServer {
   }
 
   onClose(conn) {
+    this.stats?.recordDisconnect(conn.id);
     this.players.delete(conn.id);
     this.inputQueues.delete(conn.id);
     this.broadcast(JSON.stringify({
@@ -173,6 +188,7 @@ export default class GameServer {
         } else if (now - state.deathTime >= RESPAWN_SECONDS) {
           const spawn = this._pickRespawnPoint();
           respawnPlayer(state, spawn.x, spawn.z, spawn.y);
+          this.stats?.recordRespawn(id);
           seqs[id] = this._lastSeq?.get(id) ?? 0;
           continue;
         }
@@ -210,11 +226,13 @@ export default class GameServer {
       if (hit) {
         const target = this.players.get(hit.playerId);
         if (target && target.alive) {
+          this.stats?.recordCatHit(hit.playerId);
           target.health -= hit.damage;
           if (target.health <= 0) {
             target.health = 0;
             target.alive = false;
             target.animState = 'death';
+            this.stats?.recordDeath(hit.playerId);
           }
           target.velocity.x += hit.knockbackX;
           target.velocity.z += hit.knockbackZ;
@@ -238,5 +256,30 @@ export default class GameServer {
         conn.send(message);
       }
     }
+  }
+
+  async onRequest(request) {
+    const url = new URL(request.url);
+    if (!url.pathname.endsWith('/stats')) {
+      return new Response('Not found', { status: 404 });
+    }
+
+    const expectedToken = this.room.env?.STATS_ADMIN_TOKEN;
+    if (expectedToken) {
+      const authHeader = request.headers.get('Authorization') ?? '';
+      const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      const queryToken = url.searchParams.get('token') ?? '';
+      if (bearerToken !== expectedToken && queryToken !== expectedToken) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+    }
+
+    const summary = await this.stats.getSummary();
+    return new Response(JSON.stringify(summary, null, 2), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+      },
+    });
   }
 }
