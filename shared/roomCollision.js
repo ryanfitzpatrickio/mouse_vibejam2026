@@ -2,6 +2,20 @@ export const ROOM_COLLISION_CONFIG = Object.freeze({
   scaleFactor: 1,
 });
 
+const CYLINDER_SEGMENTS = 24;
+const GLB_COLLIDER_BOUNDS_BY_ASSET_ID = Object.freeze({
+  // Local-space bounds from the optimized GLB asset. Using the true mesh extents
+  // keeps the server collider aligned with the client and leaves the undercarriage open.
+  'asset-mnnc9723-f5tn1': Object.freeze({
+    min: Object.freeze({ x: -0.91017, y: -0.00011, z: -2.39234 }),
+    max: Object.freeze({ x: 0.91017, y: 1.28011, z: 1.96239 }),
+  }),
+});
+
+export function getGlbColliderLocalBounds(assetId) {
+  return GLB_COLLIDER_BOUNDS_BY_ASSET_ID[assetId] ?? null;
+}
+
 function scaleVec3(value = {}, scaleFactor = 1) {
   return {
     x: (value.x ?? 0) * scaleFactor,
@@ -10,37 +24,188 @@ function scaleVec3(value = {}, scaleFactor = 1) {
   };
 }
 
-function makeAabb(center, size) {
-  const halfX = size.x * 0.5;
-  const halfY = size.y * 0.5;
-  const halfZ = size.z * 0.5;
+function defaultScale(value = {}) {
   return {
-    min: {
-      x: center.x - halfX,
-      y: center.y - halfY,
-      z: center.z - halfZ,
-    },
-    max: {
-      x: center.x + halfX,
-      y: center.y + halfY,
-      z: center.z + halfZ,
-    },
+    x: value.x ?? 1,
+    y: value.y ?? 1,
+    z: value.z ?? 1,
   };
 }
 
-function isGroundPlane(primitive) {
-  return primitive.type === 'plane' && (primitive.position?.y ?? 0) <= 0.1;
+function rotateEulerXYZ(point, rotation = {}) {
+  const x = point.x ?? 0;
+  const y = point.y ?? 0;
+  const z = point.z ?? 0;
+  const rx = rotation.x ?? 0;
+  const ry = rotation.y ?? 0;
+  const rz = rotation.z ?? 0;
+
+  const a = Math.cos(rx);
+  const b = Math.sin(rx);
+  const c = Math.cos(ry);
+  const d = Math.sin(ry);
+  const e = Math.cos(rz);
+  const f = Math.sin(rz);
+  const ae = a * e;
+  const af = a * f;
+  const be = b * e;
+  const bf = b * f;
+
+  return {
+    x: (c * e) * x + (-c * f) * y + d * z,
+    y: (af + be * d) * x + (ae - bf * d) * y + (-b * c) * z,
+    z: (bf - ae * d) * x + (be + af * d) * y + (a * c) * z,
+  };
 }
 
-function isCeilingPlane(primitive) {
-  return primitive.type === 'plane' && (primitive.position?.y ?? 0) > 0.1;
+function getPlaneWorldNormal(primitive) {
+  const primitiveNormal = rotateEulerXYZ({ x: 0, y: 0, z: 1 }, primitive.rotation);
+
+  if (!primitive.prefabInstanceId) {
+    return primitiveNormal;
+  }
+
+  return rotateEulerXYZ(primitiveNormal, primitive.prefabInstanceRotation);
+}
+
+function applyTransform(point, {
+  position = { x: 0, y: 0, z: 0 },
+  rotation = { x: 0, y: 0, z: 0 },
+  scale = { x: 1, y: 1, z: 1 },
+} = {}) {
+  const scaled = {
+    x: (point.x ?? 0) * (scale.x ?? 1),
+    y: (point.y ?? 0) * (scale.y ?? 1),
+    z: (point.z ?? 0) * (scale.z ?? 1),
+  };
+  const rotated = rotateEulerXYZ(scaled, rotation);
+  return {
+    x: rotated.x + (position.x ?? 0),
+    y: rotated.y + (position.y ?? 0),
+    z: rotated.z + (position.z ?? 0),
+  };
 }
 
 function colliderTypeForPrimitive(primitive) {
-  if (isGroundPlane(primitive)) return 'surface';
-  if (isCeilingPlane(primitive)) return 'surface';
-  if (primitive.name?.toLowerCase().includes('wall')) return 'wall';
-  return 'furniture';
+  if (primitive.type !== 'plane') {
+    return 'furniture';
+  }
+
+  const normal = getPlaneWorldNormal(primitive);
+  return normal.y >= 0.75 ? 'surface' : 'wall';
+}
+
+function createBoxPoints() {
+  const points = [];
+  for (const x of [-0.5, 0.5]) {
+    for (const y of [-0.5, 0.5]) {
+      for (const z of [-0.5, 0.5]) {
+        points.push({ x, y, z });
+      }
+    }
+  }
+  return points;
+}
+
+function createPointsFromBounds(bounds) {
+  if (!bounds?.min || !bounds?.max) {
+    return createBoxPoints();
+  }
+
+  const points = [];
+  for (const x of [bounds.min.x, bounds.max.x]) {
+    for (const y of [bounds.min.y, bounds.max.y]) {
+      for (const z of [bounds.min.z, bounds.max.z]) {
+        points.push({ x, y, z });
+      }
+    }
+  }
+  return points;
+}
+
+function createPlanePoints() {
+  return [
+    { x: -0.5, y: -0.5, z: 0 },
+    { x: 0.5, y: -0.5, z: 0 },
+    { x: 0.5, y: 0.5, z: 0 },
+    { x: -0.5, y: 0.5, z: 0 },
+  ];
+}
+
+function createCylinderPoints() {
+  const points = [];
+  for (let i = 0; i < CYLINDER_SEGMENTS; i += 1) {
+    const angle = (i / CYLINDER_SEGMENTS) * Math.PI * 2;
+    const x = Math.cos(angle) * 0.5;
+    const z = Math.sin(angle) * 0.5;
+    points.push({ x, y: -0.5, z });
+    points.push({ x, y: 0.5, z });
+  }
+  return points;
+}
+
+function getPrimitiveLocalPoints(primitive) {
+  switch (primitive.type) {
+    case 'plane':
+      return createPlanePoints();
+    case 'cylinder':
+      return createCylinderPoints();
+    case 'glb':
+      return createPointsFromBounds(GLB_COLLIDER_BOUNDS_BY_ASSET_ID[primitive.glbAssetId]);
+    case 'box':
+    default:
+      return createBoxPoints();
+  }
+}
+
+function createEmptyAabb() {
+  return {
+    min: { x: Number.POSITIVE_INFINITY, y: Number.POSITIVE_INFINITY, z: Number.POSITIVE_INFINITY },
+    max: { x: Number.NEGATIVE_INFINITY, y: Number.NEGATIVE_INFINITY, z: Number.NEGATIVE_INFINITY },
+  };
+}
+
+function expandAabb(aabb, point) {
+  aabb.min.x = Math.min(aabb.min.x, point.x);
+  aabb.min.y = Math.min(aabb.min.y, point.y);
+  aabb.min.z = Math.min(aabb.min.z, point.z);
+  aabb.max.x = Math.max(aabb.max.x, point.x);
+  aabb.max.y = Math.max(aabb.max.y, point.y);
+  aabb.max.z = Math.max(aabb.max.z, point.z);
+}
+
+function transformPrimitivePoint(point, primitive, scaleFactor = 1) {
+  const localPoint = applyTransform(point, {
+    position: scaleVec3(primitive.position, scaleFactor),
+    rotation: primitive.rotation,
+    scale: scaleVec3(defaultScale(primitive.scale), scaleFactor),
+  });
+
+  if (!primitive.prefabInstanceId) {
+    return localPoint;
+  }
+
+  return applyTransform(localPoint, {
+    position: scaleVec3(primitive.prefabInstanceOrigin, scaleFactor),
+    rotation: primitive.prefabInstanceRotation,
+    scale: defaultScale(primitive.prefabInstanceScale),
+  });
+}
+
+function buildPrimitiveAabb(primitive, scaleFactor = 1) {
+  const points = getPrimitiveLocalPoints(primitive);
+  const aabb = createEmptyAabb();
+
+  for (const point of points) {
+    expandAabb(aabb, transformPrimitivePoint(point, primitive, scaleFactor));
+  }
+
+  const clearance = primitive.colliderClearance ?? 0;
+  if (clearance > 0) {
+    aabb.min.y += clearance * scaleFactor;
+  }
+
+  return aabb;
 }
 
 export function buildRoomCollidersFromLayout(layout, {
@@ -52,47 +217,21 @@ export function buildRoomCollidersFromLayout(layout, {
   for (const primitive of primitives) {
     if (!primitive || primitive.deleted === true || primitive.collider === false) continue;
 
-    const position = scaleVec3(primitive.position, scaleFactor);
-    const scale = scaleVec3(primitive.scale, scaleFactor);
     const colliderType = colliderTypeForPrimitive(primitive);
     const metadata = {
       source: 'layout',
       primitiveId: primitive.id ?? null,
       prefabId: primitive.prefabId ?? null,
       prefabInstanceId: primitive.prefabInstanceId ?? null,
+      glbAssetId: primitive.glbAssetId ?? null,
+      colliderClearance: primitive.colliderClearance ?? 0,
       runnable: colliderType === 'surface',
     };
-
-    if (primitive.type === 'plane') {
-      const width = Math.max(0.0001, scale.x);
-      const depth = Math.max(0.0001, scale.y);
-      colliders.push({
-        type: colliderType,
-        metadata,
-        aabb: makeAabb(position, { x: width, y: 0.0001, z: depth }),
-      });
-      continue;
-    }
-
-    if (primitive.type === 'cylinder') {
-      const width = Math.max(0.0001, Math.max(scale.x, scale.z));
-      const depth = width;
-      colliders.push({
-        type: colliderType,
-        metadata,
-        aabb: makeAabb(position, { x: width, y: Math.max(0.0001, scale.y), z: depth }),
-      });
-      continue;
-    }
 
     colliders.push({
       type: colliderType,
       metadata,
-      aabb: makeAabb(position, {
-        x: Math.max(0.0001, scale.x),
-        y: Math.max(0.0001, scale.y),
-        z: Math.max(0.0001, scale.z),
-      }),
+      aabb: buildPrimitiveAabb(primitive, scaleFactor),
     });
   }
 

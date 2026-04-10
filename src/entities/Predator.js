@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { PHYSICS } from '../../shared/physics.js';
 
 /**
  * AI states for predator behavior.
@@ -63,6 +64,7 @@ export class Predator extends THREE.Group {
     this.gravity = config.gravity ?? -20;
     this.groundY = 0;
     this.radius = config.radius ?? 0.5;
+    this.height = config.height ?? 1.6;
 
     // Patrol
     this.spawnPoint = new THREE.Vector3();
@@ -93,6 +95,7 @@ export class Predator extends THREE.Group {
     const box = new THREE.Box3().setFromObject(this.model);
     const modelHeight = box.max.y - box.min.y;
     const s = height / modelHeight;
+    this.height = height;
     this.model.scale.set(s, s, s);
     this.model.position.y = -box.min.y * s + groundOffset;
     this.add(this.model);
@@ -322,10 +325,22 @@ export class Predator extends THREE.Group {
     if (!this.target) return;
     const dist = this._distToTarget();
     if (dist > this.attackRange * 1.5) return;
+    if (!this._hasVerticalHitOverlap()) return;
 
     if (this.onAttackHit) {
       this.onAttackHit(this, this.target);
     }
+  }
+
+  _hasVerticalHitOverlap() {
+    if (!this.target?.position) return false;
+
+    const targetBottom = this.target.position.y - (this.target.groundOffset ?? 0);
+    const targetTop = targetBottom + PHYSICS.playerHeight;
+    const predatorBottom = this.position.y;
+    const predatorTop = predatorBottom + this.height;
+
+    return predatorBottom <= targetTop && predatorTop >= targetBottom;
   }
 
   takeDamage(amount = 1) {

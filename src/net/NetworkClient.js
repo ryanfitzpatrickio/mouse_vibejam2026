@@ -70,7 +70,16 @@ export class NetworkClient {
 
   /**
    * Send an input to the server and store it for reconciliation.
-   * @param {{ moveX: number, moveZ: number, sprint: boolean, jump: boolean, crouch: boolean, rotation: number }} input
+   * @param {{
+   *   moveX: number,
+   *   moveZ: number,
+   *   sprint: boolean,
+   *   jump?: boolean,
+   *   jumpPressed?: boolean,
+   *   jumpHeld?: boolean,
+   *   crouch: boolean,
+   *   rotation: number,
+   * }} input
    * @returns {number} seq number of this input
    */
   sendInput(input) {

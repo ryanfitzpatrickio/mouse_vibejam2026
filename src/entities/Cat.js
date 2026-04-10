@@ -44,6 +44,7 @@ export class Cat extends Predator {
       maxHealth: 4,
       patrolRadius: 10,
       radius: 0.5,
+      height: 1.6,
       ...options,
     });
 

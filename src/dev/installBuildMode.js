@@ -2,12 +2,15 @@ import * as THREE from 'three';
 import { PrefabEditorDialog } from './PrefabEditorDialog.js';
 import { DEFAULT_PREFAB_LIBRARY, normalizePrefabLibrary } from './prefabRegistry.js';
 import { clamp, createAtlasButtonStyle, deepClone } from './editorShared.js';
-import { createDefaultPrimitive, createPrimitiveId, loadPrefabLibraryFromAsset } from './buildModeSupport.js';
+import { createDefaultPrimitive, createDefaultLight, createPrimitiveId, createSpawnMarkerPrimitive, loadPrefabLibraryFromAsset } from './buildModeSupport.js';
 import { loadTextureAtlases, TEXTURE_ATLASES } from './textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
+import { SPAWN_TYPES, normalizeSpawnType } from '../../shared/spawnPoints.js';
+import { NAV_AREA_TYPES, normalizeNavArea } from '../../shared/navConfig.js';
 
 const RAD_TO_DEG = 180 / Math.PI;
 const DEG_TO_RAD = Math.PI / 180;
+const SNAP_SIZE_OPTIONS = Object.freeze([2, 1, 0.5, 0.25, 0.1]);
 
 class BuildModeEditor {
   constructor(app, textureAtlases, prefabLibrary, OrbitControls, TransformControls) {
@@ -53,6 +56,8 @@ class BuildModeEditor {
   toggle() {
     this.visible = !this.visible;
     this.panel.style.display = this.visible ? 'block' : 'none';
+    this.app.room.setSpawnMarkersVisible(this.visible);
+    this.app.room.setLightHelpersVisible(this.visible);
     if (this.visible) {
       this.app.thirdPersonCamera?.setEnabled(false);
       this.controls.target.copy(this.app.mouse.position);
@@ -122,15 +127,40 @@ class BuildModeEditor {
     });
     this.panel.appendChild(note);
 
-    const grid = this.app.room.getBuildGridConfig();
-    const gridNote = document.createElement('div');
-    gridNote.textContent = `Grid: ${grid.columns}x${grid.rows} | cell ${grid.cellWidth.toFixed(3)} x ${grid.cellDepth.toFixed(3)}`;
-    Object.assign(gridNote.style, {
+    this.gridNote = document.createElement('div');
+    Object.assign(this.gridNote.style, {
       color: '#9ee8b2',
+      fontSize: '11px',
+    });
+    this.panel.appendChild(this.gridNote);
+
+    const gridControls = document.createElement('label');
+    gridControls.textContent = 'Snap Size';
+    Object.assign(gridControls.style, {
+      display: 'grid',
+      gap: '4px',
+      color: '#d7c5a7',
+      marginTop: '8px',
       marginBottom: '12px',
       fontSize: '11px',
     });
-    this.panel.appendChild(gridNote);
+    this.gridSizeSelect = document.createElement('select');
+    this._styleField(this.gridSizeSelect);
+    SNAP_SIZE_OPTIONS.forEach((size) => {
+      const option = document.createElement('option');
+      option.value = String(size);
+      option.textContent = size.toFixed(size < 1 ? (size < 0.2 ? 1 : 2) : 0);
+      this.gridSizeSelect.appendChild(option);
+    });
+    const grid = this.app.room.getBuildGridConfig();
+    this.gridSizeSelect.value = String(grid.cellWidth);
+    this.gridSizeSelect.addEventListener('change', () => {
+      const nextGrid = this.app.room.setBuildGridSnapSize(Number(this.gridSizeSelect.value));
+      this._updateGridNote(nextGrid);
+    });
+    gridControls.appendChild(this.gridSizeSelect);
+    this.panel.appendChild(gridControls);
+    this._updateGridNote(grid);
 
     this.actions = document.createElement('div');
     Object.assign(this.actions.style, {
@@ -144,6 +174,11 @@ class BuildModeEditor {
     this._addActionButton('Add Box', () => this._addPrimitive('box'));
     this._addActionButton('Add Plane', () => this._addPrimitive('plane'));
     this._addActionButton('Add Cyl', () => this._addPrimitive('cylinder'));
+    this._addActionButton('Player Spawn', () => this._addSpawnMarker(SPAWN_TYPES.PLAYER), '#1b4450');
+    this._addActionButton('Enemy Spawn', () => this._addSpawnMarker(SPAWN_TYPES.ENEMY), '#5a2b1f');
+    this._addActionButton('Point Light', () => this._addLight('point'), '#5a4120');
+    this._addActionButton('Spot Light', () => this._addLight('spot'), '#5a3a20');
+    this._addActionButton('Sun Light', () => this._addLight('directional'), '#5a4c20');
     this._addActionButton('Move', () => this._setTransformMode('translate'));
     this._addActionButton('Rotate', () => this._setTransformMode('rotate'));
     this._addActionButton('Scale', () => this._setTransformMode('scale'));
@@ -155,6 +190,7 @@ class BuildModeEditor {
     this._createSelectionSection();
     this._createTransformSection();
     this._createMaterialSection();
+    this._createLightSection();
     this._createPrefabSection();
     this._createGlbSection();
     this._createPaletteSection();
@@ -170,6 +206,11 @@ class BuildModeEditor {
     this.panel.appendChild(this.status);
 
     document.body.appendChild(this.panel);
+  }
+
+  _updateGridNote(grid = this.app.room.getBuildGridConfig()) {
+    if (!this.gridNote) return;
+    this.gridNote.textContent = `Grid: ${grid.columns}x${grid.rows} | cell ${grid.cellWidth.toFixed(3)} x ${grid.cellDepth.toFixed(3)} | y step ${grid.verticalStep.toFixed(3)}`;
   }
 
   _createOrbitControls() {
@@ -252,10 +293,14 @@ class BuildModeEditor {
       const object = this.transformControls.object;
       const primitiveId = object?.userData?.primitiveId;
       const prefabInstanceId = object?.userData?.prefabInstanceId;
-      if (!primitiveId && !prefabInstanceId) return;
+      const lightId = object?.userData?.lightId;
+      if (!primitiveId && !prefabInstanceId && !lightId) return;
 
       const primitive = primitiveId
         ? this.layout.primitives.find((entry) => entry.id === primitiveId)
+        : null;
+      const light = lightId
+        ? (this.layout.lights ?? []).find((entry) => entry.id === lightId)
         : null;
       const mode = this.transformMode || this.transformControls?.mode || 'translate';
       const isGlb = primitive?.type === 'glb';
@@ -283,6 +328,24 @@ class BuildModeEditor {
           snapScale: mode === 'scale' && !isGlb,
           allowEdgeOverflow: true,
         })
+        : light
+          ? this.app.room.snapLightToGrid({
+            ...deepClone(light),
+            position: {
+              x: object.position.x,
+              y: object.position.y,
+              z: object.position.z,
+            },
+            rotation: {
+              x: object.rotation.x,
+              y: object.rotation.y,
+              z: object.rotation.z,
+            },
+          }, {
+            snapY: true,
+            snapPosition: true,
+            allowEdgeOverflow: true,
+          })
         : {
           position: {
             x: Number(object.position.x.toFixed(4)),
@@ -304,14 +367,23 @@ class BuildModeEditor {
       this._suppressTransformSync = true;
       object.position.set(next.position.x, next.position.y, next.position.z);
       object.rotation.set(next.rotation.x, next.rotation.y, next.rotation.z);
-      object.scale.set(next.scale.x, next.scale.y, next.scale.z);
+      if (next.scale) {
+        object.scale.set(next.scale.x, next.scale.y, next.scale.z);
+      }
       this._suppressTransformSync = false;
 
-      this.app.room.updateEditablePrimitiveTransform(primitiveId || prefabInstanceId, {
-        position: next.position,
-        rotation: next.rotation,
-        scale: next.scale,
-      });
+      if (lightId) {
+        this.app.room.updateEditableLightTransform(lightId, {
+          position: next.position,
+          rotation: next.rotation,
+        });
+      } else {
+        this.app.room.updateEditablePrimitiveTransform(primitiveId || prefabInstanceId, {
+          position: next.position,
+          rotation: next.rotation,
+          scale: next.scale,
+        });
+      }
       this.layout = this.app.room.getEditableLayout();
       this._syncForm();
     });
@@ -338,15 +410,33 @@ class BuildModeEditor {
     canvas.addEventListener('dblclick', (event) => {
       if (!this.visible) return;
       event.preventDefault();
-      let hitObject = this.currentHit?.object;
-      while (hitObject && !hitObject.userData?.primitiveId) {
-        hitObject = hitObject.parent;
-      }
-      if (!hitObject?.userData?.primitiveId) return;
-      this.selectedId = hitObject.userData.primitiveId;
+      const hitObject = this._resolveEditableHitObject(this.currentHit?.object);
+      const editableId = this._editableIdFromObject(hitObject);
+      if (!editableId) return;
+      this.selectedId = editableId;
       this._syncForm();
       this._setStatus(`Selected ${hitObject.name || 'object'}.`);
     });
+  }
+
+  _resolveEditableHitObject(object) {
+    let current = object ?? null;
+    while (
+      current
+      && !current.userData?.primitiveId
+      && !current.userData?.prefabInstanceId
+      && !current.userData?.lightId
+    ) {
+      current = current.parent;
+    }
+    return current;
+  }
+
+  _editableIdFromObject(object) {
+    return object?.userData?.primitiveId
+      ?? object?.userData?.prefabInstanceId
+      ?? object?.userData?.lightId
+      ?? null;
   }
 
   _updateProbe() {
@@ -372,13 +462,13 @@ class BuildModeEditor {
     position.needsUpdate = true;
     this.pointerLine.visible = true;
 
-    let hitObject = hit.object;
-    while (hitObject && !hitObject.userData?.primitiveId) {
-      hitObject = hitObject.parent;
-    }
-    const primitiveId = hitObject?.userData?.primitiveId;
-    const primitive = primitiveId
-      ? this.layout.primitives.find((entry) => entry.id === primitiveId)
+    const hitObject = this._resolveEditableHitObject(hit.object);
+    const editableId = this._editableIdFromObject(hitObject);
+    const primitive = editableId
+      ? this.layout.primitives.find((entry) => entry.id === editableId)
+      : null;
+    const light = editableId
+      ? (this.layout.lights ?? []).find((entry) => entry.id === editableId)
       : null;
     const gridCell = this._getGridCellFromPoint(hit.point);
     this.hitTooltip.style.display = 'block';
@@ -388,6 +478,7 @@ class BuildModeEditor {
       hitObject?.name || hit.object.name || 'unnamed',
       gridCell ? `grid ${gridCell.col + 1}, ${gridCell.row + 1}` : '',
       primitive ? `cell ${primitive.texture.cell ?? 'none'}` : '',
+      light ? `${light.lightType} light` : '',
       `x ${hit.point.x.toFixed(2)} y ${hit.point.y.toFixed(2)} z ${hit.point.z.toFixed(2)}`,
     ].filter(Boolean).join('\n');
   }
@@ -410,12 +501,12 @@ class BuildModeEditor {
 
   _attachTransformControls() {
     if (!this.transformControls || !this.visible) return;
-    const mesh = this.app.room.getEditableMesh(this.selectedId);
-    if (!mesh || mesh.visible === false) {
+    const object = this.app.room.getEditableObject(this.selectedId);
+    if (!object || object.visible === false) {
       this.transformControls.detach();
       return;
     }
-    this.transformControls.attach(mesh);
+    this.transformControls.attach(object);
   }
 
   _createSelectionSection() {
@@ -435,8 +526,8 @@ class BuildModeEditor {
     this._styleField(this.nameInput);
     this.nameInput.style.marginTop = '8px';
     this.nameInput.addEventListener('input', () => {
-      this._updateSelected((primitive) => {
-        primitive.name = this.nameInput.value || primitive.type;
+      this._updateSelected((entry) => {
+        entry.name = this.nameInput.value || entry.type || `${entry.lightType}-light`;
       });
     });
     section.appendChild(this.nameInput);
@@ -471,6 +562,34 @@ class BuildModeEditor {
         primitive.colliderClearance = value;
       });
     });
+
+    const navAreaWrap = document.createElement('label');
+    navAreaWrap.textContent = 'Nav Area';
+    Object.assign(navAreaWrap.style, {
+      display: 'grid',
+      gap: '4px',
+      color: '#d7c5a7',
+      marginTop: '8px',
+    });
+    this.navAreaSelect = document.createElement('select');
+    this._styleField(this.navAreaSelect);
+    [
+      [NAV_AREA_TYPES.DEFAULT, 'Default'],
+      [NAV_AREA_TYPES.MOUSE_ONLY, 'Mouse Only'],
+    ].forEach(([value, label]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      this.navAreaSelect.appendChild(option);
+    });
+    this.navAreaSelect.addEventListener('change', () => {
+      this._updateSelected((primitive) => {
+        primitive.navArea = normalizeNavArea(this.navAreaSelect.value);
+      });
+    });
+    navAreaWrap.appendChild(this.navAreaSelect);
+    this.navAreaSelect._wrap = navAreaWrap;
+    section.appendChild(navAreaWrap);
   }
 
   _createTransformSection() {
@@ -495,6 +614,7 @@ class BuildModeEditor {
 
   _createMaterialSection() {
     const section = this._createSection('Surface');
+    this.surfaceSection = section;
 
     const grid = document.createElement('div');
     Object.assign(grid.style, {
@@ -556,6 +676,77 @@ class BuildModeEditor {
       this._updateSelected((primitive) => {
         primitive.material.metalness = value;
       });
+    });
+  }
+
+  _createLightSection() {
+    const section = this._createSection('Light');
+    this.lightSection = section;
+
+    this.lightColorInput = document.createElement('input');
+    this.lightColorInput.type = 'color';
+    this._styleField(this.lightColorInput);
+    this.lightColorInput.addEventListener('input', () => {
+      this._updateSelected((light) => {
+        light.color = this.lightColorInput.value;
+      }, { snapPosition: false, snapScale: false });
+    });
+    const colorWrap = document.createElement('label');
+    colorWrap.textContent = 'Color';
+    Object.assign(colorWrap.style, { display: 'grid', gap: '4px', color: '#d7c5a7' });
+    colorWrap.appendChild(this.lightColorInput);
+    colorWrap.style.marginTop = '0';
+    section.appendChild(colorWrap);
+    this.lightColorInput._wrap = colorWrap;
+
+    this.lightTypeSelect = document.createElement('select');
+    this._styleField(this.lightTypeSelect);
+    this.lightTypeSelect.style.marginTop = '8px';
+    [
+      ['point', 'Point'],
+      ['spot', 'Spot'],
+      ['directional', 'Directional'],
+    ].forEach(([value, label]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      this.lightTypeSelect.appendChild(option);
+    });
+    this.lightTypeSelect.addEventListener('change', () => {
+      this._updateSelected((light) => {
+        light.lightType = this.lightTypeSelect.value;
+      }, { snapPosition: false, snapScale: false });
+    });
+    section.appendChild(this.lightTypeSelect);
+
+    this.lightIntensityInput = this._createRangeField(section, 'Intensity', 0, 50, 0.1, (value) => {
+      this._updateSelected((light) => {
+        light.intensity = value;
+      }, { snapPosition: false, snapScale: false });
+    });
+
+    this.lightDistanceInput = this._createNumberField(section, 'Distance', { step: 0.1, min: 0 }, (value) => {
+      this._updateSelected((light) => {
+        light.distance = Math.max(0, value ?? 0);
+      }, { snapPosition: false, snapScale: false });
+    });
+
+    this.lightDecayInput = this._createNumberField(section, 'Decay', { step: 0.05, min: 0 }, (value) => {
+      this._updateSelected((light) => {
+        light.decay = Math.max(0, value ?? 0);
+      }, { snapPosition: false, snapScale: false });
+    });
+
+    this.lightAngleInput = this._createRangeField(section, 'Cone Angle', 5, 85, 1, (value) => {
+      this._updateSelected((light) => {
+        light.angle = value * DEG_TO_RAD;
+      }, { snapPosition: false, snapScale: false });
+    });
+
+    this.lightPenumbraInput = this._createRangeField(section, 'Penumbra', 0, 1, 0.01, (value) => {
+      this._updateSelected((light) => {
+        light.penumbra = value;
+      }, { snapPosition: false, snapScale: false });
     });
   }
 
@@ -984,6 +1175,7 @@ class BuildModeEditor {
       grid.appendChild(input);
       inputs[axis] = input;
     });
+    inputs._wrap = wrap;
     return inputs;
   }
 
@@ -1020,6 +1212,7 @@ class BuildModeEditor {
       grid.appendChild(input);
       inputs[axis] = input;
     });
+    inputs._wrap = wrap;
     return inputs;
   }
 
@@ -1043,6 +1236,7 @@ class BuildModeEditor {
     });
     wrap.appendChild(input);
     parent.appendChild(wrap);
+    input._wrap = wrap;
     return input;
   }
 
@@ -1070,6 +1264,7 @@ class BuildModeEditor {
     wrap.append(input, output);
     parent.appendChild(wrap);
     input._output = output;
+    input._wrap = wrap;
     return input;
   }
 
@@ -1087,6 +1282,7 @@ class BuildModeEditor {
     input.addEventListener('change', () => onChange(input.checked));
     wrap.append(input, document.createTextNode(label));
     parent.appendChild(wrap);
+    input._wrap = wrap;
     return input;
   }
 
@@ -1108,31 +1304,60 @@ class BuildModeEditor {
     return this._editorPrimitives().find((entry) => entry.id === this.selectedId) ?? null;
   }
 
+  _selectedLight() {
+    return this._editorLights().find((entry) => entry.id === this.selectedId) ?? null;
+  }
+
+  _selectedEntry() {
+    return this._selectedPrimitive() ?? this._selectedLight();
+  }
+
+  _spawnLabel(spawnType) {
+    if (spawnType === SPAWN_TYPES.PLAYER) return 'player spawn';
+    if (spawnType === SPAWN_TYPES.ENEMY) return 'enemy spawn';
+    return null;
+  }
+
   _editorPrimitives() {
     return this.layout.primitives.filter((entry) => entry.deleted !== true);
+  }
+
+  _editorLights() {
+    return (this.layout.lights ?? []).filter((entry) => entry.deleted !== true);
+  }
+
+  _editorEntries() {
+    return [...this._editorPrimitives(), ...this._editorLights()];
   }
 
   _refreshList() {
     this.layout = this.app.room.getEditableLayout();
     this.primitiveSelect.innerHTML = '';
-    const editorPrimitives = this._editorPrimitives();
-    if (!editorPrimitives.length) {
+    const editorEntries = this._editorEntries();
+    if (!editorEntries.length) {
       const option = document.createElement('option');
       option.value = '';
-      option.textContent = 'No editable primitives';
+      option.textContent = 'No editable objects';
       this.primitiveSelect.appendChild(option);
       this.selectedId = null;
       return;
     }
 
-    if (!editorPrimitives.some((entry) => entry.id === this.selectedId)) {
-      this.selectedId = editorPrimitives[0].id;
+    if (!editorEntries.some((entry) => entry.id === this.selectedId)) {
+      this.selectedId = editorEntries[0].id;
     }
 
-    editorPrimitives.forEach((primitive) => {
+    editorEntries.forEach((entry) => {
       const option = document.createElement('option');
-      option.value = primitive.id;
-      option.textContent = `${primitive.name} (${primitive.type})`;
+      option.value = entry.id;
+      if (entry.lightType) {
+        option.textContent = `${entry.name} (${entry.lightType} light)`;
+      } else {
+        const spawnLabel = this._spawnLabel(normalizeSpawnType(entry.spawnType));
+        option.textContent = spawnLabel
+          ? `${entry.name} (${spawnLabel})`
+          : `${entry.name} (${entry.type})`;
+      }
       this.primitiveSelect.appendChild(option);
     });
     this.primitiveSelect.value = this.selectedId;
@@ -1143,12 +1368,22 @@ class BuildModeEditor {
     this._refreshList();
     this._syncPrefabSection();
     const primitive = this._selectedPrimitive();
-    const disabled = !primitive;
+    const light = this._selectedLight();
+    const entry = primitive ?? light;
+    const disabled = !entry;
+    const primitiveDisabled = !primitive;
+    const lightDisabled = !light;
 
     [
       this.nameInput,
       ...Object.values(this.positionInputs),
       ...Object.values(this.rotationInputs),
+      this.castShadowToggle,
+    ].forEach((field) => {
+      field.disabled = disabled;
+    });
+
+    [
       ...Object.values(this.scaleInputs),
       this.textureCellInput,
       this.colorInput,
@@ -1157,46 +1392,85 @@ class BuildModeEditor {
       this.roughnessInput,
       this.metalnessInput,
       this.colliderToggle,
-      this.castShadowToggle,
       this.receiveShadowToggle,
       this.clearanceInput,
+      this.navAreaSelect,
       this.prefabSelect,
     ].forEach((field) => {
-      field.disabled = disabled;
+      field.disabled = primitiveDisabled;
     });
 
-    if (!primitive) {
+    [
+      this.lightColorInput,
+      this.lightTypeSelect,
+      this.lightIntensityInput,
+      this.lightDistanceInput,
+      this.lightDecayInput,
+      this.lightAngleInput,
+      this.lightPenumbraInput,
+    ].forEach((field) => {
+      field.disabled = lightDisabled;
+    });
+
+    this.surfaceSection.style.display = primitive ? 'block' : 'none';
+    this.lightSection.style.display = light ? 'block' : 'none';
+    this.scaleInputs._wrap.style.display = primitive ? 'block' : 'none';
+    this.colliderToggle._wrap.style.display = primitive ? 'flex' : 'none';
+    this.receiveShadowToggle._wrap.style.display = primitive ? 'flex' : 'none';
+    this.clearanceInput._wrap.style.display = primitive ? 'grid' : 'none';
+    this.navAreaSelect._wrap.style.display = primitive ? 'grid' : 'none';
+    this.prefabSelect.disabled = primitiveDisabled;
+
+    if (!entry) {
       this._highlightPalette();
       return;
     }
 
-    this.nameInput.value = primitive.name;
-    this.positionInputs.x.value = primitive.position.x;
-    this.positionInputs.y.value = primitive.position.y;
-    this.positionInputs.z.value = primitive.position.z;
-    this.rotationInputs.x.value = (primitive.rotation.x * RAD_TO_DEG).toFixed(1);
-    this.rotationInputs.y.value = (primitive.rotation.y * RAD_TO_DEG).toFixed(1);
-    this.rotationInputs.z.value = (primitive.rotation.z * RAD_TO_DEG).toFixed(1);
-    this.scaleInputs.x.value = primitive.scale.x;
-    this.scaleInputs.y.value = primitive.scale.y;
-    this.scaleInputs.z.value = primitive.scale.z;
-    this.activeTextureAtlasId = primitive.texture.atlas ?? this.activeTextureAtlasId;
-    this.textureCellInput.value = primitive.texture.cell ?? '';
-    this.textureCellInput.max = String((this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1);
-    this.colorInput.value = primitive.material.color;
-    this.repeatInputs.x.value = primitive.texture.repeat.x;
-    this.repeatInputs.y.value = primitive.texture.repeat.y;
-    this.textureRotationInput.value = (primitive.texture.rotation * RAD_TO_DEG).toFixed(1);
-    this.roughnessInput.value = primitive.material.roughness;
-    this.roughnessInput._output.textContent = Number(primitive.material.roughness).toFixed(2);
-    this.metalnessInput.value = primitive.material.metalness;
-    this.metalnessInput._output.textContent = Number(primitive.material.metalness).toFixed(2);
-    this.colliderToggle.checked = primitive.collider;
-    this.castShadowToggle.checked = primitive.castShadow;
-    this.receiveShadowToggle.checked = primitive.receiveShadow;
-    this.clearanceInput.value = primitive.colliderClearance ?? 0;
-    this.clearanceInput._output.textContent = (primitive.colliderClearance ?? 0).toFixed(2);
-    this.prefabSelect.value = primitive.prefabId ?? '';
+    this.nameInput.value = entry.name;
+    this.positionInputs.x.value = entry.position.x;
+    this.positionInputs.y.value = entry.position.y;
+    this.positionInputs.z.value = entry.position.z;
+    this.rotationInputs.x.value = (entry.rotation.x * RAD_TO_DEG).toFixed(1);
+    this.rotationInputs.y.value = (entry.rotation.y * RAD_TO_DEG).toFixed(1);
+    this.rotationInputs.z.value = (entry.rotation.z * RAD_TO_DEG).toFixed(1);
+    this.castShadowToggle.checked = entry.castShadow === true;
+
+    if (primitive) {
+      this.scaleInputs.x.value = primitive.scale.x;
+      this.scaleInputs.y.value = primitive.scale.y;
+      this.scaleInputs.z.value = primitive.scale.z;
+      this.activeTextureAtlasId = primitive.texture.atlas ?? this.activeTextureAtlasId;
+      this.textureCellInput.value = primitive.texture.cell ?? '';
+      this.textureCellInput.max = String((this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1);
+      this.colorInput.value = primitive.material.color;
+      this.repeatInputs.x.value = primitive.texture.repeat.x;
+      this.repeatInputs.y.value = primitive.texture.repeat.y;
+      this.textureRotationInput.value = (primitive.texture.rotation * RAD_TO_DEG).toFixed(1);
+      this.roughnessInput.value = primitive.material.roughness;
+      this.roughnessInput._output.textContent = Number(primitive.material.roughness).toFixed(2);
+      this.metalnessInput.value = primitive.material.metalness;
+      this.metalnessInput._output.textContent = Number(primitive.material.metalness).toFixed(2);
+      this.colliderToggle.checked = primitive.collider;
+      this.receiveShadowToggle.checked = primitive.receiveShadow;
+      this.clearanceInput.value = primitive.colliderClearance ?? 0;
+      this.clearanceInput._output.textContent = (primitive.colliderClearance ?? 0).toFixed(2);
+      this.navAreaSelect.value = normalizeNavArea(primitive.navArea);
+      this.prefabSelect.value = primitive.prefabId ?? '';
+    }
+
+    if (light) {
+      this.lightTypeSelect.value = light.lightType;
+      this.lightColorInput.value = light.color;
+      this.lightIntensityInput.value = light.intensity;
+      this.lightIntensityInput._output.textContent = Number(light.intensity).toFixed(2);
+      this.lightDistanceInput.value = light.distance;
+      this.lightDecayInput.value = light.decay;
+      this.lightAngleInput.value = (light.angle * RAD_TO_DEG).toFixed(1);
+      this.lightAngleInput._output.textContent = (light.angle * RAD_TO_DEG).toFixed(2);
+      this.lightPenumbraInput.value = light.penumbra;
+      this.lightPenumbraInput._output.textContent = Number(light.penumbra).toFixed(2);
+    }
+
     this._highlightPalette();
   }
 
@@ -1327,17 +1601,32 @@ class BuildModeEditor {
 
   _updateSelected(mutator, { snapPosition = true, snapScale = false, snapY = true } = {}) {
     const primitive = this._selectedPrimitive();
-    if (!primitive) return;
+    if (primitive) {
+      const next = deepClone(primitive);
+      mutator(next);
+      const snapped = this.app.room.snapPrimitiveToGrid(next, {
+        snapY,
+        snapPosition,
+        snapScale,
+        allowEdgeOverflow: true,
+      });
+      this.app.room.upsertEditablePrimitive(snapped);
+      this.layout = this.app.room.getEditableLayout();
+      this._syncForm();
+      this._attachTransformControls();
+      return;
+    }
 
-    const next = deepClone(primitive);
+    const light = this._selectedLight();
+    if (!light) return;
+    const next = deepClone(light);
     mutator(next);
-    const snapped = this.app.room.snapPrimitiveToGrid(next, {
+    const snapped = this.app.room.snapLightToGrid(next, {
       snapY,
       snapPosition,
-      snapScale,
       allowEdgeOverflow: true,
     });
-    this.app.room.upsertEditablePrimitive(snapped);
+    this.app.room.upsertEditableLight(snapped);
     this.layout = this.app.room.getEditableLayout();
     this._syncForm();
     this._attachTransformControls();
@@ -1353,30 +1642,78 @@ class BuildModeEditor {
     this._setStatus(`Added ${primitive.name}.`);
   }
 
+  _addSpawnMarker(spawnType) {
+    const primitive = this.app.room.snapPrimitiveToGrid(
+      createSpawnMarkerPrimitive(spawnType, this.app),
+      { snapY: true, snapPosition: true, snapScale: false, allowEdgeOverflow: true },
+    );
+    this.app.room.upsertEditablePrimitive(primitive);
+    this.layout = this.app.room.getEditableLayout();
+    this.selectedId = primitive.id;
+    this._syncForm();
+    this._attachTransformControls();
+    this._setStatus(`Added ${this._spawnLabel(spawnType)}.`);
+  }
+
+  _addLight(lightType) {
+    const light = this.app.room.snapLightToGrid(
+      createDefaultLight(lightType, this.app),
+      { snapY: true, snapPosition: true, allowEdgeOverflow: true },
+    );
+    this.app.room.upsertEditableLight(light);
+    this.layout = this.app.room.getEditableLayout();
+    this.selectedId = light.id;
+    this._syncForm();
+    this._attachTransformControls();
+    this._setStatus(`Added ${light.name}.`);
+  }
+
   _duplicateSelected() {
     const primitive = this._selectedPrimitive();
-    if (!primitive) return;
+    const light = this._selectedLight();
     const grid = this.app.room.getBuildGridConfig();
-    const copy = deepClone(primitive);
-    copy.id = createPrimitiveId();
-    copy.name = `${primitive.name}-copy`;
+    if (primitive) {
+      const copy = deepClone(primitive);
+      copy.id = createPrimitiveId();
+      copy.name = `${primitive.name}-copy`;
+      copy.position.x += grid.cellWidth;
+      copy.position.z += grid.cellDepth;
+      const snapped = this.app.room.snapPrimitiveToGrid(copy, { snapY: true, allowEdgeOverflow: true });
+      this.app.room.upsertEditablePrimitive(snapped);
+      this.layout = this.app.room.getEditableLayout();
+      this.selectedId = snapped.id;
+      this._syncForm();
+      this._attachTransformControls();
+      this._setStatus(`Duplicated ${primitive.name}.`);
+      return;
+    }
+    if (!light) return;
+    const copy = deepClone(light);
+    copy.id = `light-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+    copy.name = `${light.name}-copy`;
     copy.position.x += grid.cellWidth;
     copy.position.z += grid.cellDepth;
-    const snapped = this.app.room.snapPrimitiveToGrid(copy, { snapY: true, allowEdgeOverflow: true });
-    this.app.room.upsertEditablePrimitive(snapped);
+    const snapped = this.app.room.snapLightToGrid(copy, { snapY: true, allowEdgeOverflow: true });
+    this.app.room.upsertEditableLight(snapped);
     this.layout = this.app.room.getEditableLayout();
     this.selectedId = snapped.id;
     this._syncForm();
     this._attachTransformControls();
-    this._setStatus(`Duplicated ${primitive.name}.`);
+    this._setStatus(`Duplicated ${light.name}.`);
   }
 
   _deleteSelected() {
     if (!this.selectedId) return;
-    const currentName = this._selectedPrimitive()?.name ?? 'primitive';
-    this.app.room.purgeEditablePrimitive(this.selectedId);
+    const primitive = this._selectedPrimitive();
+    const light = this._selectedLight();
+    const currentName = primitive?.name ?? light?.name ?? 'object';
+    if (light) {
+      this.app.room.purgeEditableLight(this.selectedId);
+    } else {
+      this.app.room.purgeEditablePrimitive(this.selectedId);
+    }
     this.layout = this.app.room.getEditableLayout();
-    this.selectedId = this.layout.primitives[0]?.id ?? null;
+    this.selectedId = this.layout.primitives[0]?.id ?? this.layout.lights?.[0]?.id ?? null;
     this._syncForm();
     this._attachTransformControls();
     this._setStatus(`Deleted ${currentName}.`);
@@ -1394,6 +1731,17 @@ class BuildModeEditor {
       this._setStatus(`Save failed: ${result.error || response.statusText}`, true);
       return;
     }
+
+    const socket = this.app.net?.ws;
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: 'dev-sync-layout',
+        layout: payload,
+      }));
+      this._setStatus('Saved level and synced server layout.');
+      return;
+    }
+
     this._setStatus('Saved /levels/kitchen-layout.json');
   }
 

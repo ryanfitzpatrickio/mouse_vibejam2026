@@ -13,12 +13,17 @@ export const PHYSICS = Object.freeze({
   slideCooldown: 1.0,
   jumpForce: 6.0,
   doubleJumpForce: 5.1,
+  wallJumpForce: 6.4,
+  wallJumpAwayForce: 4.6,
   gravity: -20.0,
   groundOffset: 0.35,
   playerHeightOffset: -0.035,
   playerRadius: 0.22,
   playerHeight: 0.78,
   groundSnapDistance: 0.18,
+  wallProbeDistance: 0.14,
+  wallJumpWindow: 0.22,
+  wallAttachCooldown: 0.16,
   turnSmooth: 12,
 
   maxStamina: 100,
@@ -56,6 +61,11 @@ export function createPlayerState(id) {
     slideDirZ: 0,
     canDoubleJump: false,
     hasDoubleJumped: false,
+    wallHolding: false,
+    wallNormalX: 0,
+    wallNormalZ: 0,
+    wallJumpWindowTimer: 0,
+    wallAttachCooldownTimer: 0,
     animState: 'idle',
     deathTime: 0,
   };
@@ -66,6 +76,7 @@ export function createPlayerState(id) {
  * When walking into a short ledge, the player steps up instead of being blocked.
  */
 const MAX_STEP_HEIGHT = 0.35;
+const FACE_CONTACT_EPSILON = 0.001;
 
 function getColliderBox(collider) {
   return collider?.aabb ?? collider?.box ?? null;
@@ -76,6 +87,13 @@ function shouldSkipSurfaceCollider(collider, groundY = 0) {
   if (!box) return false;
   return (collider.type === 'surface' || collider.metadata?.runnable)
     && Math.abs(box.max.y - groundY) <= 0.05;
+}
+
+function isWallCollider(collider) {
+  return !!getColliderBox(collider)
+    && collider.type !== 'surface'
+    && collider.type !== 'loot'
+    && !collider.metadata?.runnable;
 }
 
 function getSupportHeight(state, colliders, radius, groundSnapDistance, baseGroundY = 0) {
@@ -110,10 +128,14 @@ function getSupportHeight(state, colliders, radius, groundSnapDistance, baseGrou
   return supportY;
 }
 
-function resolveAgainstBox(state, box, radius, height) {
+function resolveAgainstBox(state, box, radius, height, previousPosition = null) {
   const { position: pos, velocity: vel } = state;
   const capsuleMinY = pos.y;
   const capsuleMaxY = pos.y + height;
+  const previousX = previousPosition?.x ?? pos.x;
+  const previousZ = previousPosition?.z ?? pos.z;
+  const previousCapsuleMinY = previousPosition?.y ?? capsuleMinY;
+  const previousCapsuleMaxY = previousCapsuleMinY + height;
 
   // Early-out when capsule is entirely above or below the box
   if (capsuleMaxY < box.min.y || capsuleMinY > box.max.y) {
@@ -125,10 +147,61 @@ function resolveAgainstBox(state, box, radius, height) {
   const expandedMinZ = box.min.z - radius;
   const expandedMaxZ = box.max.z + radius;
 
+  const ySweepOverlaps = Math.max(previousCapsuleMinY, capsuleMinY) <= box.max.y + FACE_CONTACT_EPSILON
+    && Math.min(previousCapsuleMaxY, capsuleMaxY) >= box.min.y - FACE_CONTACT_EPSILON;
+  const sweptAcrossZ = Math.max(previousZ, pos.z) >= expandedMinZ - FACE_CONTACT_EPSILON
+    && Math.min(previousZ, pos.z) <= expandedMaxZ + FACE_CONTACT_EPSILON;
+  const sweptAcrossX = Math.max(previousX, pos.x) >= expandedMinX - FACE_CONTACT_EPSILON
+    && Math.min(previousX, pos.x) <= expandedMaxX + FACE_CONTACT_EPSILON;
+
+  if (ySweepOverlaps) {
+    if (previousX < box.min.x - FACE_CONTACT_EPSILON && pos.x >= box.min.x - FACE_CONTACT_EPSILON && sweptAcrossZ) {
+      pos.x = expandedMinX;
+      if (vel) vel.x = Math.min(vel.x, 0);
+      return true;
+    }
+
+    if (previousX > box.max.x + FACE_CONTACT_EPSILON && pos.x <= box.max.x + FACE_CONTACT_EPSILON && sweptAcrossZ) {
+      pos.x = expandedMaxX;
+      if (vel) vel.x = Math.max(vel.x, 0);
+      return true;
+    }
+
+    if (previousZ < box.min.z - FACE_CONTACT_EPSILON && pos.z >= box.min.z - FACE_CONTACT_EPSILON && sweptAcrossX) {
+      pos.z = expandedMinZ;
+      if (vel) vel.z = Math.min(vel.z, 0);
+      return true;
+    }
+
+    if (previousZ > box.max.z + FACE_CONTACT_EPSILON && pos.z <= box.max.z + FACE_CONTACT_EPSILON && sweptAcrossX) {
+      pos.z = expandedMaxZ;
+      if (vel) vel.z = Math.max(vel.z, 0);
+      return true;
+    }
+  }
+
   const insideX = pos.x >= expandedMinX && pos.x <= expandedMaxX;
   const insideZ = pos.z >= expandedMinZ && pos.z <= expandedMaxZ;
   if (!insideX || !insideZ) {
     return false;
+  }
+
+  const landedFromAbove = previousCapsuleMinY >= box.max.y - FACE_CONTACT_EPSILON
+    && capsuleMinY <= box.max.y + FACE_CONTACT_EPSILON
+    && vel.y <= 0;
+  if (landedFromAbove) {
+    pos.y = box.max.y;
+    if (vel) vel.y = Math.max(vel.y, 0);
+    return true;
+  }
+
+  const hitFromBelow = previousCapsuleMaxY <= box.min.y + FACE_CONTACT_EPSILON
+    && capsuleMaxY >= box.min.y - FACE_CONTACT_EPSILON
+    && vel.y >= 0;
+  if (hitFromBelow) {
+    pos.y = box.min.y - height;
+    if (vel) vel.y = Math.min(vel.y, 0);
+    return true;
   }
 
   // --- Penetration depths for all 6 faces ---
@@ -168,8 +241,102 @@ function resolveAgainstBox(state, box, radius, height) {
   return true;
 }
 
+function findNearbyWallContact(state, colliders, radius, height, probeDistance) {
+  const footY = state.position.y + 0.02;
+  const headY = state.position.y + height - 0.02;
+  let bestContact = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (const collider of colliders ?? []) {
+    if (!isWallCollider(collider)) continue;
+
+    const box = getColliderBox(collider);
+    if (!box) continue;
+    if (headY < box.min.y || footY > box.max.y) continue;
+
+    const expandedMinX = box.min.x - radius;
+    const expandedMaxX = box.max.x + radius;
+    const expandedMinZ = box.min.z - radius;
+    const expandedMaxZ = box.max.z + radius;
+    const withinX = state.position.x >= expandedMinX - probeDistance
+      && state.position.x <= expandedMaxX + probeDistance;
+    const withinZ = state.position.z >= expandedMinZ - probeDistance
+      && state.position.z <= expandedMaxZ + probeDistance;
+
+    if (withinZ) {
+      const distMinX = Math.abs(state.position.x - expandedMinX);
+      if (distMinX <= probeDistance && distMinX < bestDistance) {
+        bestDistance = distMinX;
+        bestContact = {
+          axis: 'x',
+          clampValue: expandedMinX,
+          normalX: -1,
+          normalZ: 0,
+        };
+      }
+
+      const distMaxX = Math.abs(state.position.x - expandedMaxX);
+      if (distMaxX <= probeDistance && distMaxX < bestDistance) {
+        bestDistance = distMaxX;
+        bestContact = {
+          axis: 'x',
+          clampValue: expandedMaxX,
+          normalX: 1,
+          normalZ: 0,
+        };
+      }
+    }
+
+    if (withinX) {
+      const distMinZ = Math.abs(state.position.z - expandedMinZ);
+      if (distMinZ <= probeDistance && distMinZ < bestDistance) {
+        bestDistance = distMinZ;
+        bestContact = {
+          axis: 'z',
+          clampValue: expandedMinZ,
+          normalX: 0,
+          normalZ: -1,
+        };
+      }
+
+      const distMaxZ = Math.abs(state.position.z - expandedMaxZ);
+      if (distMaxZ <= probeDistance && distMaxZ < bestDistance) {
+        bestDistance = distMaxZ;
+        bestContact = {
+          axis: 'z',
+          clampValue: expandedMaxZ,
+          normalX: 0,
+          normalZ: 1,
+        };
+      }
+    }
+  }
+
+  return bestContact;
+}
+
+function applyWallHold(state, wallContact) {
+  if (!wallContact) return false;
+
+  if (wallContact.axis === 'x') {
+    state.position.x = wallContact.clampValue;
+    state.velocity.x = 0;
+  } else {
+    state.position.z = wallContact.clampValue;
+    state.velocity.z = 0;
+  }
+
+  state.velocity.y = 0;
+  state.grounded = false;
+  state.wallHolding = true;
+  state.wallNormalX = wallContact.normalX;
+  state.wallNormalZ = wallContact.normalZ;
+  state.wallJumpWindowTimer = PHYSICS.wallJumpWindow;
+  return true;
+}
+
 function resolvePlayerCollisions(state, colliders, options) {
-  const { radius, height, groundSnapDistance, baseGroundY = 0 } = options;
+  const { radius, height, groundSnapDistance, baseGroundY = 0, previousPosition = null } = options;
 
   // Auto step-up: if the player is walking into a short ledge, step up onto it
   // instead of being blocked horizontally. Only applies when grounded and
@@ -200,7 +367,7 @@ function resolvePlayerCollisions(state, colliders, options) {
       continue;
     }
 
-    resolveAgainstBox(state, box, radius, height);
+    resolveAgainstBox(state, box, radius, height, previousPosition);
   }
 
   const supportY = getSupportHeight(state, colliders, radius, groundSnapDistance, baseGroundY);
@@ -215,15 +382,15 @@ function resolvePlayerCollisions(state, colliders, options) {
   }
 }
 
-export function respawnPlayer(state, spawnX, spawnZ) {
+export function respawnPlayer(state, spawnX, spawnZ, spawnY = 0) {
   state.position.x = spawnX;
-  state.position.y = 0;
+  state.position.y = spawnY;
   state.position.z = spawnZ;
   state.velocity.x = 0;
   state.velocity.y = 0;
   state.velocity.z = 0;
   state.rotation = 0;
-  state.grounded = true;
+  state.grounded = spawnY <= 0.001;
   state.stamina = PHYSICS.maxStamina;
   state.staminaRegenTimer = 0;
   state.health = PHYSICS.maxHealth;
@@ -237,6 +404,11 @@ export function respawnPlayer(state, spawnX, spawnZ) {
   state.slideDirZ = 0;
   state.canDoubleJump = false;
   state.hasDoubleJumped = false;
+  state.wallHolding = false;
+  state.wallNormalX = 0;
+  state.wallNormalZ = 0;
+  state.wallJumpWindowTimer = 0;
+  state.wallAttachCooldownTimer = 0;
   state.animState = 'idle';
   state.deathTime = 0;
 }
@@ -247,7 +419,9 @@ export function respawnPlayer(state, spawnX, spawnZ) {
  * @param {ReturnType<typeof createPlayerState>} state - mutable player state
  * @param {{
  *   moveX: number, moveZ: number,
- *   sprint: boolean, jump: boolean, crouch: boolean,
+ *   sprint: boolean,
+ *   jump?: boolean, jumpPressed?: boolean, jumpHeld?: boolean,
+ *   crouch: boolean,
  *   rotation: number,
  * }} input - client input for this tick
  * @param {number} dt - delta time in seconds
@@ -258,6 +432,21 @@ export function simulateTick(state, input, dt, bounds, colliders = []) {
   if (!state.alive) return;
 
   const { position: pos, velocity: vel } = state;
+  const jumpHeld = !!(input.jumpHeld ?? input.jump);
+  const jumpPressed = !!(input.jumpPressed ?? input.jump);
+  const previousPosition = {
+    x: pos.x,
+    y: pos.y,
+    z: pos.z,
+  };
+
+  state.wallJumpWindowTimer = Math.max(0, state.wallJumpWindowTimer - dt);
+  state.wallAttachCooldownTimer = Math.max(0, state.wallAttachCooldownTimer - dt);
+  if (state.grounded) {
+    state.wallHolding = false;
+  } else if (state.wallHolding && !jumpHeld) {
+    state.wallHolding = false;
+  }
 
   // --- Movement speed ---
   let speed = PHYSICS.walkSpeed;
@@ -277,12 +466,22 @@ export function simulateTick(state, input, dt, bounds, colliders = []) {
   }
 
   // --- Jump ---
-  if (input.jump) {
+  if (jumpPressed) {
     if (state.grounded) {
       vel.y = PHYSICS.jumpForce;
       state.grounded = false;
       state.canDoubleJump = true;
       state.hasDoubleJumped = false;
+      state.wallHolding = false;
+      state.wallJumpWindowTimer = 0;
+    } else if (state.wallJumpWindowTimer > 0 && (state.wallNormalX !== 0 || state.wallNormalZ !== 0)) {
+      vel.x = state.wallNormalX * PHYSICS.wallJumpAwayForce;
+      vel.z = state.wallNormalZ * PHYSICS.wallJumpAwayForce;
+      vel.y = PHYSICS.wallJumpForce;
+      state.grounded = false;
+      state.wallHolding = false;
+      state.wallJumpWindowTimer = 0;
+      state.wallAttachCooldownTimer = PHYSICS.wallAttachCooldown;
     } else if (state.canDoubleJump && !state.hasDoubleJumped) {
       vel.y = PHYSICS.doubleJumpForce;
       state.hasDoubleJumped = true;
@@ -327,7 +526,7 @@ export function simulateTick(state, input, dt, bounds, colliders = []) {
   }
 
   // --- Gravity ---
-  if (!state.grounded) {
+  if (!state.grounded && !state.wallHolding) {
     vel.y += PHYSICS.gravity * dt;
   }
 
@@ -343,6 +542,7 @@ export function simulateTick(state, input, dt, bounds, colliders = []) {
       height: PHYSICS.playerHeight,
       groundSnapDistance: PHYSICS.groundSnapDistance,
       baseGroundY: 0,
+      previousPosition,
     });
   } else if (pos.y <= 0) {
     // --- Ground check fallback ---
@@ -354,6 +554,28 @@ export function simulateTick(state, input, dt, bounds, colliders = []) {
     state.hasDoubleJumped = false;
   } else {
     state.grounded = false;
+  }
+
+  if (state.grounded) {
+    state.wallHolding = false;
+    state.wallNormalX = 0;
+    state.wallNormalZ = 0;
+    state.wallJumpWindowTimer = 0;
+  } else if (jumpHeld && state.wallAttachCooldownTimer <= 0 && colliders?.length) {
+    const wallContact = findNearbyWallContact(
+      state,
+      colliders,
+      PHYSICS.playerRadius,
+      PHYSICS.playerHeight,
+      PHYSICS.wallProbeDistance,
+    );
+    if (wallContact) {
+      applyWallHold(state, wallContact);
+    } else {
+      state.wallHolding = false;
+    }
+  } else {
+    state.wallHolding = false;
   }
 
   // --- World bounds ---

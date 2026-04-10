@@ -182,6 +182,7 @@ export class CharacterController {
 
   _updateMovement(dt, groundY) {
     const inputDir = this._getInputDirection();
+    const previousPosition = this.mouse.position.clone();
 
     let speed = CONFIG.walkSpeed;
     if (this.crouching && !this.sliding) speed = CONFIG.crouchSpeed;
@@ -241,7 +242,7 @@ export class CharacterController {
     this.mouse.position.y += this.velocity.y * dt;
     this.mouse.position.z += this.velocity.z * dt;
 
-    this._resolveCollisions(groundY);
+    this._resolveCollisions(groundY, previousPosition);
 
     const colliders = this._getCollisionCandidates();
     const supportY = this.collider.getSupportHeight(colliders, groundY);
@@ -275,7 +276,7 @@ export class CharacterController {
     return [];
   }
 
-  _resolveCollisions(groundY) {
+  _resolveCollisions(groundY, previousPosition = null) {
     const colliders = this._getCollisionCandidates();
     if (!colliders.length) {
       return;
@@ -293,7 +294,7 @@ export class CharacterController {
         continue;
       }
 
-      this.collider.resolveAgainstBox(box, this.velocity);
+      this.collider.resolveAgainstBox(box, this.velocity, previousPosition);
       this.mouse.position.copy(this.collider.position);
     }
   }

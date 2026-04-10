@@ -1,6 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { defineConfig } from 'vite';
+
+const execFileAsync = promisify(execFile);
 
 function devLevelSavePlugin() {
   const layoutPath = path.resolve(process.cwd(), 'public/levels/kitchen-layout.json');
@@ -8,11 +12,17 @@ function devLevelSavePlugin() {
   const glbRegistryPath = path.resolve(process.cwd(), 'public/levels/glb-registry.json');
   const customGlbSourceDir = path.resolve(process.cwd(), 'assets/source/custom');
   const customGlbPublicDir = path.resolve(process.cwd(), 'public/models');
+  const kitchenLayoutScriptPath = path.resolve(process.cwd(), 'scripts/generate-kitchen-layout-module.mjs');
+  const kitchenNavMeshScriptPath = path.resolve(process.cwd(), 'scripts/generate-kitchen-navmesh-module.mjs');
 
   return {
     name: 'dev-level-save',
     configureServer(server) {
-      const handleJsonSave = (targetPath, publicPath) => async (req, res) => {
+      const runNodeScript = async (scriptPath) => {
+        await execFileAsync(process.execPath, [scriptPath], { cwd: process.cwd() });
+      };
+
+      const handleJsonSave = (targetPath, publicPath, afterSave = null) => async (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;
           res.setHeader('Content-Type', 'application/json');
@@ -30,6 +40,9 @@ function devLevelSavePlugin() {
             const payload = JSON.parse(body || '{}');
             await fs.mkdir(path.dirname(targetPath), { recursive: true });
             await fs.writeFile(targetPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+            if (afterSave) {
+              await afterSave();
+            }
 
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
@@ -50,7 +63,10 @@ function devLevelSavePlugin() {
 
       server.middlewares.use(
         '/__dev/save-level',
-        handleJsonSave(layoutPath, '/levels/kitchen-layout.json'),
+        handleJsonSave(layoutPath, '/levels/kitchen-layout.json', async () => {
+          await runNodeScript(kitchenLayoutScriptPath);
+          await runNodeScript(kitchenNavMeshScriptPath);
+        }),
       );
       server.middlewares.use(
         '/__dev/save-prefabs',

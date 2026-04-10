@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { createKeyCelMaterial, createThreeBandGradientTexture } from '../materials/index.js';
 import { MouseAnimationManager } from '../animation/MouseAnimationManager.js';
 import { MouseEyeAtlasAnimator } from '../animation/MouseEyeAtlasAnimator.js';
 import { assetUrl } from '../utils/assetUrl.js';
@@ -25,22 +24,13 @@ function applyCommonProps(material, sourceMaterial) {
   return material;
 }
 
-function createToonAvatarMaterial(sourceMaterial) {
-  const baseColor = sourceMaterial?.color?.getStyle?.() ?? sourceMaterial?.color ?? '#ffffff';
-
-  if (IS_MOBILE) {
-    const material = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(baseColor),
-      roughness: 0.65,
-      metalness: 0.0,
-    });
-    material.flatShading = false;
-    applyCommonProps(material, sourceMaterial);
-    material.needsUpdate = true;
-    return material;
-  }
-
-  const material = createKeyCelMaterial({ baseColor });
+function createLitAvatarMaterial(sourceMaterial) {
+  const baseColor = sourceMaterial?.color?.clone?.() ?? new THREE.Color(sourceMaterial?.color ?? '#ffffff');
+  const material = new THREE.MeshStandardMaterial({
+    color: baseColor,
+    roughness: sourceMaterial?.roughness ?? 0.65,
+    metalness: sourceMaterial?.metalness ?? 0.0,
+  });
   material.flatShading = false;
   applyCommonProps(material, sourceMaterial);
   material.needsUpdate = true;
@@ -48,24 +38,8 @@ function createToonAvatarMaterial(sourceMaterial) {
 }
 
 function createWebGPUToonAvatarMaterial(sourceMaterial, MeshToonNodeMaterial) {
-  const color = sourceMaterial?.color?.clone?.() ?? new THREE.Color(sourceMaterial?.color ?? '#ffffff');
-
-  if (IS_MOBILE) {
-    const material = new MeshStandardMaterial({
-      color,
-      roughness: 0.65,
-      metalness: 0.0,
-    });
-    applyCommonProps(material, sourceMaterial);
-    return material;
-  }
-
-  const material = new MeshToonNodeMaterial({
-    color,
-    gradientMap: createThreeBandGradientTexture(),
-  });
-  applyCommonProps(material, sourceMaterial);
-  return material;
+  void MeshToonNodeMaterial;
+  return createLitAvatarMaterial(sourceMaterial);
 }
 
 function cloneMaterialSet(material) {
@@ -209,7 +183,7 @@ export class Mouse extends THREE.Group {
             ? createWebGPUToonAvatarMaterial(material, MeshToonNodeMaterial)
             : material.clone();
         } else {
-          nextMaterial = createToonAvatarMaterial(material);
+          nextMaterial = createLitAvatarMaterial(material);
         }
 
         materialCache.set(material, nextMaterial);
@@ -291,13 +265,19 @@ export class Mouse extends THREE.Group {
 
   buildMouse() {
     // Materials
-    const furMat = IS_MOBILE
-      ? new THREE.MeshStandardMaterial({ color: new THREE.Color(this.furColor), roughness: 0.65, metalness: 0.0, fog: false })
-      : (() => { const m = createKeyCelMaterial({ baseColor: this.furColor, toonBands: 3, rimPower: 2.5, rimStrength: 0.3 }); m.flatShading = false; m.fog = false; return m; })();
+    const furMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(this.furColor),
+      roughness: 0.65,
+      metalness: 0.0,
+      fog: false,
+    });
 
-    const bellyMat = IS_MOBILE
-      ? new THREE.MeshStandardMaterial({ color: new THREE.Color(this.bellyColor), roughness: 0.65, metalness: 0.0, fog: false })
-      : (() => { const m = createKeyCelMaterial({ baseColor: this.bellyColor, toonBands: 3 }); m.flatShading = false; m.fog = false; return m; })();
+    const bellyMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(this.bellyColor),
+      roughness: 0.65,
+      metalness: 0.0,
+      fog: false,
+    });
 
     const eyeMat = new THREE.MeshStandardMaterial({
       color: this.eyeColor,

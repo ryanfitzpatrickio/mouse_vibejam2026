@@ -97,6 +97,13 @@ canvas.addEventListener('click', () => {
 
 window.addEventListener('keydown', (event) => {
   if (event.repeat) return;
+  const target = event.target;
+  if (
+    target instanceof HTMLElement
+    && (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName))
+  ) {
+    return;
+  }
 
   const key = event.key?.toLowerCase();
   if (key === 'p') {
@@ -111,6 +118,11 @@ window.addEventListener('keydown', (event) => {
     } else {
       mobileControls?.show();
     }
+    return;
+  }
+
+  if (key === 'o') {
+    app.toggleNavMeshOverlay?.();
   }
 });
 

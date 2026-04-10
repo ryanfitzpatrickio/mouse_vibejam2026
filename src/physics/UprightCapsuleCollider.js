@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+const FACE_CONTACT_EPSILON = 0.001;
+
 export class UprightCapsuleCollider {
   constructor({
     radius = 0.22,
@@ -50,9 +52,11 @@ export class UprightCapsuleCollider {
     return supportY;
   }
 
-  resolveAgainstBox(box, velocity = null) {
+  resolveAgainstBox(box, velocity = null, previousPosition = null) {
     const capsuleMinY = this.position.y;
     const capsuleMaxY = this.position.y + this.height;
+    const previousCapsuleMinY = previousPosition?.y ?? capsuleMinY;
+    const previousCapsuleMaxY = previousCapsuleMinY + this.height;
 
     if (capsuleMaxY < box.min.y || capsuleMinY > box.max.y) {
       return false;
@@ -68,6 +72,24 @@ export class UprightCapsuleCollider {
 
     if (!insideX || !insideZ) {
       return false;
+    }
+
+    const landedFromAbove = previousCapsuleMinY >= box.max.y - FACE_CONTACT_EPSILON
+      && capsuleMinY <= box.max.y + FACE_CONTACT_EPSILON
+      && velocity?.y <= 0;
+    if (landedFromAbove) {
+      this.position.y = box.max.y;
+      if (velocity) velocity.y = Math.max(velocity.y, 0);
+      return true;
+    }
+
+    const hitFromBelow = previousCapsuleMaxY <= box.min.y + FACE_CONTACT_EPSILON
+      && capsuleMaxY >= box.min.y - FACE_CONTACT_EPSILON
+      && velocity?.y >= 0;
+    if (hitFromBelow) {
+      this.position.y = box.min.y - this.height;
+      if (velocity) velocity.y = Math.min(velocity.y, 0);
+      return true;
     }
 
     const distLeft = this.position.x - expandedMinX;

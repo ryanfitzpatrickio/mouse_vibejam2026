@@ -115,7 +115,7 @@ export class MobileControls {
     this.root.append(this.cameraZone, this.joystickZone, this.buttonStack);
     this.parent.appendChild(this.root);
 
-    this._held = { sprint: false, crouch: false };
+    this._held = { jump: false, sprint: false, crouch: false };
     this._cameraTouchId = null;
     this._cameraLastX = 0;
     this._cameraLastY = 0;
@@ -225,9 +225,12 @@ export class MobileControls {
       if (kb) this.controller.keys[kb.crouch] = false;
     });
 
-    this._bindTapButton(this._buttons.jump, () => {
-      if (!kb) return;
-      this.controller.keys[kb.jump] = true;
+    this._bindHoldButton(this._buttons.jump, () => {
+      this._held.jump = true;
+      if (kb) this.controller.keys[kb.jump] = true;
+    }, () => {
+      this._held.jump = false;
+      if (kb) this.controller.keys[kb.jump] = false;
     });
 
     this._bindTapButton(this._buttons.action, () => {

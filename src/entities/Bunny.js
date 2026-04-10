@@ -33,6 +33,7 @@ export class Bunny extends Predator {
       maxHealth: 6,
       patrolRadius: 8,
       radius: 0.6,
+      height: 2.2,
       ...options,
     });
 

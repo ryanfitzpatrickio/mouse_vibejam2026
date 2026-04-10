@@ -15,65 +15,11 @@ import { EmoteWheel } from '../emote/EmoteWheel.js';
 import { getAudioManager } from '../audio/AudioManager.js';
 import { OcclusionFader } from '../utils/OcclusionFader.js';
 import { simulateTick, createPlayerState } from '../../shared/physics.js';
-
-function createLightMarker(color) {
-  return new THREE.Mesh(
-    new THREE.SphereGeometry(0.18, 12, 12),
-    new THREE.MeshBasicMaterial({
-      color: new THREE.Color(color),
-      transparent: true,
-      opacity: 0.18,
-    }),
-  );
-}
+import kitchenNavMesh from '../../shared/kitchen-navmesh.generated.js';
 
 function applyAtmosphere(scene) {
   scene.background = new THREE.Color('#8e7a63');
   scene.fog = new THREE.Fog('#8d7964', 16, 68);
-}
-
-function addLighting(scene, room) {
-  const scale = room.scaleFactor ?? 1;
-  const roomWidth = room.width * scale;
-  const roomDepth = room.depth * scale;
-  const roomHeight = room.height * scale;
-
-  const hemisphere = new THREE.HemisphereLight('#c4d6e8', '#4f3928', 1.25);
-  scene.add(hemisphere);
-
-  const sun = new THREE.DirectionalLight('#ffdcb3', 2.2);
-  sun.position.set(roomWidth * 0.2, roomHeight * 1.35, roomDepth * 0.35);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(isMobile ? 1024 : 2048, isMobile ? 1024 : 2048);
-  sun.shadow.bias = isMobile ? -0.001 : -0.0004;
-  sun.shadow.normalBias = isMobile ? 0.04 : 0.02;
-  sun.shadow.camera.near = 1;
-  sun.shadow.camera.far = roomHeight * 3.5;
-  sun.shadow.camera.left = -roomWidth * 0.8;
-  sun.shadow.camera.right = roomWidth * 0.8;
-  sun.shadow.camera.top = roomDepth * 0.8;
-  sun.shadow.camera.bottom = -roomDepth * 0.8;
-  sun.target.position.set(0, roomHeight * 0.25, 0);
-  scene.add(sun);
-  scene.add(sun.target);
-
-  const coolFill = new THREE.DirectionalLight('#88aee8', 0.7);
-  coolFill.position.set(-roomWidth * 0.45, roomHeight * 0.95, -roomDepth * 0.35);
-  scene.add(coolFill);
-
-  const counterPractical = new THREE.PointLight('#ffc47a', 26, roomWidth * 0.75, 2);
-  counterPractical.position.set(0, roomHeight - 2.1, -roomDepth * 0.33);
-  counterPractical.add(createLightMarker('#ffc47a'));
-  scene.add(counterPractical);
-
-  const tablePractical = new THREE.PointLight('#ffe2b0', 18, roomWidth * 0.65, 2);
-  tablePractical.position.set(-roomWidth * 0.22, roomHeight - 1.9, roomDepth * 0.14);
-  tablePractical.add(createLightMarker('#ffe2b0'));
-  scene.add(tablePractical);
-
-  const fridgeBounce = new THREE.PointLight('#9dc2ff', 7, roomWidth * 0.4, 2);
-  fridgeBounce.position.set(roomWidth * 0.36, roomHeight * 0.42, -roomDepth * 0.28);
-  scene.add(fridgeBounce);
 }
 
 function createWebGLRenderer(canvas) {
@@ -109,6 +55,91 @@ const isMobile = typeof window !== 'undefined'
 const ENABLE_BUNNY_PREDATOR = false;
 const ENABLE_CAT_PREDATOR = true;
 
+function buildNavMeshOverlay(navMesh) {
+  const group = new THREE.Group();
+  group.name = 'navmesh-overlay';
+
+  const fillPositions = [];
+  const linePositions = [];
+
+  for (const tile of Object.values(navMesh?.tiles ?? {})) {
+    const vertices = tile?.vertices;
+    const polys = tile?.polys;
+    if (!Array.isArray(vertices) || !Array.isArray(polys)) continue;
+
+    for (const poly of polys) {
+      const indices = Array.isArray(poly?.vertices)
+        ? poly.vertices.filter((index) => Number.isInteger(index) && index >= 0)
+        : [];
+      if (indices.length < 3) continue;
+
+      const points = indices.map((index) => {
+        const base = index * 3;
+        return {
+          x: vertices[base],
+          y: (vertices[base + 1] ?? 0) + 0.03,
+          z: vertices[base + 2],
+        };
+      });
+
+      for (let i = 1; i < points.length - 1; i += 1) {
+        const a = points[0];
+        const b = points[i];
+        const c = points[i + 1];
+        fillPositions.push(
+          a.x, a.y, a.z,
+          b.x, b.y, b.z,
+          c.x, c.y, c.z,
+        );
+      }
+
+      for (let i = 0; i < points.length; i += 1) {
+        const current = points[i];
+        const next = points[(i + 1) % points.length];
+        linePositions.push(
+          current.x, current.y + 0.005, current.z,
+          next.x, next.y + 0.005, next.z,
+        );
+      }
+    }
+  }
+
+  if (fillPositions.length) {
+    const fillGeometry = new THREE.BufferGeometry();
+    fillGeometry.setAttribute('position', new THREE.Float32BufferAttribute(fillPositions, 3));
+    const fillMaterial = new THREE.MeshBasicMaterial({
+      color: '#6de2b5',
+      transparent: true,
+      opacity: 0.22,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
+    });
+    const fillMesh = new THREE.Mesh(fillGeometry, fillMaterial);
+    fillMesh.renderOrder = 50;
+    group.add(fillMesh);
+  }
+
+  if (linePositions.length) {
+    const lineGeometry = new THREE.BufferGeometry();
+    lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: '#b7fff0',
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false,
+    });
+    const lineSegments = new THREE.LineSegments(lineGeometry, lineMaterial);
+    lineSegments.renderOrder = 51;
+    group.add(lineSegments);
+  }
+
+  group.visible = false;
+  return group;
+}
+
 export async function createGameSession({ canvas, mode = 'webgl', roomId = 'default' } = {}) {
   const scene = new THREE.Scene();
   applyAtmosphere(scene);
@@ -125,6 +156,8 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   let room;
   let renderer;
   let render;
+  const navMeshOverlay = buildNavMeshOverlay(kitchenNavMesh);
+  scene.add(navMeshOverlay);
 
   if (mode === 'webgpu') {
     const gpu = await createWebGPURenderer(canvas);
@@ -145,7 +178,6 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     mouse.position.set(0, mouse.groundOffset, 0);
     mouse.setViewCamera(camera);
     attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
-    addLighting(scene, room);
     attachEdgeOutlines(room.getGroup(), { color: '#090909', thresholdAngle: 22, opacity: 0.9 });
     mouse.setRendererMode('webgpu', gpu);
     render = () => renderPipeline.render();
@@ -157,7 +189,6 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     mouse.position.set(0, mouse.groundOffset, 0);
     mouse.setViewCamera(camera);
     attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
-    addLighting(scene, room);
     attachEdgeOutlines(room.getGroup(), { color: '#090909', thresholdAngle: 22, opacity: 0.9 });
     render = () => renderer.render(scene, camera);
   }
@@ -304,6 +335,11 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     predictionState.slideDirZ = ss.slideDirZ;
     predictionState.canDoubleJump = ss.canDoubleJump;
     predictionState.hasDoubleJumped = ss.hasDoubleJumped;
+    predictionState.wallHolding = !!ss.wallHolding;
+    predictionState.wallNormalX = ss.wallNormalX ?? 0;
+    predictionState.wallNormalZ = ss.wallNormalZ ?? 0;
+    predictionState.wallJumpWindowTimer = ss.wallJumpWindowTimer ?? 0;
+    predictionState.wallAttachCooldownTimer = ss.wallAttachCooldownTimer ?? 0;
     predictionState.deathTime = ss.deathTime ?? 0;
   }
 
@@ -358,7 +394,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   const PHYSICS_STEP = 1 / 30;
   const MAX_PHYSICS_STEPS = 4;
   let physicsAccum = 0;
-  let jumpLatch = false;
+  let previousJumpHeld = false;
   let mobileControls = null;
 
   function setMobileControls(mc) {
@@ -376,9 +412,9 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       const keys = controller.keys;
       const kb = controller.keyBindings;
 
-      const jumpPressed = !!keys[kb.jump];
-      keys[kb.jump] = false;
-      if (jumpPressed) jumpLatch = true;
+      const jumpHeld = !!keys[kb.jump];
+      const jumpPressed = jumpHeld && !previousJumpHeld;
+      previousJumpHeld = jumpHeld;
 
       let inputDir;
       const mc = mobileControls;
@@ -411,11 +447,12 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
         moveX: inputDir.x,
         moveZ: inputDir.z,
         sprint: !!keys[kb.sprint],
-        jump: jumpLatch,
+        jump: jumpPressed,
+        jumpPressed,
+        jumpHeld,
         crouch: !!keys[kb.crouch],
         rotation: mouse.rotation.y,
       };
-      jumpLatch = false;
 
       const colliders = room.getCollisionColliders();
       simulateTick(predictionState, input, PHYSICS_STEP, CLIENT_BOUNDS, colliders);
@@ -519,6 +556,14 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   }
 
   function dispose() {
+    navMeshOverlay.traverse((child) => {
+      child.geometry?.dispose?.();
+      if (Array.isArray(child.material)) {
+        child.material.forEach((material) => material?.dispose?.());
+      } else {
+        child.material?.dispose?.();
+      }
+    });
     placementMode?.deactivate();
     net.disconnect();
     remotePlayerManager.dispose();
@@ -549,5 +594,11 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     update,
     dispose,
     setMobileControls,
+    toggleNavMeshOverlay(forceVisible) {
+      navMeshOverlay.visible = typeof forceVisible === 'boolean'
+        ? forceVisible
+        : !navMeshOverlay.visible;
+      return navMeshOverlay.visible;
+    },
   };
 }

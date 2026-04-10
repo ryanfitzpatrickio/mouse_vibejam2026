@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { FACE_TEXTURE_SLOTS } from '../dev/prefabRegistry.js';
 import { DEFAULT_TEXTURE_ATLAS, TEXTURE_ATLASES } from '../dev/textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
+import { normalizeSpawnType } from '../../shared/spawnPoints.js';
+import { normalizeNavArea } from '../../shared/navConfig.js';
 
 const ATLAS_GRID = 10;
 const ATLAS_CELL_MARGIN_PX = 3;
@@ -26,6 +28,7 @@ const ROOM_TEXTURE_CELLS = Object.freeze({
 const DEFAULT_EDITABLE_LAYOUT = Object.freeze({
   version: 1,
   primitives: [],
+  lights: [],
 });
 
 const EDITABLE_TYPE_DEFAULTS = Object.freeze({
@@ -37,6 +40,36 @@ const EDITABLE_TYPE_DEFAULTS = Object.freeze({
   }),
   cylinder: Object.freeze({
     scale: { x: 1, y: 1, z: 1 },
+  }),
+});
+
+const EDITABLE_LIGHT_DEFAULTS = Object.freeze({
+  point: Object.freeze({
+    intensity: 18,
+    distance: 14,
+    decay: 2,
+    angle: Math.PI / 4,
+    penumbra: 0,
+    castShadow: false,
+    color: '#ffc47a',
+  }),
+  spot: Object.freeze({
+    intensity: 24,
+    distance: 18,
+    decay: 2,
+    angle: Math.PI / 5,
+    penumbra: 0.28,
+    castShadow: true,
+    color: '#ffd89f',
+  }),
+  directional: Object.freeze({
+    intensity: 1.7,
+    distance: 0,
+    decay: 2,
+    angle: Math.PI / 4,
+    penumbra: 0,
+    castShadow: true,
+    color: '#ffe1b8',
   }),
 });
 
@@ -69,6 +102,41 @@ function createPrimitiveGeometry(type) {
     default:
       return new THREE.BoxGeometry(1, 1, 1);
   }
+}
+
+function normalizeLightType(value) {
+  return value === 'spot' || value === 'directional' ? value : 'point';
+}
+
+function createLightHelperMesh(definition) {
+  let geometry;
+  switch (definition.lightType) {
+    case 'spot':
+      geometry = new THREE.ConeGeometry(0.18, 0.38, 18);
+      geometry.rotateX(Math.PI * 0.5);
+      break;
+    case 'directional':
+      geometry = new THREE.ConeGeometry(0.16, 0.34, 18);
+      geometry.rotateX(Math.PI * 0.5);
+      break;
+    case 'point':
+    default:
+      geometry = new THREE.SphereGeometry(0.16, 16, 16);
+      break;
+  }
+
+  const material = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(definition.color ?? '#ffffff'),
+    transparent: true,
+    opacity: 0.72,
+    depthWrite: false,
+    toneMapped: false,
+  });
+
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = `${definition.name || definition.lightType}-helper`;
+  mesh.userData.skipOutline = true;
+  return mesh;
 }
 
 function normalizeTextureSettings(texture = {}) {
@@ -271,7 +339,10 @@ export class Room {
     this.editableGroup = new THREE.Group();
     this.editableGroup.name = 'EditableLayout';
     this.editableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
+    this.spawnMarkersVisible = false;
+    this.lightHelpersVisible = false;
     this.editableMeshes = new Map();
+    this.editableLightObjects = new Map();
     this.prefabInstanceGroups = new Map();
     this.prefabInstanceIdByPrimitiveId = new Map();
     this.ready = Promise.all([
@@ -423,6 +494,7 @@ export class Room {
       this.loadedEditableLayout = {
         version: layout?.version ?? 1,
         primitives: Array.isArray(layout?.primitives) ? layout.primitives.map((entry) => this._normalizePrimitive(entry)) : [],
+        lights: Array.isArray(layout?.lights) ? layout.lights.map((entry) => this._normalizeLight(entry)) : [],
       };
     } catch {
       this.loadedEditableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
@@ -547,6 +619,7 @@ export class Room {
       id: entry.id ?? `primitive-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
       name: entry.name ?? `${type}-${(entry.id ?? 'item').slice(0, 4)}`,
       type,
+      spawnType: normalizeSpawnType(entry.spawnType),
       position: cloneVectorLike(entry.position, { x: 0, y: 0.5, z: 0 }),
       rotation: cloneVectorLike(entry.rotation, { x: 0, y: 0, z: 0 }),
       scale: cloneVectorLike(entry.scale, defaults.scale),
@@ -567,6 +640,7 @@ export class Room {
       },
       glbAssetId: entry.glbAssetId ?? null,
       prefabId: entry.prefabId ?? null,
+      navArea: normalizeNavArea(entry.navArea),
       prefabInstanceId: entry.prefabInstanceId ?? null,
       prefabInstanceOrigin: entry.prefabInstanceOrigin ? cloneVectorLike(entry.prefabInstanceOrigin, { x: 0, y: 0, z: 0 }) : null,
       prefabInstanceRotation: entry.prefabInstanceRotation ? cloneVectorLike(entry.prefabInstanceRotation, { x: 0, y: 0, z: 0 }) : null,
@@ -579,6 +653,26 @@ export class Room {
     };
   }
 
+  _normalizeLight(entry = {}) {
+    const lightType = normalizeLightType(entry.lightType);
+    const defaults = EDITABLE_LIGHT_DEFAULTS[lightType] ?? EDITABLE_LIGHT_DEFAULTS.point;
+    return {
+      id: entry.id ?? `light-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      name: entry.name ?? `${lightType}-light`,
+      lightType,
+      position: cloneVectorLike(entry.position, { x: 0, y: 2, z: 0 }),
+      rotation: cloneVectorLike(entry.rotation, { x: 0, y: 0, z: 0 }),
+      color: colorToHex(entry.color, defaults.color),
+      intensity: Number.isFinite(entry.intensity) ? entry.intensity : defaults.intensity,
+      distance: Number.isFinite(entry.distance) ? entry.distance : defaults.distance,
+      decay: Number.isFinite(entry.decay) ? entry.decay : defaults.decay,
+      angle: Number.isFinite(entry.angle) ? entry.angle : defaults.angle,
+      penumbra: Number.isFinite(entry.penumbra) ? entry.penumbra : defaults.penumbra,
+      castShadow: entry.castShadow ?? defaults.castShadow,
+      deleted: entry.deleted === true,
+    };
+  }
+
   _registerBuiltInPrimitive(mesh, definition, collider = null) {
     this._ensureUniqueEditableMaterials(mesh);
 
@@ -586,6 +680,7 @@ export class Room {
     mesh.userData.editablePrimitive = true;
     mesh.userData.primitiveId = primitive.id;
     mesh.userData.colliderEnabled = primitive.collider;
+    mesh.userData.spawnType = primitive.spawnType;
 
     this.builtInEditableMeshes.set(primitive.id, {
       mesh,
@@ -634,6 +729,7 @@ export class Room {
       id: entry.primitive.id,
       name: mesh.name || entry.primitive.name,
       type: entry.primitive.type,
+      spawnType: normalizeSpawnType(entry.primitive.spawnType),
       position: {
         x: Number(mesh.position.x.toFixed(4)),
         y: Number(mesh.position.y.toFixed(4)),
@@ -661,11 +757,13 @@ export class Room {
       material: materialToEditableSurface(material, entry.primitive.material.color),
       faceTextures,
       prefabId: entry.primitive.prefabId ?? null,
+      navArea: normalizeNavArea(entry.primitive.navArea),
       prefabInstanceId: entry.primitive.prefabInstanceId ?? null,
       prefabInstanceOrigin: entry.primitive.prefabInstanceOrigin ?? null,
       prefabInstanceRotation: entry.primitive.prefabInstanceRotation ?? null,
       prefabInstanceScale: entry.primitive.prefabInstanceScale ?? null,
       collider: mesh.userData.colliderEnabled !== false,
+      colliderClearance: entry.primitive.colliderClearance ?? 0,
       castShadow: mesh.castShadow !== false,
       receiveShadow: mesh.receiveShadow !== false,
       deleted: this.deletedBuiltInPrimitives.has(entry.primitive.id),
@@ -679,8 +777,10 @@ export class Room {
     mesh.scale.set(primitive.scale.x, primitive.scale.y, primitive.scale.z);
     mesh.castShadow = primitive.castShadow;
     mesh.receiveShadow = primitive.receiveShadow;
-    mesh.visible = !primitive.deleted;
+    mesh.visible = this._isPrimitiveVisible(primitive);
     mesh.userData.colliderEnabled = primitive.collider;
+    mesh.userData.spawnType = primitive.spawnType;
+    mesh.userData.skipOutline = primitive.spawnType != null;
 
     const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     const faceSlots = FACE_TEXTURE_SLOTS[primitive.type] ?? [];
@@ -712,6 +812,7 @@ export class Room {
   _applyLoadedEditableLayout() {
     const builtInIds = new Set(this.builtInEditableMeshes.keys());
     const customPrimitives = [];
+    const customLights = [];
 
     this.deletedBuiltInPrimitives.clear();
 
@@ -728,9 +829,16 @@ export class Room {
       }
     }
 
+    for (const light of this.loadedEditableLayout.lights ?? []) {
+      if (!light?.deleted) {
+        customLights.push(light);
+      }
+    }
+
     this.editableLayout = {
       version: this.loadedEditableLayout.version ?? 1,
       primitives: customPrimitives,
+      lights: customLights,
     };
 
     this._normalizePrefabInstanceTransforms();
@@ -803,6 +911,107 @@ export class Room {
     });
   }
 
+  _configureEditableLightShadow(light, definition) {
+    if (!('castShadow' in light)) return;
+    light.castShadow = definition.castShadow === true;
+    if (!light.castShadow || !light.shadow) return;
+    light.shadow.mapSize.set(1024, 1024);
+    light.shadow.bias = -0.0004;
+    light.shadow.normalBias = 0.02;
+    if (light.isDirectionalLight) {
+      light.shadow.camera.near = 0.5;
+      light.shadow.camera.far = 48;
+      light.shadow.camera.left = -18;
+      light.shadow.camera.right = 18;
+      light.shadow.camera.top = 18;
+      light.shadow.camera.bottom = -18;
+    } else if (light.isSpotLight) {
+      light.shadow.camera.near = 0.5;
+      light.shadow.camera.far = Math.max(8, definition.distance || 18);
+      light.shadow.focus = 1;
+    }
+  }
+
+  _createEditableLightObject(definition) {
+    const light = this._normalizeLight(definition);
+    const group = new THREE.Group();
+    group.name = light.name;
+    group.position.set(light.position.x, light.position.y, light.position.z);
+    group.rotation.set(light.rotation.x, light.rotation.y, light.rotation.z);
+    group.userData.lightId = light.id;
+    group.userData.editableLight = true;
+
+    const helper = createLightHelperMesh(light);
+    helper.visible = this.lightHelpersVisible && !light.deleted;
+    helper.userData.lightId = light.id;
+    group.add(helper);
+
+    const target = new THREE.Object3D();
+    target.position.set(0, 0, 1);
+    target.userData.lightId = light.id;
+    group.add(target);
+
+    let lightObject;
+    if (light.lightType === 'spot') {
+      lightObject = new THREE.SpotLight(
+        light.color,
+        light.intensity,
+        light.distance,
+        light.angle,
+        light.penumbra,
+        light.decay,
+      );
+      lightObject.target = target;
+    } else if (light.lightType === 'directional') {
+      lightObject = new THREE.DirectionalLight(light.color, light.intensity);
+      lightObject.target = target;
+    } else {
+      lightObject = new THREE.PointLight(light.color, light.intensity, light.distance, light.decay);
+    }
+
+    lightObject.name = `${light.name}-source`;
+    lightObject.userData.lightId = light.id;
+    lightObject.userData.skipOutline = true;
+    group.add(lightObject);
+    if (lightObject.target?.parent !== group) {
+      group.add(lightObject.target);
+    }
+
+    this._configureEditableLightShadow(lightObject, light);
+    return { definition: light, group, helper, light: lightObject, target };
+  }
+
+  _applyLightToObject(definition, entry) {
+    const light = this._normalizeLight(definition);
+    entry.definition = light;
+    entry.group.name = light.name;
+    entry.group.position.set(light.position.x, light.position.y, light.position.z);
+    entry.group.rotation.set(light.rotation.x, light.rotation.y, light.rotation.z);
+    entry.group.visible = !light.deleted;
+    entry.helper.visible = this.lightHelpersVisible && !light.deleted;
+    if (entry.helper.material?.color) {
+      entry.helper.material.color.set(light.color);
+    }
+    entry.light.name = `${light.name}-source`;
+    entry.light.color.set(light.color);
+    entry.light.intensity = light.intensity;
+    if ('distance' in entry.light) {
+      entry.light.distance = light.distance;
+    }
+    if ('decay' in entry.light) {
+      entry.light.decay = light.decay;
+    }
+    if ('angle' in entry.light) {
+      entry.light.angle = light.angle;
+    }
+    if ('penumbra' in entry.light) {
+      entry.light.penumbra = light.penumbra;
+    }
+    this._configureEditableLightShadow(entry.light, light);
+    entry.group.updateMatrixWorld(true);
+    return light;
+  }
+
   _removeEditableColliders() {
     this.colliders = this.colliders.filter((entry) => entry.metadata?.source !== 'editable');
     this.runnables = this.runnables.filter((mesh) => mesh.userData?.editablePrimitive !== true);
@@ -830,6 +1039,7 @@ export class Room {
     });
     this.editableGroup.clear();
     this.editableMeshes.clear();
+    this.editableLightObjects.clear();
     this.prefabInstanceGroups.clear();
     this.prefabInstanceIdByPrimitiveId.clear();
 
@@ -861,11 +1071,13 @@ export class Room {
         clone.scale.set(primitive.scale.x, primitive.scale.y, primitive.scale.z);
         clone.castShadow = primitive.castShadow;
         clone.receiveShadow = primitive.receiveShadow;
-        clone.visible = !primitive.deleted;
+        clone.visible = this._isPrimitiveVisible(primitive);
         clone.userData.editablePrimitive = true;
         clone.userData.primitiveId = primitive.id;
         clone.userData.colliderEnabled = primitive.collider;
         clone.userData.colliderClearance = primitive.colliderClearance ?? 0;
+        clone.userData.spawnType = primitive.spawnType;
+        clone.userData.skipOutline = primitive.spawnType != null;
         clone.userData.isGlbClone = true;
         clone.traverse((child) => { child.userData.isGlbClone = true; });
         this.editableGroup.add(clone);
@@ -896,10 +1108,12 @@ export class Room {
       mesh.scale.set(primitive.scale.x, primitive.scale.y, primitive.scale.z);
       mesh.castShadow = primitive.castShadow;
       mesh.receiveShadow = primitive.receiveShadow;
-      mesh.visible = !primitive.deleted;
+      mesh.visible = this._isPrimitiveVisible(primitive);
       mesh.userData.editablePrimitive = true;
       mesh.userData.primitiveId = primitive.id;
       mesh.userData.colliderEnabled = primitive.collider;
+      mesh.userData.spawnType = primitive.spawnType;
+      mesh.userData.skipOutline = primitive.spawnType != null;
       this.editableGroup.add(mesh);
       this.editableMeshes.set(primitive.id, mesh);
 
@@ -953,10 +1167,12 @@ export class Room {
         mesh.scale.set(primitive.scale.x, primitive.scale.y, primitive.scale.z);
         mesh.castShadow = primitive.castShadow;
         mesh.receiveShadow = primitive.receiveShadow;
-        mesh.visible = !primitive.deleted;
+        mesh.visible = this._isPrimitiveVisible(primitive);
         mesh.userData.editablePrimitive = true;
         mesh.userData.primitiveId = primitive.id;
         mesh.userData.prefabInstanceId = instanceId;
+        mesh.userData.spawnType = primitive.spawnType;
+        mesh.userData.skipOutline = primitive.spawnType != null;
         group.add(mesh);
         this.editableMeshes.set(primitive.id, mesh);
         this.prefabInstanceIdByPrimitiveId.set(primitive.id, instanceId);
@@ -976,16 +1192,42 @@ export class Room {
       });
     }
 
+    for (const definition of this.editableLayout.lights ?? []) {
+      const entry = this._createEditableLightObject(definition);
+      this.editableGroup.add(entry.group);
+      this.editableLightObjects.set(entry.definition.id, entry);
+    }
+
     this._applyTextureAtlas();
     this.refreshColliders();
+  }
+
+  _isPrimitiveVisible(primitive) {
+    if (primitive?.deleted) return false;
+    if (primitive?.spawnType) return this.spawnMarkersVisible;
+    return true;
+  }
+
+  setSpawnMarkersVisible(visible) {
+    this.spawnMarkersVisible = visible === true;
+
+    for (const primitive of this.editableLayout.primitives) {
+      if (!primitive?.spawnType) continue;
+      const mesh = this.editableMeshes.get(primitive.id);
+      if (mesh) {
+        mesh.visible = this._isPrimitiveVisible(primitive);
+      }
+    }
   }
 
   getEditableLayout() {
     const builtIns = Array.from(this.builtInEditableMeshes.values()).map((entry) => this._serializeBuiltInPrimitive(entry));
     const customs = this.editableLayout.primitives.map((entry) => this._normalizePrimitive(entry));
+    const lights = (this.editableLayout.lights ?? []).map((entry) => this._normalizeLight(entry));
     return {
       version: Math.max(this.loadedEditableLayout.version ?? 1, this.editableLayout.version ?? 1, 1),
       primitives: [...builtIns, ...customs],
+      lights,
     };
   }
 
@@ -993,6 +1235,7 @@ export class Room {
     this.loadedEditableLayout = {
       version: layout?.version ?? 1,
       primitives: Array.isArray(layout?.primitives) ? layout.primitives.map((entry) => this._normalizePrimitive(entry)) : [],
+      lights: Array.isArray(layout?.lights) ? layout.lights.map((entry) => this._normalizeLight(entry)) : [],
     };
     this._applyLoadedEditableLayout();
     this._rebuildEditableLayout();
@@ -1021,6 +1264,29 @@ export class Room {
     return primitive;
   }
 
+  upsertEditableLight(definition) {
+    const light = this._normalizeLight(definition);
+    const index = this.editableLayout.lights.findIndex((entry) => entry.id === light.id);
+    if (index >= 0) {
+      const current = this.editableLightObjects.get(light.id);
+      const currentType = current?.definition?.lightType ?? this.editableLayout.lights[index]?.lightType;
+      if (currentType !== light.lightType) {
+        this.editableLayout.lights[index] = light;
+        this._rebuildEditableLayout();
+        return light;
+      }
+      this.editableLayout.lights[index] = light;
+      if (current) {
+        this._applyLightToObject(light, current);
+      }
+      return light;
+    }
+
+    this.editableLayout.lights.push(light);
+    this._rebuildEditableLayout();
+    return light;
+  }
+
   removeEditablePrimitive(id) {
     if (this.builtInEditableMeshes.has(id)) {
       const entry = this.builtInEditableMeshes.get(id);
@@ -1031,6 +1297,11 @@ export class Room {
       return;
     }
     this.editableLayout.primitives = this.editableLayout.primitives.filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
+  removeEditableLight(id) {
+    this.editableLayout.lights = this.editableLayout.lights.filter((entry) => entry.id !== id);
     this._rebuildEditableLayout();
   }
 
@@ -1057,7 +1328,20 @@ export class Room {
     this._rebuildEditableLayout();
   }
 
+  purgeEditableLight(id) {
+    this.editableLayout.lights = this.editableLayout.lights.filter((entry) => entry.id !== id);
+    this.loadedEditableLayout.lights = (this.loadedEditableLayout.lights ?? []).filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
   getEditableMesh(id) {
+    return this.getEditableObject(id);
+  }
+
+  getEditableObject(id) {
+    if (this.editableLightObjects.has(id)) {
+      return this.editableLightObjects.get(id)?.group ?? null;
+    }
     const prefabInstanceId = this.prefabInstanceIdByPrimitiveId.get(id);
     if (prefabInstanceId) {
       return this.prefabInstanceGroups.get(prefabInstanceId)?.group ?? null;
@@ -1122,6 +1406,26 @@ export class Room {
     }
     this.refreshColliders();
     return primitive;
+  }
+
+  updateEditableLightTransform(id, transform = {}) {
+    const index = this.editableLayout.lights.findIndex((entry) => entry.id === id);
+    if (index < 0) return null;
+
+    const light = this._normalizeLight(this.editableLayout.lights[index]);
+    if (transform.position) {
+      light.position = cloneVectorLike(transform.position, light.position);
+    }
+    if (transform.rotation) {
+      light.rotation = cloneVectorLike(transform.rotation, light.rotation);
+    }
+
+    this.editableLayout.lights[index] = light;
+    const current = this.editableLightObjects.get(id);
+    if (current) {
+      this._applyLightToObject(light, current);
+    }
+    return light;
   }
 
   updatePrefabInstanceTransform(instanceId, transform = {}) {
@@ -1208,6 +1512,15 @@ export class Room {
       roomWidth: this.width,
       roomDepth: this.depth,
     };
+  }
+
+  setBuildGridSnapSize(size) {
+    if (!Number.isFinite(size) || size <= 0) return this.getBuildGridConfig();
+
+    this.buildGrid.columns = Math.max(1, Math.round(this.width / size));
+    this.buildGrid.rows = Math.max(1, Math.round(this.depth / size));
+    this.buildGrid.verticalStep = Math.min(BUILD_GRID_VERTICAL_STEP, size);
+    return this.getBuildGridConfig();
   }
 
   getBuildGridAnchorPosition(col, row, spanX = 1, spanZ = 1) {
@@ -1303,6 +1616,49 @@ export class Room {
     primitive.scale.y = Number(primitive.scale.y.toFixed(4));
     primitive.scale.z = Number(primitive.scale.z.toFixed(4));
     return primitive;
+  }
+
+  snapLightToGrid(definition, {
+    snapY = false,
+    snapPosition = true,
+    allowEdgeOverflow = false,
+  } = {}) {
+    const light = this._normalizeLight(definition);
+    const grid = this.getBuildGridConfig();
+
+    if (snapPosition) {
+      light.position.x = this._snapGridAxisPosition(
+        light.position.x,
+        grid.cellWidth,
+        grid.roomWidth,
+        grid.cellWidth,
+        allowEdgeOverflow,
+      );
+      light.position.z = this._snapGridAxisPosition(
+        light.position.z,
+        grid.cellDepth,
+        grid.roomDepth,
+        grid.cellDepth,
+        allowEdgeOverflow,
+      );
+    }
+
+    if (snapY) {
+      light.position.y = snapToStep(light.position.y, grid.verticalStep);
+    }
+
+    light.position = roundVectorLike(light.position, { x: 0, y: 0, z: 0 });
+    light.rotation = roundVectorLike(light.rotation, { x: 0, y: 0, z: 0 });
+    return light;
+  }
+
+  setLightHelpersVisible(visible) {
+    this.lightHelpersVisible = visible === true;
+    this.editableLightObjects.forEach((entry) => {
+      if (entry?.helper) {
+        entry.helper.visible = this.lightHelpersVisible && entry.group.visible !== false;
+      }
+    });
   }
 
   instantiatePrefab(prefab, {
