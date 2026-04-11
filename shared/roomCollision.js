@@ -215,9 +215,14 @@ export function buildRoomCollidersFromLayout(layout, {
   const colliders = [];
 
   for (const primitive of primitives) {
-    if (!primitive || primitive.deleted === true || primitive.collider === false) continue;
+    if (!primitive || primitive.deleted === true) continue;
 
     const colliderType = colliderTypeForPrimitive(primitive);
+    // Outer room shells are often plane primitives with collider: false (visual-only in editor).
+    // Still emit wall-type planes so shared physics + Cannon use the same room bounds.
+    const wallPlaneAlwaysSolid = primitive.type === 'plane' && colliderType === 'wall';
+    if (primitive.collider === false && !wallPlaneAlwaysSolid) continue;
+
     const metadata = {
       source: 'layout',
       primitiveId: primitive.id ?? null,

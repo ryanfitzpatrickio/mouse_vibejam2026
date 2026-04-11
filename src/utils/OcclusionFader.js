@@ -41,10 +41,14 @@ export class OcclusionFader {
     for (const hit of hits) {
       const obj = hit.object;
       if (!obj.isMesh) continue;
+      if (obj.visible === false) continue;
       if (this._playerSet.has(obj)) continue;
       if (obj.userData?.skipFade) continue;
       if (obj.userData?.isFloor) continue;
       if (obj.userData?.surfaceType === 'floor') continue;
+      // Match ThirdPersonCamera: props that must not pull the camera arm also should not be x-ray faded.
+      if (obj.userData?.cameraOccluder === false) continue;
+      if (obj.userData?.runnable === true) continue;
 
       if (!_savedOpacity.has(obj)) {
         const materials = Array.isArray(obj.material) ? obj.material : [obj.material];

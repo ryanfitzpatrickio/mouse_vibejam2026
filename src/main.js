@@ -124,6 +124,10 @@ window.addEventListener('keydown', (event) => {
   if (key === 'o') {
     app.toggleNavMeshOverlay?.();
   }
+
+  if (key === 'n' && !buildMode?.isActive?.()) {
+    app.spawnExtraBall?.();
+  }
 });
 
 function resize() {

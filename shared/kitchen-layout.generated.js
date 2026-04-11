@@ -2162,6 +2162,7 @@ export default {
       "id": "prefab-instance-mnnkj1o1-et1xz-part-1",
       "name": "end table-Table Top",
       "type": "box",
+      "cameraOccluder": false,
       "spawnType": null,
       "position": {
         "x": 0,
@@ -2222,6 +2223,7 @@ export default {
       "id": "prefab-instance-mnnkj1o1-et1xz-part-2",
       "name": "end table-Table Base",
       "type": "box",
+      "cameraOccluder": false,
       "spawnType": null,
       "position": {
         "x": 0,

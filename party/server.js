@@ -10,10 +10,12 @@ import { applyPortalArrivalToPlayerState, collectVibePortalPlacementsFromLayout,
 import { isValidDevSyncLayout } from '../shared/devLayoutValidation.js';
 import { sanitizePlayerInputMessage } from '../shared/playerInputSanitize.js';
 import { StatsTracker } from './stats.js';
+import { createPushBallWorld } from './pushBallWorld.js';
 
 /**
  * PartyKit env (dashboard / project .env for `partykit dev`):
  * - STATS_ADMIN_TOKEN or STATS_COLLECTOR_TOKEN — required; GET …/stats returns 503 if both missing
+ * - ALLOWED_ORIGINS — comma-separated browser origins allowed to open WebSockets
  * - DEV_LAYOUT_SYNC_ENABLED — set "true" only in dev to accept dev-sync-layout
  * - DEV_LAYOUT_SYNC_TOKEN — must match Vite VITE_DEV_LAYOUT_SYNC_TOKEN when syncing layout from build mode
  */
@@ -21,8 +23,17 @@ import { StatsTracker } from './stats.js';
 const TICK_RATE = 30;
 const TICK_MS = 1000 / TICK_RATE;
 const MAX_PLAYERS = 8;
+/** Max extra push-balls a human may spawn per connection (lifetime). */
+const MAX_EXTRA_BALL_SPAWNS_PER_PLAYER = 10;
 const RESPAWN_SECONDS = 10;
 const DEFAULT_ENEMY_SPAWNS = Object.freeze([{ x: -5, y: 0, z: -5 }]);
+const DEFAULT_ALLOWED_ORIGINS = Object.freeze(['https://mouse.ryanfitzpatrick.io']);
+const LOCAL_ORIGIN_RE = /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/;
+const CONNECT_RATE_WINDOW_MS = 60_000;
+const MAX_CONNECT_ATTEMPTS_PER_WINDOW = 30;
+const WS_MESSAGE_RATE_PER_SECOND = 90;
+const WS_MESSAGE_BURST = 180;
+const MAX_DROPPED_MESSAGES_BEFORE_CLOSE = 180;
 
 const BOUNDS = Object.freeze({
   minX: -24,
@@ -33,9 +44,72 @@ const BOUNDS = Object.freeze({
 
 /** Reject oversized WebSocket frames before JSON.parse (DoS). */
 const MAX_WS_MESSAGE_CHARS = 256 * 1024;
+const connectAttempts = new Map();
 
 function getPartyEnv(room, key) {
   return room.env?.[key] ?? room.context?.env?.[key] ?? undefined;
+}
+
+function splitCsv(value) {
+  return String(value ?? '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function normalizeOrigin(value) {
+  if (typeof value !== 'string' || value.trim() === '') return '';
+  try {
+    const url = new URL(value);
+    return `${url.protocol}//${url.host}`;
+  } catch {
+    return '';
+  }
+}
+
+function getAllowedOrigins(env) {
+  const origins = new Set(DEFAULT_ALLOWED_ORIGINS);
+  for (const key of ['ALLOWED_ORIGINS', 'GAME_ORIGIN', 'PUBLIC_GAME_ORIGIN']) {
+    for (const origin of splitCsv(env?.[key])) {
+      const normalized = normalizeOrigin(origin);
+      if (normalized) origins.add(normalized);
+    }
+  }
+  return origins;
+}
+
+function isAllowedOrigin(origin, env) {
+  if (!origin) return true;
+  const normalized = normalizeOrigin(origin);
+  if (!normalized) return false;
+  if (LOCAL_ORIGIN_RE.test(normalized)) return true;
+  return getAllowedOrigins(env).has(normalized);
+}
+
+function getClientRateKey(request) {
+  const forwarded = request.headers.get('X-Forwarded-For') ?? '';
+  const ip = request.headers.get('CF-Connecting-IP') ?? forwarded.split(',')[0]?.trim() ?? '';
+  const origin = normalizeOrigin(request.headers.get('Origin') ?? '') || 'no-origin';
+  return ip ? `${ip}:${origin}` : `unknown:${origin}`;
+}
+
+function consumeConnectAttempt(request, now = Date.now()) {
+  const key = getClientRateKey(request);
+  let bucket = connectAttempts.get(key);
+  if (!bucket || now - bucket.windowStart >= CONNECT_RATE_WINDOW_MS) {
+    bucket = { windowStart: now, count: 0 };
+    connectAttempts.set(key, bucket);
+  }
+
+  bucket.count += 1;
+  if (connectAttempts.size > 1000) {
+    for (const [entryKey, entry] of connectAttempts) {
+      if (now - entry.windowStart >= CONNECT_RATE_WINDOW_MS) {
+        connectAttempts.delete(entryKey);
+      }
+    }
+  }
+  return bucket.count <= MAX_CONNECT_ATTEMPTS_PER_WINDOW;
 }
 
 function isDevLayoutSyncEnabled(room) {
@@ -49,6 +123,21 @@ function getDevLayoutSyncToken(room) {
 }
 
 export default class GameServer {
+  static onBeforeConnect(request, lobby) {
+    if (!isAllowedOrigin(request.headers.get('Origin') ?? '', lobby.env)) {
+      return new Response('Forbidden origin', { status: 403 });
+    }
+
+    if (!consumeConnectAttempt(request)) {
+      return new Response('Too many connection attempts', {
+        status: 429,
+        headers: { 'Retry-After': '60' },
+      });
+    }
+
+    return request;
+  }
+
   players = new Map();
   inputQueues = new Map();
   tickInterval = null;
@@ -62,11 +151,18 @@ export default class GameServer {
   portalArrivals = new Set();
   botBrains = new Map();
   _nextBotId = 0;
+  /** @type {Map<string, number>} last spawn-extra-ball ms by connection id */
+  _spawnBallCooldown = new Map();
+  /** @type {Map<string, number>} successful extra-ball spawns this connection */
+  _playerExtraBallSpawnCount = new Map();
+  /** @type {Map<string, {tokens: number, lastRefill: number, dropped: number}>} */
+  _messageBuckets = new Map();
 
   constructor(room) {
     this.room = room;
     this.stats = new StatsTracker(room);
     this.predators = [];
+    this.pushBallWorld = createPushBallWorld();
     this._applyLayout(kitchenLayout, { resetPredators: true });
   }
 
@@ -74,6 +170,7 @@ export default class GameServer {
     this.levelColliders = buildRoomCollidersFromLayout(layout, { scaleFactor: 1 });
     this.spawnPoints = collectSpawnPointsFromLayout(layout);
     this.portalPlacements = collectVibePortalPlacementsFromLayout(layout);
+    this.pushBallWorld?.setLevelColliders?.(this.levelColliders);
     if (resetPredators) {
       this.predators = [];
       this._initPredators();
@@ -186,6 +283,11 @@ export default class GameServer {
 
     this.players.set(conn.id, state);
     this.inputQueues.set(conn.id, []);
+    this._messageBuckets.set(conn.id, {
+      tokens: WS_MESSAGE_BURST,
+      lastRefill: Date.now(),
+      dropped: 0,
+    });
     this._syncBots();
     this.stats?.recordConnect(conn.id, this.inputQueues.size);
 
@@ -194,6 +296,7 @@ export default class GameServer {
       id: conn.id,
       players: Object.fromEntries(this.players),
       predators: this.predators.map(serializePredatorState),
+      pushBalls: this.pushBallWorld.getBallsState(),
     }));
 
     this.broadcast(JSON.stringify({
@@ -202,7 +305,43 @@ export default class GameServer {
     }), [conn.id]);
   }
 
+  _consumeMessageToken(connectionId, now = Date.now()) {
+    let bucket = this._messageBuckets.get(connectionId);
+    if (!bucket) {
+      bucket = {
+        tokens: WS_MESSAGE_BURST,
+        lastRefill: now,
+        dropped: 0,
+      };
+      this._messageBuckets.set(connectionId, bucket);
+    }
+
+    const elapsedSeconds = Math.max(0, (now - bucket.lastRefill) / 1000);
+    bucket.tokens = Math.min(
+      WS_MESSAGE_BURST,
+      bucket.tokens + elapsedSeconds * WS_MESSAGE_RATE_PER_SECOND,
+    );
+    bucket.lastRefill = now;
+
+    if (bucket.tokens < 1) {
+      bucket.dropped += 1;
+      return false;
+    }
+
+    bucket.tokens -= 1;
+    bucket.dropped = 0;
+    return true;
+  }
+
   async onMessage(message, sender) {
+    if (!this._consumeMessageToken(sender.id)) {
+      const bucket = this._messageBuckets.get(sender.id);
+      if (bucket?.dropped >= MAX_DROPPED_MESSAGES_BEFORE_CLOSE) {
+        sender.close();
+      }
+      return;
+    }
+
     if (typeof message === 'string' && message.length > MAX_WS_MESSAGE_CHARS) {
       return;
     }
@@ -249,6 +388,22 @@ export default class GameServer {
       return;
     }
 
+    if (data.type === 'spawn-extra-ball') {
+      const player = this.players.get(sender.id);
+      if (!player?.alive) return;
+      const used = this._playerExtraBallSpawnCount.get(sender.id) ?? 0;
+      if (used >= MAX_EXTRA_BALL_SPAWNS_PER_PLAYER) return;
+      const now = Date.now();
+      const last = this._spawnBallCooldown.get(sender.id) ?? 0;
+      if (now - last < 240) return;
+      this._spawnBallCooldown.set(sender.id, now);
+      const ok = this.pushBallWorld.spawnExtraBallNear(player.position, player.rotation);
+      if (ok) {
+        this._playerExtraBallSpawnCount.set(sender.id, used + 1);
+      }
+      return;
+    }
+
     if (data.type === 'dev-sync-layout') {
       if (!isDevLayoutSyncEnabled(this.room)) {
         return;
@@ -266,6 +421,9 @@ export default class GameServer {
 
   onClose(conn) {
     this.stats?.recordDisconnect(conn.id);
+    this._spawnBallCooldown.delete(conn.id);
+    this._playerExtraBallSpawnCount.delete(conn.id);
+    this._messageBuckets.delete(conn.id);
     this.portalArrivals.delete(conn.id);
     this.players.delete(conn.id);
     this.inputQueues.delete(conn.id);
@@ -357,6 +515,9 @@ export default class GameServer {
       }
     }
 
+    this.pushBallWorld.syncPlayers(this.players);
+    this.pushBallWorld.step(dt);
+
     const playersObj = Object.fromEntries(this.players);
     for (const pred of this.predators) {
       const hit = simulatePredatorTick(pred, playersObj, dt, this.levelColliders, this.levelNavMesh);
@@ -384,6 +545,7 @@ export default class GameServer {
       seqs,
       players: playersObj,
       predators: this.predators.map(serializePredatorState),
+      pushBalls: this.pushBallWorld.getBallsState(),
     };
     this.broadcast(JSON.stringify(snapshot));
   }
@@ -425,8 +587,7 @@ export default class GameServer {
 
     const authHeader = request.headers.get('Authorization') ?? '';
     const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-    const queryToken = url.searchParams.get('token') ?? '';
-    if (bearerToken !== expectedToken && queryToken !== expectedToken) {
+    if (bearerToken !== expectedToken) {
       return new Response('Unauthorized', { status: 401 });
     }
 

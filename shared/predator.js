@@ -980,5 +980,6 @@ export function serializePredatorState(state) {
     maxHp: state.maxHealth,
     alive: state.alive,
     ai: state.aiState,
+    chaseTargetId: state.chaseTargetId ?? null,
   };
 }

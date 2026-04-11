@@ -1,7 +1,7 @@
 const STATS_KV_BINDING = 'GAME_STATS';
 const GLOBAL_STATS_KEY = 'stats:v1:global';
 const PLAYER_KEY_PREFIX = 'stats:v1:player:';
-const FLUSH_DELAY_MS = 5000;
+const FLUSH_DELAY_MS = 60000;
 const COLLECTOR_TIMEOUT_MS = 3000;
 
 const GLOBAL_DELTA_FIELDS = Object.freeze([
@@ -86,7 +86,7 @@ function hasPlayerDelta(playerDelta) {
 }
 
 function isValidPlayerKey(value) {
-  return typeof value === 'string' && value.length >= 16 && value.length <= 128;
+  return typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 }
 
 async function hashPlayerKey(playerKey) {
@@ -118,6 +118,7 @@ export class StatsTracker {
     this.collectorUrl = normalizeCollectorUrl(getEnv(room, 'STATS_COLLECTOR_URL'));
     this.collectorToken = getEnv(room, 'STATS_COLLECTOR_TOKEN') ?? '';
     this.collectorEnabled = Boolean(this.collectorUrl && this.collectorToken);
+    this.persistLocalStats = !this.collectorEnabled;
     if (this.collectorUrl && !this.collectorToken) {
       console.warn('[stats] STATS_COLLECTOR_URL is configured without STATS_COLLECTOR_TOKEN');
     }
@@ -129,7 +130,7 @@ export class StatsTracker {
     this.pendingGlobalDelta = createGlobalDelta();
     this.pendingPlayerDeltas = new Map();
     this.flushTimer = null;
-    this.ready = this._loadGlobal();
+    this.ready = this.persistLocalStats ? this._loadGlobal() : Promise.resolve();
   }
 
   async _readJson(key) {
@@ -244,7 +245,7 @@ export class StatsTracker {
     session.playerHash = playerHash;
     const playerKeyName = `${PLAYER_KEY_PREFIX}${playerHash}`;
     let player = this.players.get(playerHash);
-    if (!player) {
+    if (!player && this.persistLocalStats) {
       player = await this._readJson(playerKeyName);
     }
 
@@ -306,9 +307,11 @@ export class StatsTracker {
       }, 'playSeconds', playSeconds);
     }
 
-    this.flush().catch((error) => {
-      console.warn('[stats] disconnect flush failed:', error);
-    });
+    if (!this.collectorEnabled) {
+      this.flush().catch((error) => {
+        console.warn('[stats] disconnect flush failed:', error);
+      });
+    }
   }
 
   _mutatePlayer(connectionId, mutate, deltaField = null, deltaAmount = 1) {
@@ -421,17 +424,22 @@ export class StatsTracker {
 
     await this.ready;
 
-    if (this.dirtyGlobal) {
-      this.dirtyGlobal = false;
-      await this._writeJson(GLOBAL_STATS_KEY, this.global);
-    }
+    if (this.persistLocalStats) {
+      if (this.dirtyGlobal) {
+        this.dirtyGlobal = false;
+        await this._writeJson(GLOBAL_STATS_KEY, this.global);
+      }
 
-    const dirtyPlayers = [...this.dirtyPlayers];
-    this.dirtyPlayers.clear();
-    await Promise.all(dirtyPlayers.map((playerHash) => {
-      const player = this.players.get(playerHash);
-      return player ? this._writeJson(`${PLAYER_KEY_PREFIX}${playerHash}`, player) : null;
-    }));
+      const dirtyPlayers = [...this.dirtyPlayers];
+      this.dirtyPlayers.clear();
+      await Promise.all(dirtyPlayers.map((playerHash) => {
+        const player = this.players.get(playerHash);
+        return player ? this._writeJson(`${PLAYER_KEY_PREFIX}${playerHash}`, player) : null;
+      }));
+    } else {
+      this.dirtyGlobal = false;
+      this.dirtyPlayers.clear();
+    }
 
     await this._flushCollector();
   }

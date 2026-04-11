@@ -712,7 +712,22 @@ export class Room {
       castShadow: entry.castShadow !== false,
       receiveShadow: entry.receiveShadow !== false,
       deleted: entry.deleted === true,
+      ...(typeof entry.cameraOccluder === 'boolean' ? { cameraOccluder: entry.cameraOccluder } : {}),
     };
+  }
+
+  /** When set on a primitive, syncs userData.cameraOccluder on all descendant meshes (see ThirdPersonCamera / OcclusionFader). */
+  _syncCameraOccluderUserData(root, primitive) {
+    if (!root || typeof primitive?.cameraOccluder !== 'boolean') return;
+    if (primitive.cameraOccluder === false) {
+      root.traverse((c) => {
+        if (c.isMesh) c.userData.cameraOccluder = false;
+      });
+    } else {
+      root.traverse((c) => {
+        if (c.isMesh) delete c.userData.cameraOccluder;
+      });
+    }
   }
 
   _normalizeLight(entry = {}) {
@@ -833,6 +848,9 @@ export class Room {
       castShadow: mesh.castShadow !== false,
       receiveShadow: mesh.receiveShadow !== false,
       deleted: this.deletedBuiltInPrimitives.has(entry.primitive.id),
+      ...(typeof entry.primitive.cameraOccluder === 'boolean'
+        ? { cameraOccluder: entry.primitive.cameraOccluder }
+        : {}),
     };
   }
 
@@ -847,6 +865,7 @@ export class Room {
     mesh.userData.colliderEnabled = primitive.collider;
     mesh.userData.spawnType = primitive.spawnType;
     mesh.userData.skipOutline = primitive.spawnType != null;
+    this._syncCameraOccluderUserData(mesh, primitive);
 
     const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     const faceSlots = FACE_TEXTURE_SLOTS[primitive.type] ?? [];
@@ -1177,6 +1196,7 @@ export class Room {
         clone.userData.skipOutline = primitive.spawnType != null;
         clone.userData.isGlbClone = true;
         clone.traverse((child) => { child.userData.isGlbClone = true; });
+        this._syncCameraOccluderUserData(clone, primitive);
         this.editableGroup.add(clone);
         this.editableMeshes.set(primitive.id, clone);
 
@@ -1211,6 +1231,7 @@ export class Room {
       mesh.userData.colliderEnabled = primitive.collider;
       mesh.userData.spawnType = primitive.spawnType;
       mesh.userData.skipOutline = primitive.spawnType != null;
+      this._syncCameraOccluderUserData(mesh, primitive);
       this.editableGroup.add(mesh);
       this.editableMeshes.set(primitive.id, mesh);
 
@@ -1270,6 +1291,7 @@ export class Room {
         mesh.userData.prefabInstanceId = instanceId;
         mesh.userData.spawnType = primitive.spawnType;
         mesh.userData.skipOutline = primitive.spawnType != null;
+        this._syncCameraOccluderUserData(mesh, primitive);
         group.add(mesh);
         this.editableMeshes.set(primitive.id, mesh);
         this.prefabInstanceIdByPrimitiveId.set(primitive.id, instanceId);

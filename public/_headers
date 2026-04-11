@@ -1,3 +1,11 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://vibejam.cc https://vibej.am https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://vibejam.cc https://vibej.am https://static.cloudflareinsights.com https://cloudflareinsights.com; media-src 'self' blob:; connect-src 'self' blob: https://vibejam.cc https://vibej.am https://static.cloudflareinsights.com https://cloudflareinsights.com wss://*.partykit.dev wss://*.partykit.io wss://localhost:* ws://localhost:* http://localhost:*; worker-src 'self' blob:; font-src 'self' data:; frame-src https://vibejam.cc https://vibej.am; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; manifest-src 'self'; upgrade-insecure-requests
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), fullscreen=(self), gamepad=(self)
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
 /mouse.glb
   Cache-Control: no-cache
 

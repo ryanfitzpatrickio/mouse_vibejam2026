@@ -1,6 +1,51 @@
 import * as THREE from 'three';
 
 /**
+ * Absolute URL for files in `public/`, safe with `base: './'` and non-root page paths.
+ * (Plain `./assets/...` fetch strings resolve against the *current* path, not the app root.)
+ */
+function publicAssetFetchUrl(relativePath) {
+  const encoded = String(relativePath)
+    .replace(/^\/+/, '')
+    .split('/')
+    .map((seg) => encodeURIComponent(seg))
+    .join('/');
+  const base = import.meta.env.BASE_URL || '/';
+  const root = new URL(base, window.location.href);
+  return new URL(encoded, root).href;
+}
+
+/**
+ * Candidate path stems under `public/` (no extension). Order matters.
+ * Static hosts are case-sensitive — try lowercase first, then common variants.
+ */
+const AMBIENT_CALM_STEMS = [
+  'assets/cartoon saturn',
+  'assets/Cartoon Saturn',
+  'assets/cartoonsaturn',
+  'assets/CartoonSaturn',
+];
+const AMBIENT_CHASE_STEMS = [
+  'assets/corn dog alarm',
+  'assets/Corn Dog Alarm',
+  'assets/corn-dog-alarm',
+  'assets/Corn-Dog-Alarm',
+  'assets/corndogalarm',
+];
+const AMBIENT_FORMATS = ['.m4a', '.mp3', '.ogg', '.wav'];
+/** Crossfade responsiveness (higher = quicker transitions). */
+const AMBIENT_CROSSFADE_RATE = 2.85;
+const AMBIENT_TRACK_GAIN = 0.92;
+
+function bufferLooksLikeMarkup(arrayBuffer) {
+  const n = Math.min(96, arrayBuffer.byteLength);
+  if (n < 1) return true;
+  const head = new Uint8Array(arrayBuffer, 0, n);
+  const text = new TextDecoder('utf-8', { fatal: false }).decode(head).trimStart();
+  return text.startsWith('<!') || text.startsWith('<html') || text.startsWith('<?xml');
+}
+
+/**
  * Procedural audio synthesis functions
  */
 const SoundSynth = {
@@ -358,6 +403,18 @@ export class AudioManager {
     this.musicState = 'ambient'; // ambient, tense, triumph
     this.musicTime = 0;
 
+    /** Looped MP3 ambient bed (calm vs chase), crossfaded in `update`. */
+    this._ambientDecodePromise = null;
+    this._ambientBuffers = null;
+    this._ambientCalmGain = null;
+    this._ambientChaseGain = null;
+    this._ambientCalmSource = null;
+    this._ambientChaseSource = null;
+    this._ambientBedActive = false;
+    this._ambientBlend = 0; // 0 = calm only, 1 = chase only
+    this._ambientChaseTarget = 0;
+    this._ambientBedStarting = null;
+
     // Spatial sounds
     this.spatialSounds = [];
 
@@ -452,6 +509,185 @@ export class AudioManager {
       sound.gain.value *= volume;
       sound.connect(panNode);
     }
+  }
+
+  /**
+   * Decode and start looping ambient tracks (calm + chase), crossfaded via {@link setAmbientChaseTarget}.
+   * Safe to call multiple times; starts once.
+   */
+  async startAmbientBed() {
+    if (this._ambientBedActive) return;
+    if (this._ambientBedStarting) return this._ambientBedStarting;
+
+    this._ambientBedStarting = (async () => {
+      if (!this._ambientDecodePromise) {
+        this._ambientDecodePromise = this._loadAmbientBufferPair();
+      }
+
+      let buffers;
+      try {
+        buffers = await this._ambientDecodePromise;
+      } catch (e) {
+        console.warn(
+          '[audio] Ambient bed failed to load:',
+          e?.message || e,
+          '(add public/assets/cartoon saturn.{m4a|mp3} and corn dog alarm.{m4a|mp3}, or run npm run prebuild with masters in assets/source/audio/)',
+        );
+        this._ambientDecodePromise = null;
+        return;
+      }
+
+      if (this._ambientBedActive) return;
+
+      const calmGain = this.audioContext.createGain();
+      const chaseGain = this.audioContext.createGain();
+      calmGain.connect(this.musicContext);
+      chaseGain.connect(this.musicContext);
+
+      const calmSrc = this.audioContext.createBufferSource();
+      const chaseSrc = this.audioContext.createBufferSource();
+      calmSrc.buffer = buffers.calm;
+      chaseSrc.buffer = buffers.chase;
+      calmSrc.loop = true;
+      chaseSrc.loop = true;
+      calmSrc.connect(calmGain);
+      chaseSrc.connect(chaseGain);
+
+      const now = this.audioContext.currentTime;
+      calmSrc.start(now);
+      chaseSrc.start(now);
+      await this.audioContext.resume();
+
+      this._ambientBuffers = buffers;
+      this._ambientCalmGain = calmGain;
+      this._ambientChaseGain = chaseGain;
+      this._ambientCalmSource = calmSrc;
+      this._ambientChaseSource = chaseSrc;
+      this._ambientBedActive = true;
+      this._ambientBlend = this._ambientChaseTarget;
+      this._applyAmbientGains();
+      if (import.meta.env.DEV) {
+        console.log('[audio] Ambient bed playing (Web Audio). Context:', this.audioContext.state);
+      }
+    })();
+
+    try {
+      await this._ambientBedStarting;
+    } finally {
+      this._ambientBedStarting = null;
+    }
+  }
+
+  async _loadAmbientBufferPair() {
+    const [calmBuf, chaseBuf] = await Promise.all([
+      this._tryFetchDecodeAmbientStemList(AMBIENT_CALM_STEMS),
+      this._tryFetchDecodeAmbientStemList(AMBIENT_CHASE_STEMS),
+    ]);
+    if (!calmBuf && !chaseBuf) {
+      throw new Error(
+        'No decodable ambient audio under public/assets/ (expected cartoon saturn / corn dog alarm, .m4a or .mp3)',
+      );
+    }
+    let calm = calmBuf;
+    let chase = chaseBuf;
+    if (!calm) {
+      console.warn('[audio] Missing calm bed (cartoon saturn); using chase track for both layers.');
+      calm = chase;
+    }
+    if (!chase) {
+      console.warn(
+        '[audio] Missing chase bed (corn dog alarm); using calm track for both — add public/assets/corn dog alarm.{m4a|mp3} for the alarm crossfade.',
+      );
+      chase = calm;
+    }
+    return { calm, chase };
+  }
+
+  async _tryFetchDecodeAmbientStemList(stems) {
+    for (const stem of stems) {
+      const buf = await this._tryFetchDecodeAmbientStem(stem);
+      if (buf) return buf;
+    }
+    return null;
+  }
+
+  /**
+   * Try each extension; returns null if nothing decodes (missing file / HTML shell / bad codec).
+   */
+  async _tryFetchDecodeAmbientStem(stemRelative) {
+    let lastError = null;
+    for (const ext of AMBIENT_FORMATS) {
+      const url = publicAssetFetchUrl(`${stemRelative}${ext}`);
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          lastError = new Error(`HTTP ${res.status} for ${url}`);
+          continue;
+        }
+        const data = await res.arrayBuffer();
+        if (data.byteLength < 256) {
+          lastError = new Error(`Too small (${data.byteLength} B): ${url}`);
+          continue;
+        }
+        if (bufferLooksLikeMarkup(data)) {
+          lastError = new Error(`Not audio (HTML/text response): ${url}`);
+          continue;
+        }
+        const copy = data.slice(0);
+        return await this.audioContext.decodeAudioData(copy);
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+      }
+    }
+    return null;
+  }
+
+  /**
+   * When true, crossfades toward the chase/alarm track (local player is the cat's hunt target).
+   */
+  setAmbientChaseTarget(active) {
+    this._ambientChaseTarget = active ? 1 : 0;
+  }
+
+  _applyAmbientGains() {
+    if (!this._ambientCalmGain || !this._ambientChaseGain) return;
+    const w = this._ambientBlend;
+    this._ambientCalmGain.gain.value = (1 - w) * AMBIENT_TRACK_GAIN;
+    this._ambientChaseGain.gain.value = w * AMBIENT_TRACK_GAIN;
+  }
+
+  _tickAmbientCrossfade(deltaSeconds) {
+    if (!this._ambientBedActive) return;
+    const target = this._ambientChaseTarget;
+    const t = 1 - Math.exp(-AMBIENT_CROSSFADE_RATE * deltaSeconds);
+    this._ambientBlend += (target - this._ambientBlend) * t;
+    if (Math.abs(this._ambientBlend - target) < 0.002) {
+      this._ambientBlend = target;
+    }
+    this._applyAmbientGains();
+  }
+
+  /**
+   * Stops decoded ambient loops (e.g. session teardown). Decoded buffers are kept for a possible restart.
+   */
+  stopAmbientBed() {
+    for (const src of [this._ambientCalmSource, this._ambientChaseSource]) {
+      if (!src) continue;
+      try {
+        src.stop();
+      } catch {
+        // already stopped
+      }
+    }
+    this._ambientCalmSource = null;
+    this._ambientChaseSource = null;
+    this._ambientCalmGain?.disconnect();
+    this._ambientChaseGain?.disconnect();
+    this._ambientCalmGain = null;
+    this._ambientChaseGain = null;
+    this._ambientBedActive = false;
+    this._ambientBlend = 0;
+    this._ambientChaseTarget = 0;
   }
 
   /**
@@ -635,10 +871,15 @@ export class AudioManager {
 
   /**
    * Update audio context state (called each frame)
+   * @param {THREE.Vector3} cameraPosition
+   * @param {number} [deltaSeconds]
    */
-  update(cameraPosition) {
+  update(cameraPosition, deltaSeconds) {
     // Update listener position for spatial audio
     this.listener.position.copy(cameraPosition);
+    if (typeof deltaSeconds === 'number' && deltaSeconds > 0) {
+      this._tickAmbientCrossfade(deltaSeconds);
+    }
   }
 
   /**
@@ -646,6 +887,9 @@ export class AudioManager {
    */
   dispose() {
     this.stopMusic();
+    this.stopAmbientBed();
+    this._ambientBuffers = null;
+    this._ambientDecodePromise = null;
     this.audioContext.close();
   }
 }

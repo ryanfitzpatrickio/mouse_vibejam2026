@@ -11,21 +11,24 @@ const PARTYKIT_HOST =
 /** Max pending inputs to keep for reconciliation */
 const MAX_PENDING = 120;
 const PLAYER_KEY_STORAGE = 'mouseTrouble.playerKey.v1';
+const PLAYER_KEY_PATTERN = /^[a-f0-9]{64}$/;
 
 function createPlayerKey() {
-  if (globalThis.crypto?.randomUUID) {
-    return globalThis.crypto.randomUUID();
+  const bytes = new Uint8Array(32);
+  if (globalThis.crypto?.getRandomValues) {
+    globalThis.crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) {
+      bytes[i] = Math.floor(Math.random() * 256);
+    }
   }
-
-  const bytes = new Uint8Array(16);
-  globalThis.crypto?.getRandomValues?.(bytes);
   return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function getOrCreatePlayerKey() {
   try {
     const existing = localStorage.getItem(PLAYER_KEY_STORAGE);
-    if (existing) return existing;
+    if (PLAYER_KEY_PATTERN.test(existing ?? '')) return existing;
     const created = createPlayerKey();
     localStorage.setItem(PLAYER_KEY_STORAGE, created);
     return created;
@@ -45,6 +48,9 @@ export class NetworkClient {
 
   /** @type {Map<string, object>} predator snapshots keyed by id */
   remotePredators = new Map();
+
+  /** Authoritative pushable balls (cannon-es on server); empty until init/snapshot */
+  pushBalls = [];
 
   /** Sequence counter for inputs */
   seq = 0;
@@ -95,6 +101,7 @@ export class NetworkClient {
     this.ws.addEventListener('close', () => {
       this.connected = false;
       this.localId = null;
+      this.pushBalls = [];
       console.log('[net] disconnected');
     });
   }
@@ -136,6 +143,20 @@ export class NetworkClient {
     return seq;
   }
 
+  sendSpawnExtraBall() {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'spawn-extra-ball' }));
+    }
+  }
+
+  _applyPushBallsPayload(data) {
+    if (Array.isArray(data.pushBalls)) {
+      this.pushBalls = data.pushBalls;
+    } else if (data.pushBall) {
+      this.pushBalls = [data.pushBall];
+    }
+  }
+
   on(fn) {
     this.listeners.push(fn);
     return () => {
@@ -161,6 +182,7 @@ export class NetworkClient {
             this.remotePredators.set(pred.id, pred);
           }
         }
+        this._applyPushBallsPayload(data);
         break;
 
       case 'portal-spawn':
@@ -210,6 +232,7 @@ export class NetworkClient {
             this.remotePredators.set(pred.id, pred);
           }
         }
+        this._applyPushBallsPayload(data);
         break;
       }
 

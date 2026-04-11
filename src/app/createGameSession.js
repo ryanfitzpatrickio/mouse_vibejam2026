@@ -58,6 +58,9 @@ const isMobile = typeof window !== 'undefined'
 const ENABLE_BUNNY_PREDATOR = false;
 const ENABLE_CAT_PREDATOR = true;
 
+/** Cat AI states where the hunt target is the local player — drives ambient crossfade. */
+const CAT_AMBIENT_HUNT_AI = new Set(['alert', 'roar', 'chase', 'attack', 'cooldown']);
+
 function buildNavMeshOverlay(navMesh) {
   const group = new THREE.Group();
   group.name = 'navmesh-overlay';
@@ -275,6 +278,28 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   const hud = new HUD();
 
   const audioManager = getAudioManager();
+  let ambientPrimed = false;
+  function primeAmbientAudio(event) {
+    if (event) {
+      const t = event.target;
+      if (
+        t instanceof HTMLElement
+        && (t.isContentEditable || /^(input|textarea|select)$/i.test(t.tagName))
+      ) {
+        return;
+      }
+    }
+    if (ambientPrimed) return;
+    ambientPrimed = true;
+    void (async () => {
+      await audioManager.resume();
+      await audioManager.startAmbientBed();
+    })();
+  }
+  canvas.addEventListener('pointerdown', primeAmbientAudio, { passive: true });
+  window.addEventListener('keydown', primeAmbientAudio, { passive: true });
+  window.addEventListener('touchstart', primeAmbientAudio, { passive: true });
+
   const emoteManager = new EmoteManager({ mouse, audioManager });
   const emoteWheel = new EmoteWheel({
     onSelect: (emoteId) => {
@@ -295,6 +320,10 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   });
   const remotePlayerManager = new RemotePlayerManager({ scene, rendererMode: mode });
   net.connect();
+
+  const DEFAULT_PUSH_BALL_RADIUS = 0.38;
+  /** @type {Map<string, { mesh: THREE.Mesh, geom: THREE.BufferGeometry, mat: THREE.MeshStandardMaterial, targetPos: THREE.Vector3, targetQuat: THREE.Quaternion, lastR: number }>} */
+  const pushBallMeshes = new Map();
 
   function resize(width, height, pixelRatio = window.devicePixelRatio || 1) {
     const safeWidth = Math.max(1, Math.floor(width));
@@ -320,6 +349,19 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   });
 
   const scoreboard = new ScoreboardOverlay();
+
+  function isLocalPlayerCatHuntTarget() {
+    const lid = net.localId;
+    if (!lid || !net.connected) return false;
+    for (const p of net.remotePredators.values()) {
+      if (p?.alive === false) continue;
+      if (p?.type && p.type !== 'cat') continue;
+      if (p?.chaseTargetId !== lid) continue;
+      const ai = p?.ai;
+      if (typeof ai === 'string' && CAT_AMBIENT_HUNT_AI.has(ai)) return true;
+    }
+    return false;
+  }
 
   function scoreboardLabel(id, localId) {
     if (id === localId) return 'You';
@@ -609,7 +651,76 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       respawnCountdown,
     });
     scoreboard.setRows(buildScoreboardRows());
+
+    const balls = net.pushBalls;
+    if (net.connected && Array.isArray(balls) && balls.length > 0) {
+      const seen = new Set();
+      for (const b of balls) {
+        if (!b?.id) continue;
+        seen.add(b.id);
+        const r = typeof b.r === 'number' && b.r > 0 ? b.r : DEFAULT_PUSH_BALL_RADIUS;
+        let entry = pushBallMeshes.get(b.id);
+        if (!entry) {
+          const geom = new THREE.SphereGeometry(r, 28, 20);
+          const mat = new THREE.MeshStandardMaterial({
+            color: b.color || '#e8945c',
+            metalness: 0.16,
+            roughness: 0.52,
+          });
+          const mesh = new THREE.Mesh(geom, mat);
+          mesh.name = `PushBall:${b.id}`;
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          scene.add(mesh);
+          entry = {
+            mesh,
+            geom,
+            mat,
+            targetPos: new THREE.Vector3(),
+            targetQuat: new THREE.Quaternion(),
+            lastR: r,
+          };
+          pushBallMeshes.set(b.id, entry);
+        }
+        if (Math.abs(entry.lastR - r) > 0.005) {
+          const newGeom = new THREE.SphereGeometry(r, 28, 20);
+          entry.mesh.geometry.dispose();
+          entry.mesh.geometry = newGeom;
+          entry.geom = newGeom;
+          entry.lastR = r;
+        }
+        if (typeof b.color === 'string' && b.color) {
+          entry.mat.color.set(b.color);
+        }
+        entry.targetPos.set(b.x, b.y, b.z);
+        entry.targetQuat.set(b.qx, b.qy, b.qz, b.qw);
+      }
+      for (const [id, entry] of pushBallMeshes) {
+        if (!seen.has(id)) {
+          scene.remove(entry.mesh);
+          entry.geom.dispose();
+          entry.mat.dispose();
+          pushBallMeshes.delete(id);
+        }
+      }
+      for (const entry of pushBallMeshes.values()) {
+        entry.mesh.position.lerp(entry.targetPos, 0.42);
+        entry.mesh.quaternion.slerp(entry.targetQuat, 0.42);
+      }
+    } else if (pushBallMeshes.size > 0) {
+      for (const [, entry] of pushBallMeshes) {
+        scene.remove(entry.mesh);
+        entry.geom.dispose();
+        entry.mat.dispose();
+      }
+      pushBallMeshes.clear();
+    }
+
     occlusionFader.update(deltaSeconds);
+
+    audioManager.setAmbientChaseTarget(isLocalPlayerCatHuntTarget());
+    audioManager.update(camera.position, deltaSeconds);
+
     render();
     return {
       drawCalls: renderer.info?.render?.calls ?? 0,
@@ -632,8 +743,19 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     emoteWheel.dispose();
     vibePortalManager.dispose();
     scoreboard.dispose();
+    for (const [, entry] of pushBallMeshes) {
+      scene.remove(entry.mesh);
+      entry.geom.dispose();
+      entry.mat.dispose();
+    }
+    pushBallMeshes.clear();
     hud.dispose();
+    audioManager.stopAmbientBed();
     renderer.dispose();
+  }
+
+  function spawnExtraBall() {
+    if (net.connected) net.sendSpawnExtraBall();
   }
 
   return {
@@ -657,6 +779,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     update,
     dispose,
     setMobileControls,
+    spawnExtraBall,
     toggleNavMeshOverlay(forceVisible) {
       navMeshOverlay.visible = typeof forceVisible === 'boolean'
         ? forceVisible
