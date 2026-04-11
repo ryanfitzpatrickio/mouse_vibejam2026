@@ -6,12 +6,21 @@ const METRICS_FONT = '12px monospace';
 const METRICS_LINE_HEIGHT = 16;
 
 function isValidMode(mode) {
-  return mode === 'webgl' || mode === 'webgpu';
+  return mode === 'webgl';
 }
 
+/** @deprecated Only `webgl` is supported; kept to migrate old `webgpu` localStorage entries. */
 export function readRendererMode() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === 'webgpu') {
+      try {
+        localStorage.setItem(STORAGE_KEY, 'webgl');
+      } catch {
+        /* ignore */
+      }
+      return 'webgl';
+    }
     if (isValidMode(raw)) return raw;
   } catch {
     // Ignore storage access failures.
@@ -20,6 +29,7 @@ export function readRendererMode() {
   return DEFAULT_MODE;
 }
 
+/** @deprecated Only `webgl` is supported. */
 export function writeRendererMode(mode) {
   if (!isValidMode(mode)) return DEFAULT_MODE;
   try {
@@ -31,20 +41,9 @@ export function writeRendererMode(mode) {
 }
 
 export class RendererModePanel {
-  constructor({
-    container = document.body,
-    mode = readRendererMode(),
-    onApply = null,
-    webgpuAvailable = true,
-    webgpuReason = '',
-    visible = false,
-  } = {}) {
+  constructor({ container = document.body, visible = false } = {}) {
     this.container = container;
-    this.mode = isValidMode(mode) ? mode : DEFAULT_MODE;
-    this.onApply = onApply;
-    this.webgpuAvailable = webgpuAvailable;
-    this.webgpuReason = webgpuReason;
-    this.fpsTarget = mode === 'webgpu' ? 120 : 60;
+    this.fpsTarget = 60;
     this.samples = [];
     this.sampleWindowMs = 5000;
     this.visible = visible;
@@ -74,111 +73,33 @@ export class RendererModePanel {
     });
 
     const title = document.createElement('div');
-    title.textContent = 'RENDERER MODE';
+    title.textContent = 'PERFORMANCE';
     Object.assign(title.style, {
       fontWeight: '700',
       letterSpacing: '0.08em',
-      marginBottom: '10px',
+      marginBottom: '6px',
       color: '#9ed7ff',
     });
     this.element.appendChild(title);
 
-    const row = document.createElement('label');
-    Object.assign(row.style, {
-      display: 'grid',
-      gap: '6px',
-    });
-
-    const label = document.createElement('span');
-    label.textContent = 'Backend';
-    label.style.color = '#ffd97a';
-    row.appendChild(label);
-
-    this.select = document.createElement('select');
-    Object.assign(this.select.style, {
-      width: '100%',
-      padding: '6px 8px',
-      borderRadius: '8px',
-      border: '1px solid rgba(255,255,255,0.18)',
-      background: 'rgba(255,255,255,0.08)',
-      color: '#fff',
-      fontFamily: 'inherit',
-      fontSize: '12px',
-    });
-
-    const options = [
-      { value: 'webgl', label: 'WebGL + OutlineEffect' },
-      { value: 'webgpu', label: 'WebGPU + TSL Outline' },
-    ];
-
-    for (const option of options) {
-      const el = document.createElement('option');
-      el.value = option.value;
-      el.textContent = option.label;
-      if (option.value === 'webgpu' && !this.webgpuAvailable) {
-        el.disabled = true;
-        el.textContent = `${option.label} (unavailable)`;
-      }
-      this.select.appendChild(el);
-    }
-
-    this.select.value = this.mode;
-    row.appendChild(this.select);
-
-    const help = document.createElement('div');
-    help.textContent = 'Changes reload the app.';
-    Object.assign(help.style, {
+    const hint = document.createElement('div');
+    hint.textContent = 'Toggle with P · WebGL renderer';
+    Object.assign(hint.style, {
       color: '#b7c7d6',
-      marginTop: '4px',
+      marginBottom: '10px',
+      fontSize: '11px',
     });
-    row.appendChild(help);
-
-    this.capabilityNote = document.createElement('div');
-    Object.assign(this.capabilityNote.style, {
-      color: this.webgpuAvailable ? '#9ee8b2' : '#ffb089',
-      marginTop: '2px',
-      whiteSpace: 'pre-wrap',
-    });
-    this.capabilityNote.textContent = this.webgpuAvailable
-      ? 'WebGPU is available.'
-      : `WebGPU unavailable.\n${this.webgpuReason || 'Browser or context does not support it.'}`;
-    row.appendChild(this.capabilityNote);
+    this.element.appendChild(hint);
 
     this.targetNote = document.createElement('div');
     Object.assign(this.targetNote.style, {
       color: '#b7c7d6',
-      marginTop: '2px',
+      marginBottom: '8px',
     });
-    this.targetNote.textContent = `FPS target: ${this.fpsTarget}`;
-    row.appendChild(this.targetNote);
-
-    this.element.appendChild(row);
+    this.targetNote.textContent = `FPS chart target: ${this.fpsTarget}`;
+    this.element.appendChild(this.targetNote);
 
     this._createPerformanceSection();
-
-    const actions = document.createElement('div');
-    Object.assign(actions.style, {
-      display: 'flex',
-      gap: '8px',
-      marginTop: '10px',
-    });
-
-    this.applyButton = document.createElement('button');
-    this.applyButton.type = 'button';
-    this.applyButton.textContent = 'Apply';
-    this.applyButton.addEventListener('click', () => this.apply());
-    this._styleButton(this.applyButton);
-    actions.appendChild(this.applyButton);
-
-    this.status = document.createElement('div');
-    Object.assign(this.status.style, {
-      marginTop: '8px',
-      color: '#9ee8b2',
-      minHeight: '16px',
-    });
-
-    this.element.appendChild(actions);
-    this.element.appendChild(this.status);
     this.container.appendChild(this.element);
   }
 
@@ -196,21 +117,11 @@ export class RendererModePanel {
   _createPerformanceSection() {
     const section = document.createElement('div');
     Object.assign(section.style, {
-      marginTop: '10px',
       padding: '8px',
       borderRadius: '10px',
       background: 'rgba(255,255,255,0.04)',
       border: '1px solid rgba(255,255,255,0.08)',
     });
-
-    const heading = document.createElement('div');
-    heading.textContent = 'PERFORMANCE';
-    Object.assign(heading.style, {
-      color: '#ffd97a',
-      marginBottom: '6px',
-      fontWeight: '700',
-    });
-    section.appendChild(heading);
 
     this.metrics = document.createElement('div');
     Object.assign(this.metrics.style, {
@@ -236,41 +147,6 @@ export class RendererModePanel {
     section.appendChild(this.chart);
 
     this.element.appendChild(section);
-  }
-
-  _styleButton(button) {
-    Object.assign(button.style, {
-      appearance: 'none',
-      border: '1px solid rgba(255,255,255,0.18)',
-      background: 'rgba(255,255,255,0.08)',
-      color: '#fff',
-      padding: '6px 10px',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      fontFamily: 'inherit',
-      fontSize: '12px',
-    });
-  }
-
-  apply() {
-    this.mode = isValidMode(this.select.value) ? this.select.value : DEFAULT_MODE;
-    if (this.mode === 'webgpu' && !this.webgpuAvailable) {
-      this.status.textContent = 'WebGPU unavailable, staying on WebGL.';
-      this.select.value = 'webgl';
-      return;
-    }
-    writeRendererMode(this.mode);
-    this.status.textContent = `Saved ${this.mode}. Reloading...`;
-    if (typeof this.onApply === 'function') {
-      this.onApply(this.mode);
-      return;
-    }
-    window.location.reload();
-  }
-
-  setRuntimeMessage(message) {
-    if (!this.status) return;
-    this.status.textContent = message;
   }
 
   updatePerformance({ timeMs = 0, deltaSeconds = 0, drawCalls = 0 } = {}) {

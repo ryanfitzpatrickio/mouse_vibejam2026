@@ -8,7 +8,9 @@ import { VibePortalManager } from '../world/VibePortalManager.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
 import { HUD } from '../hud/HUD.js';
+import { CatLocatorOverlay } from '../hud/CatLocatorOverlay.js';
 import { ScoreboardOverlay } from '../hud/ScoreboardOverlay.js';
+import { ChaseAlertOverlay } from '../hud/ChaseAlertOverlay.js';
 import { attachEdgeOutlines } from '../materials/index.js';
 import { NetworkClient } from '../net/NetworkClient.js';
 import { RemotePlayerManager } from '../net/RemotePlayerManager.js';
@@ -16,9 +18,14 @@ import { EmoteManager } from '../emote/EmoteManager.js';
 import { EmoteWheel } from '../emote/EmoteWheel.js';
 import { getAudioManager } from '../audio/AudioManager.js';
 import { OcclusionFader } from '../utils/OcclusionFader.js';
+import { createPlayerNameplate, syncNameplateWorldPosition } from '../world/PlayerNameplate.js';
+import { isNameplateOccluded } from '../utils/nameplateOcclusion.js';
+import { getClientPreferredDisplayName } from '../utils/playerDisplayName.js';
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { simulateTick, createPlayerState } from '../../shared/physics.js';
 import { readVibePortalArrivalFromSearch } from '../../shared/vibePortal.js';
 import kitchenNavMesh from '../../shared/kitchen-navmesh.generated.js';
+import { playerChaseRecordSeconds } from '../../shared/chaseScore.js';
 
 function applyAtmosphere(scene) {
   scene.background = new THREE.Color('#8e7a63');
@@ -35,22 +42,6 @@ function createWebGLRenderer(canvas) {
   // PCFShadowMap is more compatible across mobile GPU generations.
   renderer.shadowMap.type = isMobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
   return renderer;
-}
-
-async function createWebGPURenderer(canvas) {
-  const { WebGPURenderer, RenderPipeline, MeshToonNodeMaterial } = await import('three/webgpu');
-  const { toonOutlinePass } = await import('three/tsl');
-
-  const renderer = new WebGPURenderer({ antialias: true, canvas });
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.12;
-  if ('shadowMap' in renderer && renderer.shadowMap) {
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = isMobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
-  }
-  await renderer.init();
-
-  return { renderer, RenderPipeline, toonOutlinePass, MeshToonNodeMaterial };
 }
 
 const isMobile = typeof window !== 'undefined'
@@ -146,7 +137,7 @@ function buildNavMeshOverlay(navMesh) {
   return group;
 }
 
-export async function createGameSession({ canvas, mode = 'webgl', roomId = 'default' } = {}) {
+export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const scene = new THREE.Scene();
   applyAtmosphere(scene);
 
@@ -155,49 +146,35 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   const mouse = new Mouse({
     furColor: '#f5a962',
     bellyColor: '#f8d4b0',
-    rendererMode: mode,
   });
   scene.add(mouse);
 
-  let room;
-  let renderer;
-  let render;
+  const renderer = createWebGLRenderer(canvas);
+  canvas.style.position = 'relative';
+  canvas.style.zIndex = '0';
+
+  const labelRenderer = new CSS2DRenderer();
+  labelRenderer.domElement.style.position = 'fixed';
+  labelRenderer.domElement.style.inset = '0';
+  labelRenderer.domElement.style.pointerEvents = 'none';
+  /** Above WebGL canvas and typical embeds — labels are not depth-tested against the world. */
+  labelRenderer.domElement.style.zIndex = '10000';
+  document.body.appendChild(labelRenderer.domElement);
+
   const navMeshOverlay = buildNavMeshOverlay(kitchenNavMesh);
   scene.add(navMeshOverlay);
 
-  if (mode === 'webgpu') {
-    const gpu = await createWebGPURenderer(canvas);
-    renderer = gpu.renderer;
-    const renderPipeline = new gpu.RenderPipeline(renderer);
-    renderPipeline.outputNode = gpu.toonOutlinePass(scene, camera);
-
-    room = new Room({
-      width: 48,
-      depth: 48,
-      height: 4,
-      scale: 1,
-      rendererMode: 'webgpu',
-      rendererToolkit: gpu,
-    });
-    scene.add(room.getGroup());
-    await Promise.all([mouse.ready, room.ready]);
-    mouse.position.set(0, mouse.groundOffset, 0);
-    mouse.setViewCamera(camera);
-    attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
-    attachEdgeOutlines(room.getGroup(), { color: '#090909', thresholdAngle: 22, opacity: 0.9 });
-    mouse.setRendererMode('webgpu', gpu);
-    render = () => renderPipeline.render();
-  } else {
-    renderer = createWebGLRenderer(canvas);
-    room = new Room({ width: 48, depth: 48, height: 4, scale: 1 });
-    scene.add(room.getGroup());
-    await Promise.all([mouse.ready, room.ready]);
-    mouse.position.set(0, mouse.groundOffset, 0);
-    mouse.setViewCamera(camera);
-    attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
-    attachEdgeOutlines(room.getGroup(), { color: '#090909', thresholdAngle: 22, opacity: 0.9 });
-    render = () => renderer.render(scene, camera);
-  }
+  const room = new Room({ width: 48, depth: 48, height: 4, scale: 1 });
+  scene.add(room.getGroup());
+  await Promise.all([mouse.ready, room.ready]);
+  mouse.position.set(0, mouse.groundOffset, 0);
+  mouse.setViewCamera(camera);
+  attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
+  attachEdgeOutlines(room.getGroup(), { color: '#090909', thresholdAngle: 22, opacity: 0.9 });
+  const render = () => {
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+  };
 
   const thirdPersonCamera = new ThirdPersonCamera({
     camera,
@@ -276,6 +253,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   }
 
   const hud = new HUD();
+  const catLocator = new CatLocatorOverlay();
 
   const audioManager = getAudioManager();
   let ambientPrimed = false;
@@ -293,6 +271,9 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     ambientPrimed = true;
     void (async () => {
       await audioManager.resume();
+      audioManager.prefetchMovementLoopBuffer();
+      audioManager.prefetchJumpSfx();
+      audioManager.prefetchEmoteBuffers();
       await audioManager.startAmbientBed();
     })();
   }
@@ -318,18 +299,32 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   const net = new NetworkClient(roomId, {
     portalArrival: portalArrival.active ? portalArrival : null,
   });
-  const remotePlayerManager = new RemotePlayerManager({ scene, rendererMode: mode });
+  const remotePlayerManager = new RemotePlayerManager({ scene });
   net.connect();
+
+  const _localNameplateWorld = new THREE.Vector3();
 
   const DEFAULT_PUSH_BALL_RADIUS = 0.38;
   /** @type {Map<string, { mesh: THREE.Mesh, geom: THREE.BufferGeometry, mat: THREE.MeshStandardMaterial, targetPos: THREE.Vector3, targetQuat: THREE.Quaternion, lastR: number }>} */
   const pushBallMeshes = new Map();
+
+  const cheesePickupGroup = new THREE.Group();
+  cheesePickupGroup.name = 'WorldCheesePickups';
+  scene.add(cheesePickupGroup);
+  /** @type {Map<string, { mesh: THREE.Mesh, geom: THREE.BufferGeometry, mat: THREE.MeshStandardMaterial, phase: number }>} */
+  const cheesePickupMeshes = new Map();
+
+  function cheesePickupVisualScale(amount) {
+    const n = Math.max(1, Math.floor(Number(amount) || 1));
+    return Math.min(2.5, 0.58 + 0.022 * Math.min(n, 200));
+  }
 
   function resize(width, height, pixelRatio = window.devicePixelRatio || 1) {
     const safeWidth = Math.max(1, Math.floor(width));
     const safeHeight = Math.max(1, Math.floor(height));
     renderer.setPixelRatio(Math.min(2, pixelRatio));
     renderer.setSize(safeWidth, safeHeight, false);
+    labelRenderer.setSize(safeWidth, safeHeight);
     camera.aspect = safeWidth / safeHeight;
     camera.updateProjectionMatrix();
   }
@@ -339,6 +334,11 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   // eliminating rubberbanding from divergent physics.
   const CLIENT_BOUNDS = Object.freeze({ minX: -24, maxX: 24, minZ: -24, maxZ: 24 });
   const predictionState = createPlayerState('local');
+  predictionState.displayName = getClientPreferredDisplayName();
+  const localNameplateAnchor = new THREE.Object3D();
+  localNameplateAnchor.name = 'LocalNameplateAnchor';
+  scene.add(localNameplateAnchor);
+  const localNameplate = createPlayerNameplate(localNameplateAnchor, predictionState.displayName);
   let lastReconciledSeq = -2;
   const vibePortalManager = new VibePortalManager({
     scene,
@@ -349,6 +349,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   });
 
   const scoreboard = new ScoreboardOverlay();
+  const chaseAlert = new ChaseAlertOverlay();
 
   function isLocalPlayerCatHuntTarget() {
     const lid = net.localId;
@@ -370,20 +371,39 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     return String(id);
   }
 
+  function scoreboardRowLabel(id, localId, p) {
+    const dn = typeof p?.displayName === 'string' && p.displayName.trim() ? p.displayName.trim() : '';
+    if (dn) return id === localId ? `${dn} (you)` : dn;
+    return scoreboardLabel(id, localId);
+  }
+
   function buildScoreboardRows() {
     const lid = net.localId;
     if (!lid) return [];
     if (!net.connected) {
-      return [{ label: 'You', deaths: predictionState.deaths ?? 0 }];
+      const selfName = predictionState.displayName?.trim() || 'You';
+      return [{
+        label: `${selfName} (you)`,
+        deaths: predictionState.deaths ?? 0,
+        chaseSec: playerChaseRecordSeconds(predictionState),
+        cheese: Math.max(0, Math.floor(predictionState.cheeseCarried ?? 0)),
+      }];
     }
     const byId = new Map();
     byId.set(lid, net.serverState ?? predictionState);
     for (const [id, p] of net.remotePlayers) byId.set(id, p);
     const rows = [...byId.entries()].map(([id, p]) => ({
-      label: scoreboardLabel(id, lid),
+      label: scoreboardRowLabel(id, lid, p),
       deaths: p.deaths ?? 0,
+      chaseSec: playerChaseRecordSeconds(p),
+      cheese: Math.max(0, Math.floor(p.cheeseCarried ?? 0)),
     }));
-    rows.sort((a, b) => b.deaths - a.deaths || a.label.localeCompare(b.label));
+    rows.sort(
+      (a, b) => b.chaseSec - a.chaseSec
+        || b.cheese - a.cheese
+        || b.deaths - a.deaths
+        || a.label.localeCompare(b.label),
+    );
     return rows;
   }
 
@@ -428,6 +448,12 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     predictionState.wallAttachCooldownTimer = ss.wallAttachCooldownTimer ?? 0;
     predictionState.deathTime = ss.deathTime ?? 0;
     predictionState.deaths = ss.deaths ?? 0;
+    predictionState.longestChaseSeconds = ss.longestChaseSeconds ?? 0;
+    predictionState.chaseStreakSeconds = ss.chaseStreakSeconds ?? 0;
+    predictionState.cheeseCarried = ss.cheeseCarried ?? 0;
+    if (typeof ss.displayName === 'string' && ss.displayName.trim()) {
+      predictionState.displayName = ss.displayName;
+    }
   }
 
   function reconcileWithServer() {
@@ -554,7 +580,23 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       };
 
       const colliders = room.getCollisionColliders();
+      const vyBeforeJump = predictionState.velocity.y;
       simulateTick(predictionState, input, PHYSICS_STEP, CLIENT_BOUNDS, colliders);
+      if (
+        jumpPressed
+        && predictionState.alive
+        && predictionState.velocity.y > vyBeforeJump + 1.2
+      ) {
+        audioManager.playSoundAtPosition(
+          'jump',
+          new THREE.Vector3(
+            predictionState.position.x,
+            predictionState.position.y + mouse.groundOffset,
+            predictionState.position.z,
+          ),
+          camera.position,
+        );
+      }
 
       // Update render position with smoothing to hide reconciliation corrections
       const targetX = predictionState.position.x;
@@ -632,7 +674,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
 
     if (net.connected) {
       remotePlayerManager.sync(net.remotePlayers);
-      remotePlayerManager.update(deltaSeconds);
+      remotePlayerManager.update(deltaSeconds, camera);
     }
 
     const isAlive = controller.alive;
@@ -647,10 +689,32 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       health: controller.healthPercent,
       ping: net.ping,
       playerCount,
+      cheese: net.connected
+        ? (net.serverState?.cheeseCarried ?? 0)
+        : Math.max(0, Math.floor(predictionState.cheeseCarried ?? 0)),
       alive: isAlive,
       respawnCountdown,
     });
     scoreboard.setRows(buildScoreboardRows());
+
+    const chaseStreak = net.connected
+      ? (net.serverState?.chaseStreakSeconds ?? 0)
+      : 0;
+    chaseAlert.update({
+      active: !!(controller.alive && chaseStreak > 0.02),
+      streakSeconds: chaseStreak,
+    });
+
+    if (cat && ENABLE_CAT_PREDATOR) {
+      catLocator.update({
+        camera,
+        canvasRect: canvas.getBoundingClientRect(),
+        catWorldPos: cat.position,
+        catAlive: !!cat.alive,
+      });
+    } else {
+      catLocator.update({});
+    }
 
     const balls = net.pushBalls;
     if (net.connected && Array.isArray(balls) && balls.length > 0) {
@@ -716,9 +780,90 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       pushBallMeshes.clear();
     }
 
+    const cheeseList = net.connected ? net.cheesePickups : [];
+    if (net.connected && Array.isArray(cheeseList) && cheeseList.length > 0) {
+      const seenCheese = new Set();
+      for (const c of cheeseList) {
+        if (!c?.id) continue;
+        seenCheese.add(c.id);
+        let ch = cheesePickupMeshes.get(c.id);
+        if (!ch) {
+          const geom = new THREE.ConeGeometry(0.24, 0.38, 6);
+          geom.rotateX(Math.PI);
+          const mat = new THREE.MeshStandardMaterial({
+            color: '#f2d046',
+            emissive: '#806018',
+            emissiveIntensity: 0.22,
+            roughness: 0.42,
+            metalness: 0.06,
+          });
+          const mesh = new THREE.Mesh(geom, mat);
+          mesh.name = `Cheese:${c.id}`;
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          cheesePickupGroup.add(mesh);
+          ch = { mesh, geom, mat, phase: Math.random() * Math.PI * 2 };
+          cheesePickupMeshes.set(c.id, ch);
+        }
+        const baseY = (typeof c.y === 'number' ? c.y : 0) + 0.14;
+        ch.mesh.position.x = typeof c.x === 'number' ? c.x : 0;
+        ch.mesh.position.z = typeof c.z === 'number' ? c.z : 0;
+        ch.mesh.position.y = baseY + Math.sin(timeMs * 0.002 * 2.1 + ch.phase) * 0.07;
+        ch.mesh.scale.setScalar(cheesePickupVisualScale(c.amount));
+        ch.mesh.rotation.y += deltaSeconds * 0.65;
+      }
+      for (const [id, ch] of cheesePickupMeshes) {
+        if (!seenCheese.has(id)) {
+          cheesePickupGroup.remove(ch.mesh);
+          ch.geom.dispose();
+          ch.mat.dispose();
+          cheesePickupMeshes.delete(id);
+        }
+      }
+    } else if (cheesePickupMeshes.size > 0) {
+      for (const [, ch] of cheesePickupMeshes) {
+        cheesePickupGroup.remove(ch.mesh);
+        ch.geom.dispose();
+        ch.mat.dispose();
+      }
+      cheesePickupMeshes.clear();
+    }
+
     occlusionFader.update(deltaSeconds);
 
+    localNameplate.setText(predictionState.displayName || getClientPreferredDisplayName());
+    localNameplate.setAlive(predictionState.alive !== false);
+    syncNameplateWorldPosition(localNameplateAnchor, mouse);
+    localNameplateAnchor.getWorldPosition(_localNameplateWorld);
+    localNameplate.setOccluded(
+      isNameplateOccluded(scene, camera, _localNameplateWorld, mouse),
+    );
+
     audioManager.setAmbientChaseTarget(isLocalPlayerCatHuntTarget());
+    const keys = controller.keys;
+    const kb = controller.keyBindings;
+    const keyboardMove =
+      !!keys[kb.forward] || !!keys[kb.backward] || !!keys[kb.left] || !!keys[kb.right];
+    const stickMove =
+      !!mobileControls
+      && (Math.abs(mobileControls.moveX) > 0.02 || Math.abs(mobileControls.moveZ) > 0.02);
+    const movementIntent = keyboardMove || stickMove;
+    const hSpeed = Math.hypot(predictionState.velocity.x, predictionState.velocity.z);
+    const movementBed =
+      predictionState.alive &&
+      predictionState.grounded &&
+      (movementIntent
+        || predictionState.animState === 'walk'
+        || predictionState.animState === 'run'
+        || hSpeed > 0.35);
+    const wallRunBed =
+      predictionState.alive &&
+      predictionState.wallHolding &&
+      !predictionState.grounded &&
+      (movementIntent || hSpeed > 0.22);
+    audioManager.setMovementLoopTarget(movementBed);
+    audioManager.setMovementSprintTarget(movementBed && predictionState.sprinting);
+    audioManager.setMovementWallRunTarget(wallRunBed);
     audioManager.update(camera.position, deltaSeconds);
 
     render();
@@ -743,14 +888,27 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     emoteWheel.dispose();
     vibePortalManager.dispose();
     scoreboard.dispose();
+    chaseAlert.dispose();
     for (const [, entry] of pushBallMeshes) {
       scene.remove(entry.mesh);
       entry.geom.dispose();
       entry.mat.dispose();
     }
     pushBallMeshes.clear();
+    for (const [, ch] of cheesePickupMeshes) {
+      cheesePickupGroup.remove(ch.mesh);
+      ch.geom.dispose();
+      ch.mat.dispose();
+    }
+    cheesePickupMeshes.clear();
+    scene.remove(cheesePickupGroup);
     hud.dispose();
+    catLocator.dispose();
     audioManager.stopAmbientBed();
+    audioManager.stopMovementLoop();
+    localNameplate.dispose();
+    scene.remove(localNameplateAnchor);
+    labelRenderer.domElement.remove();
     renderer.dispose();
   }
 
@@ -759,7 +917,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   }
 
   return {
-    mode,
+    mode: 'webgl',
     renderer,
     scene,
     camera,

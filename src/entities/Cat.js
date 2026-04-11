@@ -25,6 +25,7 @@ const AI_STATE_TO_EXPRESSION = Object.freeze({
   groom: 'idle',
   play: 'shifty',
   bored_wander: 'shifty',
+  elevation_search: 'surprised',
 });
 
 const LERP_SPEED = 12;
@@ -60,6 +61,9 @@ export class Cat extends Predator {
     this._targetRot = 0;
     this._serverAiState = 'idle';
     this._prevAiState = 'idle';
+    /** @type {number} chase vertical phase from server: 0=run, 2=prep jump, 3=air */
+    this._chaseVert = 0;
+    this._prevChaseVert = -1;
     this._serverAlive = true;
     this._serverHealth = 4;
     this._initialized = false;
@@ -103,6 +107,7 @@ export class Cat extends Predator {
     this._targetPos.set(snapshot.px ?? 0, snapshot.py ?? 0, snapshot.pz ?? 0);
     this._targetRot = snapshot.ry ?? 0;
     this._serverAiState = snapshot.ai ?? 'idle';
+    this._chaseVert = snapshot.cv ?? 0;
     this._serverAlive = snapshot.alive ?? true;
     this._serverHealth = snapshot.hp ?? 0;
 
@@ -130,7 +135,11 @@ export class Cat extends Predator {
         this.playAnimation('Bite', { loop: false, clampWhenFinished: true });
         break;
       case 'chase':
-        this.playAnimation('Run');
+        if ((this._chaseVert ?? 0) >= 2) {
+          this.playAnimation('Jump', { loop: true });
+        } else {
+          this.playAnimation('Run');
+        }
         break;
       case 'attack':
         this.playAnimation('Bite', { loop: false, clampWhenFinished: true });
@@ -156,6 +165,9 @@ export class Cat extends Predator {
       case 'bored_wander':
         this.playAnimation('Walk');
         break;
+      case 'elevation_search':
+        this.playAnimation('Jump', { loop: true });
+        break;
       default:
         this.playAnimation('Idle');
     }
@@ -173,7 +185,11 @@ export class Cat extends Predator {
 
     if (this._serverAiState !== this._prevAiState) {
       this._prevAiState = this._serverAiState;
+      this._prevChaseVert = this._serverAiState === 'chase' ? this._chaseVert : -1;
       this._animateForAiState(this._serverAiState);
+    } else if (this._serverAiState === 'chase' && this._chaseVert !== this._prevChaseVert) {
+      this._prevChaseVert = this._chaseVert;
+      this._animateForAiState('chase');
     }
 
     if (this._initialized) {

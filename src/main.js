@@ -1,18 +1,11 @@
 import { createGameSession } from './app/createGameSession.js';
-import { RendererModePanel, readRendererMode, writeRendererMode } from './hud/RendererModePanel.js';
+import { RendererModePanel, readRendererMode } from './hud/RendererModePanel.js';
+
+readRendererMode(); // migrate legacy localStorage `webgpu` → `webgl`
 
 const canvas = document.getElementById('canvas');
-const mode = readRendererMode();
-const webgpuAvailable = typeof navigator !== 'undefined' && navigator.gpu && window.isSecureContext;
-const webgpuReason = !window.isSecureContext
-  ? 'WebGPU requires a secure context. Use https:// or localhost.'
-  : (!navigator.gpu ? 'navigator.gpu is not available in this browser.' : '');
 
 const modePanel = new RendererModePanel({
-  mode,
-  webgpuAvailable,
-  webgpuReason,
-  onApply: () => window.location.reload(),
   visible: false,
 });
 
@@ -54,22 +47,10 @@ function showFatalBootError(error) {
 }
 
 try {
-  app = await createGameSession({ canvas, mode });
+  app = await createGameSession({ canvas });
 } catch (error) {
-  if (mode === 'webgpu') {
-    writeRendererMode('webgl');
-    const reason = error instanceof Error ? error.message : String(error);
-    modePanel.setRuntimeMessage(`WebGPU failed: ${reason}\nUsing WebGL.`);
-    try {
-      app = await createGameSession({ canvas, mode: 'webgl' });
-    } catch (fallbackError) {
-      showFatalBootError(fallbackError);
-      throw fallbackError;
-    }
-  } else {
-    showFatalBootError(error);
-    throw error;
-  }
+  showFatalBootError(error);
+  throw error;
 }
 
 if (import.meta.env.DEV) {

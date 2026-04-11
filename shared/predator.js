@@ -4,7 +4,12 @@
  * Keep this file free of Three.js / DOM / Node dependencies.
  */
 
-import { createDefaultQueryFilter, findPath } from 'navcat';
+import {
+  createDefaultQueryFilter,
+  createFindNearestPolyResult,
+  findNearestPoly,
+  findPath,
+} from 'navcat';
 import { CAT_BT, selectRoutineAfterIdle, initialIdleDelay } from './catBehaviorTree.js';
 import { PHYSICS } from './physics.js';
 import { NAV_AGENT_CONFIGS, NAV_POLY_FLAGS } from './navConfig.js';
@@ -23,6 +28,7 @@ export const PREDATOR_AI = Object.freeze({
   GROOM: 'groom',
   PLAY: 'play',
   BORED_WANDER: 'bored_wander',
+  ELEVATION_SEARCH: 'elevation_search',
 });
 
 export const CAT_CONFIG = Object.freeze({
@@ -60,6 +66,9 @@ const CAT_NAV_QUERY_FILTER = (() => {
   filter.excludeFlags = NAV_POLY_FLAGS.MOUSE_ONLY;
   return filter;
 })();
+
+const _navGroundScratch = createFindNearestPolyResult();
+const _preyNavScratch = createFindNearestPolyResult();
 
 export function createPredatorState(config) {
   const spawnY = config.spawnY ?? 0;
@@ -114,6 +123,22 @@ export function createPredatorState(config) {
     chasePlateauTimer: 0,
     /** Sustained loss of line of sight while hunting */
     chaseLosBlockedTimer: 0,
+
+    /** null | 'prep_jump' | 'air' — vertical pursuit during chase */
+    chaseVerticalPhase: null,
+    chasePrepTimer: 0,
+    chaseAirTimer: 0,
+    chaseJumpDir: { x: 0, z: 0 },
+    chaseDesperateJumpTimer: 0,
+    /** Navmesh / waypoint Y used to scale jump impulse (any height). */
+    chaseJumpTargetY: 0,
+    chaseJumpForwardSpeed: CAT_BT.chaseJumpForwardSpeed,
+
+    /** null | 'look_hop' | 'look_hold' | 'drop_prep' | 'drop_air' */
+    elevationSearchPhase: null,
+    elevationSearchTimer: 0,
+    elevationSearchDir: { x: 0, z: 0 },
+    elevationDropIgnoreNavTimer: 0,
   };
 }
 
@@ -152,6 +177,21 @@ function canPredatorHitPlayer(predator, player) {
   const predatorSpan = getVerticalSpan(predator.position.y, predator.height);
   const playerSpan = getVerticalSpan(player.position.y, player.height ?? PHYSICS.playerHeight);
   return spansOverlap(predatorSpan, playerSpan);
+}
+
+function predatorOnSameNavWalkableLayer(state, prey, navMesh) {
+  if (!navMesh || !prey?.position) return false;
+  const catY = sampleNavMeshSupportY(state, navMesh);
+  const preyNav = sampleNavSurfaceNearPrey(navMesh, prey.position);
+  if (catY == null || preyNav == null) return false;
+  return Math.abs(catY - preyNav.y) < CAT_BT.sameNavSurfaceYTolerance;
+}
+
+function predatorCanStrikeFromSharedSurface(state, prey, navMesh) {
+  if (!prey?.position || !canPredatorHitPlayer(state, prey)) return false;
+  if (!state.grounded) return false;
+  if (state.chaseVerticalPhase === 'prep_jump' || state.chaseVerticalPhase === 'air') return false;
+  return predatorOnSameNavWalkableLayer(state, prey, navMesh);
 }
 
 function clearPredatorNavPath(state) {
@@ -249,31 +289,46 @@ function gatherMiceSortedByDistance(state, players) {
       player,
       id: player.id,
       d: distXZ(state.position, player.position),
+      offGroundPriority: isPriorityOffGroundPrey(state, player),
     });
   }
   out.sort((a, b) => a.d - b.d);
   return out;
 }
 
-/** Mice the cat could actually melee from its current height (vertical capsule overlap). */
-function reachableMiceSorted(state, sortedMice) {
-  if (!CAT_BT.requireVerticalStrikeOverlapForHunt) return sortedMice;
-  return sortedMice.filter((m) => canPredatorHitPlayer(state, m.player));
+function isPriorityOffGroundPrey(state, player) {
+  if (!player?.position) return false;
+  if (player.wallHolding) return true;
+  if (player.grounded === false) return true;
+  return player.position.y > state.spawnPoint.y + CAT_BT.offGroundTargetPriorityMinY;
 }
 
 /**
- * Nearest mouse in horizontal aggro that is vertically hittable (if required) and in line of sight.
+ * Mice in aggro range on XZ that pass vertical band + relaxed hunt LOS (path/jump can close height gaps).
  */
-function firstReachableMouseInAggro(state, sortedMice, colliders) {
+function huntEligibleMiceSorted(state, sortedMice, colliders) {
+  const out = [];
   for (const m of sortedMice) {
     if (m.d >= state.aggroRange) break;
-    const vertOk = !CAT_BT.requireVerticalStrikeOverlapForHunt || canPredatorHitPlayer(state, m.player);
-    if (!vertOk) continue;
-    const losOk = !CAT_BT.requireLineOfSightForHunt || hasPredatorLineOfSight(state, m.player, colliders);
+    if (!huntVerticalBandOk(state, m.player)) continue;
+    const losOk = !CAT_BT.requireLineOfSightForHunt
+      || hasRelaxedHuntLineOfSight(state, m.player, colliders);
     if (!losOk) continue;
-    return m;
+    out.push(m);
   }
-  return null;
+  out.sort((a, b) => {
+    if (a.offGroundPriority !== b.offGroundPriority) {
+      return a.offGroundPriority ? -1 : 1;
+    }
+    return a.d - b.d;
+  });
+  return out;
+}
+
+/** Nearest hunt-eligible mouse in horizontal aggro (may be above/below until cat climbs/jumps). */
+function firstHuntEligibleMouseInAggro(state, sortedMice, colliders) {
+  const list = huntEligibleMiceSorted(state, sortedMice, colliders);
+  return list.length ? list[0] : null;
 }
 
 function getChaseTargetPlayer(state, players) {
@@ -300,6 +355,17 @@ function refreshChaseTarget(state, reachableSorted, now) {
     return;
   }
 
+  if (nearest.offGroundPriority && !cur.offGroundPriority) {
+    state.chaseTargetId = nearest.id;
+    clearPredatorNavPath(state);
+    state.chaseFrustration *= 0.35;
+    return;
+  }
+
+  if (cur.offGroundPriority && !nearest.offGroundPriority) {
+    return;
+  }
+
   if (nearest.id !== state.chaseTargetId && nearest.d < cur.d - CAT_BT.switchTargetAdvantage) {
     state.chaseTargetId = nearest.id;
     clearPredatorNavPath(state);
@@ -310,15 +376,17 @@ function refreshChaseTarget(state, reachableSorted, now) {
 /**
  * Drops invalid targets and picks nearest vertically reachable mouse, or clears target.
  */
-function ensureChaseTarget(state, players, reachableSorted) {
-  if (!reachableSorted.length) {
+function ensureChaseTarget(state, players, huntEligibleSorted) {
+  if (!huntEligibleSorted.length) {
     state.chaseTargetId = null;
     clearPredatorNavPath(state);
     return null;
   }
   const cur = getChaseTargetPlayer(state, players);
-  if (!cur || !canPredatorHitPlayer(state, cur)) {
-    state.chaseTargetId = reachableSorted[0].id;
+  const curOk = cur && huntVerticalBandOk(state, cur)
+    && distXZ(state.position, cur.position) < state.aggroRange * 1.02;
+  if (!curOk) {
+    state.chaseTargetId = huntEligibleSorted[0].id;
     clearPredatorNavPath(state);
   }
   return getChaseTargetPlayer(state, players);
@@ -391,6 +459,70 @@ function hasPredatorLineOfSight(state, target, colliders) {
   return true;
 }
 
+function segmentIntersectsAABB3D(ax, ay, az, bx, by, bz, box) {
+  const { min, max } = box;
+  let t0 = 0;
+  let t1 = 1;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const dz = bz - az;
+
+  const axes = [
+    { o: ax, d: dx, mn: min.x, mx: max.x },
+    { o: ay, d: dy, mn: min.y, mx: max.y },
+    { o: az, d: dz, mn: min.z, mx: max.z },
+  ];
+  for (const { o, d, mn, mx } of axes) {
+    if (Math.abs(d) < 1e-9) {
+      if (o < mn || o > mx) return false;
+      continue;
+    }
+    const invD = 1 / d;
+    let tNear = (mn - o) * invD;
+    let tFar = (mx - o) * invD;
+    if (tNear > tFar) {
+      const tmp = tNear;
+      tNear = tFar;
+      tFar = tmp;
+    }
+    t0 = Math.max(t0, tNear);
+    t1 = Math.min(t1, tFar);
+    if (t0 > t1) return false;
+  }
+  return true;
+}
+
+/**
+ * 3D LOS for hunt/chase (cat chest → mouse chest). Unlike {@link hasPredatorLineOfSight},
+ * allows looking up/down at prey on counters or lower floors.
+ */
+function hasRelaxedHuntLineOfSight(state, target, colliders) {
+  if (!target?.position) return false;
+  const ax = state.position.x;
+  const ay = state.position.y + state.height * 0.32;
+  const az = state.position.z;
+  const bx = target.position.x;
+  const by = target.position.y + (target.height ?? PHYSICS.playerHeight) * 0.32;
+  const bz = target.position.z;
+
+  for (const collider of colliders ?? []) {
+    if (collider.type === 'surface' || collider.type === 'loot') continue;
+    const box = collider.aabb;
+    if (!box) continue;
+    if (segmentIntersectsAABB3D(ax, ay, az, bx, by, bz, box)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function huntVerticalBandOk(state, player) {
+  if (!player?.position) return false;
+  const dy = player.position.y - state.position.y;
+  if (dy < -CAT_BT.maxPreyBelowForHunt) return false;
+  return true;
+}
+
 function angleDiff(target, current) {
   let d = target - current;
   if (d > Math.PI) d -= Math.PI * 2;
@@ -411,6 +543,53 @@ function resetChaseProgress(state) {
   state.chaseClosestDistXZ = null;
   state.chasePlateauTimer = 0;
   state.chaseLosBlockedTimer = 0;
+  state.chaseVerticalPhase = null;
+  state.chasePrepTimer = 0;
+  state.chaseAirTimer = 0;
+  state.chaseJumpDir.x = 0;
+  state.chaseJumpDir.z = 0;
+  state.chaseDesperateJumpTimer = 0;
+  state.chaseJumpTargetY = 0;
+  state.chaseJumpForwardSpeed = CAT_BT.chaseJumpForwardSpeed;
+}
+
+function resetElevationSearch(state) {
+  state.elevationSearchPhase = null;
+  state.elevationSearchTimer = 0;
+  state.elevationSearchDir.x = 0;
+  state.elevationSearchDir.z = 0;
+  state.elevationDropIgnoreNavTimer = 0;
+}
+
+function pickChaseJumpTargetY(state, prey, preyNav, steer) {
+  let y = prey.position.y;
+  if (preyNav && preyNav.y > state.position.y - 0.04) y = Math.max(y, preyNav.y);
+  if (steer && steer.y > state.position.y + 0.02) y = Math.max(y, steer.y);
+  return y;
+}
+
+function computeChaseJumpVerticalSpeed(state, targetY) {
+  const dy = Math.max(0, targetY - state.position.y);
+  const gMag = Math.abs(state.gravity);
+  const fromPhysics = Math.sqrt(2 * gMag * (dy + CAT_BT.chaseJumpHeightMargin));
+  const vyFloor = CAT_BT.chaseJumpUpSpeed * 0.3;
+  return Math.min(CAT_BT.chaseJumpMaxVy, Math.max(vyFloor, fromPhysics));
+}
+
+function computeChaseJumpAirTime(dy) {
+  return CAT_BT.chaseJumpMaxAirTime
+    + Math.min(CAT_BT.chaseJumpMaxAirTimeExtra, Math.max(0, dy) * CAT_BT.chaseJumpAirTimePerMeter);
+}
+
+function computeChaseJumpForwardSpeed(state, prey, preyNav, airTime) {
+  const target = preyNav ?? prey?.position;
+  if (!target) return CAT_BT.chaseJumpForwardSpeed;
+  const distance = distXZ(state.position, target);
+  const neededSpeed = distance / Math.max(0.2, airTime * 0.86);
+  return Math.min(
+    CAT_BT.chaseJumpMaxForwardSpeed,
+    Math.max(CAT_BT.chaseJumpForwardSpeed, neededSpeed),
+  );
 }
 
 function enterBoredWander(state) {
@@ -418,9 +597,35 @@ function enterBoredWander(state) {
   state.chaseTargetId = null;
   state.chaseFrustration = 0;
   resetChaseProgress(state);
+  resetElevationSearch(state);
   state.aiState = PREDATOR_AI.BORED_WANDER;
   state.aiTimer = CAT_BT.boredWanderMin + Math.random() * (CAT_BT.boredWanderMax - CAT_BT.boredWanderMin);
   pickPatrolTarget(state, 1.15);
+}
+
+function enterElevationSearch(state) {
+  clearPredatorNavPath(state);
+  state.chaseTargetId = null;
+  state.chaseFrustration = 0;
+  resetChaseProgress(state);
+  state.aiState = PREDATOR_AI.ELEVATION_SEARCH;
+  state.aiTimer = CAT_BT.elevationSearchDuration;
+  state.elevationSearchPhase = 'look_hop';
+  state.elevationSearchTimer = 0;
+  state.elevationSearchDir.x = 0;
+  state.elevationSearchDir.z = 0;
+}
+
+function enterPatrolHome(state) {
+  clearPredatorNavPath(state);
+  resetChaseProgress(state);
+  resetElevationSearch(state);
+  state.chaseTargetId = null;
+  state.chaseFrustration = 0;
+  state.aiState = PREDATOR_AI.PATROL;
+  state.patrolTarget.x = state.spawnPoint.x;
+  state.patrolTarget.y = state.spawnPoint.y;
+  state.patrolTarget.z = state.spawnPoint.z;
 }
 
 function transitionLifeFromIdle(state) {
@@ -518,11 +723,67 @@ function resolvePredatorCollisions(state, colliders, previousPosition = null) {
   }
 }
 
+function sampleNavMeshSupportY(state, navMesh) {
+  if (!navMesh) return null;
+  const qy = Math.max(state.position.y, -0.5);
+  findNearestPoly(
+    _navGroundScratch,
+    navMesh,
+    [state.position.x, qy, state.position.z],
+    NAV_QUERY_HALF_EXTENTS,
+    CAT_NAV_QUERY_FILTER,
+  );
+  if (!_navGroundScratch.success) return null;
+  const px = _navGroundScratch.position[0];
+  const py = _navGroundScratch.position[1];
+  const pz = _navGroundScratch.position[2];
+  const dx = px - state.position.x;
+  const dz = pz - state.position.z;
+  if (dx * dx + dz * dz > 2.75 * 2.75) return null;
+  return py;
+}
+
+/**
+ * Nearest walkable point on the cat navmesh around the mouse (used to spot counter / ledge height).
+ * @returns {{ x: number, y: number, z: number } | null}
+ */
+function sampleNavSurfaceNearPrey(navMesh, preyPos) {
+  if (!navMesh || !preyPos) return null;
+  const qy = Math.max(preyPos.y, -0.2);
+  findNearestPoly(
+    _preyNavScratch,
+    navMesh,
+    [preyPos.x, qy, preyPos.z],
+    NAV_QUERY_HALF_EXTENTS,
+    CAT_NAV_QUERY_FILTER,
+  );
+  if (!_preyNavScratch.success) return null;
+  return {
+    x: _preyNavScratch.position[0],
+    y: _preyNavScratch.position[1],
+    z: _preyNavScratch.position[2],
+  };
+}
+
+function shouldChaseElevateToPreyLayer(state, prey, preyNav, effectiveElevGap, navMesh) {
+  if (!prey?.position) return false;
+  if (effectiveElevGap <= CAT_BT.chaseElevateMinGap) return false;
+  if (!canPredatorHitPlayer(state, prey)) return true;
+
+  const preyGroundedAboveCat = prey.grounded !== false
+    && prey.position.y > state.position.y + CAT_BT.chaseElevateMinGap;
+  const preyNavIsAboveCat = preyNav && preyNav.y > state.position.y + CAT_BT.chaseElevateMinGap * 0.5;
+  if (!preyNavIsAboveCat) return preyGroundedAboveCat;
+
+  return !predatorOnSameNavWalkableLayer(state, prey, navMesh);
+}
+
 export function simulatePredatorTick(state, players, dt, colliders, navMesh = null) {
   if (!state.alive) return null;
 
   state.aiTimer -= dt;
   state.navRepathTimer -= dt;
+  state.elevationDropIgnoreNavTimer = Math.max(0, state.elevationDropIgnoreNavTimer - dt);
   const previousPosition = {
     x: state.position.x,
     y: state.position.y,
@@ -531,10 +792,25 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
 
   const now = Date.now() / 1000;
   const sortedMice = gatherMiceSortedByDistance(state, players);
-  const reachableMice = reachableMiceSorted(state, sortedMice);
-  /** Nearest mouse in aggro that is vertically hittable and not behind world collision. */
-  const aggroPrey = firstReachableMouseInAggro(state, sortedMice, colliders);
+  const huntEligibleMice = huntEligibleMiceSorted(state, sortedMice, colliders);
+  const aggroPrey = firstHuntEligibleMouseInAggro(state, sortedMice, colliders);
   const preyInAggro = aggroPrey != null;
+
+  const ambientGroundStates = new Set([
+    PREDATOR_AI.IDLE,
+    PREDATOR_AI.PATROL,
+    PREDATOR_AI.SLEEP,
+    PREDATOR_AI.GROOM,
+    PREDATOR_AI.PLAY,
+    PREDATOR_AI.BORED_WANDER,
+  ]);
+  if (
+    !preyInAggro
+    && ambientGroundStates.has(state.aiState)
+    && state.position.y > state.spawnPoint.y + CAT_BT.catDescendAmbientAboveSpawn
+  ) {
+    enterElevationSearch(state);
+  }
 
   const distToSpawn = distXZ(state.position, state.spawnPoint);
 
@@ -655,8 +931,86 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
       }
       break;
 
+    case PREDATOR_AI.ELEVATION_SEARCH: {
+      if (preyInAggro) {
+        resetElevationSearch(state);
+        state.chaseTargetId = aggroPrey.player.id;
+        clearPredatorNavPath(state);
+        state.chaseFrustration = 0;
+        state.aiState = PREDATOR_AI.ALERT;
+        state.aiTimer = state.alertDuration;
+        break;
+      }
+
+      state.rotation += dt * 1.35;
+
+      if (!state.elevationSearchPhase) {
+        state.elevationSearchPhase = 'look_hop';
+      }
+
+      if (state.elevationSearchPhase === 'look_hop') {
+        if (state.grounded) {
+          state.velocity.y = Math.max(state.velocity.y, CAT_BT.elevationSearchHopUpSpeed);
+          state.grounded = false;
+        }
+        state.elevationSearchPhase = 'look_hold';
+        state.elevationSearchTimer = CAT_BT.elevationSearchHopLookTime;
+        break;
+      }
+
+      if (state.elevationSearchPhase === 'look_hold') {
+        if (state.grounded) {
+          state.elevationSearchTimer -= dt;
+          if (state.elevationSearchTimer <= 0 || state.aiTimer <= CAT_BT.elevationDropPrepTime) {
+            state.elevationSearchPhase = 'drop_prep';
+            state.elevationSearchTimer = CAT_BT.elevationDropPrepTime;
+          }
+        }
+        break;
+      }
+
+      if (state.elevationSearchPhase === 'drop_prep') {
+        const dir = normalizeXZ({
+          x: state.spawnPoint.x - state.position.x,
+          z: state.spawnPoint.z - state.position.z,
+        });
+        if (dir.x === 0 && dir.z === 0) {
+          dir.x = Math.sin(state.rotation);
+          dir.z = Math.cos(state.rotation);
+        }
+        state.elevationSearchDir.x = dir.x;
+        state.elevationSearchDir.z = dir.z;
+        faceDirection(state, dir, dt);
+
+        state.elevationSearchTimer -= dt;
+        if (state.elevationSearchTimer <= 0) {
+          state.velocity.y = Math.max(state.velocity.y, CAT_BT.elevationDropUpSpeed);
+          state.grounded = false;
+          state.elevationDropIgnoreNavTimer = CAT_BT.elevationDropIgnoreNavTime;
+          state.elevationSearchPhase = 'drop_air';
+        }
+        break;
+      }
+
+      if (state.elevationSearchPhase === 'drop_air') {
+        const dir = state.elevationSearchDir;
+        moveToward(state, dir, CAT_BT.elevationDropForwardSpeed, dt);
+        faceDirection(state, dir, dt);
+        if (state.grounded && state.position.y <= state.spawnPoint.y + 0.18) {
+          enterPatrolHome(state);
+        } else if (state.aiTimer <= -0.8 && state.position.y > state.spawnPoint.y + CAT_BT.catDescendAmbientAboveSpawn) {
+          state.elevationDropIgnoreNavTimer = Math.max(
+            state.elevationDropIgnoreNavTimer,
+            CAT_BT.elevationDropIgnoreNavTime * 0.5,
+          );
+          state.aiTimer = CAT_BT.elevationSearchDuration * 0.35;
+        }
+      }
+      break;
+    }
+
     case PREDATOR_AI.ALERT: {
-      const preyA = ensureChaseTarget(state, players, reachableMice);
+      const preyA = ensureChaseTarget(state, players, huntEligibleMice);
       if (!preyA || distXZ(state.position, preyA.position) > state.aggroRange * 1.08) {
         clearPredatorNavPath(state);
         state.chaseTargetId = null;
@@ -666,7 +1020,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         break;
       }
       if (CAT_BT.requireLineOfSightForHunt) {
-        if (hasPredatorLineOfSight(state, preyA, colliders)) {
+        if (hasRelaxedHuntLineOfSight(state, preyA, colliders)) {
           state.chaseLosBlockedTimer = 0;
         } else {
           state.chaseLosBlockedTimer += dt;
@@ -689,7 +1043,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
     }
 
     case PREDATOR_AI.ROAR: {
-      const preyR = ensureChaseTarget(state, players, reachableMice);
+      const preyR = ensureChaseTarget(state, players, huntEligibleMice);
       if (!preyR || distXZ(state.position, preyR.position) > state.aggroRange * 1.15) {
         clearPredatorNavPath(state);
         state.chaseTargetId = null;
@@ -699,7 +1053,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         break;
       }
       if (CAT_BT.requireLineOfSightForHunt) {
-        if (hasPredatorLineOfSight(state, preyR, colliders)) {
+        if (hasRelaxedHuntLineOfSight(state, preyR, colliders)) {
           state.chaseLosBlockedTimer = 0;
         } else {
           state.chaseLosBlockedTimer += dt;
@@ -724,10 +1078,10 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
     }
 
     case PREDATOR_AI.CHASE: {
-      const visibleReachable = CAT_BT.requireLineOfSightForHunt
-        ? reachableMice.filter((m) => hasPredatorLineOfSight(state, m.player, colliders))
-        : reachableMice;
-      const huntPool = visibleReachable.length > 0 ? visibleReachable : reachableMice;
+      const visibleHunt = CAT_BT.requireLineOfSightForHunt
+        ? huntEligibleMice.filter((m) => hasRelaxedHuntLineOfSight(state, m.player, colliders))
+        : huntEligibleMice;
+      const huntPool = visibleHunt.length > 0 ? visibleHunt : huntEligibleMice;
       ensureChaseTarget(state, players, huntPool);
       refreshChaseTarget(state, huntPool, now);
       const prey = getChaseTargetPlayer(state, players);
@@ -748,7 +1102,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
       if (
         prey
         && distPrey < state.attackRange
-        && canPredatorHitPlayer(state, prey)
+        && predatorCanStrikeFromSharedSurface(state, prey, navMesh)
         && hasPredatorLineOfSight(state, prey, colliders)
       ) {
         clearPredatorNavPath(state);
@@ -772,8 +1126,66 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         break;
       }
 
+      state.chaseDesperateJumpTimer = Math.max(0, state.chaseDesperateJumpTimer - dt);
+
+      if (state.chaseVerticalPhase === 'prep_jump') {
+        state.chasePrepTimer -= dt;
+        if (prey) {
+          facePosition(state, prey.position, dt);
+        }
+        if (state.chasePrepTimer <= 0) {
+          state.chaseVerticalPhase = 'air';
+          state.grounded = false;
+          const targetY = (state.chaseJumpTargetY > state.position.y + 0.03)
+            ? state.chaseJumpTargetY
+            : (prey ? pickChaseJumpTargetY(state, prey, null, null) : state.position.y + 0.6);
+          const dy = Math.max(0, targetY - state.position.y);
+          state.chaseAirTimer = computeChaseJumpAirTime(dy);
+          state.chaseJumpForwardSpeed = computeChaseJumpForwardSpeed(state, prey, null, state.chaseAirTimer);
+          const dir = prey
+            ? normalizeXZ({
+              x: prey.position.x - state.position.x,
+              z: prey.position.z - state.position.z,
+            })
+            : normalizeXZ({ x: Math.sin(state.rotation), z: Math.cos(state.rotation) });
+          state.chaseJumpDir.x = dir.x;
+          state.chaseJumpDir.z = dir.z;
+          state.velocity.y = computeChaseJumpVerticalSpeed(state, targetY);
+        }
+        if (prey && CAT_BT.requireLineOfSightForHunt) {
+          if (hasRelaxedHuntLineOfSight(state, prey, colliders)) {
+            state.chaseLosBlockedTimer = 0;
+          } else {
+            state.chaseLosBlockedTimer += dt;
+            if (state.chaseLosBlockedTimer >= CAT_BT.losBlockedGiveUpSeconds) {
+              enterBoredWander(state);
+            }
+          }
+        }
+        break;
+      }
+
+      if (state.chaseVerticalPhase === 'air') {
+        state.chaseAirTimer -= dt;
+        moveToward(state, state.chaseJumpDir, state.chaseJumpForwardSpeed ?? CAT_BT.chaseJumpForwardSpeed, dt);
+        if (state.chaseAirTimer <= 0) {
+          state.chaseVerticalPhase = null;
+        }
+        if (prey && CAT_BT.requireLineOfSightForHunt) {
+          if (hasRelaxedHuntLineOfSight(state, prey, colliders)) {
+            state.chaseLosBlockedTimer = 0;
+          } else {
+            state.chaseLosBlockedTimer += dt;
+            if (state.chaseLosBlockedTimer >= CAT_BT.losBlockedGiveUpSeconds) {
+              enterBoredWander(state);
+            }
+          }
+        }
+        break;
+      }
+
       if (prey && CAT_BT.requireLineOfSightForHunt) {
-        if (hasPredatorLineOfSight(state, prey, colliders)) {
+        if (hasRelaxedHuntLineOfSight(state, prey, colliders)) {
           state.chaseLosBlockedTimer = 0;
         } else {
           state.chaseLosBlockedTimer += dt;
@@ -784,9 +1196,64 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         }
       }
 
-      const moved = prey
-        ? navSteerMove(state, prey.position, navMesh, state.chaseSpeed, dt)
-        : false;
+      const preyNav = prey && navMesh ? sampleNavSurfaceNearPrey(navMesh, prey.position) : null;
+      const vertGap = prey ? prey.position.y - state.position.y : 0;
+      const navElevGap = preyNav ? preyNav.y - state.position.y : -1000;
+      const effectiveElevGap = Math.max(vertGap, navElevGap > 0.02 ? navElevGap : 0);
+      const needElevate = shouldChaseElevateToPreyLayer(state, prey, preyNav, effectiveElevGap, navMesh);
+
+      let steer = null;
+      if (prey && navMesh && needElevate) {
+        steer = getPredatorSteerTarget(state, prey.position, navMesh);
+      }
+      const steerHigh = steer && steer.y > state.position.y + CAT_BT.chaseJumpMinWaypointRise;
+      const horizClose = steer
+        && distSqXZ(state.position, steer) <= CAT_BT.chaseJumpLaunchDistXZ * CAT_BT.chaseJumpLaunchDistXZ;
+      const preyNavHigher = preyNav && preyNav.y > state.position.y + 0.14;
+      const preyNavNearMouse = preyNav
+        && distSqXZ(prey.position, preyNav) <= 2.8 * 2.8;
+      const preyGroundedElevated = prey
+        && prey.grounded !== false
+        && vertGap > CAT_BT.chaseElevateMinGap;
+
+      const jumpFromWaypoint = needElevate && steerHigh && horizClose && state.chaseDesperateJumpTimer <= 0;
+      const jumpFromPreyNav = needElevate
+        && state.chaseDesperateJumpTimer <= 0
+        && preyNavHigher
+        && preyNavNearMouse
+        && effectiveElevGap > 0.2;
+      const jumpFromPreyElevation = needElevate
+        && state.chaseDesperateJumpTimer <= 0
+        && preyGroundedElevated
+        && effectiveElevGap > 0.2;
+      if (jumpFromWaypoint || jumpFromPreyNav || jumpFromPreyElevation) {
+        state.chaseJumpTargetY = pickChaseJumpTargetY(state, prey, preyNav, steer);
+        state.chaseVerticalPhase = 'prep_jump';
+        state.chasePrepTimer = CAT_BT.chaseJumpPrepTime;
+        clearPredatorNavPath(state);
+        break;
+      }
+
+      let moved = false;
+      if (prey) {
+        moved = navSteerMove(state, prey.position, navMesh, state.chaseSpeed, dt);
+      }
+
+      if (
+        needElevate
+        && !moved
+        && state.chaseDesperateJumpTimer <= 0
+        && distPrey < 2.05
+        && effectiveElevGap > 0.35
+      ) {
+        state.chaseJumpTargetY = pickChaseJumpTargetY(state, prey, preyNav, steer);
+        state.chaseVerticalPhase = 'prep_jump';
+        state.chasePrepTimer = CAT_BT.chaseJumpPrepTime * 0.88;
+        state.chaseDesperateJumpTimer = CAT_BT.chaseDesperateJumpCooldown;
+        clearPredatorNavPath(state);
+        break;
+      }
+
       const stepMoved = distXZ(state.position, previousPosition);
       const speed = dt > 1e-6 ? stepMoved / dt : 0;
       const expectedStep = state.chaseSpeed * dt;
@@ -831,6 +1298,20 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         state.chaseFrustration = Math.max(0, state.chaseFrustration - dt * 0.1);
       }
 
+      if (
+        needElevate
+        && state.chaseDesperateJumpTimer <= 0
+        && state.chasePlateauTimer > CAT_BT.chaseJumpPlateauStallSeconds
+        && distPrey < 3.05
+        && effectiveElevGap > CAT_BT.chaseElevateMinGap * 0.82
+      ) {
+        state.chaseJumpTargetY = pickChaseJumpTargetY(state, prey, preyNav, steer);
+        state.chaseVerticalPhase = 'prep_jump';
+        state.chasePrepTimer = CAT_BT.chaseJumpPrepTime;
+        clearPredatorNavPath(state);
+        break;
+      }
+
       if (state.chaseFrustration >= CAT_BT.frustrationMax) {
         enterBoredWander(state);
       }
@@ -847,7 +1328,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         && state.aiTimer <= state.attackHitTime
         && preyAtk
         && distAtk < state.attackRange * 1.5
-        && canPredatorHitPlayer(state, preyAtk)
+        && predatorCanStrikeFromSharedSurface(state, preyAtk, navMesh)
       ) {
         state.attackHitPending = false;
         const dx = preyAtk.position.x - state.position.x;
@@ -870,14 +1351,14 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
 
     case PREDATOR_AI.COOLDOWN:
       if (state.aiTimer <= 0) {
-        ensureChaseTarget(state, players, reachableMice);
-        refreshChaseTarget(state, reachableMice, now);
+        ensureChaseTarget(state, players, huntEligibleMice);
+        refreshChaseTarget(state, huntEligibleMice, now);
         const preyC = getChaseTargetPlayer(state, players);
         const distC = preyC ? distXZ(state.position, preyC.position) : Infinity;
         if (
           distC < state.attackRange
           && preyC
-          && canPredatorHitPlayer(state, preyC)
+          && predatorCanStrikeFromSharedSurface(state, preyC, navMesh)
           && hasPredatorLineOfSight(state, preyC, colliders)
         ) {
           clearPredatorNavPath(state);
@@ -887,8 +1368,8 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         } else if (
           distC < state.aggroRange
           && preyC
-          && canPredatorHitPlayer(state, preyC)
-          && (!CAT_BT.requireLineOfSightForHunt || hasPredatorLineOfSight(state, preyC, colliders))
+          && huntVerticalBandOk(state, preyC)
+          && (!CAT_BT.requireLineOfSightForHunt || hasRelaxedHuntLineOfSight(state, preyC, colliders))
         ) {
           clearPredatorNavPath(state);
           state.aiState = PREDATOR_AI.CHASE;
@@ -935,15 +1416,43 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
     state.velocity.y += state.gravity * dt;
   }
   state.position.y += state.velocity.y * dt;
-  if (state.position.y <= 0) {
-    state.position.y = 0;
+
+  resolvePredatorCollisions(state, colliders, previousPosition);
+
+  // Navmesh landing when already near walkable height (counters, etc.).
+  const supportY = sampleNavMeshSupportY(state, navMesh);
+  let landedOnNav = false;
+  if (supportY != null && state.velocity.y <= 0 && state.elevationDropIgnoreNavTimer <= 0) {
+    const dy = supportY - state.position.y;
+    if (dy >= -0.28 && dy <= 0.2) {
+      state.position.y = supportY;
+      state.velocity.y = 0;
+      state.grounded = true;
+      landedOnNav = true;
+    }
+  }
+
+  // Room floor at y=0 (kitchen). `resolvePredatorCollisions` skips `surface` colliders, so there is no
+  // triangle mesh floor — only this clamp prevents falling through when navmesh snap does not apply.
+  const ROOM_FLOOR_Y = 0;
+  if (!landedOnNav && state.velocity.y <= 0 && state.position.y <= ROOM_FLOOR_Y + 0.08) {
+    state.position.y = ROOM_FLOOR_Y;
     state.velocity.y = 0;
     state.grounded = true;
-  } else {
+  } else if (!landedOnNav && state.position.y > ROOM_FLOOR_Y + 0.12) {
     state.grounded = false;
   }
 
-  resolvePredatorCollisions(state, colliders, previousPosition);
+  if (state.position.y < ROOM_FLOOR_Y) {
+    state.position.y = ROOM_FLOOR_Y;
+    state.velocity.y = 0;
+    state.grounded = true;
+  }
+
+  if (state.aiState === PREDATOR_AI.CHASE && state.chaseVerticalPhase === 'air' && state.grounded) {
+    state.chaseVerticalPhase = null;
+    state.chaseAirTimer = 0;
+  }
 
   // Clamp to world bounds
   const r = state.radius;
@@ -969,6 +1478,9 @@ export function predatorTakeDamage(state, amount) {
 }
 
 export function serializePredatorState(state) {
+  const cv = state.chaseVerticalPhase === 'prep_jump' ? 2
+    : state.chaseVerticalPhase === 'air' ? 3
+      : 0;
   return {
     id: state.id,
     type: state.type,
@@ -981,5 +1493,6 @@ export function serializePredatorState(state) {
     alive: state.alive,
     ai: state.aiState,
     chaseTargetId: state.chaseTargetId ?? null,
+    cv,
   };
 }

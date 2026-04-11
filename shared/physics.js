@@ -44,6 +44,8 @@ export const PHYSICS = Object.freeze({
 export function createPlayerState(id) {
   return {
     id,
+    /** Shown above the character (server-authoritative string). */
+    displayName: 'Mouse',
     position: { x: 0, y: 0, z: 0 },
     velocity: { x: 0, y: 0, z: 0 },
     rotation: 0,
@@ -70,6 +72,12 @@ export function createPlayerState(id) {
     deathTime: 0,
     /** Cumulative deaths (server-authoritative; included in snapshots). */
     deaths: 0,
+    /** Best completed single cat chase (seconds); server updates when a streak ends. */
+    longestChaseSeconds: 0,
+    /** Current uninterrupted chase (seconds); 0 when not hunted. */
+    chaseStreakSeconds: 0,
+    /** Cheese carried (server-authoritative; dropped in place on death). */
+    cheeseCarried: 0,
   };
 }
 

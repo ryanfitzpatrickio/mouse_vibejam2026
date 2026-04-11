@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { EMOTES } from '../emote/EmoteManager.js';
 
 /**
  * Absolute URL for files in `public/`, safe with `base: './'` and non-root page paths.
@@ -36,6 +37,23 @@ const AMBIENT_FORMATS = ['.m4a', '.mp3', '.ogg', '.wav'];
 /** Crossfade responsiveness (higher = quicker transitions). */
 const AMBIENT_CROSSFADE_RATE = 2.85;
 const AMBIENT_TRACK_GAIN = 0.92;
+
+const MOVE_LOOP_STEMS = ['assets/run', 'assets/Run'];
+const WALL_RUN_STEMS = ['assets/wall run', 'assets/Wall Run', 'assets/wallrun', 'assets/WallRun'];
+const JUMP_SFX_STEMS = ['assets/jump', 'assets/Jump'];
+const JUMP_SFX_GAIN = 0.62;
+const MOVE_LOOP_FADE_RATE = 5.5;
+const MOVE_LOOP_GAIN = 0.55;
+const WALL_RUN_GAIN = 0.5;
+/** Sprint uses the same run loop, sped up (1 = walk/move clip at normal pitch). */
+const RUN_SPRINT_PLAYBACK_RATE = 1.32;
+
+function emoteAssetStems(soundName) {
+  const base = String(soundName || '').trim();
+  if (!base) return [];
+  const cap = base.charAt(0).toUpperCase() + base.slice(1);
+  return base === cap ? [`assets/${base}`] : [`assets/${base}`, `assets/${cap}`];
+}
 
 function bufferLooksLikeMarkup(arrayBuffer) {
   const n = Math.min(96, arrayBuffer.byteLength);
@@ -384,6 +402,8 @@ export class AudioManager {
     }
 
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    // One shared context: THREE.AudioListener() otherwise creates a second AudioContext that may stay suspended.
+    THREE.AudioContext.setContext(this.audioContext);
     this.listener = new THREE.AudioListener();
     this.masterGain = this.audioContext.createGain();
     this.masterGain.connect(this.audioContext.destination);
@@ -396,6 +416,11 @@ export class AudioManager {
     this.sfxContext = this.audioContext.createGain();
     this.sfxContext.connect(this.masterGain);
     this.sfxContext.gain.value = 0.4;
+
+    /** Footstep / movement loop (not spatial SFX); own level into master. */
+    this.movementLoopBus = this.audioContext.createGain();
+    this.movementLoopBus.connect(this.masterGain);
+    this.movementLoopBus.gain.value = 0.85;
 
     // Music system
     this.musicOscillators = [];
@@ -415,8 +440,32 @@ export class AudioManager {
     this._ambientChaseTarget = 0;
     this._ambientBedStarting = null;
 
+    /** Looped locomotion: run (rate-boosted when sprinting) + wall-run; `undefined` = load not finished. */
+    this._movementRunBuffer = undefined;
+    this._movementWallRunBuffer = undefined;
+    this._movementDecodePromise = null;
+    this._movementRunGain = null;
+    this._movementRunSource = null;
+    this._movementWallRunGain = null;
+    this._movementWallRunSource = null;
+    this._movementLoopTarget = 0;
+    this._movementLoopBlend = 0;
+    this._movementSprintTarget = 0;
+    this._movementSprintBlend = 0;
+    this._movementWallRunTarget = 0;
+    this._movementWallRunBlend = 0;
+
     // Spatial sounds
     this.spatialSounds = [];
+
+    /** @type {Map<string, AudioBuffer|null>} */
+    this._emoteBufferCache = new Map();
+    /** @type {Map<string, Promise<AudioBuffer|null>>} */
+    this._emoteBufferInflight = new Map();
+
+    /** One-shot jump SFX; `undefined` = not loaded yet. */
+    this._jumpBuffer = undefined;
+    this._jumpLoadPromise = null;
 
     AudioManager.instance = this;
   }
@@ -447,6 +496,11 @@ export class AudioManager {
     const panNode = this.audioContext.createStereoPanner();
     panNode.pan.value = Math.min(1, Math.max(-1, pan));
     panNode.connect(this.sfxContext);
+
+    if (type === 'jump') {
+      void this._playJumpSfx(panNode, volume);
+      return;
+    }
 
     let sound;
     switch (type) {
@@ -492,6 +546,117 @@ export class AudioManager {
     const panNode = this.audioContext.createStereoPanner();
     panNode.pan.value = Math.min(1, Math.max(-1, Math.sin(angle)));
     panNode.connect(this.sfxContext);
+
+    void this._playEmoteClipOrSynth(soundName, panNode, volume);
+  }
+
+  /**
+   * Decode `public/assets/{sound}.{m4a|mp3|…}` once; used by {@link playEmote}.
+   */
+  prefetchEmoteBuffers() {
+    const seen = new Set();
+    for (const e of EMOTES) {
+      if (seen.has(e.sound)) continue;
+      seen.add(e.sound);
+      void this._getEmoteBuffer(e.sound);
+    }
+  }
+
+  /** Pre-decode `public/assets/jump.{m4a|mp3|…}` after a user gesture. */
+  prefetchJumpSfx() {
+    void this._loadJumpBufferOnce();
+  }
+
+  async _loadJumpBufferOnce() {
+    if (this._jumpBuffer !== undefined) return this._jumpBuffer;
+    if (this._jumpLoadPromise) return this._jumpLoadPromise;
+    this._jumpLoadPromise = (async () => {
+      try {
+        const buf = await this._tryFetchDecodeAmbientStemList(JUMP_SFX_STEMS);
+        this._jumpBuffer = buf;
+        if (!buf) {
+          console.warn(
+            '[audio] Missing jump SFX; add public/assets/jump.{m4a|mp3} or assets/source/audio/jump.* for prebuild.',
+          );
+        }
+        return buf;
+      } catch (e) {
+        console.warn('[audio] Jump SFX failed to load:', e?.message || e);
+        this._jumpBuffer = null;
+        return null;
+      } finally {
+        this._jumpLoadPromise = null;
+      }
+    })();
+    return this._jumpLoadPromise;
+  }
+
+  async _playJumpSfx(panNode, volume) {
+    await this.audioContext.resume();
+    const buf = await this._loadJumpBufferOnce();
+    if (buf) {
+      const gain = this.audioContext.createGain();
+      gain.gain.value = Math.max(0, Math.min(1, volume * JUMP_SFX_GAIN));
+      const src = this.audioContext.createBufferSource();
+      src.buffer = buf;
+      src.connect(gain);
+      gain.connect(panNode);
+      src.start();
+      return;
+    }
+    const dur = 0.07;
+    const now = this.audioContext.currentTime;
+    const osc = this.audioContext.createOscillator();
+    const g = this.audioContext.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(780, now);
+    g.gain.setValueAtTime(0.16 * volume, now);
+    g.gain.exponentialRampToValueAtTime(0.01, now + dur);
+    osc.connect(g);
+    g.connect(panNode);
+    osc.start(now);
+    osc.stop(now + dur);
+  }
+
+  async _getEmoteBuffer(soundName) {
+    if (this._emoteBufferCache.has(soundName)) {
+      return this._emoteBufferCache.get(soundName);
+    }
+    if (this._emoteBufferInflight.has(soundName)) {
+      return this._emoteBufferInflight.get(soundName);
+    }
+    const promise = (async () => {
+      try {
+        const stems = emoteAssetStems(soundName);
+        const buf = stems.length
+          ? await this._tryFetchDecodeAmbientStemList(stems)
+          : null;
+        this._emoteBufferCache.set(soundName, buf);
+        return buf;
+      } catch {
+        this._emoteBufferCache.set(soundName, null);
+        return null;
+      } finally {
+        this._emoteBufferInflight.delete(soundName);
+      }
+    })();
+    this._emoteBufferInflight.set(soundName, promise);
+    return promise;
+  }
+
+  async _playEmoteClipOrSynth(soundName, panNode, volume) {
+    const buf = await this._getEmoteBuffer(soundName);
+    if (buf) {
+      void this.audioContext.resume();
+      const gain = this.audioContext.createGain();
+      gain.gain.value = Math.max(0, Math.min(1, volume));
+      const src = this.audioContext.createBufferSource();
+      src.buffer = buf;
+      src.connect(gain);
+      gain.connect(panNode);
+      src.start();
+      return;
+    }
 
     const synthFn = {
       wave: 'emoteWave',
@@ -569,6 +734,9 @@ export class AudioManager {
       if (import.meta.env.DEV) {
         console.log('[audio] Ambient bed playing (Web Audio). Context:', this.audioContext.state);
       }
+      this.prefetchMovementLoopBuffer();
+      this.prefetchJumpSfx();
+      this.prefetchEmoteBuffers();
     })();
 
     try {
@@ -647,6 +815,199 @@ export class AudioManager {
    */
   setAmbientChaseTarget(active) {
     this._ambientChaseTarget = active ? 1 : 0;
+  }
+
+  /**
+   * Begin loading `run` and `wall run` loops after user gesture (with ambient); safe to call repeatedly.
+   */
+  prefetchMovementLoopBuffer() {
+    if (
+      this._movementRunBuffer !== undefined &&
+      this._movementWallRunBuffer !== undefined
+    ) {
+      return;
+    }
+    if (this._movementDecodePromise) return;
+    this._movementDecodePromise = this._loadMovementLoopBuffersOnce();
+  }
+
+  /**
+   * Fade looped movement audio in/out (local player walking or running on the ground).
+   */
+  setMovementLoopTarget(active) {
+    this._movementLoopTarget = active ? 1 : 0;
+    if (active) this.prefetchMovementLoopBuffer();
+    if (!active) this._movementSprintTarget = 0;
+  }
+
+  /**
+   * While {@link setMovementLoopTarget} is true, speeds up the run loop (same clip, higher playbackRate).
+   */
+  setMovementSprintTarget(active) {
+    this._movementSprintTarget = active ? 1 : 0;
+    if (active) this.prefetchMovementLoopBuffer();
+  }
+
+  /**
+   * Looped audio while wall-holding (jump on wall) and moving along the wall.
+   */
+  setMovementWallRunTarget(active) {
+    this._movementWallRunTarget = active ? 1 : 0;
+    if (active) this.prefetchMovementLoopBuffer();
+  }
+
+  async _loadMovementLoopBuffersOnce() {
+    try {
+      const [runBuf, wallRunBuf] = await Promise.all([
+        this._tryFetchDecodeAmbientStemList(MOVE_LOOP_STEMS),
+        this._tryFetchDecodeAmbientStemList(WALL_RUN_STEMS),
+      ]);
+      this._movementRunBuffer = runBuf;
+      this._movementWallRunBuffer = wallRunBuf;
+      if (!runBuf) {
+        console.warn(
+          '[audio] Missing movement loop (run); add public/assets/run.{m4a|mp3} or a master in assets/source/audio/ for prebuild.',
+        );
+      }
+      if (!wallRunBuf) {
+        console.warn(
+          '[audio] Missing wall run loop; add public/assets/wall run.{m4a|mp3} or assets/source/audio/wall run.* for prebuild.',
+        );
+      }
+    } catch (e) {
+      this._movementRunBuffer = this._movementRunBuffer ?? null;
+      this._movementWallRunBuffer = this._movementWallRunBuffer ?? null;
+      console.warn('[audio] Movement loop failed to load:', e?.message || e);
+    } finally {
+      this._movementDecodePromise = null;
+    }
+  }
+
+  _startMovementRunSource() {
+    if (!this._movementRunBuffer || this._movementRunSource) return;
+    const gain = this.audioContext.createGain();
+    gain.connect(this.movementLoopBus);
+    const src = this.audioContext.createBufferSource();
+    src.buffer = this._movementRunBuffer;
+    src.loop = true;
+    src.playbackRate.value = 1;
+    src.connect(gain);
+    const now = this.audioContext.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    src.start(now);
+    void this.audioContext.resume();
+    this._movementRunGain = gain;
+    this._movementRunSource = src;
+    if (import.meta.env.DEV) {
+      console.log('[audio] Run loop started. Context:', this.audioContext.state);
+    }
+  }
+
+  _stopMovementRunSource() {
+    if (this._movementRunSource) {
+      try {
+        this._movementRunSource.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+    this._movementRunSource = null;
+    this._movementRunGain?.disconnect();
+    this._movementRunGain = null;
+  }
+
+  _startMovementWallRunSource() {
+    if (!this._movementWallRunBuffer || this._movementWallRunSource) return;
+    const gain = this.audioContext.createGain();
+    gain.connect(this.movementLoopBus);
+    const src = this.audioContext.createBufferSource();
+    src.buffer = this._movementWallRunBuffer;
+    src.loop = true;
+    src.connect(gain);
+    const now = this.audioContext.currentTime;
+    gain.gain.setValueAtTime(0, now);
+    src.start(now);
+    void this.audioContext.resume();
+    this._movementWallRunGain = gain;
+    this._movementWallRunSource = src;
+  }
+
+  _stopMovementWallRunSource() {
+    if (this._movementWallRunSource) {
+      try {
+        this._movementWallRunSource.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+    this._movementWallRunSource = null;
+    this._movementWallRunGain?.disconnect();
+    this._movementWallRunGain = null;
+  }
+
+  _tickMovementLoopFade(deltaSeconds) {
+    const target = this._movementLoopTarget;
+    const t = 1 - Math.exp(-MOVE_LOOP_FADE_RATE * deltaSeconds);
+    this._movementLoopBlend += (target - this._movementLoopBlend) * t;
+    if (Math.abs(this._movementLoopBlend - target) < 0.002) {
+      this._movementLoopBlend = target;
+    }
+
+    const st = this._movementSprintTarget;
+    this._movementSprintBlend += (st - this._movementSprintBlend) * t;
+    if (Math.abs(this._movementSprintBlend - st) < 0.002) {
+      this._movementSprintBlend = st;
+    }
+
+    const wt = this._movementWallRunTarget;
+    this._movementWallRunBlend += (wt - this._movementWallRunBlend) * t;
+    if (Math.abs(this._movementWallRunBlend - wt) < 0.002) {
+      this._movementWallRunBlend = wt;
+    }
+
+    const hasRun = !!this._movementRunBuffer;
+    const wantPlay = this._movementLoopTarget > 0.5 && hasRun;
+
+    if (wantPlay && !this._movementRunSource) this._startMovementRunSource();
+
+    const m = this._movementLoopBlend;
+    const w = this._movementSprintBlend;
+
+    if (this._movementRunGain) {
+      this._movementRunGain.gain.value = hasRun ? m * MOVE_LOOP_GAIN : 0;
+    }
+    if (this._movementRunSource) {
+      const rate = 1 + w * (RUN_SPRINT_PLAYBACK_RATE - 1);
+      this._movementRunSource.playbackRate.value = rate;
+    }
+
+    const hasWallRun = !!this._movementWallRunBuffer;
+    const wantWallRun = this._movementWallRunTarget > 0.5 && hasWallRun;
+    if (wantWallRun && !this._movementWallRunSource) this._startMovementWallRunSource();
+    if (this._movementWallRunGain) {
+      this._movementWallRunGain.gain.value = this._movementWallRunBlend * WALL_RUN_GAIN;
+    }
+
+    if (this._movementLoopBlend < 0.03 && target < 0.5) {
+      this._stopMovementRunSource();
+    }
+    if (this._movementWallRunBlend < 0.03 && wt < 0.5) {
+      this._stopMovementWallRunSource();
+    }
+  }
+
+  /**
+   * Stop movement loop (session teardown).
+   */
+  stopMovementLoop() {
+    this._stopMovementRunSource();
+    this._stopMovementWallRunSource();
+    this._movementLoopTarget = 0;
+    this._movementLoopBlend = 0;
+    this._movementSprintTarget = 0;
+    this._movementSprintBlend = 0;
+    this._movementWallRunTarget = 0;
+    this._movementWallRunBlend = 0;
   }
 
   _applyAmbientGains() {
@@ -879,6 +1240,7 @@ export class AudioManager {
     this.listener.position.copy(cameraPosition);
     if (typeof deltaSeconds === 'number' && deltaSeconds > 0) {
       this._tickAmbientCrossfade(deltaSeconds);
+      this._tickMovementLoopFade(deltaSeconds);
     }
   }
 
@@ -888,8 +1250,16 @@ export class AudioManager {
   dispose() {
     this.stopMusic();
     this.stopAmbientBed();
+    this.stopMovementLoop();
     this._ambientBuffers = null;
     this._ambientDecodePromise = null;
+    this._movementRunBuffer = undefined;
+    this._movementWallRunBuffer = undefined;
+    this._movementDecodePromise = null;
+    this._emoteBufferCache.clear();
+    this._emoteBufferInflight.clear();
+    this._jumpBuffer = undefined;
+    this._jumpLoadPromise = null;
     this.audioContext.close();
   }
 }

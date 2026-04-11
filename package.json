@@ -13,7 +13,8 @@
     "deploy": "npm run deploy:cf && npm run deploy:party",
     "mouse:skin": "node scripts/apply-mouse-skin.mjs",
     "textures:analyze": "node scripts/analyze-texture-atlases.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:trim-audio": "node scripts/trim-audio-silence.mjs"
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.4",

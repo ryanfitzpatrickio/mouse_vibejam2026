@@ -37,11 +37,6 @@ function createLitAvatarMaterial(sourceMaterial) {
   return material;
 }
 
-function createWebGPUToonAvatarMaterial(sourceMaterial, MeshToonNodeMaterial) {
-  void MeshToonNodeMaterial;
-  return createLitAvatarMaterial(sourceMaterial);
-}
-
 function cloneMaterialSet(material) {
   if (Array.isArray(material)) {
     return material.map((entry) => entry?.clone?.() ?? entry);
@@ -88,8 +83,6 @@ export class Mouse extends THREE.Group {
     this.eyeAnimator = new MouseEyeAtlasAnimator({
       atlasUrl: options.eyeAtlasUrl ?? assetUrl('eyeset1.optimized.webp'),
     });
-    this.rendererMode = options.rendererMode ?? 'webgl';
-    this.rendererToolkit = options.rendererToolkit ?? null;
     this._usingModel = false;
     this._ready = false;
     this.viewCamera = null;
@@ -151,19 +144,12 @@ export class Mouse extends THREE.Group {
     this.add(this.avatar);
 
     this.animationManager.attach(this.avatar, gltf.animations);
-    this._applyRendererModeToAvatar();
+    this._applyLitMaterialsToAvatar();
     this._collectFadeMaterials();
     this.animationManager.setState(this.animationState, { immediate: true });
   }
 
-  setRendererMode(mode, rendererToolkit = null) {
-    this.rendererMode = mode ?? 'webgl';
-    this.rendererToolkit = rendererToolkit ?? this.rendererToolkit;
-    this._applyRendererModeToAvatar();
-    this._collectFadeMaterials();
-  }
-
-  _applyRendererModeToAvatar() {
+  _applyLitMaterialsToAvatar() {
     if (!this._usingModel || !this.avatar) return;
 
     const materialCache = new Map();
@@ -176,16 +162,7 @@ export class Mouse extends THREE.Group {
         if (!material) return material;
         if (materialCache.has(material)) return materialCache.get(material);
 
-        let nextMaterial = material;
-        if (this.rendererMode === 'webgpu') {
-          const MeshToonNodeMaterial = this.rendererToolkit?.MeshToonNodeMaterial;
-          nextMaterial = MeshToonNodeMaterial
-            ? createWebGPUToonAvatarMaterial(material, MeshToonNodeMaterial)
-            : material.clone();
-        } else {
-          nextMaterial = createLitAvatarMaterial(material);
-        }
-
+        const nextMaterial = createLitAvatarMaterial(material);
         materialCache.set(material, nextMaterial);
         return nextMaterial;
       });

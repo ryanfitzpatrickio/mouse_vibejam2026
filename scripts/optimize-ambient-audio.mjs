@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Transcode ambient bed sources to compact AAC (.m4a) for the web build.
+ * Transcode runtime audio (ambient beds, locomotion loops, emote one-shots) to AAC (.m4a).
  *
  * Source masters live in assets/source/audio/ (any of .wav, .flac, .mp3, .m4a, .ogg).
  * Outputs go to public/assets/*.m4a (loaded by AudioManager).
@@ -22,10 +22,21 @@ const OUT_DIR = path.join(ROOT, 'public', 'assets');
 const SCRIPT_PATH = path.join(ROOT, 'scripts', 'optimize-ambient-audio.mjs');
 const CACHE_HELPER = path.join(ROOT, 'scripts', 'build-cache.mjs');
 
-/** Logical name (file stem) → output filename under public/assets/ */
+/** Logical name (file stem under assets/source/audio/) → output filename under public/assets/ */
 const JOBS = [
   { stem: 'cartoon saturn', outFile: 'cartoon saturn.m4a' },
   { stem: 'corn dog alarm', outFile: 'corn dog alarm.m4a' },
+  { stem: 'run', outFile: 'run.m4a' },
+  { stem: 'wall run', outFile: 'wall run.m4a' },
+  { stem: 'jump', outFile: 'jump.m4a' },
+  { stem: 'wave', outFile: 'wave.m4a' },
+  { stem: 'dance', outFile: 'dance.m4a' },
+  { stem: 'laugh', outFile: 'laugh.m4a' },
+  { stem: 'cry', outFile: 'cry.m4a' },
+  { stem: 'angry', outFile: 'angry.m4a' },
+  { stem: 'love', outFile: 'love.m4a' },
+  { stem: 'thumbsup', outFile: 'thumbsup.m4a' },
+  { stem: 'scream', outFile: 'scream.m4a' },
 ];
 
 const SOURCE_EXTS = ['.wav', '.flac', '.mp3', '.m4a', '.ogg'];
@@ -84,13 +95,13 @@ async function main() {
   }
 
   if (!resolved.length) {
-    console.log('No ambient sources in assets/source/audio/; skipping ambient transcode.');
+    console.log('No matching sources in assets/source/audio/; skipping audio transcode.');
     return;
   }
 
   if (!(await ffmpegAvailable())) {
     console.error(
-      'ffmpeg is required to transcode ambient audio (install ffmpeg and ensure it is on PATH).',
+      'ffmpeg is required to transcode runtime audio (install ffmpeg and ensure it is on PATH).',
     );
     process.exit(1);
   }
@@ -101,7 +112,7 @@ async function main() {
     const outputPath = path.join(OUT_DIR, job.outFile);
     const inputs = [job.inputPath, SCRIPT_PATH, CACHE_HELPER];
     if (await isAssetBuildUpToDate({
-      cacheName: `optimize-ambient-${job.stem.replace(/\s+/g, '-')}`,
+      cacheName: `optimize-audio-${job.stem.replace(/\s+/g, '-')}`,
       inputs,
       outputs: [outputPath],
     })) {
@@ -118,7 +129,7 @@ async function main() {
     );
 
     await markAssetBuildCurrent({
-      cacheName: `optimize-ambient-${job.stem.replace(/\s+/g, '-')}`,
+      cacheName: `optimize-audio-${job.stem.replace(/\s+/g, '-')}`,
       inputs,
       outputs: [outputPath],
     });

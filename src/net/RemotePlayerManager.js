@@ -6,8 +6,11 @@ import { Mouse } from '../entities/Mouse.js';
 import { EmoteManager } from '../emote/EmoteManager.js';
 import { attachEdgeOutlines } from '../materials/index.js';
 import { getAudioManager } from '../audio/AudioManager.js';
+import { createPlayerNameplate, syncNameplateWorldPosition } from '../world/PlayerNameplate.js';
+import { isNameplateOccluded } from '../utils/nameplateOcclusion.js';
 
 const LERP_SPEED = 12;
+const _nameplateWorldPos = new THREE.Vector3();
 
 // Distinct fur colors for remote players
 const REMOTE_COLORS = [
@@ -16,14 +19,13 @@ const REMOTE_COLORS = [
 ];
 
 export class RemotePlayerManager {
-  /** @type {Map<string, { mouse: Mouse, targetPos: THREE.Vector3, prevPos: THREE.Vector3, targetRot: number, animState: string, serverAlive: boolean, serverAnimState: string }>} */
+  /** @type {Map<string, { mouse: Mouse, nameplateAnchor: THREE.Object3D, nameplate: ReturnType<typeof createPlayerNameplate>, displayName: string, targetPos: THREE.Vector3, prevPos: THREE.Vector3, targetRot: number, animState: string, serverAlive: boolean, serverAnimState: string }>} */
   players = new Map();
   /** IDs currently being spawned (async) — prevents duplicate spawns */
   _spawning = new Set();
 
-  constructor({ scene, rendererMode = 'webgl' }) {
+  constructor({ scene }) {
     this.scene = scene;
-    this.rendererMode = rendererMode;
     this._colorIndex = 0;
   }
 
@@ -43,6 +45,14 @@ export class RemotePlayerManager {
         entry.targetRot = data.rotation ?? 0;
         entry.serverAlive = data.alive !== false;
         entry.serverAnimState = data.animState ?? 'idle';
+        entry.nameplate.setAlive(entry.serverAlive);
+        if (typeof data.displayName === 'string' && data.displayName.trim()) {
+          const next = data.displayName.trim();
+          if (next !== entry.displayName) {
+            entry.displayName = next;
+            entry.nameplate.setText(next);
+          }
+        }
         if (data.emote && !entry.emoteManager.isPlaying) {
           entry.emoteManager.play(data.emote);
         } else if (!data.emote && entry.emoteManager.isPlaying) {
@@ -54,6 +64,8 @@ export class RemotePlayerManager {
     // Remove disconnected players
     for (const [id, entry] of this.players) {
       if (!remotePlayers.has(id)) {
+        entry.nameplate.dispose();
+        this.scene.remove(entry.nameplateAnchor);
         this.scene.remove(entry.mouse);
         entry.mouse.dispose();
         this.players.delete(id);
@@ -67,8 +79,11 @@ export class RemotePlayerManager {
     }
   }
 
-  /** Interpolate remote players toward their target positions */
-  update(dt) {
+  /**
+   * @param {number} dt
+   * @param {import('three').PerspectiveCamera} camera
+   */
+  update(dt, camera) {
     const t = Math.min(1, dt * LERP_SPEED);
     for (const entry of this.players.values()) {
       entry.prevPos.copy(entry.mouse.position);
@@ -105,6 +120,13 @@ export class RemotePlayerManager {
 
       entry.emoteManager.update(dt);
       entry.mouse.update(dt);
+      syncNameplateWorldPosition(entry.nameplateAnchor, entry.mouse);
+      entry.nameplateAnchor.getWorldPosition(_nameplateWorldPos);
+      entry.nameplate.setOccluded(
+        camera
+          ? isNameplateOccluded(this.scene, camera, _nameplateWorldPos, entry.mouse)
+          : false,
+      );
     }
   }
 
@@ -116,7 +138,6 @@ export class RemotePlayerManager {
 
     const mouse = new Mouse({
       furColor: color,
-      rendererMode: this.rendererMode,
     });
     mouse.name = `RemoteMouse_${id}`;
 
@@ -138,11 +159,25 @@ export class RemotePlayerManager {
     attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
     this.scene.add(mouse);
 
+    const nameplateAnchor = new THREE.Object3D();
+    nameplateAnchor.name = `NameplateAnchor_${id}`;
+    this.scene.add(nameplateAnchor);
+
+    const displayName = typeof data.displayName === 'string' && data.displayName.trim()
+      ? data.displayName.trim()
+      : `Mouse ${id.slice(0, 4)}`;
+    const nameplate = createPlayerNameplate(nameplateAnchor, displayName);
+    nameplate.setAlive(data.alive !== false);
+    syncNameplateWorldPosition(nameplateAnchor, mouse);
+
     const audioManager = getAudioManager();
     const emoteManager = new EmoteManager({ mouse, audioManager });
 
     this.players.set(id, {
       mouse,
+      nameplateAnchor,
+      nameplate,
+      displayName,
       emoteManager,
       targetPos: new THREE.Vector3(
         data.position?.x ?? 0,
@@ -163,6 +198,8 @@ export class RemotePlayerManager {
 
   dispose() {
     for (const entry of this.players.values()) {
+      entry.nameplate.dispose();
+      this.scene.remove(entry.nameplateAnchor);
       this.scene.remove(entry.mouse);
       entry.mouse.dispose();
     }

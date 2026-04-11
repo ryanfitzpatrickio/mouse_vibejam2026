@@ -10,6 +10,11 @@ const STATE_TO_CLIP = Object.freeze({
   death: 'Death',
 });
 
+/** Per-clip playback rate (1 = authored speed). Walk is sped up to match ~4 m/s in-world stride. */
+const CLIP_TIME_SCALE = Object.freeze({
+  Walk: 3.5,
+});
+
 export class MouseAnimationManager {
   constructor({ fadeDuration = 0.18 } = {}) {
     this.fadeDuration = fadeDuration;
@@ -63,6 +68,7 @@ export class MouseAnimationManager {
     action.reset();
     action.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
     action.clampWhenFinished = once;
+    action.timeScale = CLIP_TIME_SCALE[clipName] ?? 1;
     action.play();
 
     if (previous && previous !== action) {

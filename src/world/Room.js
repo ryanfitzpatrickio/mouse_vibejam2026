@@ -376,8 +376,6 @@ export class Room {
     this.height = options.height ?? 4;
     this.scaleFactor = options.scale ?? 1;
     this.group.scale.setScalar(this.scaleFactor);
-    this.rendererMode = options.rendererMode ?? 'webgl';
-    this.rendererToolkit = options.rendererToolkit ?? null;
     this.textureAtlasUrls = Object.fromEntries(TEXTURE_ATLASES.map((atlas) => [
       atlas.id,
       atlas.imageUrl,

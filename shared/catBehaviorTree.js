@@ -13,6 +13,8 @@
 export const CAT_BT = Object.freeze({
   /** Another mouse must be this much closer (m) to steal aggro from current target */
   switchTargetAdvantage: 2.2,
+  /** Mice above the room floor, wall-holding, or airborne are targeted before floor mice. */
+  offGroundTargetPriorityMinY: 0.28,
   chaseTargetRefresh: 0.55,
   /** Frustration (seconds of “stuck” weighted) before bored wander */
   frustrationMax: 1.05,
@@ -33,15 +35,52 @@ export const CAT_BT = Object.freeze({
   boredWanderMin: 3.5,
   boredWanderMax: 6.5,
   playPatrolRadiusScale: 0.55,
-  /**
-   * Cat only cares about mice whose vertical capsule overlaps its own (same as melee hit test).
-   * Prevents hunting across floors / counters where height never lines up.
-   */
+  /** Melee/attack still require vertical overlap; hunt/chase uses vertical band + jump ascent. */
   requireVerticalStrikeOverlapForHunt: true,
   /** No aggro / chase fixation on mice hidden behind world collision (same ray test as melee). */
   requireLineOfSightForHunt: true,
+  /** Max meters a mouse may be below the cat and still be hunted (e.g. lower floor). */
+  maxPreyBelowForHunt: 3.0,
+  /** If prey feet / nav layer are this much higher, chase may leap to the shared surface. */
+  chaseElevateMinGap: 0.32,
+  /** Next nav waypoint must be at least this much above us to commit to a jump. */
+  chaseJumpMinWaypointRise: 0.12,
+  /** Max horizontal distance to current steer waypoint to start a waypoint-led jump. */
+  chaseJumpLaunchDistXZ: 1.55,
+  /** Prep / jump when chase plateau + little motion under an elevated mouse (seconds). */
+  chaseJumpPlateauStallSeconds: 0.28,
+  chaseJumpPrepTime: 0.18,
+  chaseJumpUpSpeed: 6.0,
+  chaseJumpForwardSpeed: 4.8,
+  chaseJumpMaxForwardSpeed: 10.5,
+  chaseJumpMaxAirTime: 1.05,
+  /** Extra air time scales with jump height (seconds, capped). */
+  chaseJumpAirTimePerMeter: 0.2,
+  chaseJumpMaxAirTimeExtra: 3.2,
+  /** Clearance added when solving jump speed from navmesh target height. */
+  chaseJumpHeightMargin: 0.28,
+  /** Safety cap on upward launch speed (very tall nav still works up to this). */
+  chaseJumpMaxVy: 26,
+  chaseDesperateJumpCooldown: 2.6,
+  /**
+   * When no prey is in aggro, if the cat is this far above spawn floor it switches to patrol-home
+   * so it does not sleep/wander on counters where players lose track of it.
+   */
+  catDescendAmbientAboveSpawn: 0.5,
+  elevationSearchDuration: 2.2,
+  elevationSearchHopUpSpeed: 5.4,
+  elevationSearchHopLookTime: 0.45,
+  elevationDropPrepTime: 0.16,
+  elevationDropUpSpeed: 2.4,
+  elevationDropForwardSpeed: 6.8,
+  elevationDropIgnoreNavTime: 0.95,
   /** Chase / alert / roar give up when LOS stays blocked this long (seconds). */
   losBlockedGiveUpSeconds: 0.34,
+  /**
+   * Melee only if cat nav support Y under the cat matches nav surface Y near the mouse (m).
+   * Prevents jump-strikes from below / mid-air; cat must land on the same walkable layer first.
+   */
+  sameNavSurfaceYTolerance: 0.42,
 });
 
 /** @returns {{ state: string, timer: number }} */

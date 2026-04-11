@@ -4,6 +4,7 @@
  * Supports client-side prediction with server reconciliation.
  */
 import PartySocket from 'partysocket';
+import { getClientPreferredDisplayName } from '../utils/playerDisplayName.js';
 
 const PARTYKIT_HOST =
   import.meta.env.VITE_PARTYKIT_HOST || 'localhost:1999';
@@ -52,6 +53,9 @@ export class NetworkClient {
   /** Authoritative pushable balls (cannon-es on server); empty until init/snapshot */
   pushBalls = [];
 
+  /** @type {{ id: string, x: number, y: number, z: number, amount: number }[]} */
+  cheesePickups = [];
+
   /** Sequence counter for inputs */
   seq = 0;
   /** Pending inputs not yet confirmed by server (for reconciliation) */
@@ -93,6 +97,7 @@ export class NetworkClient {
       this.ws?.send(JSON.stringify({
         type: 'hello',
         playerKey: this.playerKey,
+        displayName: getClientPreferredDisplayName(),
         portal: this.portalArrival ?? undefined,
       }));
       console.log('[net] connected to room:', this.roomId);
@@ -102,6 +107,7 @@ export class NetworkClient {
       this.connected = false;
       this.localId = null;
       this.pushBalls = [];
+      this.cheesePickups = [];
       console.log('[net] disconnected');
     });
   }
@@ -157,6 +163,12 @@ export class NetworkClient {
     }
   }
 
+  _applyCheesePayload(data) {
+    if (Array.isArray(data.cheesePickups)) {
+      this.cheesePickups = data.cheesePickups;
+    }
+  }
+
   on(fn) {
     this.listeners.push(fn);
     return () => {
@@ -183,6 +195,7 @@ export class NetworkClient {
           }
         }
         this._applyPushBallsPayload(data);
+        this._applyCheesePayload(data);
         break;
 
       case 'portal-spawn':
@@ -233,6 +246,7 @@ export class NetworkClient {
           }
         }
         this._applyPushBallsPayload(data);
+        this._applyCheesePayload(data);
         break;
       }
 

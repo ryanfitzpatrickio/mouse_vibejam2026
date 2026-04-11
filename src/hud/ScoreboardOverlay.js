@@ -17,7 +17,7 @@ export class ScoreboardOverlay {
       left: '50%',
       transform: 'translateX(-50%)',
       minWidth: '240px',
-      maxWidth: 'min(92vw, 420px)',
+      maxWidth: 'min(92vw, 560px)',
       zIndex: '101',
       pointerEvents: 'none',
       fontFamily: 'monospace',
@@ -93,7 +93,7 @@ export class ScoreboardOverlay {
   }
 
   /**
-   * @param {{ label: string, deaths: number }[]} rows
+   * @param {{ label: string, deaths: number, chaseSec: number, cheese: number }[]} rows
    */
   setRows(rows) {
     this._rows = Array.isArray(rows) ? rows : [];
@@ -107,25 +107,77 @@ export class ScoreboardOverlay {
     }
     this.panel.style.display = 'block';
     this.list.innerHTML = '';
+
+    if (this._rows.length > 0) {
+      const header = document.createElement('div');
+      Object.assign(header.style, {
+        display: 'grid',
+        gridTemplateColumns: '1fr auto auto auto',
+        alignItems: 'baseline',
+        gap: '10px',
+        marginBottom: '6px',
+        fontSize: '9px',
+        fontWeight: '700',
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.45)',
+      });
+      const hName = document.createElement('span');
+      hName.textContent = 'Player';
+      const hChase = document.createElement('span');
+      hChase.textContent = 'Chase';
+      hChase.style.textAlign = 'right';
+      const hCheese = document.createElement('span');
+      hCheese.textContent = 'Cheese';
+      hCheese.style.textAlign = 'right';
+      const hDeaths = document.createElement('span');
+      hDeaths.textContent = 'KOs';
+      hDeaths.style.textAlign = 'right';
+      header.appendChild(hName);
+      header.appendChild(hChase);
+      header.appendChild(hCheese);
+      header.appendChild(hDeaths);
+      this.list.appendChild(header);
+    }
+
     for (const row of this._rows) {
       const line = document.createElement('div');
       Object.assign(line.style, {
-        display: 'flex',
-        justifyContent: 'space-between',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto auto auto',
         alignItems: 'baseline',
-        gap: '16px',
+        gap: '10px',
       });
       const name = document.createElement('span');
       name.textContent = row.label;
       name.style.overflow = 'hidden';
       name.style.textOverflow = 'ellipsis';
       name.style.whiteSpace = 'nowrap';
+      const chase = document.createElement('span');
+      const cs = Math.max(0, Number(row.chaseSec) || 0);
+      chase.textContent = `${cs.toFixed(1)}s`;
+      chase.style.flexShrink = '0';
+      chase.style.textAlign = 'right';
+      chase.style.color = 'rgba(255,220,140,0.95)';
+      chase.style.fontWeight = '700';
+      chase.style.minWidth = '52px';
+      const cheese = document.createElement('span');
+      cheese.textContent = String(Math.max(0, Math.floor(Number(row.cheese) || 0)));
+      cheese.style.flexShrink = '0';
+      cheese.style.textAlign = 'right';
+      cheese.style.color = 'rgba(255,236,120,0.98)';
+      cheese.style.fontWeight = '700';
+      cheese.style.minWidth = '40px';
       const deaths = document.createElement('span');
       deaths.textContent = String(Math.max(0, Math.floor(Number(row.deaths) || 0)));
       deaths.style.flexShrink = '0';
+      deaths.style.textAlign = 'right';
       deaths.style.color = 'rgba(255,180,120,0.95)';
       deaths.style.fontWeight = '700';
+      deaths.style.minWidth = '28px';
       line.appendChild(name);
+      line.appendChild(chase);
+      line.appendChild(cheese);
       line.appendChild(deaths);
       this.list.appendChild(line);
     }

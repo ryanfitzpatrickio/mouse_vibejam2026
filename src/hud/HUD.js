@@ -61,9 +61,11 @@ export class HUD {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      width: `${BAR_WIDTH}px`,
+      width: `${Math.max(BAR_WIDTH, 232)}px`,
+      maxWidth: 'min(260px, 92vw)',
       marginTop: '4px',
       gap: '8px',
+      flexWrap: 'wrap',
     });
 
     this.pingLabel = document.createElement('div');
@@ -109,8 +111,44 @@ export class HUD {
     });
 
     this.playersWrap.appendChild(this.playerCountBadge);
+    this.cheeseWrap = document.createElement('div');
+    Object.assign(this.cheeseWrap.style, {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: '6px',
+      flexShrink: '0',
+    });
+    this.cheeseGlyph = document.createElement('div');
+    this.cheeseGlyph.textContent = '🧀';
+    Object.assign(this.cheeseGlyph.style, {
+      fontSize: '14px',
+      lineHeight: '1',
+      filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.8))',
+    });
+    this.cheeseBadge = document.createElement('div');
+    this.cheeseBadge.textContent = '0';
+    Object.assign(this.cheeseBadge.style, {
+      minWidth: '22px',
+      height: '20px',
+      padding: '0 4px',
+      boxSizing: 'border-box',
+      borderRadius: '4px',
+      background: 'rgba(234,179,8,0.35)',
+      border: '1px solid rgba(255,236,160,0.45)',
+      color: '#fff7c2',
+      fontSize: '10px',
+      fontWeight: '700',
+      lineHeight: '18px',
+      textAlign: 'center',
+      textShadow: '0 0 2px rgba(0,0,0,0.85)',
+    });
+    this.cheeseWrap.appendChild(this.cheeseGlyph);
+    this.cheeseWrap.appendChild(this.cheeseBadge);
+
     this.statsRow.appendChild(this.pingLabel);
     this.statsRow.appendChild(this.playersWrap);
+    this.statsRow.appendChild(this.cheeseWrap);
     this.element.appendChild(this.statsRow);
 
     this.respawnOverlay = document.createElement('div');
@@ -186,7 +224,15 @@ export class HUD {
     return fg;
   }
 
-  update({ stamina, health, ping, playerCount, alive = true, respawnCountdown = 0 } = {}) {
+  update({
+    stamina,
+    health,
+    ping,
+    playerCount,
+    cheese,
+    alive = true,
+    respawnCountdown = 0,
+  } = {}) {
     if (stamina !== undefined) {
       this.staminaBar.style.width = `${Math.max(0, Math.min(1, stamina)) * 100}%`;
     }
@@ -204,6 +250,13 @@ export class HUD {
       const measured = measureText(String(n), FONT, BAR_WIDTH, LINE_HEIGHT);
       this.playerCountBadge.textContent = String(n);
       this.playerCountBadge.style.height = `${measured.height}px`;
+    }
+    if (cheese !== undefined) {
+      const c = Math.max(0, Math.floor(Number(cheese) || 0));
+      const text = String(c);
+      this.cheeseBadge.textContent = text;
+      const measured = measureText(text, FONT, BAR_WIDTH, LINE_HEIGHT);
+      this.cheeseBadge.style.height = `${measured.height}px`;
     }
 
     if (!alive && respawnCountdown > 0) {

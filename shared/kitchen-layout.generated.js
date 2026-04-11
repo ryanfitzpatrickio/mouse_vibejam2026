@@ -2162,7 +2162,6 @@ export default {
       "id": "prefab-instance-mnnkj1o1-et1xz-part-1",
       "name": "end table-Table Top",
       "type": "box",
-      "cameraOccluder": false,
       "spawnType": null,
       "position": {
         "x": 0,
@@ -2217,13 +2216,13 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "cameraOccluder": false
     },
     {
       "id": "prefab-instance-mnnkj1o1-et1xz-part-2",
       "name": "end table-Table Base",
       "type": "box",
-      "cameraOccluder": false,
       "spawnType": null,
       "position": {
         "x": 0,
@@ -2278,7 +2277,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "cameraOccluder": false
     },
     {
       "id": "prefab-instance-mnnklpov-s1u74-part-1",
@@ -3529,6 +3529,418 @@ export default {
       "castShadow": true,
       "receiveShadow": true,
       "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnuxyhg5-q8dne-part-1",
+      "name": "countertop-base",
+      "type": "box",
+      "spawnType": null,
+      "position": {
+        "x": 0,
+        "y": 2,
+        "z": -0.2656
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 4,
+        "z": 3.5
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 13,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "right": {
+          "atlas": "textures2",
+          "cell": 38
+        },
+        "left": {
+          "atlas": "textures2",
+          "cell": 38
+        },
+        "back": {
+          "atlas": "textures2",
+          "cell": 38
+        }
+      },
+      "material": {
+        "color": "#FFFFFF",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnuxlqk0-zqfpf",
+      "navArea": "default",
+      "prefabInstanceId": "prefab-instance-mnuxyhg5-q8dne",
+      "prefabInstanceOrigin": {
+        "x": 20.0001,
+        "y": 0,
+        "z": 20.2366
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1361,
+        "y": 0.0068,
+        "z": -3.1399
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnuxyhg5-q8dne-part-2",
+      "name": "countertop-surface",
+      "type": "box",
+      "spawnType": null,
+      "position": {
+        "x": 0,
+        "y": 4.2126,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 0.5,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 20,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "right": {
+          "atlas": "textures2",
+          "cell": 38
+        },
+        "left": {
+          "atlas": "textures2",
+          "cell": 38
+        },
+        "back": {
+          "atlas": "textures2",
+          "cell": 38
+        }
+      },
+      "material": {
+        "color": "#FFFFFF",
+        "roughness": 0.2,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnuxlqk0-zqfpf",
+      "navArea": "default",
+      "prefabInstanceId": "prefab-instance-mnuxyhg5-q8dne",
+      "prefabInstanceOrigin": {
+        "x": 20.0001,
+        "y": 0,
+        "z": 20.2366
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1361,
+        "y": 0.0068,
+        "z": -3.1399
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnuxyhg5-q8dne-part-3",
+      "name": "countertop-box-part",
+      "type": "box",
+      "spawnType": null,
+      "position": {
+        "x": 0,
+        "y": 6.159,
+        "z": -1.7374
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 3.5,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 95,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnuxlqk0-zqfpf",
+      "navArea": "default",
+      "prefabInstanceId": "prefab-instance-mnuxyhg5-q8dne",
+      "prefabInstanceOrigin": {
+        "x": 20.0001,
+        "y": 0,
+        "z": 20.2366
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1361,
+        "y": 0.0068,
+        "z": -3.1399
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnuy1dn9-bs5br-part-1",
+      "name": "countertop-base",
+      "type": "box",
+      "spawnType": null,
+      "position": {
+        "x": 0,
+        "y": 1.9772,
+        "z": -0.2656
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 4,
+        "z": 3.5
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 13,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "right": {
+          "atlas": "textures2",
+          "cell": 38
+        },
+        "left": {
+          "atlas": "textures2",
+          "cell": 38
+        },
+        "back": {
+          "atlas": "textures2",
+          "cell": 38
+        }
+      },
+      "material": {
+        "color": "#FFFFFF",
+        "roughness": 0.8,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnuxlqk0-zqfpf",
+      "navArea": "default",
+      "prefabInstanceId": "prefab-instance-mnuy1dn9-bs5br",
+      "prefabInstanceOrigin": {
+        "x": 16.0515,
+        "y": 0.0032,
+        "z": 20.2359
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1416,
+        "y": -0.018,
+        "z": 3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnuy1dn9-bs5br-part-2",
+      "name": "countertop-surface",
+      "type": "box",
+      "spawnType": null,
+      "position": {
+        "x": 0,
+        "y": 4.2126,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 0.5,
+        "z": 4
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 20,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {
+        "right": {
+          "atlas": "textures2",
+          "cell": 38
+        },
+        "left": {
+          "atlas": "textures2",
+          "cell": 38
+        },
+        "back": {
+          "atlas": "textures2",
+          "cell": 38
+        }
+      },
+      "material": {
+        "color": "#FFFFFF",
+        "roughness": 0.2,
+        "metalness": 0
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnuxlqk0-zqfpf",
+      "navArea": "default",
+      "prefabInstanceId": "prefab-instance-mnuy1dn9-bs5br",
+      "prefabInstanceOrigin": {
+        "x": 16.0515,
+        "y": 0.0032,
+        "z": 20.2359
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1416,
+        "y": -0.018,
+        "z": 3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "prefab-instance-mnuy1dn9-bs5br-part-3",
+      "name": "countertop-box-part",
+      "type": "box",
+      "spawnType": null,
+      "position": {
+        "x": 0,
+        "y": 6.159,
+        "z": -1.7374
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 3.5,
+        "z": 0.5
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 95,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": "prefab-mnuxlqk0-zqfpf",
+      "navArea": "default",
+      "prefabInstanceId": "prefab-instance-mnuy1dn9-bs5br",
+      "prefabInstanceOrigin": {
+        "x": 16.0515,
+        "y": 0.0032,
+        "z": 20.2359
+      },
+      "prefabInstanceRotation": {
+        "x": 3.1416,
+        "y": -0.018,
+        "z": 3.1416
+      },
+      "prefabInstanceScale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
     }
   ],
   "lights": [
@@ -3622,6 +4034,29 @@ export default {
       "angle": 0.9599310885968813,
       "penumbra": 0.28,
       "castShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "light-mnuxhsqg-k2j9t",
+      "name": "point-light-syl",
+      "lightType": "directional",
+      "position": {
+        "x": -18,
+        "y": 6,
+        "z": 10
+      },
+      "rotation": {
+        "x": 0,
+        "y": 1.5581,
+        "z": 0
+      },
+      "color": "#ffc47a",
+      "intensity": 3.7,
+      "distance": 14,
+      "decay": 2,
+      "angle": 0.7853981633974483,
+      "penumbra": 0,
+      "castShadow": false,
       "deleted": false
     }
   ],

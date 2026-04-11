@@ -10,7 +10,7 @@ The project includes:
 - A kitchen level built from editable JSON primitives, prefabs, and texture-atlas surfaces.
 - Client prediction, server reconciliation, and remote player interpolation.
 - A dev-only build mode for grid-snapped level editing and prefab authoring.
-- WebGL and WebGPU renderer paths, with production defaulting to WebGL.
+- WebGL rendering (outlines via post-processing on the WebGL path).
 
 ## Development
 

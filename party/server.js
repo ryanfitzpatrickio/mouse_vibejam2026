@@ -9,8 +9,11 @@ import { collectSpawnPointsFromLayout } from '../shared/spawnPoints.js';
 import { applyPortalArrivalToPlayerState, collectVibePortalPlacementsFromLayout, sanitizePortalArrivalPayload } from '../shared/vibePortal.js';
 import { isValidDevSyncLayout } from '../shared/devLayoutValidation.js';
 import { sanitizePlayerInputMessage } from '../shared/playerInputSanitize.js';
+import { sanitizeDisplayName } from '../shared/displayName.js';
+import { tickPlayerChaseScores } from '../shared/chaseScore.js';
 import { StatsTracker } from './stats.js';
 import { createPushBallWorld } from './pushBallWorld.js';
+import { CheeseWorld } from './cheeseWorld.js';
 
 /**
  * PartyKit env (dashboard / project .env for `partykit dev`):
@@ -163,6 +166,7 @@ export default class GameServer {
     this.stats = new StatsTracker(room);
     this.predators = [];
     this.pushBallWorld = createPushBallWorld();
+    this.cheeseWorld = new CheeseWorld();
     this._applyLayout(kitchenLayout, { resetPredators: true });
   }
 
@@ -171,9 +175,11 @@ export default class GameServer {
     this.spawnPoints = collectSpawnPointsFromLayout(layout);
     this.portalPlacements = collectVibePortalPlacementsFromLayout(layout);
     this.pushBallWorld?.setLevelColliders?.(this.levelColliders);
+    this.cheeseWorld.setNavMesh(this.levelMouseNavMesh);
     if (resetPredators) {
       this.predators = [];
       this._initPredators();
+      this.cheeseWorld.seedScatter();
     }
   }
 
@@ -251,6 +257,7 @@ export default class GameServer {
       const spawn = this._pickPlayerSpawn(this.inputQueues.size + botIds.length);
       const state = createPlayerState(id);
       state.isBot = true;
+      state.displayName = `Bot ${id.replace(/^bot-/, '')}`;
       state.position.x = spawn.x;
       state.position.y = spawn.y;
       state.position.z = spawn.z;
@@ -297,6 +304,7 @@ export default class GameServer {
       players: Object.fromEntries(this.players),
       predators: this.predators.map(serializePredatorState),
       pushBalls: this.pushBallWorld.getBallsState(),
+      cheesePickups: this.cheeseWorld.serializePickups(),
     }));
 
     this.broadcast(JSON.stringify({
@@ -354,6 +362,11 @@ export default class GameServer {
     }
 
     if (data.type === 'hello') {
+      const playerHello = this.players.get(sender.id);
+      if (playerHello && typeof data.displayName === 'string') {
+        playerHello.displayName = sanitizeDisplayName(data.displayName);
+      }
+
       const portalArrival = sanitizePortalArrivalPayload(data.portal);
       if (portalArrival.active && !this.portalArrivals.has(sender.id)) {
         const player = this.players.get(sender.id);
@@ -508,7 +521,10 @@ export default class GameServer {
           this.spawnPoints,
           BOUNDS,
           now,
-          { peerPositions },
+          {
+            peerPositions,
+            colliders: this.levelColliders,
+          },
         );
         simulateTick(state, input, dt, BOUNDS, this.levelColliders);
         seqs[id] = 0;
@@ -531,6 +547,7 @@ export default class GameServer {
             target.deaths = (target.deaths ?? 0) + 1;
             target.alive = false;
             target.animState = 'death';
+            this.cheeseWorld.onDeathDropCarried(target);
             this.stats?.recordDeath(hit.playerId);
           }
           target.velocity.x += hit.knockbackX;
@@ -539,6 +556,10 @@ export default class GameServer {
       }
     }
 
+    tickPlayerChaseScores(this.players, this.predators, dt);
+
+    this.cheeseWorld.collectFromPlayers(this.players);
+
     const snapshot = {
       type: 'snapshot',
       tick: Date.now(),
@@ -546,6 +567,7 @@ export default class GameServer {
       players: playersObj,
       predators: this.predators.map(serializePredatorState),
       pushBalls: this.pushBallWorld.getBallsState(),
+      cheesePickups: this.cheeseWorld.serializePickups(),
     };
     this.broadcast(JSON.stringify(snapshot));
   }
