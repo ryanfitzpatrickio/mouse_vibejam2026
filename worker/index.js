@@ -161,7 +161,16 @@ async function handleStatsSummary(request, env) {
   }
 
   const url = new URL(request.url);
-  const expectedToken = env.STATS_ADMIN_TOKEN || env.STATS_COLLECTOR_TOKEN;
+  const admin = env.STATS_ADMIN_TOKEN;
+  const collector = env.STATS_COLLECTOR_TOKEN;
+  const expectedToken = (typeof admin === 'string' && admin.trim() !== '')
+    ? admin
+    : (typeof collector === 'string' && collector.trim() !== '' ? collector : '');
+
+  if (!expectedToken) {
+    return json({ error: 'STATS_ADMIN_TOKEN or STATS_COLLECTOR_TOKEN must be configured' }, 503);
+  }
+
   const queryToken = url.searchParams.get('token') ?? '';
   if (!authorize(request, expectedToken) && queryToken !== expectedToken) {
     return json({ error: 'Unauthorized' }, 401);

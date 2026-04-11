@@ -33,6 +33,7 @@ export class OcclusionFader {
 
     _raycaster.set(camPos, _direction);
     _raycaster.far = distance;
+    _raycaster.camera = this.camera;
 
     const hits = _raycaster.intersectObjects(this.scene.children, true);
     const hitMeshes = new Set();

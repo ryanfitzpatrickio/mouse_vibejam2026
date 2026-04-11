@@ -4,6 +4,7 @@ import { DEFAULT_TEXTURE_ATLAS, TEXTURE_ATLASES } from '../dev/textureAtlasRegis
 import { assetUrl } from '../utils/assetUrl.js';
 import { normalizeSpawnType } from '../../shared/spawnPoints.js';
 import { normalizeNavArea } from '../../shared/navConfig.js';
+import { VIBE_PORTAL_TYPES, collectVibePortalPlacementsFromLayout, normalizeVibePortal } from '../../shared/vibePortal.js';
 
 const ATLAS_GRID = 10;
 const ATLAS_CELL_MARGIN_PX = 3;
@@ -29,6 +30,7 @@ const DEFAULT_EDITABLE_LAYOUT = Object.freeze({
   version: 1,
   primitives: [],
   lights: [],
+  portals: [],
 });
 
 const EDITABLE_TYPE_DEFAULTS = Object.freeze({
@@ -137,6 +139,63 @@ function createLightHelperMesh(definition) {
   mesh.name = `${definition.name || definition.lightType}-helper`;
   mesh.userData.skipOutline = true;
   return mesh;
+}
+
+function createPortalHelperObject(definition) {
+  const color = definition.portalType === VIBE_PORTAL_TYPES.RETURN ? '#ff5a48' : '#24f0b4';
+  const group = new THREE.Group();
+  group.name = `${definition.name || definition.portalType}-helper`;
+  group.userData.portalId = definition.id;
+  group.userData.editablePortal = true;
+  group.userData.skipOutline = true;
+
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.72, 0.055, 14, 72),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.86,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  ring.position.y = 1;
+  ring.userData.portalId = definition.id;
+  ring.userData.skipOutline = true;
+  group.add(ring);
+
+  const trigger = new THREE.Mesh(
+    new THREE.CylinderGeometry(definition.triggerRadius, definition.triggerRadius, 0.08, 48),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  trigger.position.y = 0.04;
+  trigger.userData.portalId = definition.id;
+  trigger.userData.skipOutline = true;
+  group.add(trigger);
+
+  const arrow = new THREE.Mesh(
+    new THREE.ConeGeometry(0.16, 0.38, 18),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.78,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  arrow.rotation.x = Math.PI * 0.5;
+  arrow.position.set(0, 1, 0.82);
+  arrow.userData.portalId = definition.id;
+  arrow.userData.skipOutline = true;
+  group.add(arrow);
+
+  return group;
 }
 
 function normalizeTextureSettings(texture = {}) {
@@ -341,8 +400,10 @@ export class Room {
     this.editableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
     this.spawnMarkersVisible = false;
     this.lightHelpersVisible = false;
+    this.portalHelpersVisible = false;
     this.editableMeshes = new Map();
     this.editableLightObjects = new Map();
+    this.editablePortalObjects = new Map();
     this.prefabInstanceGroups = new Map();
     this.prefabInstanceIdByPrimitiveId = new Map();
     this.ready = Promise.all([
@@ -495,6 +556,7 @@ export class Room {
         version: layout?.version ?? 1,
         primitives: Array.isArray(layout?.primitives) ? layout.primitives.map((entry) => this._normalizePrimitive(entry)) : [],
         lights: Array.isArray(layout?.lights) ? layout.lights.map((entry) => this._normalizeLight(entry)) : [],
+        portals: Array.isArray(layout?.portals) ? layout.portals.map((entry) => this._normalizePortal(entry)) : [],
       };
     } catch {
       this.loadedEditableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
@@ -673,6 +735,10 @@ export class Room {
     };
   }
 
+  _normalizePortal(entry = {}) {
+    return normalizeVibePortal(entry);
+  }
+
   _registerBuiltInPrimitive(mesh, definition, collider = null) {
     this._ensureUniqueEditableMaterials(mesh);
 
@@ -813,6 +879,7 @@ export class Room {
     const builtInIds = new Set(this.builtInEditableMeshes.keys());
     const customPrimitives = [];
     const customLights = [];
+    const customPortals = [];
 
     this.deletedBuiltInPrimitives.clear();
 
@@ -835,10 +902,17 @@ export class Room {
       }
     }
 
+    for (const portal of this.loadedEditableLayout.portals ?? []) {
+      if (!portal?.deleted) {
+        customPortals.push(portal);
+      }
+    }
+
     this.editableLayout = {
       version: this.loadedEditableLayout.version ?? 1,
       primitives: customPrimitives,
       lights: customLights,
+      portals: customPortals,
     };
 
     this._normalizePrefabInstanceTransforms();
@@ -973,12 +1047,33 @@ export class Room {
     lightObject.userData.lightId = light.id;
     lightObject.userData.skipOutline = true;
     group.add(lightObject);
-    if (lightObject.target?.parent !== group) {
+    if (lightObject.target && lightObject.target.parent !== group) {
       group.add(lightObject.target);
     }
 
     this._configureEditableLightShadow(lightObject, light);
     return { definition: light, group, helper, light: lightObject, target };
+  }
+
+  _createEditablePortalObject(definition) {
+    const portal = this._normalizePortal(definition);
+    const group = createPortalHelperObject(portal);
+    group.position.set(portal.position.x, portal.position.y, portal.position.z);
+    group.rotation.set(portal.rotation.x, portal.rotation.y, portal.rotation.z);
+    group.visible = this.portalHelpersVisible && !portal.deleted;
+    return { definition: portal, group };
+  }
+
+  _applyPortalToObject(definition, entry) {
+    const portal = this._normalizePortal(definition);
+    entry.definition = portal;
+    entry.group.name = `${portal.name || portal.portalType}-helper`;
+    entry.group.position.set(portal.position.x, portal.position.y, portal.position.z);
+    entry.group.rotation.set(portal.rotation.x, portal.rotation.y, portal.rotation.z);
+    entry.group.scale.set(1, 1, 1);
+    entry.group.visible = this.portalHelpersVisible && !portal.deleted;
+    entry.group.userData.portalId = portal.id;
+    return portal;
   }
 
   _applyLightToObject(definition, entry) {
@@ -987,6 +1082,7 @@ export class Room {
     entry.group.name = light.name;
     entry.group.position.set(light.position.x, light.position.y, light.position.z);
     entry.group.rotation.set(light.rotation.x, light.rotation.y, light.rotation.z);
+    entry.group.scale.set(1, 1, 1);
     entry.group.visible = !light.deleted;
     entry.helper.visible = this.lightHelpersVisible && !light.deleted;
     if (entry.helper.material?.color) {
@@ -1040,6 +1136,7 @@ export class Room {
     this.editableGroup.clear();
     this.editableMeshes.clear();
     this.editableLightObjects.clear();
+    this.editablePortalObjects.clear();
     this.prefabInstanceGroups.clear();
     this.prefabInstanceIdByPrimitiveId.clear();
 
@@ -1198,6 +1295,12 @@ export class Room {
       this.editableLightObjects.set(entry.definition.id, entry);
     }
 
+    for (const definition of this.editableLayout.portals ?? []) {
+      const entry = this._createEditablePortalObject(definition);
+      this.editableGroup.add(entry.group);
+      this.editablePortalObjects.set(entry.definition.id, entry);
+    }
+
     this._applyTextureAtlas();
     this.refreshColliders();
   }
@@ -1220,14 +1323,27 @@ export class Room {
     }
   }
 
+  setPortalHelpersVisible(visible) {
+    this.portalHelpersVisible = visible === true;
+    for (const entry of this.editablePortalObjects.values()) {
+      entry.group.visible = this.portalHelpersVisible && !entry.definition.deleted;
+    }
+  }
+
+  getVibePortalPlacements() {
+    return collectVibePortalPlacementsFromLayout(this.getEditableLayout());
+  }
+
   getEditableLayout() {
     const builtIns = Array.from(this.builtInEditableMeshes.values()).map((entry) => this._serializeBuiltInPrimitive(entry));
     const customs = this.editableLayout.primitives.map((entry) => this._normalizePrimitive(entry));
     const lights = (this.editableLayout.lights ?? []).map((entry) => this._normalizeLight(entry));
+    const portals = (this.editableLayout.portals ?? []).map((entry) => this._normalizePortal(entry));
     return {
       version: Math.max(this.loadedEditableLayout.version ?? 1, this.editableLayout.version ?? 1, 1),
       primitives: [...builtIns, ...customs],
       lights,
+      portals,
     };
   }
 
@@ -1236,6 +1352,7 @@ export class Room {
       version: layout?.version ?? 1,
       primitives: Array.isArray(layout?.primitives) ? layout.primitives.map((entry) => this._normalizePrimitive(entry)) : [],
       lights: Array.isArray(layout?.lights) ? layout.lights.map((entry) => this._normalizeLight(entry)) : [],
+      portals: Array.isArray(layout?.portals) ? layout.portals.map((entry) => this._normalizePortal(entry)) : [],
     };
     this._applyLoadedEditableLayout();
     this._rebuildEditableLayout();
@@ -1287,6 +1404,31 @@ export class Room {
     return light;
   }
 
+  upsertEditablePortal(definition) {
+    const portal = this._normalizePortal(definition);
+    const index = this.editableLayout.portals.findIndex((entry) => entry.id === portal.id);
+    if (index >= 0) {
+      const previous = this._normalizePortal(this.editableLayout.portals[index]);
+      this.editableLayout.portals[index] = portal;
+      if (
+        previous.portalType !== portal.portalType
+        || Math.abs((previous.triggerRadius ?? 0) - (portal.triggerRadius ?? 0)) > 0.0001
+      ) {
+        this._rebuildEditableLayout();
+        return portal;
+      }
+      const current = this.editablePortalObjects.get(portal.id);
+      if (current) {
+        this._applyPortalToObject(portal, current);
+      }
+      return portal;
+    }
+
+    this.editableLayout.portals.push(portal);
+    this._rebuildEditableLayout();
+    return portal;
+  }
+
   removeEditablePrimitive(id) {
     if (this.builtInEditableMeshes.has(id)) {
       const entry = this.builtInEditableMeshes.get(id);
@@ -1302,6 +1444,11 @@ export class Room {
 
   removeEditableLight(id) {
     this.editableLayout.lights = this.editableLayout.lights.filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
+  removeEditablePortal(id) {
+    this.editableLayout.portals = this.editableLayout.portals.filter((entry) => entry.id !== id);
     this._rebuildEditableLayout();
   }
 
@@ -1334,6 +1481,12 @@ export class Room {
     this._rebuildEditableLayout();
   }
 
+  purgeEditablePortal(id) {
+    this.editableLayout.portals = this.editableLayout.portals.filter((entry) => entry.id !== id);
+    this.loadedEditableLayout.portals = (this.loadedEditableLayout.portals ?? []).filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
   getEditableMesh(id) {
     return this.getEditableObject(id);
   }
@@ -1341,6 +1494,9 @@ export class Room {
   getEditableObject(id) {
     if (this.editableLightObjects.has(id)) {
       return this.editableLightObjects.get(id)?.group ?? null;
+    }
+    if (this.editablePortalObjects.has(id)) {
+      return this.editablePortalObjects.get(id)?.group ?? null;
     }
     const prefabInstanceId = this.prefabInstanceIdByPrimitiveId.get(id);
     if (prefabInstanceId) {
@@ -1426,6 +1582,29 @@ export class Room {
       this._applyLightToObject(light, current);
     }
     return light;
+  }
+
+  updateEditablePortalTransform(id, transform = {}) {
+    const index = this.editableLayout.portals.findIndex((entry) => entry.id === id);
+    if (index < 0) return null;
+
+    const portal = this._normalizePortal(this.editableLayout.portals[index]);
+    if (transform.position) {
+      portal.position = cloneVectorLike(transform.position, portal.position);
+    }
+    if (transform.rotation) {
+      portal.rotation = cloneVectorLike(transform.rotation, portal.rotation);
+    }
+    if (Number.isFinite(transform.triggerRadius)) {
+      portal.triggerRadius = Math.max(0.1, transform.triggerRadius);
+    }
+
+    this.editableLayout.portals[index] = portal;
+    const current = this.editablePortalObjects.get(id);
+    if (current) {
+      this._applyPortalToObject(portal, current);
+    }
+    return portal;
   }
 
   updatePrefabInstanceTransform(instanceId, transform = {}) {
@@ -1650,6 +1829,41 @@ export class Room {
     light.position = roundVectorLike(light.position, { x: 0, y: 0, z: 0 });
     light.rotation = roundVectorLike(light.rotation, { x: 0, y: 0, z: 0 });
     return light;
+  }
+
+  snapPortalToGrid(definition, {
+    snapY = false,
+    snapPosition = true,
+    allowEdgeOverflow = false,
+  } = {}) {
+    const portal = this._normalizePortal(definition);
+    const grid = this.getBuildGridConfig();
+
+    if (snapPosition) {
+      portal.position.x = this._snapGridAxisPosition(
+        portal.position.x,
+        portal.triggerRadius * 2,
+        grid.roomWidth,
+        grid.cellWidth,
+        allowEdgeOverflow,
+      );
+      portal.position.z = this._snapGridAxisPosition(
+        portal.position.z,
+        portal.triggerRadius * 2,
+        grid.roomDepth,
+        grid.cellDepth,
+        allowEdgeOverflow,
+      );
+    }
+
+    if (snapY) {
+      portal.position.y = snapToStep(portal.position.y, grid.verticalStep);
+    }
+
+    portal.position = roundVectorLike(portal.position, { x: 0, y: 0, z: 0 });
+    portal.rotation = roundVectorLike(portal.rotation, { x: 0, y: 0, z: 0 });
+    portal.triggerRadius = Number(portal.triggerRadius.toFixed(4));
+    return portal;
   }
 
   setLightHelpersVisible(visible) {

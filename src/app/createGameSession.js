@@ -4,6 +4,7 @@ import { Bunny } from '../entities/Bunny.js';
 import { Cat } from '../entities/Cat.js';
 import { PredatorManager } from '../entities/PredatorManager.js';
 import { Room } from '../world/Room.js';
+import { VibePortalManager } from '../world/VibePortalManager.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
 import { HUD } from '../hud/HUD.js';
@@ -15,6 +16,7 @@ import { EmoteWheel } from '../emote/EmoteWheel.js';
 import { getAudioManager } from '../audio/AudioManager.js';
 import { OcclusionFader } from '../utils/OcclusionFader.js';
 import { simulateTick, createPlayerState } from '../../shared/physics.js';
+import { readVibePortalArrivalFromSearch } from '../../shared/vibePortal.js';
 import kitchenNavMesh from '../../shared/kitchen-navmesh.generated.js';
 
 function applyAtmosphere(scene) {
@@ -286,7 +288,10 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   });
 
   // --- Multiplayer ---
-  const net = new NetworkClient(roomId);
+  const portalArrival = readVibePortalArrivalFromSearch(window.location.search);
+  const net = new NetworkClient(roomId, {
+    portalArrival: portalArrival.active ? portalArrival : null,
+  });
   const remotePlayerManager = new RemotePlayerManager({ scene, rendererMode: mode });
   net.connect();
 
@@ -305,6 +310,13 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   const CLIENT_BOUNDS = Object.freeze({ minX: -24, maxX: 24, minZ: -24, maxZ: 24 });
   const predictionState = createPlayerState('local');
   let lastReconciledSeq = -2;
+  const vibePortalManager = new VibePortalManager({
+    scene,
+    getPlayerState: () => predictionState,
+    getPlayerObject: () => mouse,
+    getPlayerColor: () => '#f5a962',
+    getPortalPlacements: () => room.getVibePortalPlacements(),
+  });
 
   // Visual smoothing: render position lerps toward prediction to hide small corrections
   const renderPos = new THREE.Vector3();
@@ -312,6 +324,11 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
   const RECONCILE_SNAP_THRESHOLD = 3.0; // teleport if error > this
   const RECONCILE_SKIP_THRESHOLD = 0.001; // ignore corrections smaller than this
   const RECONCILE_SMOOTH_RATE = 20; // lerp speed for corrections
+  const PHYSICS_STEP = 1 / 30;
+  const MAX_PHYSICS_STEPS = 4;
+  let physicsAccum = 0;
+  let previousJumpHeld = false;
+  let mobileControls = null;
 
   function copyServerToPrediction(ss) {
     predictionState.position.x = ss.position.x;
@@ -377,25 +394,37 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     }
   }
 
+  function snapLocalStateToServer(ss) {
+    copyServerToPrediction(ss);
+    mouse.rotation.y = predictionState.rotation;
+    previousJumpHeld = false;
+    physicsAccum = 0;
+    net.pendingInputs.length = 0;
+    // Snap render position to spawn/teleport
+    renderPos.set(
+      predictionState.position.x,
+      predictionState.position.y + mouse.groundOffset,
+      predictionState.position.z,
+    );
+    renderPosInitialized = true;
+  }
+
   net.on((data) => {
     if (data.type === 'init' && data.players?.[net.localId]) {
-      copyServerToPrediction(data.players[net.localId]);
+      snapLocalStateToServer(data.players[net.localId]);
       lastReconciledSeq = -2;
-      // Snap render position to spawn
-      renderPos.set(
-        predictionState.position.x,
-        predictionState.position.y + mouse.groundOffset,
-        predictionState.position.z,
-      );
-      renderPosInitialized = true;
+      return;
+    }
+
+    if (data.type === 'portal-spawn' && data.player?.id === net.localId) {
+      snapLocalStateToServer(data.player);
+      lastReconciledSeq = -2;
     }
   });
 
-  const PHYSICS_STEP = 1 / 30;
-  const MAX_PHYSICS_STEPS = 4;
-  let physicsAccum = 0;
-  let previousJumpHeld = false;
-  let mobileControls = null;
+  if (net.localId && net.serverState) {
+    snapLocalStateToServer(net.serverState);
+  }
 
   function setMobileControls(mc) {
     mobileControls = mc;
@@ -529,6 +558,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
 
     placementMode?.update(deltaSeconds);
     room.updateLoot(timeMs);
+    vibePortalManager.update(deltaSeconds);
 
     if (net.connected) {
       remotePlayerManager.sync(net.remotePlayers);
@@ -541,10 +571,12 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       ? Math.max(0, 10 - (Date.now() / 1000 - deathTime))
       : 0;
 
+    const playerCount = net.connected ? 1 + net.remotePlayers.size : 1;
     hud.update({
       stamina: controller.staminaPercent,
       health: controller.healthPercent,
       ping: net.ping,
+      playerCount,
       alive: isAlive,
       respawnCountdown,
     });
@@ -569,6 +601,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     remotePlayerManager.dispose();
     predatorManager?.dispose();
     emoteWheel.dispose();
+    vibePortalManager.dispose();
     hud.dispose();
     renderer.dispose();
   }

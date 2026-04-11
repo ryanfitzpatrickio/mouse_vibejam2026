@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { normalizePrefabPrimitive } from './prefabRegistry.js';
 import { SPAWN_TYPES } from '../../shared/spawnPoints.js';
 import { NAV_AREA_TYPES } from '../../shared/navConfig.js';
+import { VIBE_PORTAL_TYPES, normalizeVibePortalType } from '../../shared/vibePortal.js';
 
 export function createPrimitiveId() {
   return `primitive-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -9,6 +10,10 @@ export function createPrimitiveId() {
 
 export function createLightId() {
   return `light-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function createPortalId() {
+  return `portal-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 export function createDefaultPrimitive(type, app) {
@@ -178,6 +183,39 @@ export function createDefaultLight(lightType, app) {
     angle: defaults.angle,
     penumbra: defaults.penumbra,
     castShadow: defaults.castShadow,
+  };
+}
+
+export function createDefaultPortal(portalType, app) {
+  const type = normalizeVibePortalType(portalType);
+  const forward = new THREE.Vector3();
+  app.camera.getWorldDirection(forward);
+  forward.y = 0;
+  if (forward.lengthSq() < 0.0001) {
+    forward.set(0, 0, -1);
+  }
+  forward.normalize();
+
+  const spawn = app.mouse.position.clone().add(forward.multiplyScalar(2.5));
+  const yaw = Math.atan2(forward.x, forward.z);
+
+  return {
+    id: createPortalId(),
+    name: type === VIBE_PORTAL_TYPES.RETURN
+      ? `return-portal-${Math.random().toString(36).slice(2, 5)}`
+      : `vibe-portal-${Math.random().toString(36).slice(2, 5)}`,
+    portalType: type,
+    position: {
+      x: Number(spawn.x.toFixed(3)),
+      y: Number(Math.max(0, app.mouse.position.y).toFixed(3)),
+      z: Number(spawn.z.toFixed(3)),
+    },
+    rotation: {
+      x: 0,
+      y: Number(yaw.toFixed(4)),
+      z: 0,
+    },
+    triggerRadius: 0.9,
   };
 }
 

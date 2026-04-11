@@ -21,6 +21,10 @@ const AI_STATE_TO_EXPRESSION = Object.freeze({
   stunned: 'shocked',
   roar: 'angry',
   death: 'shocked',
+  sleep: 'idle',
+  groom: 'idle',
+  play: 'shifty',
+  bored_wander: 'shifty',
 });
 
 const LERP_SPEED = 12;
@@ -139,6 +143,18 @@ export class Cat extends Predator {
         break;
       case 'death':
         this.playAnimation('Death', { loop: false, clampWhenFinished: true });
+        break;
+      case 'sleep':
+        this.playAnimation('Idle');
+        break;
+      case 'groom':
+        this.playAnimation('Idle');
+        break;
+      case 'play':
+        this.playAnimation('Run');
+        break;
+      case 'bored_wander':
+        this.playAnimation('Walk');
         break;
       default:
         this.playAnimation('Idle');

@@ -1,10 +1,22 @@
 import { createPlayerState, simulateTick, respawnPlayer } from '../shared/physics.js';
+import { createMouseBotBrain, buildMouseBotInput, resetMouseBotBrain } from '../shared/mouseBot.js';
 import { createPredatorState, simulatePredatorTick, serializePredatorState } from '../shared/predator.js';
 import { buildRoomCollidersFromLayout } from '../shared/roomCollision.js';
 import kitchenLayout from '../shared/kitchen-layout.generated.js';
 import kitchenNavMesh from '../shared/kitchen-navmesh.generated.js';
+import kitchenMouseNavMesh from '../shared/kitchen-mouse-navmesh.generated.js';
 import { collectSpawnPointsFromLayout } from '../shared/spawnPoints.js';
+import { applyPortalArrivalToPlayerState, collectVibePortalPlacementsFromLayout, sanitizePortalArrivalPayload } from '../shared/vibePortal.js';
+import { isValidDevSyncLayout } from '../shared/devLayoutValidation.js';
+import { sanitizePlayerInputMessage } from '../shared/playerInputSanitize.js';
 import { StatsTracker } from './stats.js';
+
+/**
+ * PartyKit env (dashboard / project .env for `partykit dev`):
+ * - STATS_ADMIN_TOKEN or STATS_COLLECTOR_TOKEN — required; GET …/stats returns 503 if both missing
+ * - DEV_LAYOUT_SYNC_ENABLED — set "true" only in dev to accept dev-sync-layout
+ * - DEV_LAYOUT_SYNC_TOKEN — must match Vite VITE_DEV_LAYOUT_SYNC_TOKEN when syncing layout from build mode
+ */
 
 const TICK_RATE = 30;
 const TICK_MS = 1000 / TICK_RATE;
@@ -19,14 +31,37 @@ const BOUNDS = Object.freeze({
   maxZ: 24,
 });
 
+/** Reject oversized WebSocket frames before JSON.parse (DoS). */
+const MAX_WS_MESSAGE_CHARS = 256 * 1024;
+
+function getPartyEnv(room, key) {
+  return room.env?.[key] ?? room.context?.env?.[key] ?? undefined;
+}
+
+function isDevLayoutSyncEnabled(room) {
+  const v = getPartyEnv(room, 'DEV_LAYOUT_SYNC_ENABLED');
+  return v === true || v === 1 || String(v).toLowerCase() === 'true' || String(v) === '1';
+}
+
+function getDevLayoutSyncToken(room) {
+  const t = getPartyEnv(room, 'DEV_LAYOUT_SYNC_TOKEN');
+  return typeof t === 'string' ? t : '';
+}
+
 export default class GameServer {
   players = new Map();
   inputQueues = new Map();
   tickInterval = null;
   levelColliders = buildRoomCollidersFromLayout(kitchenLayout, { scaleFactor: 1 });
   levelNavMesh = kitchenNavMesh;
+  /** Walk mesh for mice (mouse-only nav polys); cats use levelNavMesh. */
+  levelMouseNavMesh = kitchenMouseNavMesh;
   spawnPoints = collectSpawnPointsFromLayout(kitchenLayout);
+  portalPlacements = collectVibePortalPlacementsFromLayout(kitchenLayout);
   stats = null;
+  portalArrivals = new Set();
+  botBrains = new Map();
+  _nextBotId = 0;
 
   constructor(room) {
     this.room = room;
@@ -38,6 +73,7 @@ export default class GameServer {
   _applyLayout(layout, { resetPredators = false } = {}) {
     this.levelColliders = buildRoomCollidersFromLayout(layout, { scaleFactor: 1 });
     this.spawnPoints = collectSpawnPointsFromLayout(layout);
+    this.portalPlacements = collectVibePortalPlacementsFromLayout(layout);
     if (resetPredators) {
       this.predators = [];
       this._initPredators();
@@ -86,20 +122,63 @@ export default class GameServer {
     };
   }
 
+  _listBotIdsSorted() {
+    return [...this.players.keys()]
+      .filter((id) => !this.inputQueues.has(id))
+      .sort((a, b) => {
+        const na = Number(String(a).replace(/^bot-/, '')) || 0;
+        const nb = Number(String(b).replace(/^bot-/, '')) || 0;
+        return na - nb;
+      });
+  }
+
+  /**
+   * Keeps (humans + bots) at MAX_PLAYERS when humans < MAX_PLAYERS; no bots at 8 humans.
+   */
+  _syncBots() {
+    const humanCount = this.inputQueues.size;
+    const desiredBots = Math.max(0, MAX_PLAYERS - humanCount);
+    const botIds = this._listBotIdsSorted();
+
+    while (botIds.length > desiredBots) {
+      const id = botIds.pop();
+      if (!id) break;
+      this.players.delete(id);
+      this.botBrains.delete(id);
+      this._lastSeq?.delete(id);
+      this.broadcast(JSON.stringify({ type: 'player-left', id }));
+    }
+
+    while (botIds.length < desiredBots) {
+      const id = `bot-${this._nextBotId++}`;
+      const spawn = this._pickPlayerSpawn(this.inputQueues.size + botIds.length);
+      const state = createPlayerState(id);
+      state.isBot = true;
+      state.position.x = spawn.x;
+      state.position.y = spawn.y;
+      state.position.z = spawn.z;
+      state.grounded = spawn.y <= 0.001;
+      this.players.set(id, state);
+      this.botBrains.set(id, createMouseBotBrain());
+      botIds.push(id);
+      this.broadcast(JSON.stringify({ type: 'player-joined', player: state }));
+    }
+  }
+
   async onStart() {
     await this.stats?.ready;
     this.tickInterval = setInterval(() => this.tick(), TICK_MS);
   }
 
   onConnect(conn) {
-    if (this.players.size >= MAX_PLAYERS) {
+    if (this.inputQueues.size >= MAX_PLAYERS) {
       conn.send(JSON.stringify({ type: 'error', message: 'Room full' }));
       conn.close();
       return;
     }
 
     const state = createPlayerState(conn.id);
-    const spawn = this._pickPlayerSpawn(this.players.size);
+    const spawn = this._pickPlayerSpawn(this.inputQueues.size);
     state.position.x = spawn.x;
     state.position.y = spawn.y;
     state.position.z = spawn.z;
@@ -107,7 +186,8 @@ export default class GameServer {
 
     this.players.set(conn.id, state);
     this.inputQueues.set(conn.id, []);
-    this.stats?.recordConnect(conn.id, this.players.size);
+    this._syncBots();
+    this.stats?.recordConnect(conn.id, this.inputQueues.size);
 
     conn.send(JSON.stringify({
       type: 'init',
@@ -123,6 +203,10 @@ export default class GameServer {
   }
 
   async onMessage(message, sender) {
+    if (typeof message === 'string' && message.length > MAX_WS_MESSAGE_CHARS) {
+      return;
+    }
+
     let data;
     try {
       data = JSON.parse(/** @type {string} */ (message));
@@ -131,6 +215,22 @@ export default class GameServer {
     }
 
     if (data.type === 'hello') {
+      const portalArrival = sanitizePortalArrivalPayload(data.portal);
+      if (portalArrival.active && !this.portalArrivals.has(sender.id)) {
+        const player = this.players.get(sender.id);
+        if (applyPortalArrivalToPlayerState(player, portalArrival, this.portalPlacements)) {
+          this.portalArrivals.add(sender.id);
+          sender.send(JSON.stringify({
+            type: 'portal-spawn',
+            player,
+          }));
+          this.broadcast(JSON.stringify({
+            type: 'player-joined',
+            player,
+          }), [sender.id]);
+        }
+      }
+
       try {
         await this.stats?.identifyConnection(sender.id, data.playerKey);
       } catch (error) {
@@ -143,38 +243,42 @@ export default class GameServer {
       const queue = this.inputQueues.get(sender.id);
       if (queue) {
         if (queue.length < 8) {
-          queue.push({
-            moveX: data.moveX ?? 0,
-            moveZ: data.moveZ ?? 0,
-            sprint: !!data.sprint,
-            jump: !!(data.jumpPressed ?? data.jump),
-            jumpPressed: !!(data.jumpPressed ?? data.jump),
-            jumpHeld: !!(data.jumpHeld ?? data.jumpPressed ?? data.jump),
-            crouch: !!data.crouch,
-            rotation: data.rotation ?? 0,
-            seq: data.seq ?? 0,
-          });
+          queue.push(sanitizePlayerInputMessage(data));
         }
       }
       return;
     }
 
-    if (data.type === 'dev-sync-layout' && data.layout) {
+    if (data.type === 'dev-sync-layout') {
+      if (!isDevLayoutSyncEnabled(this.room)) {
+        return;
+      }
+      const expected = getDevLayoutSyncToken(this.room);
+      if (!expected || typeof data.syncToken !== 'string' || data.syncToken !== expected) {
+        return;
+      }
+      if (!isValidDevSyncLayout(data.layout)) {
+        return;
+      }
       this._applyLayout(data.layout, { resetPredators: true });
     }
   }
 
   onClose(conn) {
     this.stats?.recordDisconnect(conn.id);
+    this.portalArrivals.delete(conn.id);
     this.players.delete(conn.id);
     this.inputQueues.delete(conn.id);
     this.broadcast(JSON.stringify({
       type: 'player-left',
       id: conn.id,
     }));
+    this._syncBots();
   }
 
   tick() {
+    this._syncBots();
+
     if (this.players.size === 0 && this.predators.length === 0) return;
 
     const dt = TICK_MS / 1000;
@@ -182,6 +286,7 @@ export default class GameServer {
     const seqs = {};
     const now = Date.now() / 1000;
     for (const [id, state] of this.players) {
+      const isHuman = this.inputQueues.has(id);
       if (!state.alive) {
         if (state.deathTime <= 0) {
           state.deathTime = now;
@@ -189,6 +294,9 @@ export default class GameServer {
           const spawn = this._pickRespawnPoint();
           respawnPlayer(state, spawn.x, spawn.z, spawn.y);
           this.stats?.recordRespawn(id);
+          if (!isHuman) {
+            resetMouseBotBrain(this.botBrains.get(id));
+          }
           seqs[id] = this._lastSeq?.get(id) ?? 0;
           continue;
         }
@@ -196,27 +304,47 @@ export default class GameServer {
         continue;
       }
 
-      const queue = this.inputQueues.get(id);
-      if (!queue || queue.length === 0) {
-        simulateTick(state, {
-          moveX: 0,
-          moveZ: 0,
-          sprint: false,
-          jump: false,
-          jumpPressed: false,
-          jumpHeld: false,
-          crouch: false,
-          rotation: state.rotation,
-        }, dt, BOUNDS, this.levelColliders);
-        seqs[id] = this._lastSeq?.get(id) ?? 0;
-      } else {
-        for (const input of queue) {
-          simulateTick(state, input, dt, BOUNDS, this.levelColliders);
-          seqs[id] = input.seq;
+      if (isHuman) {
+        const queue = this.inputQueues.get(id);
+        if (!queue || queue.length === 0) {
+          simulateTick(state, {
+            moveX: 0,
+            moveZ: 0,
+            sprint: false,
+            jump: false,
+            jumpPressed: false,
+            jumpHeld: false,
+            crouch: false,
+            rotation: state.rotation,
+          }, dt, BOUNDS, this.levelColliders);
+          seqs[id] = this._lastSeq?.get(id) ?? 0;
+        } else {
+          for (const input of queue) {
+            simulateTick(state, input, dt, BOUNDS, this.levelColliders);
+            seqs[id] = input.seq;
+          }
+          if (!this._lastSeq) this._lastSeq = new Map();
+          this._lastSeq.set(id, seqs[id]);
+          queue.length = 0;
         }
-        if (!this._lastSeq) this._lastSeq = new Map();
-        this._lastSeq.set(id, seqs[id]);
-        queue.length = 0;
+      } else {
+        const brain = this.botBrains.get(id);
+        if (!brain) {
+          seqs[id] = 0;
+          continue;
+        }
+        const input = buildMouseBotInput(
+          state,
+          brain,
+          this.levelMouseNavMesh,
+          this.predators,
+          dt,
+          this.spawnPoints,
+          BOUNDS,
+          now,
+        );
+        simulateTick(state, input, dt, BOUNDS, this.levelColliders);
+        seqs[id] = 0;
       }
     }
 
@@ -264,14 +392,32 @@ export default class GameServer {
       return new Response('Not found', { status: 404 });
     }
 
-    const expectedToken = this.room.env?.STATS_ADMIN_TOKEN;
-    if (expectedToken) {
-      const authHeader = request.headers.get('Authorization') ?? '';
-      const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-      const queryToken = url.searchParams.get('token') ?? '';
-      if (bearerToken !== expectedToken && queryToken !== expectedToken) {
-        return new Response('Unauthorized', { status: 401 });
-      }
+    const adminTok = getPartyEnv(this.room, 'STATS_ADMIN_TOKEN');
+    const collectorTok = getPartyEnv(this.room, 'STATS_COLLECTOR_TOKEN');
+    const expectedToken = (typeof adminTok === 'string' && adminTok.trim() !== '')
+      ? adminTok
+      : (typeof collectorTok === 'string' && collectorTok.trim() !== '' ? collectorTok : '');
+
+    if (!expectedToken) {
+      return new Response(
+        JSON.stringify({
+          error: 'Set STATS_ADMIN_TOKEN or STATS_COLLECTOR_TOKEN for /stats',
+        }),
+        {
+          status: 503,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          },
+        },
+      );
+    }
+
+    const authHeader = request.headers.get('Authorization') ?? '';
+    const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    const queryToken = url.searchParams.get('token') ?? '';
+    if (bearerToken !== expectedToken && queryToken !== expectedToken) {
+      return new Response('Unauthorized', { status: 401 });
     }
 
     const summary = await this.stats.getSummary();

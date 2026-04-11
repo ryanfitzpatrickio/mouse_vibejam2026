@@ -38,6 +38,7 @@ export default {
       },
       "faceTextures": {},
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -85,6 +86,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -132,6 +134,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -179,6 +182,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -226,6 +230,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -273,6 +278,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -320,6 +326,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -367,6 +374,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -414,6 +422,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -461,6 +470,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -508,6 +518,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -555,6 +566,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -602,6 +614,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -649,6 +662,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -696,6 +710,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -743,6 +758,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -790,6 +806,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -837,6 +854,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -901,6 +919,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
         "x": 20.0786,
@@ -960,6 +979,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
         "x": 20.0786,
@@ -1019,6 +1039,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
         "x": 20.0786,
@@ -1078,6 +1099,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnmdn888-9vryd",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnme4b2q-k7ts5",
       "prefabInstanceOrigin": {
         "x": 20.0786,
@@ -1137,6 +1159,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -1184,6 +1207,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -1236,6 +1260,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnn7zhdy-mzl5t",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnn842j8-vz10x",
       "prefabInstanceOrigin": {
         "x": 20.1716,
@@ -1300,6 +1325,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnn7zhdy-mzl5t",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnn842j8-vz10x",
       "prefabInstanceOrigin": {
         "x": 20.1716,
@@ -1359,6 +1385,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnaenht-mwjw5",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
       "prefabInstanceOrigin": {
         "x": -1,
@@ -1418,6 +1445,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnaenht-mwjw5",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
       "prefabInstanceOrigin": {
         "x": -1,
@@ -1477,6 +1505,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnaenht-mwjw5",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
       "prefabInstanceOrigin": {
         "x": -1,
@@ -1536,6 +1565,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnaenht-mwjw5",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnah6e0-nuyyj",
       "prefabInstanceOrigin": {
         "x": -1,
@@ -1595,6 +1625,7 @@ export default {
       },
       "glbAssetId": "asset-mnnc9723-f5tn1",
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -1655,6 +1686,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnijml3-8mgeb",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
       "prefabInstanceOrigin": {
         "x": -19.612,
@@ -1714,6 +1746,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnijml3-8mgeb",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
       "prefabInstanceOrigin": {
         "x": -19.612,
@@ -1778,6 +1811,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnijml3-8mgeb",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
       "prefabInstanceOrigin": {
         "x": -19.612,
@@ -1837,6 +1871,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnijml3-8mgeb",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
       "prefabInstanceOrigin": {
         "x": -19.612,
@@ -1896,6 +1931,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnijml3-8mgeb",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
       "prefabInstanceOrigin": {
         "x": -19.612,
@@ -1955,6 +1991,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnijml3-8mgeb",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnniuzxe-kymf6",
       "prefabInstanceOrigin": {
         "x": -19.612,
@@ -2014,6 +2051,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -2061,6 +2099,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -2108,6 +2147,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -2155,6 +2195,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnke7ov-78eek",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnkj1o1-et1xz",
       "prefabInstanceOrigin": {
         "x": -0.8672,
@@ -2214,6 +2255,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnke7ov-78eek",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnkj1o1-et1xz",
       "prefabInstanceOrigin": {
         "x": -0.8672,
@@ -2273,6 +2315,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnkgoos-5j0jz",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnklpov-s1u74",
       "prefabInstanceOrigin": {
         "x": -0.5581,
@@ -2332,6 +2375,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnkgoos-5j0jz",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnklpov-s1u74",
       "prefabInstanceOrigin": {
         "x": -0.5581,
@@ -2391,6 +2435,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnkgoos-5j0jz",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnklpov-s1u74",
       "prefabInstanceOrigin": {
         "x": -0.5581,
@@ -2450,6 +2495,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnw1tv7-7giwr",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
       "prefabInstanceOrigin": {
         "x": 19.1403,
@@ -2509,6 +2555,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnw1tv7-7giwr",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
       "prefabInstanceOrigin": {
         "x": 19.1403,
@@ -2568,6 +2615,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnw1tv7-7giwr",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
       "prefabInstanceOrigin": {
         "x": 19.1403,
@@ -2627,6 +2675,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnw1tv7-7giwr",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
       "prefabInstanceOrigin": {
         "x": 19.1403,
@@ -2686,6 +2735,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnw1tv7-7giwr",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
       "prefabInstanceOrigin": {
         "x": 19.1403,
@@ -2745,6 +2795,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnw1tv7-7giwr",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
       "prefabInstanceOrigin": {
         "x": 19.1403,
@@ -2813,6 +2864,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnw1tv7-7giwr",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
       "prefabInstanceOrigin": {
         "x": 19.1403,
@@ -2877,6 +2929,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnnw1tv7-7giwr",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnnxdd5f-39zcn",
       "prefabInstanceOrigin": {
         "x": 19.1403,
@@ -2936,6 +2989,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -2983,6 +3037,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -3030,6 +3085,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -3077,6 +3133,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnn87pdj-nntjz",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnszt1vz-ax5gq",
       "prefabInstanceOrigin": {
         "x": -6.9725,
@@ -3136,6 +3193,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnn87pdj-nntjz",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnszt1vz-ax5gq",
       "prefabInstanceOrigin": {
         "x": -6.9725,
@@ -3195,6 +3253,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnn87pdj-nntjz",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnszt1vz-ax5gq",
       "prefabInstanceOrigin": {
         "x": -6.9725,
@@ -3254,6 +3313,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": "prefab-mnn87pdj-nntjz",
+      "navArea": "default",
       "prefabInstanceId": "prefab-instance-mnszt1vz-ax5gq",
       "prefabInstanceOrigin": {
         "x": -6.9725,
@@ -3313,6 +3373,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -3360,6 +3421,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -3407,6 +3469,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -3454,6 +3517,7 @@ export default {
       },
       "glbAssetId": null,
       "prefabId": null,
+      "navArea": "default",
       "prefabInstanceId": null,
       "prefabInstanceOrigin": null,
       "prefabInstanceRotation": null,
@@ -3556,6 +3620,42 @@ export default {
       "angle": 0.9599310885968813,
       "penumbra": 0.28,
       "castShadow": true,
+      "deleted": false
+    }
+  ],
+  "portals": [
+    {
+      "id": "portal-mntle3rd-vpfu9",
+      "name": "vibe-portal-o25",
+      "portalType": "exit",
+      "position": {
+        "x": 8,
+        "y": 0,
+        "z": -5
+      },
+      "rotation": {
+        "x": -3.1416,
+        "y": 1.5708,
+        "z": -3.1416
+      },
+      "triggerRadius": 0.9,
+      "deleted": false
+    },
+    {
+      "id": "portal-mntmpudd-978ar",
+      "name": "return-portal-3u0",
+      "portalType": "return",
+      "position": {
+        "x": 16.75,
+        "y": 1,
+        "z": 5.5
+      },
+      "rotation": {
+        "x": 0,
+        "y": -1.5273,
+        "z": 0
+      },
+      "triggerRadius": 0.9,
       "deleted": false
     }
   ]

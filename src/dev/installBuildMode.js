@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import { PrefabEditorDialog } from './PrefabEditorDialog.js';
 import { DEFAULT_PREFAB_LIBRARY, normalizePrefabLibrary } from './prefabRegistry.js';
 import { clamp, createAtlasButtonStyle, deepClone } from './editorShared.js';
-import { createDefaultPrimitive, createDefaultLight, createPrimitiveId, createSpawnMarkerPrimitive, loadPrefabLibraryFromAsset } from './buildModeSupport.js';
+import { createDefaultPrimitive, createDefaultLight, createDefaultPortal, createPrimitiveId, createPortalId, createSpawnMarkerPrimitive, loadPrefabLibraryFromAsset } from './buildModeSupport.js';
 import { loadTextureAtlases, TEXTURE_ATLASES } from './textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
 import { SPAWN_TYPES, normalizeSpawnType } from '../../shared/spawnPoints.js';
 import { NAV_AREA_TYPES, normalizeNavArea } from '../../shared/navConfig.js';
+import { VIBE_PORTAL_TYPES, normalizeVibePortalType } from '../../shared/vibePortal.js';
 
 const RAD_TO_DEG = 180 / Math.PI;
 const DEG_TO_RAD = Math.PI / 180;
@@ -58,6 +59,7 @@ class BuildModeEditor {
     this.panel.style.display = this.visible ? 'block' : 'none';
     this.app.room.setSpawnMarkersVisible(this.visible);
     this.app.room.setLightHelpersVisible(this.visible);
+    this.app.room.setPortalHelpersVisible(this.visible);
     if (this.visible) {
       this.app.thirdPersonCamera?.setEnabled(false);
       this.controls.target.copy(this.app.mouse.position);
@@ -179,6 +181,8 @@ class BuildModeEditor {
     this._addActionButton('Point Light', () => this._addLight('point'), '#5a4120');
     this._addActionButton('Spot Light', () => this._addLight('spot'), '#5a3a20');
     this._addActionButton('Sun Light', () => this._addLight('directional'), '#5a4c20');
+    this._addActionButton('Vibe Portal', () => this._addPortal(VIBE_PORTAL_TYPES.EXIT), '#125341');
+    this._addActionButton('Return Portal', () => this._addPortal(VIBE_PORTAL_TYPES.RETURN), '#5b241c');
     this._addActionButton('Move', () => this._setTransformMode('translate'));
     this._addActionButton('Rotate', () => this._setTransformMode('rotate'));
     this._addActionButton('Scale', () => this._setTransformMode('scale'));
@@ -191,6 +195,7 @@ class BuildModeEditor {
     this._createTransformSection();
     this._createMaterialSection();
     this._createLightSection();
+    this._createPortalSection();
     this._createPrefabSection();
     this._createGlbSection();
     this._createPaletteSection();
@@ -294,13 +299,17 @@ class BuildModeEditor {
       const primitiveId = object?.userData?.primitiveId;
       const prefabInstanceId = object?.userData?.prefabInstanceId;
       const lightId = object?.userData?.lightId;
-      if (!primitiveId && !prefabInstanceId && !lightId) return;
+      const portalId = object?.userData?.portalId;
+      if (!primitiveId && !prefabInstanceId && !lightId && !portalId) return;
 
       const primitive = primitiveId
         ? this.layout.primitives.find((entry) => entry.id === primitiveId)
         : null;
       const light = lightId
         ? (this.layout.lights ?? []).find((entry) => entry.id === lightId)
+        : null;
+      const portal = portalId
+        ? (this.layout.portals ?? []).find((entry) => entry.id === portalId)
         : null;
       const mode = this.transformMode || this.transformControls?.mode || 'translate';
       const isGlb = primitive?.type === 'glb';
@@ -346,7 +355,25 @@ class BuildModeEditor {
             snapPosition: true,
             allowEdgeOverflow: true,
           })
-        : {
+        : portal
+          ? this.app.room.snapPortalToGrid({
+            ...deepClone(portal),
+            position: {
+              x: object.position.x,
+              y: object.position.y,
+              z: object.position.z,
+            },
+            rotation: {
+              x: object.rotation.x,
+              y: object.rotation.y,
+              z: object.rotation.z,
+            },
+          }, {
+            snapY: true,
+            snapPosition: true,
+            allowEdgeOverflow: true,
+          })
+          : {
           position: {
             x: Number(object.position.x.toFixed(4)),
             y: Number(object.position.y.toFixed(4)),
@@ -369,11 +396,18 @@ class BuildModeEditor {
       object.rotation.set(next.rotation.x, next.rotation.y, next.rotation.z);
       if (next.scale) {
         object.scale.set(next.scale.x, next.scale.y, next.scale.z);
+      } else {
+        object.scale.set(1, 1, 1);
       }
       this._suppressTransformSync = false;
 
       if (lightId) {
         this.app.room.updateEditableLightTransform(lightId, {
+          position: next.position,
+          rotation: next.rotation,
+        });
+      } else if (portalId) {
+        this.app.room.updateEditablePortalTransform(portalId, {
           position: next.position,
           rotation: next.rotation,
         });
@@ -426,6 +460,7 @@ class BuildModeEditor {
       && !current.userData?.primitiveId
       && !current.userData?.prefabInstanceId
       && !current.userData?.lightId
+      && !current.userData?.portalId
     ) {
       current = current.parent;
     }
@@ -436,6 +471,7 @@ class BuildModeEditor {
     return object?.userData?.primitiveId
       ?? object?.userData?.prefabInstanceId
       ?? object?.userData?.lightId
+      ?? object?.userData?.portalId
       ?? null;
   }
 
@@ -470,6 +506,9 @@ class BuildModeEditor {
     const light = editableId
       ? (this.layout.lights ?? []).find((entry) => entry.id === editableId)
       : null;
+    const portal = editableId
+      ? (this.layout.portals ?? []).find((entry) => entry.id === editableId)
+      : null;
     const gridCell = this._getGridCellFromPoint(hit.point);
     this.hitTooltip.style.display = 'block';
     this.hitTooltip.style.left = `${this.pointerScreen.x + 14}px`;
@@ -479,6 +518,7 @@ class BuildModeEditor {
       gridCell ? `grid ${gridCell.col + 1}, ${gridCell.row + 1}` : '',
       primitive ? `cell ${primitive.texture.cell ?? 'none'}` : '',
       light ? `${light.lightType} light` : '',
+      portal ? `${portal.portalType} portal` : '',
       `x ${hit.point.x.toFixed(2)} y ${hit.point.y.toFixed(2)} z ${hit.point.z.toFixed(2)}`,
     ].filter(Boolean).join('\n');
   }
@@ -527,7 +567,10 @@ class BuildModeEditor {
     this.nameInput.style.marginTop = '8px';
     this.nameInput.addEventListener('input', () => {
       this._updateSelected((entry) => {
-        entry.name = this.nameInput.value || entry.type || `${entry.lightType}-light`;
+        entry.name = this.nameInput.value
+          || entry.type
+          || (entry.lightType ? `${entry.lightType}-light` : null)
+          || (entry.portalType ? `${entry.portalType}-portal` : 'editable');
       });
     });
     section.appendChild(this.nameInput);
@@ -746,6 +789,44 @@ class BuildModeEditor {
     this.lightPenumbraInput = this._createRangeField(section, 'Penumbra', 0, 1, 0.01, (value) => {
       this._updateSelected((light) => {
         light.penumbra = value;
+      }, { snapPosition: false, snapScale: false });
+    });
+  }
+
+  _createPortalSection() {
+    const section = this._createSection('Portal');
+    this.portalSection = section;
+
+    const typeWrap = document.createElement('label');
+    typeWrap.textContent = 'Portal Type';
+    Object.assign(typeWrap.style, {
+      display: 'grid',
+      gap: '4px',
+      color: '#d7c5a7',
+    });
+    this.portalTypeSelect = document.createElement('select');
+    this._styleField(this.portalTypeSelect);
+    [
+      [VIBE_PORTAL_TYPES.EXIT, 'Vibe Jam Exit'],
+      [VIBE_PORTAL_TYPES.RETURN, 'Return / Start'],
+    ].forEach(([value, label]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      this.portalTypeSelect.appendChild(option);
+    });
+    this.portalTypeSelect.addEventListener('change', () => {
+      this._updateSelected((portal) => {
+        portal.portalType = normalizeVibePortalType(this.portalTypeSelect.value);
+        portal.name = portal.portalType === VIBE_PORTAL_TYPES.RETURN ? 'Return Portal' : 'Vibe Jam Portal';
+      }, { snapPosition: false, snapScale: false });
+    });
+    typeWrap.appendChild(this.portalTypeSelect);
+    section.appendChild(typeWrap);
+
+    this.portalTriggerRadiusInput = this._createRangeField(section, 'Trigger Radius', 0.25, 3, 0.05, (value) => {
+      this._updateSelected((portal) => {
+        portal.triggerRadius = value;
       }, { snapPosition: false, snapScale: false });
     });
   }
@@ -1308,8 +1389,12 @@ class BuildModeEditor {
     return this._editorLights().find((entry) => entry.id === this.selectedId) ?? null;
   }
 
+  _selectedPortal() {
+    return this._editorPortals().find((entry) => entry.id === this.selectedId) ?? null;
+  }
+
   _selectedEntry() {
-    return this._selectedPrimitive() ?? this._selectedLight();
+    return this._selectedPrimitive() ?? this._selectedLight() ?? this._selectedPortal();
   }
 
   _spawnLabel(spawnType) {
@@ -1326,8 +1411,12 @@ class BuildModeEditor {
     return (this.layout.lights ?? []).filter((entry) => entry.deleted !== true);
   }
 
+  _editorPortals() {
+    return (this.layout.portals ?? []).filter((entry) => entry.deleted !== true);
+  }
+
   _editorEntries() {
-    return [...this._editorPrimitives(), ...this._editorLights()];
+    return [...this._editorPrimitives(), ...this._editorLights(), ...this._editorPortals()];
   }
 
   _refreshList() {
@@ -1352,6 +1441,8 @@ class BuildModeEditor {
       option.value = entry.id;
       if (entry.lightType) {
         option.textContent = `${entry.name} (${entry.lightType} light)`;
+      } else if (entry.portalType) {
+        option.textContent = `${entry.name} (${normalizeVibePortalType(entry.portalType)} portal)`;
       } else {
         const spawnLabel = this._spawnLabel(normalizeSpawnType(entry.spawnType));
         option.textContent = spawnLabel
@@ -1369,16 +1460,17 @@ class BuildModeEditor {
     this._syncPrefabSection();
     const primitive = this._selectedPrimitive();
     const light = this._selectedLight();
-    const entry = primitive ?? light;
+    const portal = this._selectedPortal();
+    const entry = primitive ?? light ?? portal;
     const disabled = !entry;
     const primitiveDisabled = !primitive;
     const lightDisabled = !light;
+    const portalDisabled = !portal;
 
     [
       this.nameInput,
       ...Object.values(this.positionInputs),
       ...Object.values(this.rotationInputs),
-      this.castShadowToggle,
     ].forEach((field) => {
       field.disabled = disabled;
     });
@@ -1411,11 +1503,21 @@ class BuildModeEditor {
     ].forEach((field) => {
       field.disabled = lightDisabled;
     });
+    this.castShadowToggle.disabled = !primitive && !light;
+
+    [
+      this.portalTypeSelect,
+      this.portalTriggerRadiusInput,
+    ].forEach((field) => {
+      field.disabled = portalDisabled;
+    });
 
     this.surfaceSection.style.display = primitive ? 'block' : 'none';
     this.lightSection.style.display = light ? 'block' : 'none';
+    this.portalSection.style.display = portal ? 'block' : 'none';
     this.scaleInputs._wrap.style.display = primitive ? 'block' : 'none';
     this.colliderToggle._wrap.style.display = primitive ? 'flex' : 'none';
+    this.castShadowToggle._wrap.style.display = primitive || light ? 'flex' : 'none';
     this.receiveShadowToggle._wrap.style.display = primitive ? 'flex' : 'none';
     this.clearanceInput._wrap.style.display = primitive ? 'grid' : 'none';
     this.navAreaSelect._wrap.style.display = primitive ? 'grid' : 'none';
@@ -1469,6 +1571,12 @@ class BuildModeEditor {
       this.lightAngleInput._output.textContent = (light.angle * RAD_TO_DEG).toFixed(2);
       this.lightPenumbraInput.value = light.penumbra;
       this.lightPenumbraInput._output.textContent = Number(light.penumbra).toFixed(2);
+    }
+
+    if (portal) {
+      this.portalTypeSelect.value = normalizeVibePortalType(portal.portalType);
+      this.portalTriggerRadiusInput.value = portal.triggerRadius;
+      this.portalTriggerRadiusInput._output.textContent = Number(portal.triggerRadius).toFixed(2);
     }
 
     this._highlightPalette();
@@ -1618,15 +1726,33 @@ class BuildModeEditor {
     }
 
     const light = this._selectedLight();
-    if (!light) return;
-    const next = deepClone(light);
-    mutator(next);
-    const snapped = this.app.room.snapLightToGrid(next, {
+    if (light) {
+      const next = deepClone(light);
+      mutator(next);
+      const snapped = this.app.room.snapLightToGrid(next, {
+        snapY,
+        snapPosition,
+        allowEdgeOverflow: true,
+      });
+      this.app.room.upsertEditableLight(snapped);
+      this.layout = this.app.room.getEditableLayout();
+      this._syncForm();
+      this._attachTransformControls();
+      return;
+    }
+
+    const portal = this._selectedPortal();
+    if (!portal) {
+      return;
+    }
+    const nextPortal = deepClone(portal);
+    mutator(nextPortal);
+    const snappedPortal = this.app.room.snapPortalToGrid(nextPortal, {
       snapY,
       snapPosition,
       allowEdgeOverflow: true,
     });
-    this.app.room.upsertEditableLight(snapped);
+    this.app.room.upsertEditablePortal(snappedPortal);
     this.layout = this.app.room.getEditableLayout();
     this._syncForm();
     this._attachTransformControls();
@@ -1668,9 +1794,23 @@ class BuildModeEditor {
     this._setStatus(`Added ${light.name}.`);
   }
 
+  _addPortal(portalType) {
+    const portal = this.app.room.snapPortalToGrid(
+      createDefaultPortal(portalType, this.app),
+      { snapY: true, snapPosition: true, allowEdgeOverflow: true },
+    );
+    this.app.room.upsertEditablePortal(portal);
+    this.layout = this.app.room.getEditableLayout();
+    this.selectedId = portal.id;
+    this._syncForm();
+    this._attachTransformControls();
+    this._setStatus(`Added ${portal.name}.`);
+  }
+
   _duplicateSelected() {
     const primitive = this._selectedPrimitive();
     const light = this._selectedLight();
+    const portal = this._selectedPortal();
     const grid = this.app.room.getBuildGridConfig();
     if (primitive) {
       const copy = deepClone(primitive);
@@ -1687,33 +1827,51 @@ class BuildModeEditor {
       this._setStatus(`Duplicated ${primitive.name}.`);
       return;
     }
-    if (!light) return;
-    const copy = deepClone(light);
-    copy.id = `light-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-    copy.name = `${light.name}-copy`;
-    copy.position.x += grid.cellWidth;
-    copy.position.z += grid.cellDepth;
-    const snapped = this.app.room.snapLightToGrid(copy, { snapY: true, allowEdgeOverflow: true });
-    this.app.room.upsertEditableLight(snapped);
+    if (light) {
+      const copy = deepClone(light);
+      copy.id = `light-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+      copy.name = `${light.name}-copy`;
+      copy.position.x += grid.cellWidth;
+      copy.position.z += grid.cellDepth;
+      const snapped = this.app.room.snapLightToGrid(copy, { snapY: true, allowEdgeOverflow: true });
+      this.app.room.upsertEditableLight(snapped);
+      this.layout = this.app.room.getEditableLayout();
+      this.selectedId = snapped.id;
+      this._syncForm();
+      this._attachTransformControls();
+      this._setStatus(`Duplicated ${light.name}.`);
+      return;
+    }
+    if (!portal) return;
+    const portalCopy = deepClone(portal);
+    portalCopy.id = createPortalId();
+    portalCopy.name = `${portal.name}-copy`;
+    portalCopy.position.x += grid.cellWidth;
+    portalCopy.position.z += grid.cellDepth;
+    const snapped = this.app.room.snapPortalToGrid(portalCopy, { snapY: true, allowEdgeOverflow: true });
+    this.app.room.upsertEditablePortal(snapped);
     this.layout = this.app.room.getEditableLayout();
     this.selectedId = snapped.id;
     this._syncForm();
     this._attachTransformControls();
-    this._setStatus(`Duplicated ${light.name}.`);
+    this._setStatus(`Duplicated ${portal.name}.`);
   }
 
   _deleteSelected() {
     if (!this.selectedId) return;
     const primitive = this._selectedPrimitive();
     const light = this._selectedLight();
-    const currentName = primitive?.name ?? light?.name ?? 'object';
+    const portal = this._selectedPortal();
+    const currentName = primitive?.name ?? light?.name ?? portal?.name ?? 'object';
     if (light) {
       this.app.room.purgeEditableLight(this.selectedId);
+    } else if (portal) {
+      this.app.room.purgeEditablePortal(this.selectedId);
     } else {
       this.app.room.purgeEditablePrimitive(this.selectedId);
     }
     this.layout = this.app.room.getEditableLayout();
-    this.selectedId = this.layout.primitives[0]?.id ?? this.layout.lights?.[0]?.id ?? null;
+    this.selectedId = this.layout.primitives[0]?.id ?? this.layout.lights?.[0]?.id ?? this.layout.portals?.[0]?.id ?? null;
     this._syncForm();
     this._attachTransformControls();
     this._setStatus(`Deleted ${currentName}.`);
@@ -1734,8 +1892,17 @@ class BuildModeEditor {
 
     const socket = this.app.net?.ws;
     if (socket?.readyState === WebSocket.OPEN) {
+      const syncToken = import.meta.env.VITE_DEV_LAYOUT_SYNC_TOKEN ?? '';
+      if (!syncToken) {
+        this._setStatus(
+          'Saved level (file only). Set VITE_DEV_LAYOUT_SYNC_TOKEN and PartyKit DEV_LAYOUT_SYNC_ENABLED + DEV_LAYOUT_SYNC_TOKEN to push colliders to the server.',
+          true,
+        );
+        return;
+      }
       socket.send(JSON.stringify({
         type: 'dev-sync-layout',
+        syncToken,
         layout: payload,
       }));
       this._setStatus('Saved level and synced server layout.');

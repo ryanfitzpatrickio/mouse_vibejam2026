@@ -66,8 +66,9 @@ export class NetworkClient {
   /** @type {((event: {type: string, [k:string]: any}) => void)[]} */
   listeners = [];
 
-  constructor(roomId = 'default') {
+  constructor(roomId = 'default', { portalArrival = null } = {}) {
     this.roomId = roomId;
+    this.portalArrival = portalArrival;
   }
 
   connect() {
@@ -86,6 +87,7 @@ export class NetworkClient {
       this.ws?.send(JSON.stringify({
         type: 'hello',
         playerKey: this.playerKey,
+        portal: this.portalArrival ?? undefined,
       }));
       console.log('[net] connected to room:', this.roomId);
     });
@@ -158,6 +160,15 @@ export class NetworkClient {
           for (const pred of data.predators) {
             this.remotePredators.set(pred.id, pred);
           }
+        }
+        break;
+
+      case 'portal-spawn':
+        if (data.player?.id === this.localId) {
+          this.serverState = data.player;
+          this.serverSeq = -1;
+          this.pendingInputs.length = 0;
+          this._sendTimes.clear();
         }
         break;
 

@@ -5,6 +5,7 @@
  */
 
 import { createDefaultQueryFilter, findPath } from 'navcat';
+import { CAT_BT, selectRoutineAfterIdle, initialIdleDelay } from './catBehaviorTree.js';
 import { PHYSICS } from './physics.js';
 import { NAV_AGENT_CONFIGS, NAV_POLY_FLAGS } from './navConfig.js';
 
@@ -18,6 +19,10 @@ export const PREDATOR_AI = Object.freeze({
   STUNNED: 'stunned',
   ROAR: 'roar',
   DEATH: 'death',
+  SLEEP: 'sleep',
+  GROOM: 'groom',
+  PLAY: 'play',
+  BORED_WANDER: 'bored_wander',
 });
 
 export const CAT_CONFIG = Object.freeze({
@@ -69,7 +74,7 @@ export function createPredatorState(config) {
     maxHealth: config.maxHealth ?? CAT_CONFIG.maxHealth,
     alive: true,
     aiState: PREDATOR_AI.IDLE,
-    aiTimer: 1 + Math.random() * 2,
+    aiTimer: initialIdleDelay(),
 
     spawnPoint: { x: config.spawnX ?? 0, y: spawnY, z: config.spawnZ ?? 0 },
     patrolTarget: { x: config.spawnX ?? 0, y: spawnY, z: config.spawnZ ?? 0 },
@@ -99,6 +104,16 @@ export function createPredatorState(config) {
     navPathIndex: 0,
     navTarget: null,
     navRepathTimer: 0,
+
+    chaseTargetId: null,
+    chaseFrustration: 0,
+    nextChaseTargetPick: 0,
+    /** Best horizontal distance achieved this chase; null until first tick */
+    chaseClosestDistXZ: null,
+    /** Time spent on a chase “plateau” without real progress */
+    chasePlateauTimer: 0,
+    /** Sustained loss of line of sight while hunting */
+    chaseLosBlockedTimer: 0,
   };
 }
 
@@ -185,9 +200,13 @@ function rebuildPredatorPath(state, targetPosition, navMesh) {
   state.navPathIndex = state.navPath.length > 1 ? 1 : 0;
 }
 
+/**
+ * Next steering point on the cat navmesh, or null when no route exists (prey unreachable).
+ * Callers should treat null as "do not run straight at the mouse" and build frustration / boredom.
+ */
 function getPredatorSteerTarget(state, targetPosition, navMesh) {
   if (!targetPosition || !navMesh) {
-    return targetPosition;
+    return targetPosition ?? null;
   }
 
   if (shouldRebuildPredatorPath(state, targetPosition)) {
@@ -203,7 +222,106 @@ function getPredatorSteerTarget(state, targetPosition, navMesh) {
     return waypoint;
   }
 
+  if (!state.navPath?.length) {
+    return null;
+  }
+
   return targetPosition;
+}
+
+function navSteerMove(state, dest, navMesh, speed, dt) {
+  const steer = getPredatorSteerTarget(state, dest, navMesh);
+  if (!steer) return false;
+  const dir = normalizeXZ({
+    x: steer.x - state.position.x,
+    z: steer.z - state.position.z,
+  });
+  moveToward(state, dir, speed, dt);
+  faceDirection(state, dir, dt);
+  return true;
+}
+
+function gatherMiceSortedByDistance(state, players) {
+  const out = [];
+  for (const player of Object.values(players)) {
+    if (!player?.alive || !player.position) continue;
+    out.push({
+      player,
+      id: player.id,
+      d: distXZ(state.position, player.position),
+    });
+  }
+  out.sort((a, b) => a.d - b.d);
+  return out;
+}
+
+/** Mice the cat could actually melee from its current height (vertical capsule overlap). */
+function reachableMiceSorted(state, sortedMice) {
+  if (!CAT_BT.requireVerticalStrikeOverlapForHunt) return sortedMice;
+  return sortedMice.filter((m) => canPredatorHitPlayer(state, m.player));
+}
+
+/**
+ * Nearest mouse in horizontal aggro that is vertically hittable (if required) and in line of sight.
+ */
+function firstReachableMouseInAggro(state, sortedMice, colliders) {
+  for (const m of sortedMice) {
+    if (m.d >= state.aggroRange) break;
+    const vertOk = !CAT_BT.requireVerticalStrikeOverlapForHunt || canPredatorHitPlayer(state, m.player);
+    if (!vertOk) continue;
+    const losOk = !CAT_BT.requireLineOfSightForHunt || hasPredatorLineOfSight(state, m.player, colliders);
+    if (!losOk) continue;
+    return m;
+  }
+  return null;
+}
+
+function getChaseTargetPlayer(state, players) {
+  if (!state.chaseTargetId) return null;
+  const p = players[state.chaseTargetId];
+  return p?.alive ? p : null;
+}
+
+function refreshChaseTarget(state, reachableSorted, now) {
+  if (now < state.nextChaseTargetPick) return;
+  state.nextChaseTargetPick = now + CAT_BT.chaseTargetRefresh;
+
+  if (!reachableSorted.length) {
+    state.chaseTargetId = null;
+    return;
+  }
+
+  const nearest = reachableSorted[0];
+  const cur = reachableSorted.find((m) => m.id === state.chaseTargetId);
+
+  if (!state.chaseTargetId || !cur) {
+    state.chaseTargetId = nearest.id;
+    clearPredatorNavPath(state);
+    return;
+  }
+
+  if (nearest.id !== state.chaseTargetId && nearest.d < cur.d - CAT_BT.switchTargetAdvantage) {
+    state.chaseTargetId = nearest.id;
+    clearPredatorNavPath(state);
+    state.chaseFrustration *= 0.45;
+  }
+}
+
+/**
+ * Drops invalid targets and picks nearest vertically reachable mouse, or clears target.
+ */
+function ensureChaseTarget(state, players, reachableSorted) {
+  if (!reachableSorted.length) {
+    state.chaseTargetId = null;
+    clearPredatorNavPath(state);
+    return null;
+  }
+  const cur = getChaseTargetPlayer(state, players);
+  if (!cur || !canPredatorHitPlayer(state, cur)) {
+    state.chaseTargetId = reachableSorted[0].id;
+    clearPredatorNavPath(state);
+  }
+  return getChaseTargetPlayer(state, players);
 }
 
 function segmentIntersectsExpandedBoxXZ(start, end, box, padding = 0) {
@@ -280,11 +398,44 @@ function angleDiff(target, current) {
   return d;
 }
 
-function pickPatrolTarget(state) {
+function pickPatrolTarget(state, radiusScale = 1) {
   const angle = Math.random() * Math.PI * 2;
-  const dist = 1 + Math.random() * (state.patrolRadius - 1);
+  const span = Math.max(0.5, (state.patrolRadius - 1) * radiusScale);
+  const dist = 1 + Math.random() * span;
   state.patrolTarget.x = state.spawnPoint.x + Math.cos(angle) * dist;
   state.patrolTarget.z = state.spawnPoint.z + Math.sin(angle) * dist;
+  state.patrolTarget.y = state.spawnPoint.y;
+}
+
+function resetChaseProgress(state) {
+  state.chaseClosestDistXZ = null;
+  state.chasePlateauTimer = 0;
+  state.chaseLosBlockedTimer = 0;
+}
+
+function enterBoredWander(state) {
+  clearPredatorNavPath(state);
+  state.chaseTargetId = null;
+  state.chaseFrustration = 0;
+  resetChaseProgress(state);
+  state.aiState = PREDATOR_AI.BORED_WANDER;
+  state.aiTimer = CAT_BT.boredWanderMin + Math.random() * (CAT_BT.boredWanderMax - CAT_BT.boredWanderMin);
+  pickPatrolTarget(state, 1.15);
+}
+
+function transitionLifeFromIdle(state) {
+  const choice = selectRoutineAfterIdle();
+  clearPredatorNavPath(state);
+  if (choice.state === PREDATOR_AI.PATROL) {
+    state.aiState = PREDATOR_AI.PATROL;
+    pickPatrolTarget(state, 1);
+    return;
+  }
+  state.aiState = choice.state;
+  state.aiTimer = choice.timer;
+  if (choice.state === PREDATOR_AI.PLAY) {
+    pickPatrolTarget(state, CAT_BT.playPatrolRadiusScale);
+  }
 }
 
 function moveToward(state, dir, speed, dt) {
@@ -378,36 +529,35 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
     z: state.position.z,
   };
 
-  let nearestPlayer = null;
-  let nearestDist = Infinity;
-  for (const player of Object.values(players)) {
-    if (!player.alive) continue;
-    const d = distXZ(state.position, player.position);
-    if (d < nearestDist) {
-      nearestDist = d;
-      nearestPlayer = player;
-    }
-  }
+  const now = Date.now() / 1000;
+  const sortedMice = gatherMiceSortedByDistance(state, players);
+  const reachableMice = reachableMiceSorted(state, sortedMice);
+  /** Nearest mouse in aggro that is vertically hittable and not behind world collision. */
+  const aggroPrey = firstReachableMouseInAggro(state, sortedMice, colliders);
+  const preyInAggro = aggroPrey != null;
 
   const distToSpawn = distXZ(state.position, state.spawnPoint);
 
   switch (state.aiState) {
     case PREDATOR_AI.IDLE:
-      clearPredatorNavPath(state);
-      if (nearestDist < state.aggroRange && nearestPlayer) {
+      if (preyInAggro) {
+        state.chaseTargetId = aggroPrey.player.id;
+        clearPredatorNavPath(state);
+        state.chaseFrustration = 0;
         state.aiState = PREDATOR_AI.ALERT;
         state.aiTimer = state.alertDuration;
         break;
       }
       if (state.aiTimer <= 0) {
-        state.aiState = PREDATOR_AI.PATROL;
-        pickPatrolTarget(state);
+        transitionLifeFromIdle(state);
       }
       break;
 
     case PREDATOR_AI.PATROL: {
-      clearPredatorNavPath(state);
-      if (nearestDist < state.aggroRange && nearestPlayer) {
+      if (preyInAggro) {
+        state.chaseTargetId = aggroPrey.player.id;
+        clearPredatorNavPath(state);
+        state.chaseFrustration = 0;
         state.aiState = PREDATOR_AI.ALERT;
         state.aiTimer = state.alertDuration;
         break;
@@ -415,87 +565,296 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
       const dx = state.patrolTarget.x - state.position.x;
       const dz = state.patrolTarget.z - state.position.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
-      if (dist < 0.5) {
+      if (dist < 0.55) {
+        clearPredatorNavPath(state);
         state.aiState = PREDATOR_AI.IDLE;
         state.aiTimer = state.patrolWaitMin + Math.random() * (state.patrolWaitMax - state.patrolWaitMin);
-      } else {
-        const dir = normalizeXZ({ x: dx, z: dz });
-        moveToward(state, dir, state.moveSpeed, dt);
-        faceDirection(state, dir, dt);
+      } else if (!navSteerMove(state, state.patrolTarget, navMesh, state.moveSpeed, dt)) {
+        pickPatrolTarget(state, 1);
+        clearPredatorNavPath(state);
       }
       break;
     }
 
-    case PREDATOR_AI.ALERT:
-      clearPredatorNavPath(state);
-      if (nearestPlayer) facePosition(state, nearestPlayer.position, dt);
+    case PREDATOR_AI.SLEEP:
+      if (preyInAggro) {
+        state.chaseTargetId = aggroPrey.player.id;
+        clearPredatorNavPath(state);
+        state.chaseFrustration = 0;
+        state.aiState = PREDATOR_AI.ALERT;
+        state.aiTimer = state.alertDuration;
+        break;
+      }
+      if (state.aiTimer <= 0) {
+        clearPredatorNavPath(state);
+        state.aiState = PREDATOR_AI.IDLE;
+        state.aiTimer = initialIdleDelay();
+      }
+      break;
+
+    case PREDATOR_AI.GROOM:
+      if (preyInAggro) {
+        state.chaseTargetId = aggroPrey.player.id;
+        clearPredatorNavPath(state);
+        state.chaseFrustration = 0;
+        state.aiState = PREDATOR_AI.ALERT;
+        state.aiTimer = state.alertDuration;
+        break;
+      }
+      state.rotation += Math.sin(now * 2.4) * dt * 0.55;
+      if (state.aiTimer <= 0) {
+        clearPredatorNavPath(state);
+        state.aiState = PREDATOR_AI.IDLE;
+        state.aiTimer = initialIdleDelay();
+      }
+      break;
+
+    case PREDATOR_AI.PLAY:
+      if (preyInAggro) {
+        state.chaseTargetId = aggroPrey.player.id;
+        clearPredatorNavPath(state);
+        state.chaseFrustration = 0;
+        state.aiState = PREDATOR_AI.ALERT;
+        state.aiTimer = state.alertDuration;
+        break;
+      }
+      if (
+        !navSteerMove(state, state.patrolTarget, navMesh, state.chaseSpeed * 0.62, dt)
+        || distXZ(state.position, state.patrolTarget) < 0.65
+      ) {
+        pickPatrolTarget(state, CAT_BT.playPatrolRadiusScale);
+        clearPredatorNavPath(state);
+      }
+      if (state.aiTimer <= 0) {
+        clearPredatorNavPath(state);
+        state.aiState = PREDATOR_AI.IDLE;
+        state.aiTimer = initialIdleDelay();
+      }
+      break;
+
+    case PREDATOR_AI.BORED_WANDER:
+      if (preyInAggro) {
+        state.chaseTargetId = aggroPrey.player.id;
+        clearPredatorNavPath(state);
+        state.chaseFrustration = 0;
+        state.aiState = PREDATOR_AI.ALERT;
+        state.aiTimer = state.alertDuration;
+        break;
+      }
+      if (
+        !navSteerMove(state, state.patrolTarget, navMesh, state.moveSpeed * 0.85, dt)
+        || distXZ(state.position, state.patrolTarget) < 0.6
+      ) {
+        pickPatrolTarget(state, 1.2);
+        clearPredatorNavPath(state);
+      }
+      if (state.aiTimer <= 0) {
+        clearPredatorNavPath(state);
+        state.aiState = PREDATOR_AI.IDLE;
+        state.aiTimer = initialIdleDelay();
+      }
+      break;
+
+    case PREDATOR_AI.ALERT: {
+      const preyA = ensureChaseTarget(state, players, reachableMice);
+      if (!preyA || distXZ(state.position, preyA.position) > state.aggroRange * 1.08) {
+        clearPredatorNavPath(state);
+        state.chaseTargetId = null;
+        resetChaseProgress(state);
+        state.aiState = PREDATOR_AI.IDLE;
+        state.aiTimer = initialIdleDelay();
+        break;
+      }
+      if (CAT_BT.requireLineOfSightForHunt) {
+        if (hasPredatorLineOfSight(state, preyA, colliders)) {
+          state.chaseLosBlockedTimer = 0;
+        } else {
+          state.chaseLosBlockedTimer += dt;
+          if (state.chaseLosBlockedTimer >= CAT_BT.losBlockedGiveUpSeconds) {
+            clearPredatorNavPath(state);
+            state.chaseTargetId = null;
+            resetChaseProgress(state);
+            state.aiState = PREDATOR_AI.IDLE;
+            state.aiTimer = initialIdleDelay();
+            break;
+          }
+        }
+      }
+      facePosition(state, preyA.position, dt);
       if (state.aiTimer <= 0) {
         state.aiState = PREDATOR_AI.ROAR;
         state.aiTimer = state.roarDuration;
       }
       break;
+    }
 
-    case PREDATOR_AI.ROAR:
-      clearPredatorNavPath(state);
-      if (nearestPlayer) facePosition(state, nearestPlayer.position, dt);
+    case PREDATOR_AI.ROAR: {
+      const preyR = ensureChaseTarget(state, players, reachableMice);
+      if (!preyR || distXZ(state.position, preyR.position) > state.aggroRange * 1.15) {
+        clearPredatorNavPath(state);
+        state.chaseTargetId = null;
+        resetChaseProgress(state);
+        state.aiState = PREDATOR_AI.IDLE;
+        state.aiTimer = initialIdleDelay();
+        break;
+      }
+      if (CAT_BT.requireLineOfSightForHunt) {
+        if (hasPredatorLineOfSight(state, preyR, colliders)) {
+          state.chaseLosBlockedTimer = 0;
+        } else {
+          state.chaseLosBlockedTimer += dt;
+          if (state.chaseLosBlockedTimer >= CAT_BT.losBlockedGiveUpSeconds) {
+            clearPredatorNavPath(state);
+            state.chaseTargetId = null;
+            resetChaseProgress(state);
+            state.aiState = PREDATOR_AI.IDLE;
+            state.aiTimer = initialIdleDelay();
+            break;
+          }
+        }
+      }
+      facePosition(state, preyR.position, dt);
       if (state.aiTimer <= 0) {
         state.aiState = PREDATOR_AI.CHASE;
+        state.nextChaseTargetPick = 0;
+        state.chaseFrustration = 0;
+        resetChaseProgress(state);
       }
       break;
+    }
 
     case PREDATOR_AI.CHASE: {
-      if (!nearestPlayer || (distToSpawn > state.leashRange && nearestDist > state.aggroRange)) {
+      const visibleReachable = CAT_BT.requireLineOfSightForHunt
+        ? reachableMice.filter((m) => hasPredatorLineOfSight(state, m.player, colliders))
+        : reachableMice;
+      const huntPool = visibleReachable.length > 0 ? visibleReachable : reachableMice;
+      ensureChaseTarget(state, players, huntPool);
+      refreshChaseTarget(state, huntPool, now);
+      const prey = getChaseTargetPlayer(state, players);
+      const distPrey = prey ? distXZ(state.position, prey.position) : Infinity;
+
+      if (!prey || (distToSpawn > state.leashRange && distPrey > state.aggroRange)) {
         clearPredatorNavPath(state);
+        state.chaseTargetId = null;
+        state.chaseFrustration = 0;
+        resetChaseProgress(state);
         state.aiState = PREDATOR_AI.PATROL;
         state.patrolTarget.x = state.spawnPoint.x;
         state.patrolTarget.z = state.spawnPoint.z;
+        state.patrolTarget.y = state.spawnPoint.y;
         break;
       }
+
       if (
-        nearestDist < state.attackRange
-        && nearestPlayer
-        && canPredatorHitPlayer(state, nearestPlayer)
-        && hasPredatorLineOfSight(state, nearestPlayer, colliders)
+        prey
+        && distPrey < state.attackRange
+        && canPredatorHitPlayer(state, prey)
+        && hasPredatorLineOfSight(state, prey, colliders)
       ) {
         clearPredatorNavPath(state);
         state.aiState = PREDATOR_AI.ATTACK;
         state.aiTimer = state.attackWindup;
         state.attackHitPending = true;
+        state.chaseFrustration = 0;
+        resetChaseProgress(state);
         break;
       }
-      if (nearestDist > state.leashRange * 1.5) {
+
+      if (distPrey > state.leashRange * 1.5) {
         clearPredatorNavPath(state);
+        state.chaseTargetId = null;
+        state.chaseFrustration = 0;
+        resetChaseProgress(state);
         state.aiState = PREDATOR_AI.PATROL;
         state.patrolTarget.x = state.spawnPoint.x;
         state.patrolTarget.z = state.spawnPoint.z;
+        state.patrolTarget.y = state.spawnPoint.y;
         break;
       }
-      const steerTarget = getPredatorSteerTarget(state, nearestPlayer.position, navMesh);
-      const dir = normalizeXZ({
-        x: steerTarget.x - state.position.x,
-        z: steerTarget.z - state.position.z,
-      });
-      moveToward(state, dir, state.chaseSpeed, dt);
-      faceDirection(state, dir, dt);
+
+      if (prey && CAT_BT.requireLineOfSightForHunt) {
+        if (hasPredatorLineOfSight(state, prey, colliders)) {
+          state.chaseLosBlockedTimer = 0;
+        } else {
+          state.chaseLosBlockedTimer += dt;
+          if (state.chaseLosBlockedTimer >= CAT_BT.losBlockedGiveUpSeconds) {
+            enterBoredWander(state);
+            break;
+          }
+        }
+      }
+
+      const moved = prey
+        ? navSteerMove(state, prey.position, navMesh, state.chaseSpeed, dt)
+        : false;
+      const stepMoved = distXZ(state.position, previousPosition);
+      const speed = dt > 1e-6 ? stepMoved / dt : 0;
+      const expectedStep = state.chaseSpeed * dt;
+      const barelyMoved = moved && stepMoved < Math.max(0.024, expectedStep * 0.14);
+
+      const prevClosest = state.chaseClosestDistXZ;
+      if (prevClosest == null || distPrey < prevClosest - 0.07) {
+        state.chaseClosestDistXZ = distPrey;
+        state.chasePlateauTimer = 0;
+      } else {
+        state.chaseClosestDistXZ = Math.min(prevClosest, distPrey);
+      }
+
+      const gapToBest = distPrey - state.chaseClosestDistXZ;
+      const onApproachPlateau = gapToBest <= CAT_BT.chasePlateauSpan;
+      const outOfMelee = distPrey > state.attackRange + CAT_BT.chasePlateauMinDist;
+      const motionPoor = !moved || speed < CAT_BT.stuckSpeedThreshold || barelyMoved;
+
+      if (onApproachPlateau && outOfMelee && motionPoor) {
+        state.chasePlateauTimer += dt;
+      } else {
+        state.chasePlateauTimer = Math.max(0, state.chasePlateauTimer - dt * 1.2);
+      }
+
+      if (state.chasePlateauTimer > CAT_BT.chasePlateauGrace) {
+        state.chaseFrustration += dt * CAT_BT.plateauStallFrustrationRate;
+      }
+
+      if (!moved) {
+        state.chaseFrustration += dt * CAT_BT.pathFailFrustrationRate;
+      } else if (motionPoor && outOfMelee) {
+        state.chaseFrustration += dt * CAT_BT.stuckMoveFrustrationRate;
+      } else if (
+        moved
+        && !barelyMoved
+        && speed >= CAT_BT.stuckSpeedThreshold
+        && prevClosest != null
+        && distPrey < prevClosest - 0.05
+      ) {
+        state.chaseFrustration = Math.max(0, state.chaseFrustration - dt * 0.55);
+      } else {
+        state.chaseFrustration = Math.max(0, state.chaseFrustration - dt * 0.1);
+      }
+
+      if (state.chaseFrustration >= CAT_BT.frustrationMax) {
+        enterBoredWander(state);
+      }
       break;
     }
 
     case PREDATOR_AI.ATTACK: {
       clearPredatorNavPath(state);
+      const preyAtk = getChaseTargetPlayer(state, players);
+      const distAtk = preyAtk ? distXZ(state.position, preyAtk.position) : Infinity;
       let hitResult = null;
       if (
         state.attackHitPending
         && state.aiTimer <= state.attackHitTime
-        && nearestPlayer
-        && nearestDist < state.attackRange * 1.5
-        && canPredatorHitPlayer(state, nearestPlayer)
+        && preyAtk
+        && distAtk < state.attackRange * 1.5
+        && canPredatorHitPlayer(state, preyAtk)
       ) {
         state.attackHitPending = false;
-        const dx = nearestPlayer.position.x - state.position.x;
-        const dz = nearestPlayer.position.z - state.position.z;
+        const dx = preyAtk.position.x - state.position.x;
+        const dz = preyAtk.position.z - state.position.z;
         const dir = normalizeXZ({ x: dx, z: dz });
         hitResult = {
-          playerId: nearestPlayer.id,
+          playerId: preyAtk.id,
           damage: state.damage,
           knockbackX: dir.x * state.knockbackForce,
           knockbackZ: dir.z * state.knockbackForce,
@@ -510,23 +869,41 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
     }
 
     case PREDATOR_AI.COOLDOWN:
-      clearPredatorNavPath(state);
       if (state.aiTimer <= 0) {
+        ensureChaseTarget(state, players, reachableMice);
+        refreshChaseTarget(state, reachableMice, now);
+        const preyC = getChaseTargetPlayer(state, players);
+        const distC = preyC ? distXZ(state.position, preyC.position) : Infinity;
         if (
-          nearestDist < state.attackRange
-          && nearestPlayer
-          && canPredatorHitPlayer(state, nearestPlayer)
-          && hasPredatorLineOfSight(state, nearestPlayer, colliders)
+          distC < state.attackRange
+          && preyC
+          && canPredatorHitPlayer(state, preyC)
+          && hasPredatorLineOfSight(state, preyC, colliders)
         ) {
+          clearPredatorNavPath(state);
           state.aiState = PREDATOR_AI.ATTACK;
           state.aiTimer = state.attackWindup;
           state.attackHitPending = true;
-        } else if (nearestDist < state.aggroRange && nearestPlayer) {
+        } else if (
+          distC < state.aggroRange
+          && preyC
+          && canPredatorHitPlayer(state, preyC)
+          && (!CAT_BT.requireLineOfSightForHunt || hasPredatorLineOfSight(state, preyC, colliders))
+        ) {
+          clearPredatorNavPath(state);
           state.aiState = PREDATOR_AI.CHASE;
+          state.nextChaseTargetPick = 0;
+          state.chaseFrustration = 0;
+          resetChaseProgress(state);
         } else {
+          clearPredatorNavPath(state);
+          state.chaseTargetId = null;
+          state.chaseFrustration = 0;
+          resetChaseProgress(state);
           state.aiState = PREDATOR_AI.PATROL;
           state.patrolTarget.x = state.spawnPoint.x;
           state.patrolTarget.z = state.spawnPoint.z;
+          state.patrolTarget.y = state.spawnPoint.y;
         }
       }
       break;
@@ -534,7 +911,17 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
     case PREDATOR_AI.STUNNED:
       clearPredatorNavPath(state);
       if (state.aiTimer <= 0) {
-        state.aiState = PREDATOR_AI.CHASE;
+        if (preyInAggro) {
+          state.chaseTargetId = aggroPrey.player.id;
+          state.aiState = PREDATOR_AI.CHASE;
+          state.nextChaseTargetPick = 0;
+        } else {
+          state.chaseTargetId = null;
+          state.aiState = PREDATOR_AI.PATROL;
+          state.patrolTarget.x = state.spawnPoint.x;
+          state.patrolTarget.z = state.spawnPoint.z;
+          state.patrolTarget.y = state.spawnPoint.y;
+        }
       }
       break;
 
