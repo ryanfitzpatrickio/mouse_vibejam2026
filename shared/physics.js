@@ -68,6 +68,8 @@ export function createPlayerState(id) {
     wallAttachCooldownTimer: 0,
     animState: 'idle',
     deathTime: 0,
+    /** Cumulative deaths (server-authoritative; included in snapshots). */
+    deaths: 0,
   };
 }
 

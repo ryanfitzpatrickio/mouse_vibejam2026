@@ -16,7 +16,7 @@ const REMOTE_COLORS = [
 ];
 
 export class RemotePlayerManager {
-  /** @type {Map<string, { mouse: Mouse, targetPos: THREE.Vector3, prevPos: THREE.Vector3, targetRot: number, animState: string }>} */
+  /** @type {Map<string, { mouse: Mouse, targetPos: THREE.Vector3, prevPos: THREE.Vector3, targetRot: number, animState: string, serverAlive: boolean, serverAnimState: string }>} */
   players = new Map();
   /** IDs currently being spawned (async) — prevents duplicate spawns */
   _spawning = new Set();
@@ -41,6 +41,8 @@ export class RemotePlayerManager {
           data.position?.z ?? 0,
         );
         entry.targetRot = data.rotation ?? 0;
+        entry.serverAlive = data.alive !== false;
+        entry.serverAnimState = data.animState ?? 'idle';
         if (data.emote && !entry.emoteManager.isPlaying) {
           entry.emoteManager.play(data.emote);
         } else if (!data.emote && entry.emoteManager.isPlaying) {
@@ -84,7 +86,9 @@ export class RemotePlayerManager {
       const speed = dt > 0 ? Math.sqrt(dx * dx + dz * dz) / dt : 0;
 
       let animState;
-      if (entry.emoteManager.isPlaying) {
+      if (!entry.serverAlive || entry.serverAnimState === 'death') {
+        animState = 'death';
+      } else if (entry.emoteManager.isPlaying) {
         animState = entry.animState;
       } else if (speed > 5) {
         animState = 'run';
@@ -152,6 +156,8 @@ export class RemotePlayerManager {
       ),
       targetRot: data.rotation ?? 0,
       animState: 'idle',
+      serverAlive: data.alive !== false,
+      serverAnimState: data.animState ?? 'idle',
     });
   }
 

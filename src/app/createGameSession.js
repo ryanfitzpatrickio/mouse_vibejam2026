@@ -8,6 +8,7 @@ import { VibePortalManager } from '../world/VibePortalManager.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
 import { HUD } from '../hud/HUD.js';
+import { ScoreboardOverlay } from '../hud/ScoreboardOverlay.js';
 import { attachEdgeOutlines } from '../materials/index.js';
 import { NetworkClient } from '../net/NetworkClient.js';
 import { RemotePlayerManager } from '../net/RemotePlayerManager.js';
@@ -318,6 +319,32 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     getPortalPlacements: () => room.getVibePortalPlacements(),
   });
 
+  const scoreboard = new ScoreboardOverlay();
+
+  function scoreboardLabel(id, localId) {
+    if (id === localId) return 'You';
+    if (typeof id === 'string' && id.startsWith('bot-')) return `Bot ${id.slice(4)}`;
+    if (typeof id === 'string' && id.length > 12) return id.slice(0, 8);
+    return String(id);
+  }
+
+  function buildScoreboardRows() {
+    const lid = net.localId;
+    if (!lid) return [];
+    if (!net.connected) {
+      return [{ label: 'You', deaths: predictionState.deaths ?? 0 }];
+    }
+    const byId = new Map();
+    byId.set(lid, net.serverState ?? predictionState);
+    for (const [id, p] of net.remotePlayers) byId.set(id, p);
+    const rows = [...byId.entries()].map(([id, p]) => ({
+      label: scoreboardLabel(id, lid),
+      deaths: p.deaths ?? 0,
+    }));
+    rows.sort((a, b) => b.deaths - a.deaths || a.label.localeCompare(b.label));
+    return rows;
+  }
+
   // Visual smoothing: render position lerps toward prediction to hide small corrections
   const renderPos = new THREE.Vector3();
   let renderPosInitialized = false;
@@ -358,6 +385,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     predictionState.wallJumpWindowTimer = ss.wallJumpWindowTimer ?? 0;
     predictionState.wallAttachCooldownTimer = ss.wallAttachCooldownTimer ?? 0;
     predictionState.deathTime = ss.deathTime ?? 0;
+    predictionState.deaths = ss.deaths ?? 0;
   }
 
   function reconcileWithServer() {
@@ -580,6 +608,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
       alive: isAlive,
       respawnCountdown,
     });
+    scoreboard.setRows(buildScoreboardRows());
     occlusionFader.update(deltaSeconds);
     render();
     return {
@@ -602,6 +631,7 @@ export async function createGameSession({ canvas, mode = 'webgl', roomId = 'defa
     predatorManager?.dispose();
     emoteWheel.dispose();
     vibePortalManager.dispose();
+    scoreboard.dispose();
     hud.dispose();
     renderer.dispose();
   }

@@ -3,7 +3,14 @@
  * Cats use the cat navmesh in predator.js; bots must use the mouse nav mesh only.
  */
 
-import { findPath, createDefaultQueryFilter } from 'navcat';
+import {
+  findPath,
+  createDefaultQueryFilter,
+  findRandomPoint,
+  findRandomPointAroundCircle,
+  findNearestPoly,
+  createFindNearestPolyResult,
+} from 'navcat';
 import { NAV_AGENT_CONFIGS } from './navConfig.js';
 
 const MOUSE_NAV_FILTER = createDefaultQueryFilter();
@@ -12,11 +19,18 @@ const MOUSE_HALF_EXTENTS = NAV_AGENT_CONFIGS.mouse.queryHalfExtents;
 const REPATH_INTERVAL = 0.35;
 const WAYPOINT_REACH_DIST_SQ = 0.38 * 0.38;
 const TARGET_REPATH_DIST_SQ = 0.7 * 0.7;
-const WANDER_TIMER_MIN = 2.2;
-const WANDER_TIMER_MAX = 5.5;
+const WANDER_TIMER_MIN = 1.35;
+const WANDER_TIMER_MAX = 3.8;
 const FLEE_DURATION = 2.8;
 const FLEE_TRIGGER_DIST = 8.2;
 const FLEE_RUN_DISTANCE = 6;
+
+/** Prefer goals at least this far from other alive players (reduces clumping). */
+const PEER_GOAL_SEPARATION = 3.8;
+const PEER_GOAL_SEPARATION_SQ = PEER_GOAL_SEPARATION * PEER_GOAL_SEPARATION;
+
+const _nearestPolyScratch = createFindNearestPolyResult();
+const _nearestCenterScratch = [0, 0, 0];
 
 function distSqXZ(a, b) {
   const dx = a.x - b.x;
@@ -73,6 +87,109 @@ function shouldRepath(brain, target) {
   return distSqXZ(brain.navTarget, target) >= TARGET_REPATH_DIST_SQ;
 }
 
+function isGoalTooCloseToPeers(goal, peerPositions) {
+  if (!peerPositions?.length) return false;
+  for (const p of peerPositions) {
+    const dx = goal.x - p.x;
+    const dz = goal.z - p.z;
+    if (dx * dx + dz * dz < PEER_GOAL_SEPARATION_SQ) return true;
+  }
+  return false;
+}
+
+/**
+ * Pick a walkable exploration point spread across the navmesh, with mild separation from peers.
+ */
+function pickExploreGoal(state, navMesh, bounds, spawnPoints, peerPositions, rand) {
+  for (let attempt = 0; attempt < 18; attempt += 1) {
+    let pos = null;
+
+    if (navMesh) {
+      const tryRegional = rand() < 0.4;
+      if (tryRegional) {
+        _nearestCenterScratch[0] = state.position.x;
+        _nearestCenterScratch[1] = state.position.y;
+        _nearestCenterScratch[2] = state.position.z;
+        findNearestPoly(
+          _nearestPolyScratch,
+          navMesh,
+          _nearestCenterScratch,
+          MOUSE_HALF_EXTENTS,
+          MOUSE_NAV_FILTER,
+        );
+        if (_nearestPolyScratch.success) {
+          const maxRadius = 11 + rand() * 13;
+          const local = findRandomPointAroundCircle(
+            navMesh,
+            _nearestPolyScratch.nodeRef,
+            _nearestPolyScratch.position,
+            maxRadius,
+            MOUSE_NAV_FILTER,
+            rand,
+          );
+          if (local.success) {
+            pos = {
+              x: local.position[0],
+              y: local.position[1],
+              z: local.position[2],
+            };
+          }
+        }
+      }
+      if (!pos) {
+        const g = findRandomPoint(navMesh, MOUSE_NAV_FILTER, rand);
+        if (g.success) {
+          pos = {
+            x: g.position[0],
+            y: g.position[1],
+            z: g.position[2],
+          };
+        }
+      }
+    }
+
+    if (!pos && spawnPoints?.player?.length) {
+      const s = spawnPoints.player[Math.floor(rand() * spawnPoints.player.length)];
+      pos = clampXZ(
+        s.x + (rand() - 0.5) * 16,
+        s.z + (rand() - 0.5) * 16,
+        bounds,
+        0.5,
+      );
+      pos.y = s.y;
+    }
+
+    if (!pos) {
+      const angle = rand() * Math.PI * 2;
+      const t = 7 + rand() * 17;
+      pos = clampXZ(Math.cos(angle) * t, Math.sin(angle) * t, bounds, 1);
+      pos.y = state.position.y;
+    }
+
+    if (!isGoalTooCloseToPeers(pos, peerPositions)) return pos;
+  }
+
+  const g = navMesh && findRandomPoint(navMesh, MOUSE_NAV_FILTER, rand);
+  if (g?.success) {
+    return {
+      x: g.position[0],
+      y: g.position[1],
+      z: g.position[2],
+    };
+  }
+
+  const sp = spawnPoints?.player?.[0];
+  if (sp) {
+    return {
+      x: sp.x,
+      y: sp.y,
+      z: sp.z,
+    };
+  }
+
+  return clampXZ(0, 0, bounds, 1);
+}
+
 export function createMouseBotBrain() {
   return {
     navPath: [],
@@ -105,8 +222,10 @@ export function resetMouseBotBrain(brain) {
  * @param {{ player?: { x: number, y: number, z: number }[] }} spawnPoints
  * @param {object} bounds { minX, maxX, minZ, maxZ }
  * @param {number} now Wall-clock seconds
+ * @param {{ peerPositions?: { x: number, z: number }[] }} [options] Other alive players (for spread-out goals)
  */
-export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPoints, bounds, now) {
+export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPoints, bounds, now, options = {}) {
+  const peerPositions = options.peerPositions;
   if (!navMesh) {
     return {
       moveX: 0,
@@ -161,20 +280,8 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
     brain.fleeUntil = 0;
     if (brain.wanderTimer <= 0 || !brain.goal) {
       brain.wanderTimer = WANDER_TIMER_MIN + Math.random() * (WANDER_TIMER_MAX - WANDER_TIMER_MIN);
-      const sp = spawnPoints?.player ?? [];
-      if (sp.length) {
-        const s = sp[Math.floor(Math.random() * sp.length)];
-        brain.goal = {
-          x: s.x + (Math.random() - 0.5) * 4,
-          y: s.y,
-          z: s.z + (Math.random() - 0.5) * 4,
-        };
-      } else {
-        const angle = Math.random() * Math.PI * 2;
-        const t = 3 + Math.random() * 10;
-        brain.goal = clampXZ(Math.cos(angle) * t, Math.sin(angle) * t, bounds, 1);
-        brain.goal.y = 0;
-      }
+      const rand = Math.random;
+      brain.goal = pickExploreGoal(state, navMesh, bounds, spawnPoints, peerPositions, rand);
       goal = brain.goal;
       brain.navRepathTimer = 0;
       brain.navPath = [];
@@ -217,7 +324,7 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
   const len = Math.sqrt(dx * dx + dz * dz);
 
   const fleeing = now < brain.fleeUntil && nearestCat && nearestCatDistSq < (FLEE_TRIGGER_DIST + 3) ** 2;
-  const sprint = fleeing;
+  const sprint = fleeing || len > 5.5;
 
   if (len < 0.06) {
     const jumpPressed = Math.random() < 0.004 && state.grounded;

@@ -201,7 +201,9 @@ export class HUD {
     }
     if (playerCount !== undefined) {
       const n = Math.max(0, Math.floor(playerCount));
+      const measured = measureText(String(n), FONT, BAR_WIDTH, LINE_HEIGHT);
       this.playerCountBadge.textContent = String(n);
+      this.playerCountBadge.style.height = `${measured.height}px`;
     }
 
     if (!alive && respawnCountdown > 0) {

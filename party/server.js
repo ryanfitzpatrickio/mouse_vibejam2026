@@ -333,6 +333,14 @@ export default class GameServer {
           seqs[id] = 0;
           continue;
         }
+        const peerPositions = [];
+        for (const [otherId, otherState] of this.players) {
+          if (otherId === id || !otherState?.alive) continue;
+          peerPositions.push({
+            x: otherState.position.x,
+            z: otherState.position.z,
+          });
+        }
         const input = buildMouseBotInput(
           state,
           brain,
@@ -342,6 +350,7 @@ export default class GameServer {
           this.spawnPoints,
           BOUNDS,
           now,
+          { peerPositions },
         );
         simulateTick(state, input, dt, BOUNDS, this.levelColliders);
         seqs[id] = 0;
@@ -358,6 +367,7 @@ export default class GameServer {
           target.health -= hit.damage;
           if (target.health <= 0) {
             target.health = 0;
+            target.deaths = (target.deaths ?? 0) + 1;
             target.alive = false;
             target.animState = 'death';
             this.stats?.recordDeath(hit.playerId);
