@@ -30,6 +30,7 @@ import { simulateTick, createPlayerState } from '../../shared/physics.js';
 import { readVibePortalArrivalFromSearch } from '../../shared/vibePortal.js';
 import kitchenNavMesh from '../../shared/kitchen-navmesh.generated.js';
 import { playerChaseRecordSeconds } from '../../shared/chaseScore.js';
+import { LEVEL_WORLD_BOUNDS_XZ } from '../../shared/levelWorldBounds.js';
 
 function applyAtmosphere(scene) {
   scene.background = new THREE.Color('#8e7a63');
@@ -194,7 +195,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const navMeshOverlay = buildNavMeshOverlay(kitchenNavMesh);
   scene.add(navMeshOverlay);
 
-  const room = new Room({ width: 48, depth: 48, height: 4, scale: 1 });
+  const room = new Room({ height: 4, scale: 1 });
   scene.add(room.getGroup());
   await Promise.all([mouse.ready, room.ready]);
   mouse.position.set(0, mouse.groundOffset, 0);
@@ -432,7 +433,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   // --- Client-side prediction using shared physics ---
   // Uses simulateTick (same code as server) so prediction matches server exactly,
   // eliminating rubberbanding from divergent physics.
-  const CLIENT_BOUNDS = Object.freeze({ minX: -24, maxX: 24, minZ: -24, maxZ: 24 });
+  const CLIENT_BOUNDS = LEVEL_WORLD_BOUNDS_XZ;
   const predictionState = createPlayerState('local');
   predictionState.displayName = getClientPreferredDisplayName();
   const localNameplateAnchor = new THREE.Object3D();

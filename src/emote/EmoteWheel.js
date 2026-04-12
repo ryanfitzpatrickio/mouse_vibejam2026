@@ -20,8 +20,12 @@ export class EmoteWheel {
     this._centerY = 0;
     this._cursorX = 0;
     this._cursorY = 0;
+    this._pointerId = null;
     this._boundMouseMove = this._handleMouseMove.bind(this);
     this._boundMouseUp = this._handleMouseUp.bind(this);
+    this._boundPointerDown = this._handlePointerDown.bind(this);
+    this._boundPointerMove = this._handlePointerMove.bind(this);
+    this._boundPointerUp = this._handlePointerUp.bind(this);
     this._build();
   }
 
@@ -37,6 +41,8 @@ export class EmoteWheel {
       background: 'rgba(0, 0, 0, 0.25)',
       backdropFilter: 'blur(2px)',
       cursor: 'none',
+      touchAction: 'none',
+      WebkitTapHighlightColor: 'transparent',
     });
 
     this._wheel = document.createElement('div');
@@ -141,7 +147,10 @@ export class EmoteWheel {
 
     this._cursorDot.style.left = `${this._centerX + this._cursorX}px`;
     this._cursorDot.style.top = `${this._centerY + this._cursorY}px`;
+    this._updateSelectionFromCursor();
+  }
 
+  _updateSelectionFromCursor() {
     const dist = Math.sqrt(this._cursorX * this._cursorX + this._cursorY * this._cursorY);
 
     if (dist < DEAD_ZONE_PX) {
@@ -155,6 +164,53 @@ export class EmoteWheel {
     let index = Math.floor(angle / SECTOR_ANGLE);
     if (index >= SLOT_COUNT) index = 0;
     this._highlight(index);
+  }
+
+  _setPointerCapture(pointerId) {
+    try {
+      this._container.setPointerCapture(pointerId);
+    } catch {}
+  }
+
+  _releasePointerCapture(pointerId) {
+    try {
+      if (this._container.hasPointerCapture?.(pointerId)) {
+        this._container.releasePointerCapture(pointerId);
+      }
+    } catch {}
+  }
+
+  _handlePointerDown(e) {
+    if (!this.visible || this._pointerId !== null) return;
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    this._pointerId = e.pointerId;
+    this._setPointerCapture(e.pointerId);
+    this._cursorX = e.clientX - this._centerX;
+    this._cursorY = e.clientY - this._centerY;
+    this._cursorDot.style.left = `${e.clientX}px`;
+    this._cursorDot.style.top = `${e.clientY}px`;
+    this._updateSelectionFromCursor();
+  }
+
+  _handlePointerMove(e) {
+    if (!this.visible || e.pointerId !== this._pointerId) return;
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    this._cursorX = e.clientX - this._centerX;
+    this._cursorY = e.clientY - this._centerY;
+    this._cursorDot.style.left = `${e.clientX}px`;
+    this._cursorDot.style.top = `${e.clientY}px`;
+    this._updateSelectionFromCursor();
+  }
+
+  _handlePointerUp(e) {
+    if (e.pointerId !== this._pointerId) return;
+    if (e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    this._releasePointerCapture(e.pointerId);
+    this._pointerId = null;
+    this.confirm();
   }
 
   _handleMouseUp() {
@@ -217,6 +273,10 @@ export class EmoteWheel {
     this._cursorDot.style.top = `${this._centerY}px`;
     this._cursorDot.style.display = 'block';
     this._highlight(-1);
+    this._container.addEventListener('pointerdown', this._boundPointerDown);
+    this._container.addEventListener('pointermove', this._boundPointerMove);
+    this._container.addEventListener('pointerup', this._boundPointerUp);
+    this._container.addEventListener('pointercancel', this._boundPointerUp);
     document.addEventListener('mousemove', this._boundMouseMove);
     document.addEventListener('mouseup', this._boundMouseUp);
   }
@@ -224,8 +284,13 @@ export class EmoteWheel {
   hide() {
     this.visible = false;
     this.selectedIndex = -1;
+    this._pointerId = null;
     this._container.style.display = 'none';
     this._cursorDot.style.display = 'none';
+    this._container.removeEventListener('pointerdown', this._boundPointerDown);
+    this._container.removeEventListener('pointermove', this._boundPointerMove);
+    this._container.removeEventListener('pointerup', this._boundPointerUp);
+    this._container.removeEventListener('pointercancel', this._boundPointerUp);
     document.removeEventListener('mousemove', this._boundMouseMove);
     document.removeEventListener('mouseup', this._boundMouseUp);
     this._slots.forEach((slot) => {

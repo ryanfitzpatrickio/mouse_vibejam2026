@@ -13,6 +13,7 @@ import {
 import { CAT_BT, selectRoutineAfterIdle, initialIdleDelay } from './catBehaviorTree.js';
 import { PHYSICS } from './physics.js';
 import { NAV_AGENT_CONFIGS, NAV_POLY_FLAGS } from './navConfig.js';
+import { LEVEL_WORLD_BOUNDS_XZ } from './levelWorldBounds.js';
 
 export const PREDATOR_AI = Object.freeze({
   IDLE: 'idle',
@@ -1761,10 +1762,11 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
 
   // Clamp to world bounds
   const r = state.radius;
-  if (state.position.x < -24 + r) state.position.x = -24 + r;
-  if (state.position.x > 24 - r) state.position.x = 24 - r;
-  if (state.position.z < -24 + r) state.position.z = -24 + r;
-  if (state.position.z > 24 - r) state.position.z = 24 - r;
+  const { minX, maxX, minZ, maxZ } = LEVEL_WORLD_BOUNDS_XZ;
+  if (state.position.x < minX + r) state.position.x = minX + r;
+  if (state.position.x > maxX - r) state.position.x = maxX - r;
+  if (state.position.z < minZ + r) state.position.z = minZ + r;
+  if (state.position.z > maxZ - r) state.position.z = maxZ - r;
 
   if (pendingStuckIntent && state.aiState === pendingStuckIntent.aiState) {
     updatePredatorStuckIntent(state, {

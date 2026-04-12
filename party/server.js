@@ -14,6 +14,7 @@ import { playerChaseRecordSeconds, tickPlayerChaseScores } from '../shared/chase
 import { StatsTracker } from './stats.js';
 import { createPushBallWorld } from './pushBallWorld.js';
 import { CheeseWorld } from './cheeseWorld.js';
+import { LEVEL_WORLD_BOUNDS_XZ } from '../shared/levelWorldBounds.js';
 
 /**
  * PartyKit env (dashboard / project .env for `partykit dev`):
@@ -39,12 +40,7 @@ const WS_MESSAGE_RATE_PER_SECOND = 90;
 const WS_MESSAGE_BURST = 180;
 const MAX_DROPPED_MESSAGES_BEFORE_CLOSE = 180;
 
-const BOUNDS = Object.freeze({
-  minX: -24,
-  maxX: 24,
-  minZ: -24,
-  maxZ: 24,
-});
+const BOUNDS = LEVEL_WORLD_BOUNDS_XZ;
 
 /** Reject oversized WebSocket frames before JSON.parse (DoS). */
 const MAX_WS_MESSAGE_CHARS = 256 * 1024;

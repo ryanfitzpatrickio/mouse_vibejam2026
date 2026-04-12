@@ -152,7 +152,7 @@
       "position": {
         "x": -24,
         "y": 6,
-        "z": 0
+        "z": 10
       },
       "rotation": {
         "x": -3.1415926535897905,
@@ -161,7 +161,7 @@
       },
       "scale": {
         "x": 12,
-        "y": 48,
+        "y": 28,
         "z": 24
       },
       "texture": {
@@ -3935,6 +3935,246 @@
         "y": 1,
         "z": 1
       },
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnw3vjz8-oy4k0",
+      "name": "garage",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": -40,
+        "y": 0,
+        "z": -14
+      },
+      "rotation": {
+        "x": -1.5707963267948966,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 32,
+        "y": 32,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 94,
+        "repeat": {
+          "x": 2,
+          "y": 3
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnw3ydpx-i39dn",
+      "name": "garage-copy",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": -40,
+        "y": 0,
+        "z": 18
+      },
+      "rotation": {
+        "x": -1.5707963267948966,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 32,
+        "y": 32,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures3",
+        "cell": 94,
+        "repeat": {
+          "x": 2,
+          "y": 3
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnw41vu3-ysjlb",
+      "name": "plane-gx3",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": -24,
+        "y": 10,
+        "z": -14
+      },
+      "rotation": {
+        "x": 1.5707963267948983,
+        "y": -1.5707963267948966,
+        "z": 3.141592653589792
+      },
+      "scale": {
+        "x": 4,
+        "y": 20,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 0,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnw43vvy-sszt3",
+      "name": "plane-gx3-copy",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": -24,
+        "y": 4,
+        "z": -23
+      },
+      "rotation": {
+        "x": 0,
+        "y": -1.5707963267948966,
+        "z": 3.141592653589792
+      },
+      "scale": {
+        "x": 2,
+        "y": 8,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 0,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnw45czh-gsqfx",
+      "name": "plane-gx3-copy-copy",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": -24,
+        "y": 4,
+        "z": -5
+      },
+      "rotation": {
+        "x": 0,
+        "y": -1.5707963267948966,
+        "z": 3.141592653589792
+      },
+      "scale": {
+        "x": 2,
+        "y": 8,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": 0,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
       "collider": true,
       "colliderClearance": 0,
       "castShadow": true,

@@ -65,6 +65,8 @@ if (shouldShowMobileControls) {
   mobileControls = await new MobileControls({
     controller: app.controller,
     thirdPersonCamera: app.thirdPersonCamera,
+    onSpawnExtraBall: () => app.spawnExtraBall?.(),
+    onOpenEmote: () => app.emoteWheel?.toggle?.(),
   }).init();
   app.setMobileControls(mobileControls);
 }

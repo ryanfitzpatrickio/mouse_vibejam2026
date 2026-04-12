@@ -5,11 +5,17 @@ import { assetUrl } from '../utils/assetUrl.js';
 import { normalizeSpawnType } from '../../shared/spawnPoints.js';
 import { normalizeNavArea } from '../../shared/navConfig.js';
 import { VIBE_PORTAL_TYPES, collectVibePortalPlacementsFromLayout, normalizeVibePortal } from '../../shared/vibePortal.js';
+import {
+  LEVEL_BUILD_GRID_COLUMNS,
+  LEVEL_BUILD_GRID_ROWS,
+  LEVEL_ROOM_DEPTH,
+  LEVEL_ROOM_WIDTH,
+} from '../../shared/levelWorldBounds.js';
 
 const ATLAS_GRID = 10;
 const ATLAS_CELL_MARGIN_PX = 3;
-const BUILD_GRID_COLUMNS = 24;
-const BUILD_GRID_ROWS = 24;
+const BUILD_GRID_COLUMNS = LEVEL_BUILD_GRID_COLUMNS;
+const BUILD_GRID_ROWS = LEVEL_BUILD_GRID_ROWS;
 const BUILD_GRID_VERTICAL_STEP = 0.25;
 const ROOM_TEXTURE_CELLS = Object.freeze({
   floor: 0,
@@ -371,8 +377,8 @@ export class Room {
     this.glbRegistry = null;
 
     // Room dimensions
-    this.width = options.width ?? 48;
-    this.depth = options.depth ?? 48;
+    this.width = options.width ?? LEVEL_ROOM_WIDTH;
+    this.depth = options.depth ?? LEVEL_ROOM_DEPTH;
     this.height = options.height ?? 4;
     this.scaleFactor = options.scale ?? 1;
     this.group.scale.setScalar(this.scaleFactor);

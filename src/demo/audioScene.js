@@ -40,8 +40,6 @@ export async function createAudioScene({ canvas, forceWebGL = false } = {}) {
 
   // Create room
   const room = new Room({
-    width: 48,
-    depth: 48,
     height: 4,
     scale: 1,
   });
