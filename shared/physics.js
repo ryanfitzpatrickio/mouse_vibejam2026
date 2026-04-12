@@ -78,6 +78,8 @@ export function createPlayerState(id) {
     chaseStreakSeconds: 0,
     /** Cheese carried (server-authoritative; dropped in place on death). */
     cheeseCarried: 0,
+    /** Current emote id while active; server updates from sanitized input. */
+    emote: null,
   };
 }
 
@@ -420,6 +422,7 @@ export function respawnPlayer(state, spawnX, spawnZ, spawnY = 0) {
   state.wallJumpWindowTimer = 0;
   state.wallAttachCooldownTimer = 0;
   state.animState = 'idle';
+  state.emote = null;
   state.deathTime = 0;
 }
 

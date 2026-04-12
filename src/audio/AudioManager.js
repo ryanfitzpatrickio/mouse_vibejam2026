@@ -411,16 +411,21 @@ export class AudioManager {
 
     this.musicContext = this.audioContext.createGain();
     this.musicContext.connect(this.masterGain);
-    this.musicContext.gain.value = 0.3;
+    this._musicVolume = 0.3;
+    this._musicMuted = false;
+    this.musicContext.gain.value = this._musicVolume;
 
     this.sfxContext = this.audioContext.createGain();
     this.sfxContext.connect(this.masterGain);
-    this.sfxContext.gain.value = 0.4;
+    this._sfxVolume = 0.4;
+    this._sfxMuted = false;
+    this.sfxContext.gain.value = this._sfxVolume;
 
     /** Footstep / movement loop (not spatial SFX); own level into master. */
     this.movementLoopBus = this.audioContext.createGain();
     this.movementLoopBus.connect(this.masterGain);
-    this.movementLoopBus.gain.value = 0.85;
+    this._movementLoopVolume = 0.85;
+    this.movementLoopBus.gain.value = this._movementLoopVolume;
 
     // Music system
     this.musicOscillators = [];
@@ -483,6 +488,8 @@ export class AudioManager {
    * Play sound effect at world position
    */
   playSoundAtPosition(type, position, cameraPosition) {
+    if (this._sfxMuted) return;
+
     const distance = position.distanceTo(cameraPosition);
     const maxDistance = 20;
     const volume = Math.max(0, 1 - distance / maxDistance);
@@ -533,6 +540,8 @@ export class AudioManager {
   }
 
   playEmote(soundName, position) {
+    if (this._sfxMuted) return;
+
     const camPos = this.listener.position;
     if (!camPos) return;
 
@@ -1206,14 +1215,40 @@ export class AudioManager {
    * Set music volume
    */
   setMusicVolume(value) {
-    this.musicContext.gain.setTargetAtTime(Math.min(1, Math.max(0, value)), this.audioContext.currentTime, 0.01);
+    this._musicVolume = Math.min(1, Math.max(0, value));
+    const target = this._musicMuted ? 0 : this._musicVolume;
+    this.musicContext.gain.setTargetAtTime(target, this.audioContext.currentTime, 0.01);
+  }
+
+  setMusicMuted(muted) {
+    this._musicMuted = !!muted;
+    const target = this._musicMuted ? 0 : this._musicVolume;
+    this.musicContext.gain.setTargetAtTime(target, this.audioContext.currentTime, 0.01);
+  }
+
+  isMusicMuted() {
+    return this._musicMuted;
   }
 
   /**
    * Set SFX volume
    */
   setSFXVolume(value) {
-    this.sfxContext.gain.setTargetAtTime(Math.min(1, Math.max(0, value)), this.audioContext.currentTime, 0.01);
+    this._sfxVolume = Math.min(1, Math.max(0, value));
+    const target = this._sfxMuted ? 0 : this._sfxVolume;
+    this.sfxContext.gain.setTargetAtTime(target, this.audioContext.currentTime, 0.01);
+  }
+
+  setSFXMuted(muted) {
+    this._sfxMuted = !!muted;
+    const sfxTarget = this._sfxMuted ? 0 : this._sfxVolume;
+    const movementTarget = this._sfxMuted ? 0 : this._movementLoopVolume;
+    this.sfxContext.gain.setTargetAtTime(sfxTarget, this.audioContext.currentTime, 0.01);
+    this.movementLoopBus.gain.setTargetAtTime(movementTarget, this.audioContext.currentTime, 0.01);
+  }
+
+  isSFXMuted() {
+    return this._sfxMuted;
   }
 
   /**

@@ -488,10 +488,12 @@ export default class GameServer {
             crouch: false,
             rotation: state.rotation,
           }, dt, BOUNDS, this.levelColliders);
+          state.emote = null;
           seqs[id] = this._lastSeq?.get(id) ?? 0;
         } else {
           for (const input of queue) {
             simulateTick(state, input, dt, BOUNDS, this.levelColliders);
+            state.emote = input.emote ?? null;
             seqs[id] = input.seq;
           }
           if (!this._lastSeq) this._lastSeq = new Map();
@@ -505,12 +507,26 @@ export default class GameServer {
           continue;
         }
         const peerPositions = [];
+        const reservedCheeseIds = new Set();
+        const reservedGoalPositions = [];
         for (const [otherId, otherState] of this.players) {
           if (otherId === id || !otherState?.alive) continue;
           peerPositions.push({
             x: otherState.position.x,
             z: otherState.position.z,
           });
+        }
+        for (const [otherId, otherBrain] of this.botBrains) {
+          if (otherId === id || !otherBrain) continue;
+          const otherBotState = this.players.get(otherId);
+          if (!otherBotState?.alive) continue;
+          if (otherBrain.cheeseTargetId) reservedCheeseIds.add(otherBrain.cheeseTargetId);
+          if (otherBrain.goal) {
+            reservedGoalPositions.push({
+              x: otherBrain.goal.x,
+              z: otherBrain.goal.z,
+            });
+          }
         }
         const input = buildMouseBotInput(
           state,
@@ -524,9 +540,13 @@ export default class GameServer {
           {
             peerPositions,
             colliders: this.levelColliders,
+            cheesePickups: this.cheeseWorld.pickups,
+            reservedCheeseIds,
+            reservedGoalPositions,
           },
         );
         simulateTick(state, input, dt, BOUNDS, this.levelColliders);
+        state.emote = input.emote ?? null;
         seqs[id] = 0;
       }
     }

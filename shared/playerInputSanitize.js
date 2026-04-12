@@ -3,6 +3,16 @@
  */
 
 const MAX_SEQ = Number.MAX_SAFE_INTEGER;
+const ALLOWED_EMOTES = new Set([
+  'wave',
+  'dance',
+  'laugh',
+  'cry',
+  'angry',
+  'love',
+  'thumbsup',
+  'scream',
+]);
 
 function clampUnit(v) {
   const n = Number(v);
@@ -22,6 +32,11 @@ function clampSeq(v) {
   return Math.min(Math.floor(n), MAX_SEQ);
 }
 
+function sanitizeEmote(value) {
+  if (typeof value !== 'string') return null;
+  return ALLOWED_EMOTES.has(value) ? value : null;
+}
+
 /**
  * @param {object} data Raw parsed JSON from client
  * @returns {object} Safe fields for simulateTick queue
@@ -36,6 +51,7 @@ export function sanitizePlayerInputMessage(data) {
     jumpHeld: !!(data.jumpHeld ?? data.jumpPressed ?? data.jump),
     crouch: !!data.crouch,
     rotation: clampRotation(data.rotation),
+    emote: sanitizeEmote(data.emote),
     seq: clampSeq(data.seq),
   };
 }

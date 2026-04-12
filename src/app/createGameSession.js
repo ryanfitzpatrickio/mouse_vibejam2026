@@ -8,6 +8,7 @@ import { VibePortalManager } from '../world/VibePortalManager.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
 import { HUD } from '../hud/HUD.js';
+import { GameToolbar } from '../hud/GameToolbar.js';
 import { CatLocatorOverlay } from '../hud/CatLocatorOverlay.js';
 import { ScoreboardOverlay } from '../hud/ScoreboardOverlay.js';
 import { ChaseAlertOverlay } from '../hud/ChaseAlertOverlay.js';
@@ -20,7 +21,10 @@ import { getAudioManager } from '../audio/AudioManager.js';
 import { OcclusionFader } from '../utils/OcclusionFader.js';
 import { createPlayerNameplate, syncNameplateWorldPosition } from '../world/PlayerNameplate.js';
 import { isNameplateOccluded } from '../utils/nameplateOcclusion.js';
-import { getClientPreferredDisplayName } from '../utils/playerDisplayName.js';
+import {
+  getClientPreferredDisplayName,
+  setClientPreferredDisplayName,
+} from '../utils/playerDisplayName.js';
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { simulateTick, createPlayerState } from '../../shared/physics.js';
 import { readVibePortalArrivalFromSearch } from '../../shared/vibePortal.js';
@@ -48,9 +52,35 @@ const isMobile = typeof window !== 'undefined'
   && (window.matchMedia?.('(pointer: coarse)')?.matches || navigator.maxTouchPoints > 0);
 const ENABLE_BUNNY_PREDATOR = false;
 const ENABLE_CAT_PREDATOR = true;
+const AUDIO_PREFS_KEY = 'mouse-trouble-audio-prefs';
+const GITHUB_URL = 'https://github.com/ryanfitzpatrickio/vibejam2026';
 
 /** Cat AI states where the hunt target is the local player — drives ambient crossfade. */
 const CAT_AMBIENT_HUNT_AI = new Set(['alert', 'roar', 'chase', 'attack', 'cooldown']);
+
+function readAudioPrefs() {
+  try {
+    const raw = window.localStorage?.getItem(AUDIO_PREFS_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return {
+      musicMuted: !!parsed?.musicMuted,
+      sfxMuted: !!parsed?.sfxMuted,
+    };
+  } catch {
+    return { musicMuted: false, sfxMuted: false };
+  }
+}
+
+function writeAudioPrefs(prefs) {
+  try {
+    window.localStorage?.setItem(AUDIO_PREFS_KEY, JSON.stringify({
+      musicMuted: !!prefs.musicMuted,
+      sfxMuted: !!prefs.sfxMuted,
+    }));
+  } catch {
+    // Local storage may be unavailable in private contexts.
+  }
+}
 
 function buildNavMeshOverlay(navMesh) {
   const group = new THREE.Group();
@@ -256,6 +286,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const catLocator = new CatLocatorOverlay();
 
   const audioManager = getAudioManager();
+  const audioPrefs = readAudioPrefs();
+  audioManager.setMusicMuted(audioPrefs.musicMuted);
+  audioManager.setSFXMuted(audioPrefs.sfxMuted);
   let ambientPrimed = false;
   function primeAmbientAudio(event) {
     if (event) {
@@ -280,6 +313,47 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   canvas.addEventListener('pointerdown', primeAmbientAudio, { passive: true });
   window.addEventListener('keydown', primeAmbientAudio, { passive: true });
   window.addEventListener('touchstart', primeAmbientAudio, { passive: true });
+
+  function setMusicMuted(muted) {
+    audioPrefs.musicMuted = !!muted;
+    audioManager.setMusicMuted(audioPrefs.musicMuted);
+    writeAudioPrefs(audioPrefs);
+    toolbar.updateState(audioPrefs);
+  }
+
+  function setSfxMuted(muted) {
+    audioPrefs.sfxMuted = !!muted;
+    audioManager.setSFXMuted(audioPrefs.sfxMuted);
+    writeAudioPrefs(audioPrefs);
+    toolbar.updateState(audioPrefs);
+  }
+
+  const toolbar = new GameToolbar({
+    githubUrl: GITHUB_URL,
+    displayName: getClientPreferredDisplayName(),
+    onToggleMusic: () => {
+      primeAmbientAudio();
+      setMusicMuted(!audioPrefs.musicMuted);
+    },
+    onToggleSfx: () => {
+      void audioManager.resume();
+      setSfxMuted(!audioPrefs.sfxMuted);
+    },
+    onOpenGithub: () => {
+      window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
+    },
+    onChangeDisplayName: (rawName) => {
+      const displayName = setClientPreferredDisplayName(rawName);
+      predictionState.displayName = displayName;
+      if (net.serverState) net.serverState.displayName = displayName;
+      net.sendDisplayName(displayName);
+      return displayName;
+    },
+  });
+  toolbar.updateState({
+    ...audioPrefs,
+    displayName: getClientPreferredDisplayName(),
+  });
 
   const emoteManager = new EmoteManager({ mouse, audioManager });
   const emoteWheel = new EmoteWheel({
@@ -889,6 +963,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     vibePortalManager.dispose();
     scoreboard.dispose();
     chaseAlert.dispose();
+    toolbar.dispose();
     for (const [, entry] of pushBallMeshes) {
       scene.remove(entry.mesh);
       entry.geom.dispose();

@@ -155,6 +155,16 @@ export class NetworkClient {
     }
   }
 
+  sendDisplayName(displayName) {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({
+        type: 'hello',
+        playerKey: this.playerKey,
+        displayName,
+      }));
+    }
+  }
+
   _applyPushBallsPayload(data) {
     if (Array.isArray(data.pushBalls)) {
       this.pushBalls = data.pushBalls;

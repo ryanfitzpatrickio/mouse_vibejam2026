@@ -18,3 +18,13 @@ export function getClientPreferredDisplayName() {
     return 'Mouse';
   }
 }
+
+export function setClientPreferredDisplayName(raw) {
+  const name = sanitizeDisplayName(raw);
+  try {
+    localStorage.setItem(STORAGE_KEY, name);
+  } catch {
+    // Ignore storage failures; the current session can still use the sanitized value.
+  }
+  return name;
+}

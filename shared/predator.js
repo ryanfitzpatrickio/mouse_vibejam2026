@@ -69,6 +69,7 @@ const CAT_NAV_QUERY_FILTER = (() => {
 
 const _navGroundScratch = createFindNearestPolyResult();
 const _preyNavScratch = createFindNearestPolyResult();
+const LOUD_THREAT_EMOTES = new Set(['angry', 'cry', 'dance', 'laugh', 'scream']);
 
 export function createPredatorState(config) {
   const spawnY = config.spawnY ?? 0;
@@ -115,6 +116,8 @@ export function createPredatorState(config) {
     navRepathTimer: 0,
 
     chaseTargetId: null,
+    aggroTargetId: null,
+    aggroTargetThreat: 0,
     chaseFrustration: 0,
     nextChaseTargetPick: 0,
     /** Best horizontal distance achieved this chase; null until first tick */
@@ -132,6 +135,9 @@ export function createPredatorState(config) {
     chaseDesperateJumpTimer: 0,
     /** Navmesh / waypoint Y used to scale jump impulse (any height). */
     chaseJumpTargetY: 0,
+    chaseJumpTargetX: 0,
+    chaseJumpTargetZ: 0,
+    chaseJumpHasTarget: false,
     chaseJumpForwardSpeed: CAT_BT.chaseJumpForwardSpeed,
 
     /** null | 'look_hop' | 'look_hold' | 'drop_prep' | 'drop_air' */
@@ -139,6 +145,12 @@ export function createPredatorState(config) {
     elevationSearchTimer: 0,
     elevationSearchDir: { x: 0, z: 0 },
     elevationDropIgnoreNavTimer: 0,
+
+    /** Physical recovery when nav says "move" but collision keeps the cat pinned. */
+    stuckIntentTimer: 0,
+    unstuckCooldownTimer: 0,
+    unstuckTimer: 0,
+    unstuckDir: { x: 0, z: 0 },
   };
 }
 
@@ -199,6 +211,19 @@ function clearPredatorNavPath(state) {
   state.navPathIndex = 0;
   state.navTarget = null;
   state.navRepathTimer = 0;
+}
+
+function setPredatorAggroTarget(state, candidate) {
+  const id = candidate?.id ?? candidate?.player?.id ?? candidate?.playerId ?? null;
+  state.chaseTargetId = id;
+  state.aggroTargetId = id;
+  state.aggroTargetThreat = candidate?.threat ?? 0;
+}
+
+function clearPredatorAggroTarget(state) {
+  state.chaseTargetId = null;
+  state.aggroTargetId = null;
+  state.aggroTargetThreat = 0;
 }
 
 function shouldRebuildPredatorPath(state, targetPosition) {
@@ -281,15 +306,30 @@ function navSteerMove(state, dest, navMesh, speed, dt) {
   return true;
 }
 
+function estimatePredatorPathDistance(state, finalTarget = null) {
+  if (!state.navPath?.length || state.navPathIndex >= state.navPath.length) return null;
+  let total = 0;
+  let prev = state.position;
+  for (let i = state.navPathIndex; i < state.navPath.length; i += 1) {
+    const waypoint = state.navPath[i];
+    total += distXZ(prev, waypoint);
+    prev = waypoint;
+  }
+  if (finalTarget) total += distXZ(prev, finalTarget);
+  return total;
+}
+
 function gatherMiceSortedByDistance(state, players) {
   const out = [];
   for (const player of Object.values(players)) {
     if (!player?.alive || !player.position) continue;
+    const d = distXZ(state.position, player.position);
     out.push({
       player,
       id: player.id,
-      d: distXZ(state.position, player.position),
+      d,
       offGroundPriority: isPriorityOffGroundPrey(state, player),
+      threat: 0,
     });
   }
   out.sort((a, b) => a.d - b.d);
@@ -303,6 +343,45 @@ function isPriorityOffGroundPrey(state, player) {
   return player.position.y > state.spawnPoint.y + CAT_BT.offGroundTargetPriorityMinY;
 }
 
+function computeMouseThreat(state, player, distanceXZ) {
+  if (!player?.position) return 0;
+
+  const distanceScore = Math.max(0, 1 - (distanceXZ / Math.max(0.001, state.aggroRange)))
+    * CAT_BT.threatDistanceWeight;
+  const heightAboveSpawn = Math.max(0, player.position.y - state.spawnPoint.y);
+  const currentTargetBonus = player.id && player.id === state.chaseTargetId
+    ? CAT_BT.threatCurrentTargetBonus
+    : 0;
+
+  let threat = distanceScore + currentTargetBonus;
+
+  if (isPriorityOffGroundPrey(state, player)) threat += CAT_BT.threatOffGroundBonus;
+  if (player.wallHolding) threat += CAT_BT.threatWallHoldBonus;
+  if (player.grounded === false) threat += CAT_BT.threatAirborneBonus;
+  threat += Math.min(18, heightAboveSpawn * CAT_BT.threatElevatedPerMeter);
+
+  threat += Math.max(0, Math.floor(player.cheeseCarried ?? 0)) * CAT_BT.threatCheesePerPiece;
+  if (player.emote) {
+    threat += CAT_BT.threatEmoteBonus;
+    if (LOUD_THREAT_EMOTES.has(player.emote)) threat += CAT_BT.threatLoudEmoteBonus;
+  }
+  if (player.sprinting) threat += CAT_BT.threatSprintBonus;
+  if (player.sliding) threat += CAT_BT.threatSlideBonus;
+  if ((player.health ?? PHYSICS.maxHealth) < PHYSICS.maxHealth) threat += CAT_BT.threatLowHealthBonus;
+
+  return threat;
+}
+
+function compareThreatCandidates(a, b) {
+  if (a.offGroundPriority !== b.offGroundPriority) {
+    return a.offGroundPriority ? -1 : 1;
+  }
+  if (Math.abs((b.threat ?? 0) - (a.threat ?? 0)) > 0.001) {
+    return (b.threat ?? 0) - (a.threat ?? 0);
+  }
+  return a.d - b.d;
+}
+
 /**
  * Mice in aggro range on XZ that pass vertical band + relaxed hunt LOS (path/jump can close height gaps).
  */
@@ -314,14 +393,10 @@ function huntEligibleMiceSorted(state, sortedMice, colliders) {
     const losOk = !CAT_BT.requireLineOfSightForHunt
       || hasRelaxedHuntLineOfSight(state, m.player, colliders);
     if (!losOk) continue;
+    m.threat = computeMouseThreat(state, m.player, m.d);
     out.push(m);
   }
-  out.sort((a, b) => {
-    if (a.offGroundPriority !== b.offGroundPriority) {
-      return a.offGroundPriority ? -1 : 1;
-    }
-    return a.d - b.d;
-  });
+  out.sort(compareThreatCandidates);
   return out;
 }
 
@@ -342,7 +417,7 @@ function refreshChaseTarget(state, reachableSorted, now) {
   state.nextChaseTargetPick = now + CAT_BT.chaseTargetRefresh;
 
   if (!reachableSorted.length) {
-    state.chaseTargetId = null;
+    clearPredatorAggroTarget(state);
     return;
   }
 
@@ -350,26 +425,32 @@ function refreshChaseTarget(state, reachableSorted, now) {
   const cur = reachableSorted.find((m) => m.id === state.chaseTargetId);
 
   if (!state.chaseTargetId || !cur) {
-    state.chaseTargetId = nearest.id;
+    setPredatorAggroTarget(state, nearest);
     clearPredatorNavPath(state);
     return;
   }
 
   if (nearest.offGroundPriority && !cur.offGroundPriority) {
-    state.chaseTargetId = nearest.id;
+    setPredatorAggroTarget(state, nearest);
     clearPredatorNavPath(state);
     state.chaseFrustration *= 0.35;
     return;
   }
 
   if (cur.offGroundPriority && !nearest.offGroundPriority) {
+    state.aggroTargetThreat = cur.threat ?? state.aggroTargetThreat;
     return;
   }
 
-  if (nearest.id !== state.chaseTargetId && nearest.d < cur.d - CAT_BT.switchTargetAdvantage) {
-    state.chaseTargetId = nearest.id;
+  if (
+    nearest.id !== state.chaseTargetId
+    && (nearest.threat ?? 0) >= (cur.threat ?? 0) + CAT_BT.threatSwitchMargin
+  ) {
+    setPredatorAggroTarget(state, nearest);
     clearPredatorNavPath(state);
     state.chaseFrustration *= 0.45;
+  } else {
+    state.aggroTargetThreat = cur.threat ?? state.aggroTargetThreat;
   }
 }
 
@@ -378,7 +459,7 @@ function refreshChaseTarget(state, reachableSorted, now) {
  */
 function ensureChaseTarget(state, players, huntEligibleSorted) {
   if (!huntEligibleSorted.length) {
-    state.chaseTargetId = null;
+    clearPredatorAggroTarget(state);
     clearPredatorNavPath(state);
     return null;
   }
@@ -386,8 +467,11 @@ function ensureChaseTarget(state, players, huntEligibleSorted) {
   const curOk = cur && huntVerticalBandOk(state, cur)
     && distXZ(state.position, cur.position) < state.aggroRange * 1.02;
   if (!curOk) {
-    state.chaseTargetId = huntEligibleSorted[0].id;
+    setPredatorAggroTarget(state, huntEligibleSorted[0]);
     clearPredatorNavPath(state);
+  } else {
+    const curCandidate = huntEligibleSorted.find((m) => m.id === state.chaseTargetId);
+    if (curCandidate) state.aggroTargetThreat = curCandidate.threat ?? state.aggroTargetThreat;
   }
   return getChaseTargetPlayer(state, players);
 }
@@ -550,7 +634,11 @@ function resetChaseProgress(state) {
   state.chaseJumpDir.z = 0;
   state.chaseDesperateJumpTimer = 0;
   state.chaseJumpTargetY = 0;
+  state.chaseJumpTargetX = 0;
+  state.chaseJumpTargetZ = 0;
+  state.chaseJumpHasTarget = false;
   state.chaseJumpForwardSpeed = CAT_BT.chaseJumpForwardSpeed;
+  resetPredatorUnstuck(state);
 }
 
 function resetElevationSearch(state) {
@@ -561,11 +649,32 @@ function resetElevationSearch(state) {
   state.elevationDropIgnoreNavTimer = 0;
 }
 
+function resetPredatorUnstuck(state) {
+  state.stuckIntentTimer = 0;
+  state.unstuckCooldownTimer = 0;
+  state.unstuckTimer = 0;
+  state.unstuckDir.x = 0;
+  state.unstuckDir.z = 0;
+}
+
 function pickChaseJumpTargetY(state, prey, preyNav, steer) {
   let y = prey.position.y;
   if (preyNav && preyNav.y > state.position.y - 0.04) y = Math.max(y, preyNav.y);
   if (steer && steer.y > state.position.y + 0.02) y = Math.max(y, steer.y);
   return y;
+}
+
+function setChaseJumpTarget(state, target) {
+  if (!target) {
+    state.chaseJumpHasTarget = false;
+    state.chaseJumpTargetX = 0;
+    state.chaseJumpTargetZ = 0;
+    return;
+  }
+  state.chaseJumpHasTarget = true;
+  state.chaseJumpTargetX = target.x;
+  state.chaseJumpTargetZ = target.z;
+  state.chaseJumpTargetY = target.y ?? state.chaseJumpTargetY;
 }
 
 function computeChaseJumpVerticalSpeed(state, targetY) {
@@ -581,8 +690,8 @@ function computeChaseJumpAirTime(dy) {
     + Math.min(CAT_BT.chaseJumpMaxAirTimeExtra, Math.max(0, dy) * CAT_BT.chaseJumpAirTimePerMeter);
 }
 
-function computeChaseJumpForwardSpeed(state, prey, preyNav, airTime) {
-  const target = preyNav ?? prey?.position;
+function computeChaseJumpForwardSpeed(state, prey, preyNav, airTime, explicitTarget = null) {
+  const target = explicitTarget ?? preyNav ?? prey?.position;
   if (!target) return CAT_BT.chaseJumpForwardSpeed;
   const distance = distXZ(state.position, target);
   const neededSpeed = distance / Math.max(0.2, airTime * 0.86);
@@ -592,9 +701,50 @@ function computeChaseJumpForwardSpeed(state, prey, preyNav, airTime) {
   );
 }
 
+function computeChaseSurfaceLeapAirTime(state, target) {
+  const dxz = target ? distXZ(state.position, target) : 0;
+  const dy = target ? target.y - state.position.y : 0;
+  const distanceTime = 0.36 + dxz / Math.max(0.001, CAT_BT.chaseJumpMaxForwardSpeed * 0.84);
+  const heightTime = Math.max(0, dy) * CAT_BT.chaseJumpAirTimePerMeter;
+  const dropTime = Math.max(0, -dy) * 0.12;
+  return Math.min(
+    CAT_BT.chaseJumpMaxAirTime + CAT_BT.chaseJumpMaxAirTimeExtra,
+    Math.max(0.58, distanceTime + heightTime + dropTime),
+  );
+}
+
+function shouldSurfaceLeapToPrey(state, prey, preyNav, navMesh, pathUsable, routeDistance = null) {
+  if (!state.grounded || !prey?.position || !preyNav) return false;
+  if (state.position.y < state.spawnPoint.y + CAT_BT.chaseSurfaceLeapMinCatY) return false;
+  const surfaceDeltaY = preyNav.y - state.position.y;
+  if (surfaceDeltaY > CAT_BT.chaseSurfaceLeapMaxRise) return false;
+  if (surfaceDeltaY < -CAT_BT.chaseSurfaceLeapMaxDrop) return false;
+  const gapXZ = distXZ(state.position, preyNav);
+  if (gapXZ < CAT_BT.chaseSurfaceLeapMinGapXZ || gapXZ > CAT_BT.chaseSurfaceLeapMaxGapXZ) return false;
+  const sameLayer = predatorOnSameNavWalkableLayer(state, prey, navMesh);
+  if (pathUsable && sameLayer) {
+    const routeIsTooIndirect = routeDistance != null
+      && routeDistance > gapXZ * CAT_BT.chaseSurfaceLeapPathRatio
+      && routeDistance - gapXZ > CAT_BT.chaseSurfaceLeapMinPathSaving;
+    if (!routeIsTooIndirect) return false;
+  }
+  if (pathUsable && surfaceDeltaY > CAT_BT.chaseElevateMinGap) return false;
+  return true;
+}
+
+function beginChaseJump(state, prey, target, prepTime = CAT_BT.chaseJumpPrepTime, cooldown = 0) {
+  if (!prey) return;
+  state.chaseJumpTargetY = target?.y ?? pickChaseJumpTargetY(state, prey, null, null);
+  setChaseJumpTarget(state, target);
+  state.chaseVerticalPhase = 'prep_jump';
+  state.chasePrepTimer = prepTime;
+  state.chaseDesperateJumpTimer = Math.max(state.chaseDesperateJumpTimer, cooldown);
+  clearPredatorNavPath(state);
+}
+
 function enterBoredWander(state) {
   clearPredatorNavPath(state);
-  state.chaseTargetId = null;
+  clearPredatorAggroTarget(state);
   state.chaseFrustration = 0;
   resetChaseProgress(state);
   resetElevationSearch(state);
@@ -605,7 +755,7 @@ function enterBoredWander(state) {
 
 function enterElevationSearch(state) {
   clearPredatorNavPath(state);
-  state.chaseTargetId = null;
+  clearPredatorAggroTarget(state);
   state.chaseFrustration = 0;
   resetChaseProgress(state);
   state.aiState = PREDATOR_AI.ELEVATION_SEARCH;
@@ -620,7 +770,7 @@ function enterPatrolHome(state) {
   clearPredatorNavPath(state);
   resetChaseProgress(state);
   resetElevationSearch(state);
-  state.chaseTargetId = null;
+  clearPredatorAggroTarget(state);
   state.chaseFrustration = 0;
   state.aiState = PREDATOR_AI.PATROL;
   state.patrolTarget.x = state.spawnPoint.x;
@@ -646,6 +796,62 @@ function transitionLifeFromIdle(state) {
 function moveToward(state, dir, speed, dt) {
   state.position.x += dir.x * speed * dt;
   state.position.z += dir.z * speed * dt;
+}
+
+function beginPredatorUnstuck(state, target = null) {
+  const toTarget = target
+    ? normalizeXZ({ x: target.x - state.position.x, z: target.z - state.position.z })
+    : normalizeXZ({ x: Math.sin(state.rotation), z: Math.cos(state.rotation) });
+  const sideSign = Math.random() < 0.5 ? -1 : 1;
+  let dir = {
+    x: -toTarget.z * sideSign - toTarget.x * 0.35,
+    z: toTarget.x * sideSign - toTarget.z * 0.35,
+  };
+  dir = normalizeXZ(dir);
+  if (Math.abs(dir.x) + Math.abs(dir.z) < 0.001) {
+    dir = normalizeXZ({ x: Math.sin(state.rotation + Math.PI * 0.5), z: Math.cos(state.rotation + Math.PI * 0.5) });
+  }
+
+  state.unstuckDir.x = dir.x;
+  state.unstuckDir.z = dir.z;
+  state.unstuckTimer = CAT_BT.unstuckDuration;
+  state.unstuckCooldownTimer = CAT_BT.unstuckCooldown;
+  state.stuckIntentTimer = 0;
+  state.chasePlateauTimer = 0;
+  state.chaseFrustration = Math.max(0, state.chaseFrustration * 0.45);
+  if (state.grounded) {
+    state.velocity.y = Math.max(state.velocity.y, CAT_BT.unstuckHopUpSpeed);
+    state.grounded = false;
+  }
+  clearPredatorNavPath(state);
+}
+
+function applyPredatorUnstuckMove(state, dt) {
+  if (state.unstuckTimer <= 0) return false;
+  state.unstuckTimer = Math.max(0, state.unstuckTimer - dt);
+  moveToward(state, state.unstuckDir, CAT_BT.unstuckSideStepSpeed, dt);
+  faceDirection(state, state.unstuckDir, dt);
+  return true;
+}
+
+function updatePredatorStuckIntent(state, { intendedMove, movedDistance, expectedDistance, target, dt }) {
+  if (!intendedMove || state.unstuckCooldownTimer > 0 || state.unstuckTimer > 0) {
+    if (!intendedMove) state.stuckIntentTimer = 0;
+    return false;
+  }
+
+  const minStep = Math.max(CAT_BT.unstuckMinStepDistance, expectedDistance * CAT_BT.unstuckMinStepRatio);
+  if (movedDistance < minStep) {
+    state.stuckIntentTimer += dt;
+  } else {
+    state.stuckIntentTimer = Math.max(0, state.stuckIntentTimer - dt * 1.8);
+  }
+
+  if (state.stuckIntentTimer >= CAT_BT.unstuckIntentSeconds) {
+    beginPredatorUnstuck(state, target);
+    return true;
+  }
+  return false;
 }
 
 function faceDirection(state, dir, dt) {
@@ -784,11 +990,13 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
   state.aiTimer -= dt;
   state.navRepathTimer -= dt;
   state.elevationDropIgnoreNavTimer = Math.max(0, state.elevationDropIgnoreNavTimer - dt);
+  state.unstuckCooldownTimer = Math.max(0, (state.unstuckCooldownTimer ?? 0) - dt);
   const previousPosition = {
     x: state.position.x,
     y: state.position.y,
     z: state.position.z,
   };
+  let pendingStuckIntent = null;
 
   const now = Date.now() / 1000;
   const sortedMice = gatherMiceSortedByDistance(state, players);
@@ -817,7 +1025,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
   switch (state.aiState) {
     case PREDATOR_AI.IDLE:
       if (preyInAggro) {
-        state.chaseTargetId = aggroPrey.player.id;
+        setPredatorAggroTarget(state, aggroPrey);
         clearPredatorNavPath(state);
         state.chaseFrustration = 0;
         state.aiState = PREDATOR_AI.ALERT;
@@ -831,13 +1039,14 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
 
     case PREDATOR_AI.PATROL: {
       if (preyInAggro) {
-        state.chaseTargetId = aggroPrey.player.id;
+        setPredatorAggroTarget(state, aggroPrey);
         clearPredatorNavPath(state);
         state.chaseFrustration = 0;
         state.aiState = PREDATOR_AI.ALERT;
         state.aiTimer = state.alertDuration;
         break;
       }
+      if (applyPredatorUnstuckMove(state, dt)) break;
       const dx = state.patrolTarget.x - state.position.x;
       const dz = state.patrolTarget.z - state.position.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
@@ -845,16 +1054,25 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         clearPredatorNavPath(state);
         state.aiState = PREDATOR_AI.IDLE;
         state.aiTimer = state.patrolWaitMin + Math.random() * (state.patrolWaitMax - state.patrolWaitMin);
-      } else if (!navSteerMove(state, state.patrolTarget, navMesh, state.moveSpeed, dt)) {
-        pickPatrolTarget(state, 1);
-        clearPredatorNavPath(state);
+      } else {
+        const moved = navSteerMove(state, state.patrolTarget, navMesh, state.moveSpeed, dt);
+        if (!moved) {
+          pickPatrolTarget(state, 1);
+          clearPredatorNavPath(state);
+        } else {
+          pendingStuckIntent = {
+            aiState: state.aiState,
+            expectedDistance: state.moveSpeed * dt,
+            target: state.patrolTarget,
+          };
+        }
       }
       break;
     }
 
     case PREDATOR_AI.SLEEP:
       if (preyInAggro) {
-        state.chaseTargetId = aggroPrey.player.id;
+        setPredatorAggroTarget(state, aggroPrey);
         clearPredatorNavPath(state);
         state.chaseFrustration = 0;
         state.aiState = PREDATOR_AI.ALERT;
@@ -870,7 +1088,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
 
     case PREDATOR_AI.GROOM:
       if (preyInAggro) {
-        state.chaseTargetId = aggroPrey.player.id;
+        setPredatorAggroTarget(state, aggroPrey);
         clearPredatorNavPath(state);
         state.chaseFrustration = 0;
         state.aiState = PREDATOR_AI.ALERT;
@@ -887,19 +1105,25 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
 
     case PREDATOR_AI.PLAY:
       if (preyInAggro) {
-        state.chaseTargetId = aggroPrey.player.id;
+        setPredatorAggroTarget(state, aggroPrey);
         clearPredatorNavPath(state);
         state.chaseFrustration = 0;
         state.aiState = PREDATOR_AI.ALERT;
         state.aiTimer = state.alertDuration;
         break;
       }
-      if (
-        !navSteerMove(state, state.patrolTarget, navMesh, state.chaseSpeed * 0.62, dt)
-        || distXZ(state.position, state.patrolTarget) < 0.65
-      ) {
+      if (applyPredatorUnstuckMove(state, dt)) break;
+      const playSpeed = state.chaseSpeed * 0.62;
+      const movedPlay = navSteerMove(state, state.patrolTarget, navMesh, playSpeed, dt);
+      if (!movedPlay || distXZ(state.position, state.patrolTarget) < 0.65) {
         pickPatrolTarget(state, CAT_BT.playPatrolRadiusScale);
         clearPredatorNavPath(state);
+      } else {
+        pendingStuckIntent = {
+          aiState: state.aiState,
+          expectedDistance: playSpeed * dt,
+          target: state.patrolTarget,
+        };
       }
       if (state.aiTimer <= 0) {
         clearPredatorNavPath(state);
@@ -910,19 +1134,25 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
 
     case PREDATOR_AI.BORED_WANDER:
       if (preyInAggro) {
-        state.chaseTargetId = aggroPrey.player.id;
+        setPredatorAggroTarget(state, aggroPrey);
         clearPredatorNavPath(state);
         state.chaseFrustration = 0;
         state.aiState = PREDATOR_AI.ALERT;
         state.aiTimer = state.alertDuration;
         break;
       }
-      if (
-        !navSteerMove(state, state.patrolTarget, navMesh, state.moveSpeed * 0.85, dt)
-        || distXZ(state.position, state.patrolTarget) < 0.6
-      ) {
+      if (applyPredatorUnstuckMove(state, dt)) break;
+      const boredSpeed = state.moveSpeed * 0.85;
+      const movedBored = navSteerMove(state, state.patrolTarget, navMesh, boredSpeed, dt);
+      if (!movedBored || distXZ(state.position, state.patrolTarget) < 0.6) {
         pickPatrolTarget(state, 1.2);
         clearPredatorNavPath(state);
+      } else {
+        pendingStuckIntent = {
+          aiState: state.aiState,
+          expectedDistance: boredSpeed * dt,
+          target: state.patrolTarget,
+        };
       }
       if (state.aiTimer <= 0) {
         clearPredatorNavPath(state);
@@ -934,7 +1164,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
     case PREDATOR_AI.ELEVATION_SEARCH: {
       if (preyInAggro) {
         resetElevationSearch(state);
-        state.chaseTargetId = aggroPrey.player.id;
+        setPredatorAggroTarget(state, aggroPrey);
         clearPredatorNavPath(state);
         state.chaseFrustration = 0;
         state.aiState = PREDATOR_AI.ALERT;
@@ -1013,7 +1243,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
       const preyA = ensureChaseTarget(state, players, huntEligibleMice);
       if (!preyA || distXZ(state.position, preyA.position) > state.aggroRange * 1.08) {
         clearPredatorNavPath(state);
-        state.chaseTargetId = null;
+        clearPredatorAggroTarget(state);
         resetChaseProgress(state);
         state.aiState = PREDATOR_AI.IDLE;
         state.aiTimer = initialIdleDelay();
@@ -1026,7 +1256,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
           state.chaseLosBlockedTimer += dt;
           if (state.chaseLosBlockedTimer >= CAT_BT.losBlockedGiveUpSeconds) {
             clearPredatorNavPath(state);
-            state.chaseTargetId = null;
+            clearPredatorAggroTarget(state);
             resetChaseProgress(state);
             state.aiState = PREDATOR_AI.IDLE;
             state.aiTimer = initialIdleDelay();
@@ -1046,7 +1276,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
       const preyR = ensureChaseTarget(state, players, huntEligibleMice);
       if (!preyR || distXZ(state.position, preyR.position) > state.aggroRange * 1.15) {
         clearPredatorNavPath(state);
-        state.chaseTargetId = null;
+        clearPredatorAggroTarget(state);
         resetChaseProgress(state);
         state.aiState = PREDATOR_AI.IDLE;
         state.aiTimer = initialIdleDelay();
@@ -1059,7 +1289,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
           state.chaseLosBlockedTimer += dt;
           if (state.chaseLosBlockedTimer >= CAT_BT.losBlockedGiveUpSeconds) {
             clearPredatorNavPath(state);
-            state.chaseTargetId = null;
+            clearPredatorAggroTarget(state);
             resetChaseProgress(state);
             state.aiState = PREDATOR_AI.IDLE;
             state.aiTimer = initialIdleDelay();
@@ -1089,7 +1319,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
 
       if (!prey || (distToSpawn > state.leashRange && distPrey > state.aggroRange)) {
         clearPredatorNavPath(state);
-        state.chaseTargetId = null;
+        clearPredatorAggroTarget(state);
         state.chaseFrustration = 0;
         resetChaseProgress(state);
         state.aiState = PREDATOR_AI.PATROL;
@@ -1116,7 +1346,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
 
       if (distPrey > state.leashRange * 1.5) {
         clearPredatorNavPath(state);
-        state.chaseTargetId = null;
+        clearPredatorAggroTarget(state);
         state.chaseFrustration = 0;
         resetChaseProgress(state);
         state.aiState = PREDATOR_AI.PATROL;
@@ -1127,6 +1357,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
       }
 
       state.chaseDesperateJumpTimer = Math.max(0, state.chaseDesperateJumpTimer - dt);
+      if (applyPredatorUnstuckMove(state, dt)) break;
 
       if (state.chaseVerticalPhase === 'prep_jump') {
         state.chasePrepTimer -= dt;
@@ -1136,13 +1367,33 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         if (state.chasePrepTimer <= 0) {
           state.chaseVerticalPhase = 'air';
           state.grounded = false;
-          const targetY = (state.chaseJumpTargetY > state.position.y + 0.03)
+          const jumpTarget = state.chaseJumpHasTarget
+            ? {
+              x: state.chaseJumpTargetX,
+              y: state.chaseJumpTargetY,
+              z: state.chaseJumpTargetZ,
+            }
+            : null;
+          const targetY = (state.chaseJumpTargetY > state.position.y + 0.03 || jumpTarget)
             ? state.chaseJumpTargetY
             : (prey ? pickChaseJumpTargetY(state, prey, null, null) : state.position.y + 0.6);
           const dy = Math.max(0, targetY - state.position.y);
-          state.chaseAirTimer = computeChaseJumpAirTime(dy);
-          state.chaseJumpForwardSpeed = computeChaseJumpForwardSpeed(state, prey, null, state.chaseAirTimer);
-          const dir = prey
+          state.chaseAirTimer = jumpTarget
+            ? computeChaseSurfaceLeapAirTime(state, jumpTarget)
+            : computeChaseJumpAirTime(dy);
+          state.chaseJumpForwardSpeed = computeChaseJumpForwardSpeed(
+            state,
+            prey,
+            null,
+            state.chaseAirTimer,
+            jumpTarget,
+          );
+          const dir = jumpTarget
+            ? normalizeXZ({
+              x: jumpTarget.x - state.position.x,
+              z: jumpTarget.z - state.position.z,
+            })
+            : prey
             ? normalizeXZ({
               x: prey.position.x - state.position.x,
               z: prey.position.z - state.position.z,
@@ -1170,6 +1421,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         moveToward(state, state.chaseJumpDir, state.chaseJumpForwardSpeed ?? CAT_BT.chaseJumpForwardSpeed, dt);
         if (state.chaseAirTimer <= 0) {
           state.chaseVerticalPhase = null;
+          state.chaseJumpHasTarget = false;
         }
         if (prey && CAT_BT.requireLineOfSightForHunt) {
           if (hasRelaxedHuntLineOfSight(state, prey, colliders)) {
@@ -1201,9 +1453,12 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
       const navElevGap = preyNav ? preyNav.y - state.position.y : -1000;
       const effectiveElevGap = Math.max(vertGap, navElevGap > 0.02 ? navElevGap : 0);
       const needElevate = shouldChaseElevateToPreyLayer(state, prey, preyNav, effectiveElevGap, navMesh);
+      const surfaceLeapCandidate = prey
+        && preyNav
+        && state.position.y >= state.spawnPoint.y + CAT_BT.chaseSurfaceLeapMinCatY;
 
       let steer = null;
-      if (prey && navMesh && needElevate) {
+      if (prey && navMesh && (needElevate || surfaceLeapCandidate)) {
         steer = getPredatorSteerTarget(state, prey.position, navMesh);
       }
       const steerHigh = steer && steer.y > state.position.y + CAT_BT.chaseJumpMinWaypointRise;
@@ -1227,10 +1482,31 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         && preyGroundedElevated
         && effectiveElevGap > 0.2;
       if (jumpFromWaypoint || jumpFromPreyNav || jumpFromPreyElevation) {
-        state.chaseJumpTargetY = pickChaseJumpTargetY(state, prey, preyNav, steer);
-        state.chaseVerticalPhase = 'prep_jump';
-        state.chasePrepTimer = CAT_BT.chaseJumpPrepTime;
-        clearPredatorNavPath(state);
+        const jumpTarget = jumpFromPreyNav && preyNav
+          ? preyNav
+          : steerHigh && steer
+            ? steer
+            : preyNav;
+        beginChaseJump(state, prey, jumpTarget ?? {
+          x: prey.position.x,
+          y: pickChaseJumpTargetY(state, prey, preyNav, steer),
+          z: prey.position.z,
+        });
+        break;
+      }
+
+      const surfaceLeapRouteDistance = preyNav ? estimatePredatorPathDistance(state, preyNav) : null;
+      if (
+        state.chaseDesperateJumpTimer <= 0
+        && shouldSurfaceLeapToPrey(state, prey, preyNav, navMesh, !!steer, surfaceLeapRouteDistance)
+      ) {
+        beginChaseJump(
+          state,
+          prey,
+          preyNav,
+          CAT_BT.chaseJumpPrepTime * 0.72,
+          CAT_BT.chaseSurfaceLeapNoPathCooldown,
+        );
         break;
       }
 
@@ -1240,17 +1516,37 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
       }
 
       if (
+        state.chaseDesperateJumpTimer <= 0
+        && shouldSurfaceLeapToPrey(state, prey, preyNav, navMesh, moved, surfaceLeapRouteDistance)
+      ) {
+        beginChaseJump(
+          state,
+          prey,
+          preyNav,
+          CAT_BT.chaseJumpPrepTime * 0.72,
+          CAT_BT.chaseSurfaceLeapNoPathCooldown,
+        );
+        break;
+      }
+
+      if (
         needElevate
         && !moved
         && state.chaseDesperateJumpTimer <= 0
         && distPrey < 2.05
         && effectiveElevGap > 0.35
       ) {
-        state.chaseJumpTargetY = pickChaseJumpTargetY(state, prey, preyNav, steer);
-        state.chaseVerticalPhase = 'prep_jump';
-        state.chasePrepTimer = CAT_BT.chaseJumpPrepTime * 0.88;
-        state.chaseDesperateJumpTimer = CAT_BT.chaseDesperateJumpCooldown;
-        clearPredatorNavPath(state);
+        beginChaseJump(
+          state,
+          prey,
+          preyNav ?? {
+            x: prey.position.x,
+            y: pickChaseJumpTargetY(state, prey, preyNav, steer),
+            z: prey.position.z,
+          },
+          CAT_BT.chaseJumpPrepTime * 0.88,
+          CAT_BT.chaseDesperateJumpCooldown,
+        );
         break;
       }
 
@@ -1271,6 +1567,13 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
       const onApproachPlateau = gapToBest <= CAT_BT.chasePlateauSpan;
       const outOfMelee = distPrey > state.attackRange + CAT_BT.chasePlateauMinDist;
       const motionPoor = !moved || speed < CAT_BT.stuckSpeedThreshold || barelyMoved;
+      if (moved) {
+        pendingStuckIntent = {
+          aiState: state.aiState,
+          expectedDistance: expectedStep,
+          target: prey.position,
+        };
+      }
 
       if (onApproachPlateau && outOfMelee && motionPoor) {
         state.chasePlateauTimer += dt;
@@ -1305,10 +1608,11 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         && distPrey < 3.05
         && effectiveElevGap > CAT_BT.chaseElevateMinGap * 0.82
       ) {
-        state.chaseJumpTargetY = pickChaseJumpTargetY(state, prey, preyNav, steer);
-        state.chaseVerticalPhase = 'prep_jump';
-        state.chasePrepTimer = CAT_BT.chaseJumpPrepTime;
-        clearPredatorNavPath(state);
+        beginChaseJump(state, prey, preyNav ?? {
+          x: prey.position.x,
+          y: pickChaseJumpTargetY(state, prey, preyNav, steer),
+          z: prey.position.z,
+        });
         break;
       }
 
@@ -1378,7 +1682,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
           resetChaseProgress(state);
         } else {
           clearPredatorNavPath(state);
-          state.chaseTargetId = null;
+          clearPredatorAggroTarget(state);
           state.chaseFrustration = 0;
           resetChaseProgress(state);
           state.aiState = PREDATOR_AI.PATROL;
@@ -1393,11 +1697,11 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
       clearPredatorNavPath(state);
       if (state.aiTimer <= 0) {
         if (preyInAggro) {
-          state.chaseTargetId = aggroPrey.player.id;
+          setPredatorAggroTarget(state, aggroPrey);
           state.aiState = PREDATOR_AI.CHASE;
           state.nextChaseTargetPick = 0;
         } else {
-          state.chaseTargetId = null;
+          clearPredatorAggroTarget(state);
           state.aiState = PREDATOR_AI.PATROL;
           state.patrolTarget.x = state.spawnPoint.x;
           state.patrolTarget.z = state.spawnPoint.z;
@@ -1452,6 +1756,7 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
   if (state.aiState === PREDATOR_AI.CHASE && state.chaseVerticalPhase === 'air' && state.grounded) {
     state.chaseVerticalPhase = null;
     state.chaseAirTimer = 0;
+    state.chaseJumpHasTarget = false;
   }
 
   // Clamp to world bounds
@@ -1460,6 +1765,24 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
   if (state.position.x > 24 - r) state.position.x = 24 - r;
   if (state.position.z < -24 + r) state.position.z = -24 + r;
   if (state.position.z > 24 - r) state.position.z = 24 - r;
+
+  if (pendingStuckIntent && state.aiState === pendingStuckIntent.aiState) {
+    updatePredatorStuckIntent(state, {
+      intendedMove: true,
+      movedDistance: distXZ(state.position, previousPosition),
+      expectedDistance: pendingStuckIntent.expectedDistance,
+      target: pendingStuckIntent.target,
+      dt,
+    });
+  } else if (!pendingStuckIntent) {
+    updatePredatorStuckIntent(state, {
+      intendedMove: false,
+      movedDistance: 0,
+      expectedDistance: 0,
+      target: null,
+      dt,
+    });
+  }
 
   return null;
 }
@@ -1493,6 +1816,7 @@ export function serializePredatorState(state) {
     alive: state.alive,
     ai: state.aiState,
     chaseTargetId: state.chaseTargetId ?? null,
+    aggroThreat: +Math.max(0, state.aggroTargetThreat ?? 0).toFixed(1),
     cv,
   };
 }

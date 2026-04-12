@@ -37,6 +37,21 @@ const VERTICAL_ESCAPE_PERCH_MIN_Y = 0.58;
 const VERTICAL_CLIMB_JUMP_COOLDOWN = 0.38;
 const VERTICAL_CLIMB_WALL_JUMP_COOLDOWN = 0.85;
 const VERTICAL_PROGRESS_STALL_TIME = 1.45;
+const CHEESE_TARGET_REFRESH_MIN = 0.65;
+const CHEESE_TARGET_REFRESH_MAX = 1.25;
+const CHEESE_CANDIDATE_LIMIT = 18;
+const CHEESE_REACHED_DIST_SQ = 0.95 * 0.95;
+const CHEESE_RESERVED_TARGET_PENALTY = 26;
+const CHEESE_PEER_GOAL_PENALTY = 7.5;
+const CHEESE_SCORE_JITTER = 8;
+const VERTICAL_ESCAPE_SCORE_JITTER = 2.8;
+const VERTICAL_ESCAPE_PEER_GOAL_PENALTY = 4.5;
+const TEASE_PERCH_MIN_TIME = 2.4;
+const TEASE_PERCH_MAX_TIME = 4.8;
+const TEASE_EMOTE_MIN_INTERVAL = 3.4;
+const TEASE_EMOTE_MAX_INTERVAL = 6.2;
+const TEASE_EMOTE_DURATION = 0.75;
+const TEASE_EMOTES = ['laugh', 'dance', 'wave', 'thumbsup', 'scream'];
 
 /** Prefer goals at least this far from other alive players (reduces clumping). */
 const PEER_GOAL_SEPARATION = 3.8;
@@ -49,6 +64,49 @@ function distSqXZ(a, b) {
   const dx = a.x - b.x;
   const dz = a.z - b.z;
   return dx * dx + dz * dz;
+}
+
+function createBotPersonality(rand = Math.random) {
+  return {
+    seed: rand(),
+    cheeseGreed: 0.72 + rand() * 0.72,
+    distancePatience: 0.72 + rand() * 0.65,
+    catRiskAvoidance: 0.55 + rand() * 0.85,
+    heightInterest: rand(),
+    panicDistanceScale: 0.88 + rand() * 0.24,
+    teaseDurationScale: 0.78 + rand() * 0.55,
+    teaseFrequencyScale: 0.72 + rand() * 0.72,
+  };
+}
+
+function ensureBotPersonality(brain) {
+  if (!brain.personality) brain.personality = createBotPersonality();
+  return brain.personality;
+}
+
+function stableNoise(seed, key) {
+  let h = Math.floor((seed || 0.5) * 2147483647) >>> 0;
+  const s = String(key ?? '');
+  for (let i = 0; i < s.length; i += 1) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h / 4294967295;
+}
+
+function isReservedCheese(goal, reservedCheeseIds) {
+  if (!goal?.id || !reservedCheeseIds) return false;
+  if (typeof reservedCheeseIds.has === 'function') return reservedCheeseIds.has(goal.id);
+  return Array.isArray(reservedCheeseIds) && reservedCheeseIds.includes(goal.id);
+}
+
+function isGoalTooCloseToReservedGoals(goal, reservedGoalPositions) {
+  if (!reservedGoalPositions?.length) return false;
+  for (const p of reservedGoalPositions) {
+    if (!p) continue;
+    if (distSqXZ(goal, p) < PEER_GOAL_SEPARATION_SQ) return true;
+  }
+  return false;
 }
 
 function normalizeXZ(x, z) {
@@ -66,7 +124,7 @@ function clampXZ(x, z, bounds, pad) {
   };
 }
 
-function idleInput(rotation) {
+function idleInput(rotation, emote = null) {
   return {
     moveX: 0,
     moveZ: 0,
@@ -76,6 +134,7 @@ function idleInput(rotation) {
     jumpHeld: false,
     crouch: false,
     rotation,
+    emote,
   };
 }
 
@@ -84,6 +143,13 @@ function clearBotPath(brain) {
   brain.navPath = [];
   brain.navPathIndex = 0;
   brain.navTarget = null;
+}
+
+function clearBotGoal(brain) {
+  brain.goal = null;
+  brain.goalKind = 'none';
+  brain.cheeseTargetId = null;
+  clearBotPath(brain);
 }
 
 function rebuildBotPath(brain, from, to, navMesh) {
@@ -180,6 +246,88 @@ function canPathToGoal(state, goal, navMesh) {
   return result.success && Array.isArray(result.path) && result.path.length > 0;
 }
 
+function asGoalFromCheese(cheese) {
+  if (!cheese) return null;
+  return {
+    id: cheese.id,
+    x: cheese.x,
+    y: cheese.y,
+    z: cheese.z,
+    amount: cheese.amount ?? 1,
+  };
+}
+
+function chooseWeightedScored(scored, rand = Math.random) {
+  if (!scored.length) return null;
+  scored.sort((a, b) => b.score - a.score);
+  const pool = scored.slice(0, Math.min(5, scored.length));
+  const best = pool[0].score;
+  let total = 0;
+  for (const item of pool) {
+    item.weight = Math.max(0.04, Math.exp((item.score - best) / 7));
+    total += item.weight;
+  }
+  let r = rand() * total;
+  for (const item of pool) {
+    r -= item.weight;
+    if (r <= 0) return item.goal;
+  }
+  return pool[0].goal;
+}
+
+function pickCheeseGoal(
+  state,
+  brain,
+  navMesh,
+  cheesePickups,
+  nearestCat,
+  peerPositions,
+  reservedCheeseIds,
+  reservedGoalPositions,
+) {
+  if (!Array.isArray(cheesePickups) || cheesePickups.length === 0) return null;
+
+  const personality = ensureBotPersonality(brain);
+  const catPos = nearestCat?.position;
+  const candidates = cheesePickups
+    .map((cheese) => {
+      const goal = asGoalFromCheese(cheese);
+      if (!goal) return null;
+      const selfDistSq = distSqXZ(state.position, goal);
+      const catDist = catPos ? Math.sqrt(distSqXZ(goal, catPos)) : 10;
+      const noise = (stableNoise(personality.seed, goal.id ?? `${goal.x},${goal.y},${goal.z}`) - 0.5)
+        * CHEESE_SCORE_JITTER;
+      return {
+        goal,
+        selfDistSq,
+        catDist,
+        roughScore: (goal.amount ?? 1) * 8 * personality.cheeseGreed
+          - Math.sqrt(selfDistSq) * (0.42 + personality.distancePatience * 0.42)
+          + Math.min(catDist, 16) * (0.12 + personality.catRiskAvoidance * 0.22)
+          + Math.max(0, goal.y - state.position.y) * (0.2 + personality.heightInterest * 0.7)
+          + noise,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.roughScore - a.roughScore)
+    .slice(0, CHEESE_CANDIDATE_LIMIT);
+
+  const scored = [];
+  for (const candidate of candidates) {
+    const goal = candidate.goal;
+    if (!canPathToGoal(state, goal, navMesh)) continue;
+    const peerPenalty = isGoalTooCloseToPeers(goal, peerPositions) ? CHEESE_PEER_GOAL_PENALTY : 0;
+    const reservedGoalPenalty = isGoalTooCloseToReservedGoals(goal, reservedGoalPositions)
+      ? CHEESE_PEER_GOAL_PENALTY
+      : 0;
+    const reservedPenalty = isReservedCheese(goal, reservedCheeseIds) ? CHEESE_RESERVED_TARGET_PENALTY : 0;
+    const catTooClosePenalty = candidate.catDist < 3.2 ? 8 * personality.catRiskAvoidance : 0;
+    const score = candidate.roughScore - peerPenalty - catTooClosePenalty;
+    scored.push({ goal, score: score - reservedPenalty - reservedGoalPenalty });
+  }
+  return chooseWeightedScored(scored, Math.random);
+}
+
 function snapCandidateToMouseNav(candidate, navMesh) {
   findNearestPoly(
     _nearestPolyScratch,
@@ -251,9 +399,10 @@ function isSupportedVerticalEscapeGoal(candidate, colliders) {
   return false;
 }
 
-function pickVerticalEscapeGoal(state, navMesh, nearestCat, rand, colliders) {
+function pickVerticalEscapeGoal(state, brain, navMesh, nearestCat, rand, colliders, reservedGoalPositions) {
   let best = null;
   let bestScore = -Infinity;
+  const personality = ensureBotPersonality(brain);
   const catPos = nearestCat?.position;
   const candidates = [];
   addSupportColliderCandidates(candidates, state, navMesh, colliders);
@@ -282,10 +431,17 @@ function pickVerticalEscapeGoal(state, navMesh, nearestCat, rand, colliders) {
     const catDist = catPos ? Math.sqrt(distSqXZ(candidate, catPos)) : 0;
     const selfDist = Math.sqrt(distSelfSq);
     const practicalRise = Math.min(Math.max(0, rise), 2.4);
+    const key = `${candidate.x.toFixed(1)},${candidate.y.toFixed(1)},${candidate.z.toFixed(1)}`;
+    const jitter = (stableNoise(personality.seed, key) - 0.5) * VERTICAL_ESCAPE_SCORE_JITTER;
+    const peerGoalPenalty = isGoalTooCloseToReservedGoals(candidate, reservedGoalPositions)
+      ? VERTICAL_ESCAPE_PEER_GOAL_PENALTY
+      : 0;
     const score = candidate.y * 1.4
-      + practicalRise * 3.0
-      + catDist * 0.45
-      - selfDist * 0.85;
+      + practicalRise * (2.4 + personality.heightInterest * 1.2)
+      + catDist * (0.28 + personality.catRiskAvoidance * 0.28)
+      - selfDist * (0.68 + personality.distancePatience * 0.35)
+      + jitter
+      - peerGoalPenalty;
 
     if (score > bestScore) {
       bestScore = score;
@@ -294,6 +450,35 @@ function pickVerticalEscapeGoal(state, navMesh, nearestCat, rand, colliders) {
   }
 
   return best;
+}
+
+function enterVerticalPerch(brain, now, rand = Math.random) {
+  const personality = ensureBotPersonality(brain);
+  brain.verticalEscapeMode = 'perch';
+  brain.verticalEscapeSafeSince = 0;
+  const baseDuration = TEASE_PERCH_MIN_TIME + rand() * (TEASE_PERCH_MAX_TIME - TEASE_PERCH_MIN_TIME);
+  brain.teaseUntil = now + baseDuration * personality.teaseDurationScale;
+  brain.nextTeaseEmoteAt = now + 0.75 + rand() * 1.25;
+  brain.activeEmote = null;
+  brain.emoteUntil = 0;
+  clearBotPath(brain);
+}
+
+function nextTeaseEmote(brain, now, rand = Math.random) {
+  const personality = ensureBotPersonality(brain);
+  if (brain.activeEmote && now < brain.emoteUntil) return brain.activeEmote;
+  brain.activeEmote = null;
+  brain.emoteUntil = 0;
+
+  if (now < brain.nextTeaseEmoteAt) return null;
+
+  const emote = TEASE_EMOTES[Math.floor(rand() * TEASE_EMOTES.length)] ?? 'laugh';
+  brain.activeEmote = emote;
+  brain.emoteUntil = now + TEASE_EMOTE_DURATION;
+  brain.nextTeaseEmoteAt = brain.emoteUntil
+    + (TEASE_EMOTE_MIN_INTERVAL + rand() * (TEASE_EMOTE_MAX_INTERVAL - TEASE_EMOTE_MIN_INTERVAL))
+      * personality.teaseFrequencyScale;
+  return emote;
 }
 
 /**
@@ -391,6 +576,7 @@ function pickExploreGoal(state, navMesh, bounds, spawnPoints, peerPositions, ran
 
 export function createMouseBotBrain() {
   return {
+    personality: createBotPersonality(),
     navPath: [],
     navPathIndex: 0,
     navTarget: null,
@@ -398,6 +584,8 @@ export function createMouseBotBrain() {
     wanderTimer: 0,
     fleeUntil: 0,
     goal: null,
+    goalKind: 'none',
+    cheeseTargetId: null,
     verticalEscapeActive: false,
     verticalEscapeMode: 'none',
     verticalEscapeSafeSince: 0,
@@ -405,11 +593,16 @@ export function createMouseBotBrain() {
     verticalJumpCooldown: 0,
     verticalProgressBestY: 0,
     verticalProgressTimer: 0,
+    teaseUntil: 0,
+    nextTeaseEmoteAt: 0,
+    activeEmote: null,
+    emoteUntil: 0,
   };
 }
 
 export function resetMouseBotBrain(brain) {
   if (!brain) return;
+  ensureBotPersonality(brain);
   brain.navPath = [];
   brain.navPathIndex = 0;
   brain.navTarget = null;
@@ -417,6 +610,8 @@ export function resetMouseBotBrain(brain) {
   brain.wanderTimer = 0;
   brain.fleeUntil = 0;
   brain.goal = null;
+  brain.goalKind = 'none';
+  brain.cheeseTargetId = null;
   brain.verticalEscapeActive = false;
   brain.verticalEscapeMode = 'none';
   brain.verticalEscapeSafeSince = 0;
@@ -424,6 +619,10 @@ export function resetMouseBotBrain(brain) {
   brain.verticalJumpCooldown = 0;
   brain.verticalProgressBestY = 0;
   brain.verticalProgressTimer = 0;
+  brain.teaseUntil = 0;
+  brain.nextTeaseEmoteAt = 0;
+  brain.activeEmote = null;
+  brain.emoteUntil = 0;
 }
 
 /**
@@ -435,11 +634,15 @@ export function resetMouseBotBrain(brain) {
  * @param {{ player?: { x: number, y: number, z: number }[] }} spawnPoints
  * @param {object} bounds { minX, maxX, minZ, maxZ }
  * @param {number} now Wall-clock seconds
- * @param {{ peerPositions?: { x: number, z: number }[] }} [options] Other alive players (for spread-out goals)
+ * @param {{ peerPositions?: { x: number, z: number }[], cheesePickups?: object[], reservedCheeseIds?: Set<string> | string[], reservedGoalPositions?: { x: number, z: number }[] }} [options] Other alive players and cheese pickups
  */
 export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPoints, bounds, now, options = {}) {
+  const personality = ensureBotPersonality(brain);
   const peerPositions = options.peerPositions;
   const colliders = options.colliders;
+  const cheesePickups = options.cheesePickups;
+  const reservedCheeseIds = options.reservedCheeseIds;
+  const reservedGoalPositions = options.reservedGoalPositions;
   if (!navMesh) {
     return idleInput(state.rotation);
   }
@@ -460,16 +663,19 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
     }
   }
 
-  const fleeDistSq = FLEE_TRIGGER_DIST * FLEE_TRIGGER_DIST;
-  const verticalDangerDistSq = VERTICAL_ESCAPE_TRIGGER_DIST * VERTICAL_ESCAPE_TRIGGER_DIST;
+  const fleeTriggerDist = FLEE_TRIGGER_DIST * personality.panicDistanceScale;
+  const verticalDangerDist = VERTICAL_ESCAPE_TRIGGER_DIST * personality.panicDistanceScale;
+  const fleeDistSq = fleeTriggerDist * fleeTriggerDist;
+  const verticalDangerDistSq = verticalDangerDist * verticalDangerDist;
   const verticalSafeDistSq = VERTICAL_ESCAPE_SAFE_DIST * VERTICAL_ESCAPE_SAFE_DIST;
   let goal = brain.goal;
+  const alreadyOnHighSurface = state.grounded && state.position.y >= VERTICAL_ESCAPE_PERCH_MIN_Y;
   const perchedHigh = state.grounded
     && state.position.y >= VERTICAL_ESCAPE_PERCH_MIN_Y
     && brain.verticalEscapeActive;
 
   if (brain.verticalEscapeActive && perchedHigh) {
-    brain.verticalEscapeMode = 'perch';
+    if (brain.verticalEscapeMode !== 'perch') enterVerticalPerch(brain, now, Math.random);
   }
 
   if (brain.verticalEscapeActive && brain.verticalEscapeMode === 'perch') {
@@ -480,30 +686,51 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
         brain.verticalEscapeActive = false;
         brain.verticalEscapeMode = 'none';
         brain.verticalEscapeSafeSince = 0;
-        brain.goal = null;
+        brain.teaseUntil = 0;
+        brain.activeEmote = null;
+        brain.emoteUntil = 0;
+        clearBotGoal(brain);
         goal = null;
-        clearBotPath(brain);
       }
     } else {
       brain.verticalEscapeSafeSince = 0;
     }
 
     if (brain.verticalEscapeActive) {
-      const rotation = nearestCat
-        ? Math.atan2(state.position.x - nearestCat.position.x, state.position.z - nearestCat.position.z)
-        : state.rotation;
-      return idleInput(rotation);
+      if (now < brain.teaseUntil) {
+        const rotation = nearestCat
+          ? Math.atan2(nearestCat.position.x - state.position.x, nearestCat.position.z - state.position.z)
+          : state.rotation;
+        return idleInput(rotation, nextTeaseEmote(brain, now, Math.random));
+      }
+
+      brain.verticalEscapeActive = false;
+      brain.verticalEscapeMode = 'none';
+      brain.verticalEscapeSafeSince = 0;
+      brain.teaseUntil = 0;
+      brain.activeEmote = null;
+      brain.emoteUntil = 0;
+      clearBotGoal(brain);
+      goal = null;
     }
   }
 
-  if (nearestCat && nearestCatDistSq < verticalDangerDistSq) {
+  if (nearestCat && nearestCatDistSq < verticalDangerDistSq && !alreadyOnHighSurface) {
     if (
       !brain.verticalEscapeActive
       || !brain.goal
       || brain.verticalEscapeGoalRefresh <= 0
       || brain.goal.y < state.position.y + 0.15
     ) {
-      const verticalGoal = pickVerticalEscapeGoal(state, navMesh, nearestCat, Math.random, colliders);
+      const verticalGoal = pickVerticalEscapeGoal(
+        state,
+        brain,
+        navMesh,
+        nearestCat,
+        Math.random,
+        colliders,
+        reservedGoalPositions,
+      );
       if (verticalGoal) {
         brain.verticalEscapeActive = true;
         brain.verticalEscapeMode = 'climb';
@@ -512,6 +739,8 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
         brain.verticalProgressBestY = state.position.y;
         brain.verticalProgressTimer = 0;
         brain.goal = verticalGoal;
+        brain.goalKind = 'vertical_escape';
+        brain.cheeseTargetId = null;
         goal = verticalGoal;
         clearBotPath(brain);
       }
@@ -530,10 +759,20 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
     }
     if (brain.verticalProgressTimer > VERTICAL_PROGRESS_STALL_TIME) {
       const verticalGoal = nearestCat
-        ? pickVerticalEscapeGoal(state, navMesh, nearestCat, Math.random, colliders)
+        ? pickVerticalEscapeGoal(
+          state,
+          brain,
+          navMesh,
+          nearestCat,
+          Math.random,
+          colliders,
+          reservedGoalPositions,
+        )
         : null;
       if (verticalGoal) {
         brain.goal = verticalGoal;
+        brain.goalKind = 'vertical_escape';
+        brain.cheeseTargetId = null;
         goal = verticalGoal;
         brain.verticalEscapeGoalRefresh = VERTICAL_ESCAPE_GOAL_REFRESH;
         brain.verticalProgressBestY = state.position.y;
@@ -544,9 +783,8 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
         brain.verticalEscapeMode = 'none';
         brain.verticalProgressTimer = 0;
         brain.verticalProgressBestY = 0;
-        brain.goal = null;
+        clearBotGoal(brain);
         goal = null;
-        clearBotPath(brain);
       }
     }
   } else if (nearestCat && nearestCatDistSq < fleeDistSq) {
@@ -563,18 +801,59 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
     );
     goal.y = state.position.y;
     brain.goal = goal;
+    brain.goalKind = 'flee';
+    brain.cheeseTargetId = null;
     clearBotPath(brain);
     brain.wanderTimer = WANDER_TIMER_MIN + Math.random() * (WANDER_TIMER_MAX - WANDER_TIMER_MIN);
   } else if (now < brain.fleeUntil && brain.goal) {
     goal = brain.goal;
   } else {
     brain.fleeUntil = 0;
-    if (brain.wanderTimer <= 0 || !brain.goal) {
-      brain.wanderTimer = WANDER_TIMER_MIN + Math.random() * (WANDER_TIMER_MAX - WANDER_TIMER_MIN);
-      const rand = Math.random;
-      brain.goal = pickExploreGoal(state, navMesh, bounds, spawnPoints, peerPositions, rand);
+    const currentCheese = brain.cheeseTargetId
+      ? cheesePickups?.find((c) => c?.id === brain.cheeseTargetId)
+      : null;
+    if (
+      brain.goalKind === 'cheese'
+      && brain.goal
+      && distSqXZ(state.position, brain.goal) <= CHEESE_REACHED_DIST_SQ
+      && Math.abs((brain.goal.y ?? state.position.y) - state.position.y) < 0.95
+    ) {
+      brain.wanderTimer = Math.min(brain.wanderTimer, 0.15);
+    }
+
+    if (currentCheese && brain.goalKind === 'cheese' && brain.wanderTimer > 0) {
+      brain.goal = asGoalFromCheese(currentCheese);
       goal = brain.goal;
-      clearBotPath(brain);
+    } else if (brain.wanderTimer <= 0 || !brain.goal || brain.goalKind !== 'cheese') {
+      const cheeseGoal = pickCheeseGoal(
+        state,
+        brain,
+        navMesh,
+        cheesePickups,
+        nearestCat,
+        peerPositions,
+        reservedCheeseIds,
+        reservedGoalPositions,
+      );
+      if (cheeseGoal) {
+        brain.wanderTimer = CHEESE_TARGET_REFRESH_MIN
+          + Math.random() * (CHEESE_TARGET_REFRESH_MAX - CHEESE_TARGET_REFRESH_MIN);
+        brain.goal = cheeseGoal;
+        brain.goalKind = 'cheese';
+        brain.cheeseTargetId = cheeseGoal.id ?? null;
+        goal = brain.goal;
+        clearBotPath(brain);
+      } else if (brain.wanderTimer <= 0 || !brain.goal) {
+        brain.wanderTimer = WANDER_TIMER_MIN + Math.random() * (WANDER_TIMER_MAX - WANDER_TIMER_MIN);
+        const rand = Math.random;
+        brain.goal = pickExploreGoal(state, navMesh, bounds, spawnPoints, peerPositions, rand);
+        brain.goalKind = 'explore';
+        brain.cheeseTargetId = null;
+        goal = brain.goal;
+        clearBotPath(brain);
+      } else {
+        goal = brain.goal;
+      }
     } else {
       goal = brain.goal;
     }
@@ -606,8 +885,7 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
     && state.position.y >= Math.min(goal.y - 0.22, VERTICAL_ESCAPE_PERCH_MIN_Y)
     && distSqXZ(state.position, goal) <= VERTICAL_ESCAPE_REACHED_DIST_SQ
   ) {
-    brain.verticalEscapeMode = 'perch';
-    brain.verticalEscapeSafeSince = 0;
+    enterVerticalPerch(brain, now, Math.random);
     return idleInput(state.rotation);
   }
 
@@ -615,7 +893,7 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
   const dz = steer.z - state.position.z;
   const len = Math.sqrt(dx * dx + dz * dz);
 
-  const fleeing = now < brain.fleeUntil && nearestCat && nearestCatDistSq < (FLEE_TRIGGER_DIST + 3) ** 2;
+  const fleeing = now < brain.fleeUntil && nearestCat && nearestCatDistSq < (fleeTriggerDist + 3) ** 2;
   const sprint = fleeing || len > 5.5;
   const verticalClimb = brain.verticalEscapeActive && brain.verticalEscapeMode === 'climb';
   const targetY = Math.max(goal.y ?? state.position.y, steer.y ?? state.position.y);

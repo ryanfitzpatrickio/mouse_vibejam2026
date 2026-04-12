@@ -11,10 +11,22 @@
  */
 
 export const CAT_BT = Object.freeze({
-  /** Another mouse must be this much closer (m) to steal aggro from current target */
-  switchTargetAdvantage: 2.2,
   /** Mice above the room floor, wall-holding, or airborne are targeted before floor mice. */
   offGroundTargetPriorityMinY: 0.28,
+  /** Threat lead required before the cat switches from a valid current target. */
+  threatSwitchMargin: 7,
+  threatCurrentTargetBonus: 6,
+  threatDistanceWeight: 18,
+  threatOffGroundBonus: 100,
+  threatWallHoldBonus: 28,
+  threatAirborneBonus: 18,
+  threatElevatedPerMeter: 5,
+  threatCheesePerPiece: 16,
+  threatEmoteBonus: 14,
+  threatLoudEmoteBonus: 12,
+  threatSprintBonus: 5,
+  threatSlideBonus: 4,
+  threatLowHealthBonus: 3,
   chaseTargetRefresh: 0.55,
   /** Frustration (seconds of “stuck” weighted) before bored wander */
   frustrationMax: 1.05,
@@ -24,6 +36,14 @@ export const CAT_BT = Object.freeze({
   pathFailFrustrationRate: 3.2,
   /** Path says move but we barely slide (collision vs nav) */
   stuckMoveFrustrationRate: 2.0,
+  /** Sustained "trying to move but barely moving" before a physical recovery hop. */
+  unstuckIntentSeconds: 0.36,
+  unstuckCooldown: 1.15,
+  unstuckDuration: 0.32,
+  unstuckHopUpSpeed: 3.9,
+  unstuckSideStepSpeed: 5.8,
+  unstuckMinStepRatio: 0.18,
+  unstuckMinStepDistance: 0.028,
   /** Frustration per second when plateaued near best approach + low motion */
   plateauStallFrustrationRate: 2.4,
   /** Must be this far from prey (m) before plateau stall can build */
@@ -54,6 +74,14 @@ export const CAT_BT = Object.freeze({
   chaseJumpForwardSpeed: 4.8,
   chaseJumpMaxForwardSpeed: 10.5,
   chaseJumpMaxAirTime: 1.05,
+  chaseSurfaceLeapMinCatY: 0.55,
+  chaseSurfaceLeapMinGapXZ: 1.4,
+  chaseSurfaceLeapMaxGapXZ: 8.5,
+  chaseSurfaceLeapMaxDrop: 1.15,
+  chaseSurfaceLeapMaxRise: 1.2,
+  chaseSurfaceLeapPathRatio: 1.7,
+  chaseSurfaceLeapMinPathSaving: 2.0,
+  chaseSurfaceLeapNoPathCooldown: 0.85,
   /** Extra air time scales with jump height (seconds, capped). */
   chaseJumpAirTimePerMeter: 0.2,
   chaseJumpMaxAirTimeExtra: 3.2,
