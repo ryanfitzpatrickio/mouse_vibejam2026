@@ -1,6 +1,7 @@
 import { measureText } from '../utils/textLayout.js';
 
 const STORAGE_KEY = 'mouse-renderer-mode-v2';
+const PERF_TOGGLES_STORAGE_KEY = 'mouse-trouble-perf-toggles-v1';
 const DEFAULT_MODE = 'webgl';
 const METRICS_FONT = '12px monospace';
 const METRICS_LINE_HEIGHT = 16;
@@ -40,6 +41,25 @@ export function writeRendererMode(mode) {
   return mode;
 }
 
+function readPerfTogglesFromStorage() {
+  try {
+    const raw = localStorage.getItem(PERF_TOGGLES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writePerfToggleToStorage(key, value) {
+  try {
+    const cur = readPerfTogglesFromStorage();
+    cur[key] = !!value;
+    localStorage.setItem(PERF_TOGGLES_STORAGE_KEY, JSON.stringify(cur));
+  } catch {
+    /* ignore */
+  }
+}
+
 export class RendererModePanel {
   constructor({ container = document.body, visible = false } = {}) {
     this.container = container;
@@ -47,6 +67,10 @@ export class RendererModePanel {
     this.samples = [];
     this.sampleWindowMs = 5000;
     this.visible = visible;
+    /** @type {Record<string, { label: string, get: () => boolean, set: (v: boolean) => void }> | null} */
+    this._perfToggleDefs = null;
+    /** @type {Map<string, HTMLInputElement>} */
+    this._perfToggleInputs = new Map();
     this._createElements();
   }
 
@@ -83,7 +107,7 @@ export class RendererModePanel {
     this.element.appendChild(title);
 
     const hint = document.createElement('div');
-    hint.textContent = 'Toggle with P · WebGL renderer';
+    hint.textContent = 'Toggle with P · O = nav overlay · WebGL';
     Object.assign(hint.style, {
       color: '#b7c7d6',
       marginBottom: '10px',
@@ -99,8 +123,95 @@ export class RendererModePanel {
     this.targetNote.textContent = `FPS chart target: ${this.fpsTarget}`;
     this.element.appendChild(this.targetNote);
 
+    this.perfTogglesSection = document.createElement('div');
+    Object.assign(this.perfTogglesSection.style, {
+      marginTop: '10px',
+      padding: '8px',
+      borderRadius: '10px',
+      background: 'rgba(255,255,255,0.04)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      display: 'none',
+    });
+    const perfTitle = document.createElement('div');
+    perfTitle.textContent = 'DRAW / SCENE TOGGLES';
+    Object.assign(perfTitle.style, {
+      fontWeight: '700',
+      letterSpacing: '0.06em',
+      marginBottom: '8px',
+      color: '#c9b8ff',
+      fontSize: '11px',
+    });
+    this.perfTogglesSection.appendChild(perfTitle);
+    this.perfTogglesRoot = document.createElement('div');
+    Object.assign(this.perfTogglesRoot.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px',
+    });
+    this.perfTogglesSection.appendChild(this.perfTogglesRoot);
+    this.element.appendChild(this.perfTogglesSection);
+
     this._createPerformanceSection();
     this.container.appendChild(this.element);
+  }
+
+  /**
+   * @param {Record<string, { label: string, get: () => boolean, set: (v: boolean) => void }>} definitions
+   */
+  bindPerformanceToggles(definitions) {
+    if (!definitions || typeof definitions !== 'object') return;
+    this._perfToggleDefs = definitions;
+    this.perfTogglesRoot.replaceChildren();
+    this._perfToggleInputs.clear();
+
+    const stored = readPerfTogglesFromStorage();
+    for (const [key, def] of Object.entries(definitions)) {
+      if (!def?.label || typeof def.get !== 'function' || typeof def.set !== 'function') continue;
+
+      if (Object.prototype.hasOwnProperty.call(stored, key)) {
+        def.set(!!stored[key]);
+      }
+
+      const row = document.createElement('label');
+      Object.assign(row.style, {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        cursor: 'pointer',
+        color: '#d8e6f3',
+        fontSize: '11px',
+        lineHeight: '1.25',
+      });
+
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = !!def.get();
+      input.addEventListener('change', () => {
+        def.set(input.checked);
+        writePerfToggleToStorage(key, input.checked);
+      });
+
+      const text = document.createElement('span');
+      text.textContent = def.label;
+
+      row.appendChild(input);
+      row.appendChild(text);
+      this.perfTogglesRoot.appendChild(row);
+      this._perfToggleInputs.set(key, input);
+    }
+
+    this.perfTogglesSection.style.display = this.perfTogglesRoot.childElementCount > 0 ? 'block' : 'none';
+  }
+
+  /** Sync checkboxes from live state (e.g. after O key changes nav overlay). */
+  syncPerformanceToggleChecks() {
+    if (!this._perfToggleDefs) return;
+    for (const [key, def] of Object.entries(this._perfToggleDefs)) {
+      const input = this._perfToggleInputs.get(key);
+      if (input && typeof def.get === 'function') {
+        input.checked = !!def.get();
+      }
+    }
   }
 
   setVisible(visible) {

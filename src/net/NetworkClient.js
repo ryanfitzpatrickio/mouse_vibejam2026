@@ -14,6 +14,14 @@ const MAX_PENDING = 120;
 const PLAYER_KEY_STORAGE = 'mouseTrouble.playerKey.v1';
 const PLAYER_KEY_PATTERN = /^[a-f0-9]{64}$/;
 
+async function parseLeaderboardResponse(response) {
+  if (!response?.ok) return null;
+  const contentType = response.headers?.get?.('Content-Type') ?? '';
+  if (!contentType.includes('application/json')) return null;
+  const data = await response.json();
+  return data?.leaderboards ? data : null;
+}
+
 function createPlayerKey() {
   const bytes = new Uint8Array(32);
   if (globalThis.crypto?.getRandomValues) {
@@ -162,6 +170,29 @@ export class NetworkClient {
         playerKey: this.playerKey,
         displayName,
       }));
+    }
+  }
+
+  async fetchLeaderboard() {
+    try {
+      const sameOrigin = await parseLeaderboardResponse(await fetch('/api/leaderboard', {
+        headers: { Accept: 'application/json' },
+      }));
+      if (sameOrigin) return sameOrigin;
+    } catch {}
+
+    try {
+      const response = await PartySocket.fetch({
+        host: PARTYKIT_HOST,
+        room: this.roomId,
+        party: 'main',
+        path: 'leaderboard',
+      }, {
+        headers: { Accept: 'application/json' },
+      });
+      return await parseLeaderboardResponse(response);
+    } catch {
+      return null;
     }
   }
 

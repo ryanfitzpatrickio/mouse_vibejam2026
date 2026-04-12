@@ -53,6 +53,8 @@ try {
   throw error;
 }
 
+app.bindPerformancePanel?.(modePanel);
+
 if (import.meta.env.DEV) {
   const { installBuildMode } = await import('./dev/installBuildMode.js');
   buildMode = await installBuildMode(app);
@@ -104,6 +106,7 @@ window.addEventListener('keydown', (event) => {
 
   if (key === 'o') {
     app.toggleNavMeshOverlay?.();
+    modePanel.syncPerformanceToggleChecks?.();
   }
 
   if (key === 'n' && !buildMode?.isActive?.()) {

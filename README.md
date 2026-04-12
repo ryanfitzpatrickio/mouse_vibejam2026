@@ -52,6 +52,7 @@ The Wrangler config lives in [wrangler.jsonc](/Users/personal/source/vibejam2026
 The same Worker also owns the aggregate stats API:
 - `POST /api/stats/event` accepts signed stat batches from PartyKit.
 - `GET /api/stats` returns aggregate stats when called with the admin bearer token.
+- `GET /api/leaderboard` returns public all-time leaderboards for cat chase time and cheese held.
 
 PartyKit accounts without custom Cloudflare bindings cannot attach KV directly, so production stats flow through this Worker and its `GAME_STATS` KV binding.
 

@@ -1,12 +1,13 @@
 const GLOBAL_STATS_KEY = 'stats:v1:global';
 const UNIQUE_PLAYER_BUCKET_COUNT = 8192;
+const LEADERBOARD_LIMIT = 25;
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self' 'wasm-unsafe-eval' https://vibejam.cc https://vibej.am https://static.cloudflareinsights.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://vibejam.cc https://vibej.am https://static.cloudflareinsights.com https://cloudflareinsights.com",
   "media-src 'self' blob:",
-  "connect-src 'self' blob: https://vibejam.cc https://vibej.am https://static.cloudflareinsights.com https://cloudflareinsights.com wss://*.partykit.dev wss://*.partykit.io wss://localhost:* ws://localhost:* http://localhost:*",
+  "connect-src 'self' blob: https://vibejam.cc https://vibej.am https://static.cloudflareinsights.com https://cloudflareinsights.com https://*.partykit.dev https://*.partykit.io wss://*.partykit.dev wss://*.partykit.io wss://localhost:* ws://localhost:* http://localhost:*",
   "worker-src 'self' blob:",
   "font-src 'self' data:",
   "frame-src https://vibejam.cc https://vibej.am",
@@ -80,10 +81,87 @@ function createGlobalStats(now = Date.now()) {
     totalRespawns: 0,
     totalCatHits: 0,
     totalPlaySeconds: 0,
+    leaderboards: createLeaderboards(),
     uniquePlayerBase: 0,
     uniquePlayerBucketCount: UNIQUE_PLAYER_BUCKET_COUNT,
     uniquePlayerBuckets: '',
   };
+}
+
+function normalizeDisplayName(value) {
+  const name = String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 24);
+  return name || 'Mouse';
+}
+
+function createLeaderboards() {
+  return {
+    bestChase: [],
+    bestCheeseHeld: [],
+  };
+}
+
+function ensureLeaderboards(global) {
+  if (!global.leaderboards || typeof global.leaderboards !== 'object') {
+    global.leaderboards = createLeaderboards();
+  }
+  if (!Array.isArray(global.leaderboards.bestChase)) global.leaderboards.bestChase = [];
+  if (!Array.isArray(global.leaderboards.bestCheeseHeld)) global.leaderboards.bestCheeseHeld = [];
+  return global.leaderboards;
+}
+
+function publicLeaderboardEntry(entry) {
+  return {
+    displayName: normalizeDisplayName(entry?.displayName),
+    value: Number(entry?.value) || 0,
+    updatedAt: Number(entry?.updatedAt) || 0,
+  };
+}
+
+function publicLeaderboards(global) {
+  const leaderboards = ensureLeaderboards(global);
+  return {
+    bestChase: leaderboards.bestChase.map(publicLeaderboardEntry),
+    bestCheeseHeld: leaderboards.bestCheeseHeld.map(publicLeaderboardEntry),
+  };
+}
+
+function upsertLeaderboardEntry(global, boardName, { playerHash, displayName, value, updatedAt = Date.now() }) {
+  if (!isPlayerHash(playerHash)) return false;
+  const numericValue = Number(value) || 0;
+  if (numericValue <= 0) return false;
+
+  const leaderboards = ensureLeaderboards(global);
+  const board = leaderboards[boardName];
+  if (!Array.isArray(board)) return false;
+
+  const roundedValue = boardName === 'bestChase'
+    ? Math.round(numericValue * 10) / 10
+    : Math.floor(numericValue);
+  const name = normalizeDisplayName(displayName);
+  const existing = board.find((entry) => entry?.playerHash === playerHash);
+  if (existing) {
+    if ((Number(existing.value) || 0) > roundedValue) return false;
+    if ((Number(existing.value) || 0) === roundedValue && existing.displayName === name) return false;
+    existing.value = roundedValue;
+    existing.displayName = name;
+    existing.updatedAt = updatedAt;
+  } else {
+    board.push({
+      playerHash,
+      displayName: name,
+      value: roundedValue,
+      updatedAt,
+    });
+  }
+
+  board.sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)
+    || (Number(a.updatedAt) || 0) - (Number(b.updatedAt) || 0)
+    || normalizeDisplayName(a.displayName).localeCompare(normalizeDisplayName(b.displayName)));
+  if (board.length > LEADERBOARD_LIMIT) board.length = LEADERBOARD_LIMIT;
+  return true;
 }
 
 async function readJson(kv, key) {
@@ -206,6 +284,7 @@ async function handleStatsEvent(request, env) {
   const kv = env.GAME_STATS;
   const now = Date.now();
   const global = await readJson(kv, GLOBAL_STATS_KEY) ?? createGlobalStats(now);
+  ensureLeaderboards(global);
 
   applyIncrements(global, payload.global, GLOBAL_INCREMENT_FIELDS);
   global.peakConcurrent = Math.max(
@@ -218,6 +297,18 @@ async function handleStatsEvent(request, env) {
   for (const incoming of players) {
     if (isPlayerHash(incoming?.playerHash)) {
       acceptedPlayerHashes.push(incoming.playerHash);
+      upsertLeaderboardEntry(global, 'bestChase', {
+        playerHash: incoming.playerHash,
+        displayName: incoming.displayName,
+        value: incoming.bestChaseSeconds,
+        updatedAt: safePositiveInteger(incoming.lastSeen ?? now) || now,
+      });
+      upsertLeaderboardEntry(global, 'bestCheeseHeld', {
+        playerHash: incoming.playerHash,
+        displayName: incoming.displayName,
+        value: incoming.bestCheeseHeld,
+        updatedAt: safePositiveInteger(incoming.lastSeen ?? now) || now,
+      });
     }
   }
   applyUniquePlayerEstimate(global, acceptedPlayerHashes);
@@ -252,6 +343,7 @@ async function handleStatsSummary(request, env) {
   }
 
   const summary = await readJson(env.GAME_STATS, GLOBAL_STATS_KEY) ?? createGlobalStats();
+  ensureLeaderboards(summary);
   const {
     uniquePlayerBase,
     uniquePlayerBucketCount,
@@ -260,7 +352,23 @@ async function handleStatsSummary(request, env) {
   } = summary;
   return json({
     ...publicSummary,
+    leaderboards: publicLeaderboards(summary),
     storage: 'cloudflare-kv',
+  });
+}
+
+async function handleLeaderboard(request, env) {
+  if (!env.GAME_STATS) {
+    return json({ error: 'GAME_STATS KV binding is not configured' }, 503);
+  }
+
+  const summary = await readJson(env.GAME_STATS, GLOBAL_STATS_KEY) ?? createGlobalStats();
+  ensureLeaderboards(summary);
+  return json({
+    version: 1,
+    updatedAt: summary.updatedAt ?? 0,
+    storage: 'cloudflare-kv',
+    leaderboards: publicLeaderboards(summary),
   });
 }
 
@@ -273,6 +381,8 @@ export default {
       response = await handleStatsEvent(request, env);
     } else if (url.pathname === '/api/stats' && request.method === 'GET') {
       response = await handleStatsSummary(request, env);
+    } else if (url.pathname === '/api/leaderboard' && request.method === 'GET') {
+      response = await handleLeaderboard(request, env);
     } else if (url.pathname.startsWith('/api/')) {
       response = json({ error: 'Not found' }, 404);
     } else if (env.ASSETS) {

@@ -199,8 +199,25 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   await Promise.all([mouse.ready, room.ready]);
   mouse.position.set(0, mouse.groundOffset, 0);
   mouse.setViewCamera(camera);
-  attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
-  attachEdgeOutlines(room.getGroup(), { color: '#090909', thresholdAngle: 22, opacity: 0.9 });
+  const localMouseOutlineMeshes = attachEdgeOutlines(mouse, {
+    color: '#090909',
+    thresholdAngle: 24,
+    opacity: 0.95,
+    batch: false,
+  });
+  const roomOutlineMeshes = attachEdgeOutlines(room.getGroup(), {
+    color: '#090909',
+    thresholdAngle: 22,
+    opacity: 0.9,
+  });
+
+  function setOutlineListVisible(list, visible) {
+    if (!Array.isArray(list)) return;
+    const v = !!visible;
+    for (const obj of list) {
+      if (obj) obj.visible = v;
+    }
+  }
   const render = () => {
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
@@ -328,6 +345,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     toolbar.updateState(audioPrefs);
   }
 
+  let leaderboardRequestSeq = 0;
   const toolbar = new GameToolbar({
     githubUrl: GITHUB_URL,
     displayName: getClientPreferredDisplayName(),
@@ -341,6 +359,13 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     },
     onOpenGithub: () => {
       window.open(GITHUB_URL, '_blank', 'noopener,noreferrer');
+    },
+    onOpenLeaderboard: async () => {
+      const requestSeq = ++leaderboardRequestSeq;
+      toolbar.setAllTimeLeaderboards(toolbar.allTimeLeaderboards, 'Loading all-time scores...');
+      const data = await net.fetchLeaderboard();
+      if (requestSeq !== leaderboardRequestSeq) return;
+      toolbar.setAllTimeLeaderboards(data, data ? '' : 'All-time scores unavailable');
     },
     onChangeDisplayName: (rawName) => {
       const displayName = setClientPreferredDisplayName(rawName);
@@ -381,6 +406,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const DEFAULT_PUSH_BALL_RADIUS = 0.38;
   /** @type {Map<string, { mesh: THREE.Mesh, geom: THREE.BufferGeometry, mat: THREE.MeshStandardMaterial, targetPos: THREE.Vector3, targetQuat: THREE.Quaternion, lastR: number }>} */
   const pushBallMeshes = new Map();
+  let pushBallsRenderVisible = true;
 
   const cheesePickupGroup = new THREE.Group();
   cheesePickupGroup.name = 'WorldCheesePickups';
@@ -769,7 +795,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       alive: isAlive,
       respawnCountdown,
     });
-    scoreboard.setRows(buildScoreboardRows());
+    const scoreboardRows = buildScoreboardRows();
+    scoreboard.setRows(scoreboardRows);
+    toolbar.setLeaderboardRows(scoreboardRows);
 
     const chaseStreak = net.connected
       ? (net.serverState?.chaseStreakSeconds ?? 0)
@@ -809,6 +837,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
           mesh.name = `PushBall:${b.id}`;
           mesh.castShadow = true;
           mesh.receiveShadow = true;
+          mesh.visible = pushBallsRenderVisible;
           scene.add(mesh);
           entry = {
             mesh,
@@ -991,6 +1020,75 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     if (net.connected) net.sendSpawnExtraBall();
   }
 
+  function wirePerformancePanel(panel) {
+    if (!panel?.bindPerformanceToggles) return;
+    panel.bindPerformanceToggles({
+      shadows: {
+        label: 'Shadow maps (extra passes per light)',
+        get: () => renderer.shadowMap.enabled,
+        set: (v) => {
+          renderer.shadowMap.enabled = !!v;
+        },
+      },
+      roomOutlines: {
+        label: 'Room edge outlines (batched)',
+        get: () => roomOutlineMeshes.some((m) => m && m.visible !== false),
+        set: (v) => setOutlineListVisible(roomOutlineMeshes, v),
+      },
+      localMouseOutlines: {
+        label: 'Local mouse edge outlines (per mesh)',
+        get: () => localMouseOutlineMeshes.some((m) => m && m.visible !== false),
+        set: (v) => setOutlineListVisible(localMouseOutlineMeshes, v),
+      },
+      remoteMouseOutlines: {
+        label: 'Remote mouse edge outlines',
+        get: () => remotePlayerManager.getEdgeOutlinesVisible(),
+        set: (v) => remotePlayerManager.setEdgeOutlinesVisible(v),
+      },
+      navOverlay: {
+        label: 'Nav mesh overlay',
+        get: () => navMeshOverlay.visible === true,
+        set: (v) => {
+          navMeshOverlay.visible = !!v;
+        },
+      },
+      vibePortals: {
+        label: 'Vibe portals (rings / particles / sprites)',
+        get: () => vibePortalManager.getPortalsVisible(),
+        set: (v) => vibePortalManager.setPortalsVisible(v),
+      },
+      cheesePickups: {
+        label: 'Cheese pickup meshes',
+        get: () => cheesePickupGroup.visible !== false,
+        set: (v) => {
+          cheesePickupGroup.visible = !!v;
+        },
+      },
+      pushBalls: {
+        label: 'Push ball meshes',
+        get: () => pushBallsRenderVisible,
+        set: (v) => {
+          pushBallsRenderVisible = !!v;
+          for (const e of pushBallMeshes.values()) {
+            if (e?.mesh) e.mesh.visible = pushBallsRenderVisible;
+          }
+        },
+      },
+      catPredator: {
+        label: 'Cat predator model',
+        get: () => (cat ? cat.visible !== false : false),
+        set: (v) => {
+          if (cat) cat.visible = !!v;
+        },
+      },
+      occlusionFader: {
+        label: 'Occlusion x-ray fader (wall fade)',
+        get: () => occlusionFader.enabled !== false,
+        set: (v) => occlusionFader.setEnabled(v),
+      },
+    });
+  }
+
   return {
     mode: 'webgl',
     renderer,
@@ -1019,5 +1117,6 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         : !navMeshOverlay.visible;
       return navMeshOverlay.visible;
     },
+    bindPerformancePanel: wirePerformancePanel,
   };
 }

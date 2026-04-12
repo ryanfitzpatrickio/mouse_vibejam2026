@@ -3,6 +3,7 @@ const GLOBAL_STATS_KEY = 'stats:v1:global';
 const PLAYER_KEY_PREFIX = 'stats:v1:player:';
 const FLUSH_DELAY_MS = 60000;
 const COLLECTOR_TIMEOUT_MS = 3000;
+const LEADERBOARD_LIMIT = 25;
 
 const GLOBAL_DELTA_FIELDS = Object.freeze([
   'totalConnections',
@@ -33,14 +34,16 @@ function createGlobalStats() {
     totalRespawns: 0,
     totalCatHits: 0,
     totalPlaySeconds: 0,
+    leaderboards: createLeaderboards(),
   };
 }
 
-function createPlayerStats(playerHash) {
+function createPlayerStats(playerHash, displayName = 'Mouse') {
   const now = Date.now();
   return {
     version: 1,
     playerHash,
+    displayName: normalizeDisplayName(displayName),
     firstSeen: now,
     lastSeen: now,
     sessions: 0,
@@ -48,6 +51,8 @@ function createPlayerStats(playerHash) {
     respawns: 0,
     catHitsTaken: 0,
     playSeconds: 0,
+    bestChaseSeconds: 0,
+    bestCheeseHeld: 0,
   };
 }
 
@@ -65,6 +70,9 @@ function createGlobalDelta() {
 function createPlayerDelta(playerHash) {
   return {
     playerHash,
+    displayName: null,
+    bestChaseSeconds: null,
+    bestCheeseHeld: null,
     delta: {
       sessions: 0,
       deaths: 0,
@@ -83,6 +91,88 @@ function hasGlobalDelta(delta) {
 
 function hasPlayerDelta(playerDelta) {
   return PLAYER_DELTA_FIELDS.some((field) => playerDelta.delta[field] > 0);
+}
+
+function hasPlayerUpdate(playerDelta) {
+  return hasPlayerDelta(playerDelta)
+    || playerDelta.bestChaseSeconds != null
+    || playerDelta.bestCheeseHeld != null;
+}
+
+function normalizeDisplayName(value) {
+  const name = String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 24);
+  return name || 'Mouse';
+}
+
+function createLeaderboards() {
+  return {
+    bestChase: [],
+    bestCheeseHeld: [],
+  };
+}
+
+function ensureLeaderboards(global) {
+  if (!global.leaderboards || typeof global.leaderboards !== 'object') {
+    global.leaderboards = createLeaderboards();
+  }
+  if (!Array.isArray(global.leaderboards.bestChase)) global.leaderboards.bestChase = [];
+  if (!Array.isArray(global.leaderboards.bestCheeseHeld)) global.leaderboards.bestCheeseHeld = [];
+  return global.leaderboards;
+}
+
+function publicLeaderboardEntry(entry) {
+  return {
+    displayName: normalizeDisplayName(entry?.displayName),
+    value: Number(entry?.value) || 0,
+    updatedAt: Number(entry?.updatedAt) || 0,
+  };
+}
+
+function publicLeaderboards(global) {
+  const leaderboards = ensureLeaderboards(global);
+  return {
+    bestChase: leaderboards.bestChase.map(publicLeaderboardEntry),
+    bestCheeseHeld: leaderboards.bestCheeseHeld.map(publicLeaderboardEntry),
+  };
+}
+
+function upsertLeaderboardEntry(global, boardName, { playerHash, displayName, value, updatedAt = Date.now() }) {
+  if (!isValidPlayerKey(playerHash) && !/^[a-f0-9]{64}$/.test(String(playerHash ?? ''))) return false;
+  const numericValue = Number(value) || 0;
+  if (numericValue <= 0) return false;
+
+  const leaderboards = ensureLeaderboards(global);
+  const board = leaderboards[boardName];
+  if (!Array.isArray(board)) return false;
+
+  const roundedValue = boardName === 'bestChase'
+    ? Math.round(numericValue * 10) / 10
+    : Math.floor(numericValue);
+  const name = normalizeDisplayName(displayName);
+  const existing = board.find((entry) => entry?.playerHash === playerHash);
+  if (existing) {
+    if ((Number(existing.value) || 0) > roundedValue) return false;
+    if ((Number(existing.value) || 0) === roundedValue && existing.displayName === name) return false;
+    existing.value = roundedValue;
+    existing.displayName = name;
+    existing.updatedAt = updatedAt;
+  } else {
+    board.push({
+      playerHash,
+      displayName: name,
+      value: roundedValue,
+      updatedAt,
+    });
+  }
+
+  board.sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0)
+    || (Number(a.updatedAt) || 0) - (Number(b.updatedAt) || 0)
+    || normalizeDisplayName(a.displayName).localeCompare(normalizeDisplayName(b.displayName)));
+  if (board.length > LEADERBOARD_LIMIT) board.length = LEADERBOARD_LIMIT;
+  return true;
 }
 
 function isValidPlayerKey(value) {
@@ -152,6 +242,7 @@ export class StatsTracker {
   async _loadGlobal() {
     try {
       this.global = await this._readJson(GLOBAL_STATS_KEY) ?? createGlobalStats();
+      ensureLeaderboards(this.global);
     } catch (error) {
       console.warn('[stats] failed to load global stats:', error);
       this.global = createGlobalStats();
@@ -202,10 +293,20 @@ export class StatsTracker {
     playerDelta.lastSeen = Math.max(playerDelta.lastSeen ?? 0, now);
   }
 
-  _touchPendingPlayer(playerHash, now = Date.now()) {
+  _touchPendingPlayer(playerHash, now = Date.now(), displayName = null) {
     if (!this.collectorEnabled) return;
     if (!playerHash) return;
     const playerDelta = this._getPendingPlayerDelta(playerHash);
+    if (displayName) playerDelta.displayName = normalizeDisplayName(displayName);
+    playerDelta.firstSeen = playerDelta.firstSeen ?? now;
+    playerDelta.lastSeen = Math.max(playerDelta.lastSeen ?? 0, now);
+  }
+
+  _recordPendingBest(playerHash, field, value, displayName, now = Date.now()) {
+    if (!this.collectorEnabled || !playerHash) return;
+    const playerDelta = this._getPendingPlayerDelta(playerHash);
+    playerDelta.displayName = normalizeDisplayName(displayName);
+    playerDelta[field] = Math.max(Number(playerDelta[field]) || 0, Number(value) || 0);
     playerDelta.firstSeen = playerDelta.firstSeen ?? now;
     playerDelta.lastSeen = Math.max(playerDelta.lastSeen ?? 0, now);
   }
@@ -224,6 +325,7 @@ export class StatsTracker {
     this.sessions.set(connectionId, {
       connectedAt: Date.now(),
       playerHash: null,
+      displayName: 'Mouse',
     });
     this.global.totalConnections += 1;
     this.global.peakConcurrent = Math.max(this.global.peakConcurrent, concurrentCount);
@@ -232,7 +334,7 @@ export class StatsTracker {
     this._markGlobalDirty();
   }
 
-  async identifyConnection(connectionId, playerKey) {
+  async identifyConnection(connectionId, playerKey, displayName = 'Mouse') {
     if (!isValidPlayerKey(playerKey)) return;
     await this.ready;
 
@@ -240,6 +342,7 @@ export class StatsTracker {
     if (!session) return;
 
     const playerHash = await hashPlayerKey(playerKey);
+    session.displayName = normalizeDisplayName(displayName);
     if (session.playerHash === playerHash) return;
 
     session.playerHash = playerHash;
@@ -251,16 +354,74 @@ export class StatsTracker {
 
     const now = Date.now();
     if (!player) {
-      player = createPlayerStats(playerHash);
+      player = createPlayerStats(playerHash, session.displayName);
       this.global.uniquePlayers += 1;
       this._markGlobalDirty();
     }
 
+    player.displayName = session.displayName;
     player.sessions += 1;
     player.lastSeen = now;
     this.players.set(playerHash, player);
+    this._touchPendingPlayer(playerHash, now, session.displayName);
     this._addPlayerDelta(playerHash, 'sessions', 1, now);
     this._markPlayerDirty(playerHash);
+  }
+
+  recordDisplayName(connectionId, displayName) {
+    const session = this.sessions.get(connectionId);
+    if (!session) return;
+    const name = normalizeDisplayName(displayName);
+    session.displayName = name;
+    if (!session.playerHash) return;
+    this._mutatePlayerByHash(session.playerHash, (player) => {
+      player.displayName = name;
+    });
+  }
+
+  recordPlayerBests(connectionId, { displayName = null, chaseSeconds = 0, cheeseHeld = 0 } = {}) {
+    const session = this.sessions.get(connectionId);
+    if (!session?.playerHash) return;
+    const name = normalizeDisplayName(displayName ?? session.displayName);
+    session.displayName = name;
+    const roundedChase = Math.round(Math.max(0, Number(chaseSeconds) || 0) * 10) / 10;
+    const heldCheese = Math.max(0, Math.floor(Number(cheeseHeld) || 0));
+    const player = this.players.get(session.playerHash);
+    if (!player) return;
+
+    const now = Date.now();
+    let changed = false;
+    player.displayName = name;
+    if (roundedChase > (Number(player.bestChaseSeconds) || 0)) {
+      player.bestChaseSeconds = roundedChase;
+      this._recordPendingBest(session.playerHash, 'bestChaseSeconds', roundedChase, name, now);
+      if (upsertLeaderboardEntry(this.global, 'bestChase', {
+        playerHash: session.playerHash,
+        displayName: name,
+        value: roundedChase,
+        updatedAt: now,
+      })) {
+        this._markGlobalDirty();
+      }
+      changed = true;
+    }
+    if (heldCheese > (Number(player.bestCheeseHeld) || 0)) {
+      player.bestCheeseHeld = heldCheese;
+      this._recordPendingBest(session.playerHash, 'bestCheeseHeld', heldCheese, name, now);
+      if (upsertLeaderboardEntry(this.global, 'bestCheeseHeld', {
+        playerHash: session.playerHash,
+        displayName: name,
+        value: heldCheese,
+        updatedAt: now,
+      })) {
+        this._markGlobalDirty();
+      }
+      changed = true;
+    }
+    if (changed) {
+      player.lastSeen = now;
+      this._markPlayerDirty(session.playerHash);
+    }
   }
 
   recordCatHit(connectionId) {
@@ -337,11 +498,14 @@ export class StatsTracker {
   _snapshotPendingCollectorBatch() {
     const global = { ...this.pendingGlobalDelta };
     const players = [...this.pendingPlayerDeltas.values()]
-      .filter(hasPlayerDelta)
+      .filter(hasPlayerUpdate)
       .map((playerDelta) => ({
         playerHash: playerDelta.playerHash,
+        displayName: playerDelta.displayName,
         firstSeen: playerDelta.firstSeen,
         lastSeen: playerDelta.lastSeen,
+        bestChaseSeconds: playerDelta.bestChaseSeconds,
+        bestCheeseHeld: playerDelta.bestCheeseHeld,
         delta: { ...playerDelta.delta },
       }));
 
@@ -372,6 +536,19 @@ export class StatsTracker {
     for (const incoming of batch.players ?? []) {
       if (!incoming?.playerHash) continue;
       const playerDelta = this._getPendingPlayerDelta(incoming.playerHash);
+      if (incoming.displayName) playerDelta.displayName = normalizeDisplayName(incoming.displayName);
+      if (incoming.bestChaseSeconds != null) {
+        playerDelta.bestChaseSeconds = Math.max(
+          Number(playerDelta.bestChaseSeconds) || 0,
+          Number(incoming.bestChaseSeconds) || 0,
+        );
+      }
+      if (incoming.bestCheeseHeld != null) {
+        playerDelta.bestCheeseHeld = Math.max(
+          Number(playerDelta.bestCheeseHeld) || 0,
+          Number(incoming.bestCheeseHeld) || 0,
+        );
+      }
       for (const field of PLAYER_DELTA_FIELDS) {
         playerDelta.delta[field] += incoming.delta?.[field] ?? 0;
       }
@@ -448,9 +625,22 @@ export class StatsTracker {
     await this.flush();
     return {
       ...this.global,
+      leaderboards: publicLeaderboards(this.global),
       currentConcurrent: this.sessions.size,
       storage: this.kv ? 'cloudflare-kv' : 'party-room-storage',
       collector: this.collectorEnabled ? 'cloudflare-worker' : 'disabled',
+    };
+  }
+
+  async getLeaderboards() {
+    await this.flush();
+    return {
+      version: 1,
+      updatedAt: this.global.updatedAt ?? Date.now(),
+      currentConcurrent: this.sessions.size,
+      storage: this.kv ? 'cloudflare-kv' : 'party-room-storage',
+      collector: this.collectorEnabled ? 'cloudflare-worker' : 'disabled',
+      leaderboards: publicLeaderboards(this.global),
     };
   }
 }

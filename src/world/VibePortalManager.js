@@ -183,8 +183,20 @@ export class VibePortalManager {
     this.placementKey = '';
     this.exitPortal = null;
     this.startPortal = null;
+    /** When false, portal meshes stay hidden (logic still runs). */
+    this._portalsVisible = true;
 
     this._syncPortalObjects();
+  }
+
+  getPortalsVisible() {
+    return this._portalsVisible;
+  }
+
+  setPortalsVisible(visible) {
+    this._portalsVisible = !!visible;
+    if (this.exitPortal) this.exitPortal.visible = this._portalsVisible;
+    if (this.startPortal) this.startPortal.visible = this._portalsVisible;
   }
 
   getArrivalPayload() {
@@ -265,6 +277,7 @@ export class VibePortalManager {
       rotationY: placements.exit.rotation?.y ?? Math.PI,
     });
     this.scene.add(this.exitPortal);
+    this.exitPortal.visible = this._portalsVisible;
 
     this.startPortal = null;
     if (this.arrival.active && this.arrival.ref) {
@@ -275,6 +288,7 @@ export class VibePortalManager {
         rotationY: placements.return.rotation?.y ?? 0,
       });
       this.scene.add(this.startPortal);
+      this.startPortal.visible = this._portalsVisible;
     }
   }
 

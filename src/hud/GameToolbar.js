@@ -1,5 +1,5 @@
 const BUTTON_SIZE = 38;
-const BUTTON_COUNT = 4;
+const BUTTON_COUNT = 5;
 const BUTTON_GAP = 0;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -92,6 +92,12 @@ function createIconSvg(name) {
   } else if (name === 'gear') {
     addSvgCircle(svg, { cx: '12', cy: '12', r: '3.1' });
     addSvgPath(svg, { d: 'M19.1 13.4a7.8 7.8 0 0 0 0-2.8l2-1.5-2-3.4-2.4 1a7.4 7.4 0 0 0-2.4-1.4L14 2.7h-4l-.4 2.6a7.4 7.4 0 0 0-2.4 1.4l-2.4-1-2 3.4 2 1.5a7.8 7.8 0 0 0 0 2.8l-2 1.5 2 3.4 2.4-1a7.4 7.4 0 0 0 2.4 1.4l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 2.4-1.4l2.4 1 2-3.4z' });
+  } else if (name === 'leaderboard') {
+    addSvgLine(svg, { x1: '5', y1: '19', x2: '19', y2: '19' });
+    addSvgPath(svg, { d: 'M7 19v-5.6h3V19' });
+    addSvgPath(svg, { d: 'M10.5 19V9h3V19' });
+    addSvgPath(svg, { d: 'M14 19v-7.2h3V19' });
+    addSvgPath(svg, { d: 'M10.4 5.8 12 4.2l1.6 1.6 2.2-.3-1 2 1 2-2.2-.3L12 10.8l-1.6-1.6-2.2.3 1-2-1-2z' });
   } else if (name === 'close') {
     addSvgLine(svg, { x1: '7', y1: '7', x2: '17', y2: '17' });
     addSvgLine(svg, { x1: '17', y1: '7', x2: '7', y2: '17' });
@@ -131,7 +137,10 @@ export class GameToolbar {
     onToggleSfx,
     onOpenGithub,
     onChangeDisplayName,
+    onOpenLeaderboard,
     displayName = 'Mouse',
+    leaderboardRows = [],
+    allTimeLeaderboards = null,
   } = {}) {
     this.container = container;
     this.githubUrl = githubUrl;
@@ -139,7 +148,11 @@ export class GameToolbar {
     this.onToggleSfx = onToggleSfx;
     this.onOpenGithub = onOpenGithub;
     this.onChangeDisplayName = onChangeDisplayName;
+    this.onOpenLeaderboard = onOpenLeaderboard;
     this.displayName = displayName;
+    this.leaderboardRows = Array.isArray(leaderboardRows) ? leaderboardRows : [];
+    this.allTimeLeaderboards = allTimeLeaderboards;
+    this.leaderboardStatus = '';
     this.musicMuted = false;
     this.sfxMuted = false;
     this._createElements();
@@ -184,6 +197,11 @@ export class GameToolbar {
         window.open(this.githubUrl, '_blank', 'noopener,noreferrer');
       }
     });
+    this.leaderboardButton = createToolbarButton('leaderboard', 'Leaderboard', () => {
+      const nextOpen = !this.leaderboardOpen;
+      this.setLeaderboardOpen(nextOpen);
+      if (nextOpen) this.onOpenLeaderboard?.();
+    });
     this.settingsButton = createToolbarButton('gear', 'Settings', () => {
       this.setSettingsOpen(!this.settingsOpen);
     });
@@ -191,6 +209,7 @@ export class GameToolbar {
     this.element.append(
       this.musicButton,
       this.sfxButton,
+      this.leaderboardButton,
       this.githubButton,
       this.settingsButton,
     );
@@ -285,8 +304,92 @@ export class GameToolbar {
     });
 
     this.panel.append(header, this.nameRow.root, this.musicRow.root, this.sfxRow.root, link, controls);
-    this.container.append(this.element, this.panel);
+    this.leaderboardPanel = this._createLeaderboardPanel();
+    this.container.append(this.element, this.panel, this.leaderboardPanel);
     this.updateState({});
+  }
+
+  _createPanelShell(id, width = 'min(320px, calc(100vw - env(safe-area-inset-left, 0px)))') {
+    const panel = document.createElement('div');
+    panel.id = id;
+    Object.assign(panel.style, {
+      position: 'fixed',
+      top: `calc(env(safe-area-inset-top, 0px) + ${BUTTON_SIZE + 1}px)`,
+      left: 'env(safe-area-inset-left, 0px)',
+      width,
+      maxHeight: `calc(100vh - env(safe-area-inset-top, 0px) - ${BUTTON_SIZE + 12}px)`,
+      overflow: 'auto',
+      borderRadius: '8px',
+      border: '1px solid rgba(255,255,255,0.24)',
+      background: 'rgba(18,18,18,0.92)',
+      color: '#fff',
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      lineHeight: '1.4',
+      padding: '12px',
+      zIndex: '12000',
+      boxShadow: '0 12px 28px rgba(0,0,0,0.38)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      pointerEvents: 'auto',
+      display: 'none',
+      userSelect: 'none',
+      boxSizing: 'border-box',
+    });
+    panel.addEventListener('pointerdown', stopPanelEvent);
+    panel.addEventListener('click', (event) => event.stopPropagation());
+    return panel;
+  }
+
+  _createDialogHeader(titleText, closeTitle, closeAction) {
+    const header = document.createElement('div');
+    Object.assign(header.style, {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: '10px',
+      marginBottom: '10px',
+    });
+
+    const title = document.createElement('div');
+    title.textContent = titleText;
+    Object.assign(title.style, {
+      fontSize: '13px',
+      fontWeight: '700',
+      color: '#fff6d7',
+    });
+
+    const closeButton = createToolbarButton('close', closeTitle, closeAction);
+    Object.assign(closeButton.style, {
+      width: '28px',
+      height: '28px',
+      fontSize: '12px',
+      flexShrink: '0',
+      borderRight: '0',
+    });
+
+    header.append(title, closeButton);
+    return header;
+  }
+
+  _createLeaderboardPanel() {
+    const panel = this._createPanelShell('leaderboard-panel', 'min(360px, calc(100vw - env(safe-area-inset-left, 0px)))');
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-label', 'Leaderboard');
+
+    this.leaderboardList = document.createElement('div');
+    Object.assign(this.leaderboardList.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '5px',
+    });
+
+    panel.append(
+      this._createDialogHeader('Leaderboard', 'Close leaderboard', () => this.setLeaderboardOpen(false)),
+      this.leaderboardList,
+    );
+    this._renderLeaderboard();
+    return panel;
   }
 
   _createNameRow() {
@@ -428,10 +531,15 @@ export class GameToolbar {
     musicMuted = this.musicMuted,
     sfxMuted = this.sfxMuted,
     displayName = this.displayName,
+    leaderboardRows = this.leaderboardRows,
+    allTimeLeaderboards = this.allTimeLeaderboards,
+    leaderboardStatus = this.leaderboardStatus,
   } = {}) {
     this.musicMuted = !!musicMuted;
     this.sfxMuted = !!sfxMuted;
     this.setDisplayName(displayName);
+    this.setLeaderboardRows(leaderboardRows);
+    this.setAllTimeLeaderboards(allTimeLeaderboards, leaderboardStatus);
     this.musicButton.title = this.musicMuted ? 'Unmute music' : 'Mute music';
     this.musicButton.ariaLabel = this.musicButton.title;
     this.sfxButton.title = this.sfxMuted ? 'Unmute sound effects' : 'Mute sound effects';
@@ -444,6 +552,189 @@ export class GameToolbar {
     this.sfxRow.value.textContent = this.sfxMuted ? 'Off' : 'On';
   }
 
+  setLeaderboardRows(rows) {
+    this.leaderboardRows = Array.isArray(rows) ? rows : [];
+    if (this.leaderboardOpen) this._renderLeaderboard();
+  }
+
+  setAllTimeLeaderboards(data, status = this.leaderboardStatus) {
+    this.allTimeLeaderboards = data;
+    this.leaderboardStatus = String(status ?? '');
+    if (this.leaderboardOpen) this._renderLeaderboard();
+  }
+
+  _appendLeaderboardSection(titleText, rows, formatValue) {
+    const section = document.createElement('div');
+    Object.assign(section.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '5px',
+      marginBottom: '12px',
+    });
+
+    const title = document.createElement('div');
+    title.textContent = titleText;
+    Object.assign(title.style, {
+      color: '#fff6d7',
+      fontWeight: '700',
+      fontSize: '11px',
+    });
+    section.append(title);
+
+    if (!rows.length) {
+      const empty = document.createElement('div');
+      empty.textContent = 'No scores yet';
+      empty.style.color = 'rgba(255,255,255,0.52)';
+      empty.style.fontSize = '11px';
+      section.append(empty);
+      this.leaderboardList.append(section);
+      return;
+    }
+
+    rows.forEach((row, index) => {
+      const line = document.createElement('div');
+      Object.assign(line.style, {
+        display: 'grid',
+        gridTemplateColumns: '28px minmax(0, 1fr) 64px',
+        alignItems: 'baseline',
+        gap: '8px',
+        minHeight: '22px',
+      });
+      const rank = document.createElement('span');
+      rank.textContent = String(index + 1);
+      rank.style.color = 'rgba(255,255,255,0.62)';
+      rank.style.textAlign = 'right';
+      const name = document.createElement('span');
+      name.textContent = row.displayName || 'Mouse';
+      name.style.overflow = 'hidden';
+      name.style.textOverflow = 'ellipsis';
+      name.style.whiteSpace = 'nowrap';
+      const value = document.createElement('span');
+      value.textContent = formatValue(Number(row.value) || 0);
+      value.style.textAlign = 'right';
+      value.style.color = 'rgba(255,220,140,0.96)';
+      value.style.fontWeight = '700';
+      line.append(rank, name, value);
+      section.append(line);
+    });
+
+    this.leaderboardList.append(section);
+  }
+
+  _appendLiveLeaderboard() {
+    const sectionTitle = document.createElement('div');
+    sectionTitle.textContent = 'Current room';
+    Object.assign(sectionTitle.style, {
+      color: '#fff6d7',
+      fontWeight: '700',
+      fontSize: '11px',
+      marginBottom: '5px',
+    });
+    this.leaderboardList.append(sectionTitle);
+
+    if (this.leaderboardRows.length === 0) {
+      const empty = document.createElement('div');
+      empty.textContent = 'No players yet';
+      empty.style.color = 'rgba(255,255,255,0.58)';
+      empty.style.fontSize = '11px';
+      this.leaderboardList.append(empty);
+      return;
+    }
+
+    const header = document.createElement('div');
+    Object.assign(header.style, {
+      display: 'grid',
+      gridTemplateColumns: '28px minmax(0, 1fr) 54px 44px 34px',
+      alignItems: 'baseline',
+      gap: '8px',
+      paddingBottom: '6px',
+      borderBottom: '1px solid rgba(255,255,255,0.14)',
+      fontSize: '9px',
+      fontWeight: '700',
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+      color: 'rgba(255,255,255,0.48)',
+    });
+    for (const label of ['#', 'Player', 'Chase', 'Cheese', 'KOs']) {
+      const cell = document.createElement('span');
+      cell.textContent = label;
+      if (label !== 'Player') cell.style.textAlign = 'right';
+      header.append(cell);
+    }
+    this.leaderboardList.append(header);
+
+    this.leaderboardRows.forEach((row, index) => {
+      const line = document.createElement('div');
+      Object.assign(line.style, {
+        display: 'grid',
+        gridTemplateColumns: '28px minmax(0, 1fr) 54px 44px 34px',
+        alignItems: 'baseline',
+        gap: '8px',
+        minHeight: '24px',
+      });
+
+      const rank = document.createElement('span');
+      rank.textContent = String(index + 1);
+      rank.style.color = 'rgba(255,255,255,0.62)';
+      rank.style.textAlign = 'right';
+
+      const name = document.createElement('span');
+      name.textContent = row.label || 'Mouse';
+      name.style.overflow = 'hidden';
+      name.style.textOverflow = 'ellipsis';
+      name.style.whiteSpace = 'nowrap';
+
+      const chase = document.createElement('span');
+      const chaseSec = Math.max(0, Number(row.chaseSec) || 0);
+      chase.textContent = `${chaseSec.toFixed(1)}s`;
+      chase.style.color = 'rgba(255,220,140,0.96)';
+      chase.style.fontWeight = '700';
+      chase.style.textAlign = 'right';
+
+      const cheese = document.createElement('span');
+      cheese.textContent = String(Math.max(0, Math.floor(Number(row.cheese) || 0)));
+      cheese.style.color = 'rgba(255,236,120,0.98)';
+      cheese.style.fontWeight = '700';
+      cheese.style.textAlign = 'right';
+
+      const deaths = document.createElement('span');
+      deaths.textContent = String(Math.max(0, Math.floor(Number(row.deaths) || 0)));
+      deaths.style.color = 'rgba(255,180,120,0.95)';
+      deaths.style.fontWeight = '700';
+      deaths.style.textAlign = 'right';
+
+      line.append(rank, name, chase, cheese, deaths);
+      this.leaderboardList.append(line);
+    });
+  }
+
+  _renderLeaderboard() {
+    if (!this.leaderboardList) return;
+    this.leaderboardList.innerHTML = '';
+
+    if (this.leaderboardStatus) {
+      const status = document.createElement('div');
+      status.textContent = this.leaderboardStatus;
+      status.style.color = 'rgba(255,255,255,0.58)';
+      status.style.fontSize = '11px';
+      status.style.marginBottom = '8px';
+      this.leaderboardList.append(status);
+    }
+
+    const boards = this.allTimeLeaderboards?.leaderboards ?? this.allTimeLeaderboards ?? {};
+    this._appendLeaderboardSection(
+      'Best cat chase',
+      Array.isArray(boards.bestChase) ? boards.bestChase : [],
+      (value) => `${value.toFixed(1)}s`,
+    );
+    this._appendLeaderboardSection(
+      'Most cheese held',
+      Array.isArray(boards.bestCheeseHeld) ? boards.bestCheeseHeld : [],
+      (value) => String(Math.max(0, Math.floor(value))),
+    );
+    this._appendLiveLeaderboard();
+  }
+
   setDisplayName(displayName) {
     this.displayName = String(displayName || 'Mouse');
     if (this.nameRow?.input && document.activeElement !== this.nameRow.input) {
@@ -453,12 +744,22 @@ export class GameToolbar {
 
   setSettingsOpen(open) {
     this.settingsOpen = !!open;
+    if (this.settingsOpen && this.leaderboardOpen) this.setLeaderboardOpen(false);
     this.panel.style.display = this.settingsOpen ? 'block' : 'none';
     setPressedStyle(this.settingsButton, this.settingsOpen);
+  }
+
+  setLeaderboardOpen(open) {
+    this.leaderboardOpen = !!open;
+    if (this.leaderboardOpen && this.settingsOpen) this.setSettingsOpen(false);
+    this.leaderboardPanel.style.display = this.leaderboardOpen ? 'block' : 'none';
+    setPressedStyle(this.leaderboardButton, this.leaderboardOpen);
+    if (this.leaderboardOpen) this._renderLeaderboard();
   }
 
   dispose() {
     this.element.remove();
     this.panel.remove();
+    this.leaderboardPanel.remove();
   }
 }

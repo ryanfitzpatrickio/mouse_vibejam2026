@@ -19,14 +19,21 @@ const REMOTE_COLORS = [
 ];
 
 export class RemotePlayerManager {
-  /** @type {Map<string, { mouse: Mouse, nameplateAnchor: THREE.Object3D, nameplate: ReturnType<typeof createPlayerNameplate>, displayName: string, targetPos: THREE.Vector3, prevPos: THREE.Vector3, targetRot: number, animState: string, serverAlive: boolean, serverAnimState: string }>} */
+  /** @type {Map<string, { mouse: Mouse, outlineMeshes?: THREE.Object3D[], nameplateAnchor: THREE.Object3D, nameplate: ReturnType<typeof createPlayerNameplate>, displayName: string, targetPos: THREE.Vector3, prevPos: THREE.Vector3, targetRot: number, animState: string, serverAlive: boolean, serverAnimState: string }>} */
   players = new Map();
   /** IDs currently being spawned (async) — prevents duplicate spawns */
   _spawning = new Set();
 
+  /** Applied to new spawns and existing outline meshes. */
+  edgeOutlinesVisible = true;
+
   constructor({ scene }) {
     this.scene = scene;
     this._colorIndex = 0;
+  }
+
+  getEdgeOutlinesVisible() {
+    return this.edgeOutlinesVisible;
   }
 
   /** Sync with latest snapshot from NetworkClient.remotePlayers */
@@ -156,7 +163,15 @@ export class RemotePlayerManager {
       groundY,
       data.position?.z ?? 0,
     );
-    attachEdgeOutlines(mouse, { color: '#090909', thresholdAngle: 24, opacity: 0.95, batch: false });
+    const outlineMeshes = attachEdgeOutlines(mouse, {
+      color: '#090909',
+      thresholdAngle: 24,
+      opacity: 0.95,
+      batch: false,
+    });
+    for (const m of outlineMeshes) {
+      if (m) m.visible = this.edgeOutlinesVisible;
+    }
     this.scene.add(mouse);
 
     const nameplateAnchor = new THREE.Object3D();
@@ -175,6 +190,7 @@ export class RemotePlayerManager {
 
     this.players.set(id, {
       mouse,
+      outlineMeshes,
       nameplateAnchor,
       nameplate,
       displayName,
@@ -194,6 +210,18 @@ export class RemotePlayerManager {
       serverAlive: data.alive !== false,
       serverAnimState: data.animState ?? 'idle',
     });
+  }
+
+  setEdgeOutlinesVisible(visible) {
+    this.edgeOutlinesVisible = !!visible;
+    const v = this.edgeOutlinesVisible;
+    for (const entry of this.players.values()) {
+      const meshes = entry.outlineMeshes;
+      if (!Array.isArray(meshes)) continue;
+      for (const m of meshes) {
+        if (m) m.visible = v;
+      }
+    }
   }
 
   dispose() {

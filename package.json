@@ -21,6 +21,7 @@
     "cannon-es": "^0.20.0",
     "navcat": "^0.2.0",
     "nipplejs": "^1.0.1",
+    "obscenity": "^0.4.6",
     "partysocket": "^1.1.16",
     "three": "^0.183.2"
   },

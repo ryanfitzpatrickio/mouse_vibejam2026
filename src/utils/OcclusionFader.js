@@ -11,11 +11,40 @@ export class OcclusionFader {
     this.getPlayer = getPlayer;
     this.fadeOpacity = fadeOpacity;
     this.fadeSpeed = fadeSpeed;
+    this.enabled = true;
     this._fading = new Map();
     this._playerSet = new Set();
   }
 
+  /** When false, stops updates and restores any meshes still faded. */
+  setEnabled(on) {
+    this.enabled = !!on;
+    if (!this.enabled) {
+      this._restoreAllFades();
+    }
+  }
+
+  _restoreAllFades() {
+    for (const [obj] of this._fading) {
+      const saved = _savedOpacity.get(obj);
+      if (saved) {
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        for (let i = 0; i < mats.length; i++) {
+          if (saved[i]) {
+            mats[i].opacity = saved[i].opacity;
+            mats[i].transparent = saved[i].transparent;
+            mats[i].depthWrite = saved[i].depthWrite;
+            mats[i].needsUpdate = true;
+          }
+        }
+      }
+      _savedOpacity.delete(obj);
+    }
+    this._fading.clear();
+  }
+
   update(dt) {
+    if (!this.enabled) return;
     const player = this.getPlayer();
     if (!player) return;
 

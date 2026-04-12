@@ -10,7 +10,7 @@ import { applyPortalArrivalToPlayerState, collectVibePortalPlacementsFromLayout,
 import { isValidDevSyncLayout } from '../shared/devLayoutValidation.js';
 import { sanitizePlayerInputMessage } from '../shared/playerInputSanitize.js';
 import { sanitizeDisplayName } from '../shared/displayName.js';
-import { tickPlayerChaseScores } from '../shared/chaseScore.js';
+import { playerChaseRecordSeconds, tickPlayerChaseScores } from '../shared/chaseScore.js';
 import { StatsTracker } from './stats.js';
 import { createPushBallWorld } from './pushBallWorld.js';
 import { CheeseWorld } from './cheeseWorld.js';
@@ -18,6 +18,7 @@ import { CheeseWorld } from './cheeseWorld.js';
 /**
  * PartyKit env (dashboard / project .env for `partykit dev`):
  * - STATS_ADMIN_TOKEN or STATS_COLLECTOR_TOKEN — required; GET …/stats returns 503 if both missing
+ * - GET …/leaderboard returns public aggregate leaderboards
  * - ALLOWED_ORIGINS — comma-separated browser origins allowed to open WebSockets
  * - DEV_LAYOUT_SYNC_ENABLED — set "true" only in dev to accept dev-sync-layout
  * - DEV_LAYOUT_SYNC_TOKEN — must match Vite VITE_DEV_LAYOUT_SYNC_TOKEN when syncing layout from build mode
@@ -87,6 +88,28 @@ function isAllowedOrigin(origin, env) {
   if (!normalized) return false;
   if (LOCAL_ORIGIN_RE.test(normalized)) return true;
   return getAllowedOrigins(env).has(normalized);
+}
+
+function corsHeadersForRequest(request, env) {
+  const origin = request.headers.get('Origin') ?? '';
+  if (!origin || !isAllowedOrigin(origin, env)) return {};
+  return {
+    'Access-Control-Allow-Origin': normalizeOrigin(origin),
+    'Access-Control-Allow-Methods': 'GET,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Vary': 'Origin',
+  };
+}
+
+function jsonResponse(request, env, body, status = 200) {
+  return new Response(JSON.stringify(body, null, 2), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+      ...corsHeadersForRequest(request, env),
+    },
+  });
 }
 
 function getClientRateKey(request) {
@@ -365,6 +388,7 @@ export default class GameServer {
       const playerHello = this.players.get(sender.id);
       if (playerHello && typeof data.displayName === 'string') {
         playerHello.displayName = sanitizeDisplayName(data.displayName);
+        this.stats?.recordDisplayName(sender.id, playerHello.displayName);
       }
 
       const portalArrival = sanitizePortalArrivalPayload(data.portal);
@@ -384,7 +408,7 @@ export default class GameServer {
       }
 
       try {
-        await this.stats?.identifyConnection(sender.id, data.playerKey);
+        await this.stats?.identifyConnection(sender.id, data.playerKey, playerHello?.displayName);
       } catch (error) {
         console.warn('[stats] failed to identify player:', error);
       }
@@ -579,6 +603,14 @@ export default class GameServer {
     tickPlayerChaseScores(this.players, this.predators, dt);
 
     this.cheeseWorld.collectFromPlayers(this.players);
+    for (const [id, state] of this.players) {
+      if (!this.inputQueues.has(id)) continue;
+      this.stats?.recordPlayerBests(id, {
+        displayName: state.displayName,
+        chaseSeconds: playerChaseRecordSeconds(state),
+        cheeseHeld: state.cheeseCarried ?? 0,
+      });
+    }
 
     const snapshot = {
       type: 'snapshot',
@@ -602,7 +634,22 @@ export default class GameServer {
 
   async onRequest(request) {
     const url = new URL(request.url);
-    if (!url.pathname.endsWith('/stats')) {
+    const env = this.room.env ?? this.room.context?.env ?? {};
+    const isLeaderboardRequest = url.pathname.endsWith('/leaderboard');
+    const isStatsRequest = url.pathname.endsWith('/stats');
+
+    if (request.method === 'OPTIONS' && (isLeaderboardRequest || isStatsRequest)) {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeadersForRequest(request, env),
+      });
+    }
+
+    if (isLeaderboardRequest) {
+      return jsonResponse(request, env, await this.stats.getLeaderboards());
+    }
+
+    if (!isStatsRequest) {
       return new Response('Not found', { status: 404 });
     }
 
@@ -613,18 +660,9 @@ export default class GameServer {
       : (typeof collectorTok === 'string' && collectorTok.trim() !== '' ? collectorTok : '');
 
     if (!expectedToken) {
-      return new Response(
-        JSON.stringify({
-          error: 'Set STATS_ADMIN_TOKEN or STATS_COLLECTOR_TOKEN for /stats',
-        }),
-        {
-          status: 503,
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
-          },
-        },
-      );
+      return jsonResponse(request, env, {
+        error: 'Set STATS_ADMIN_TOKEN or STATS_COLLECTOR_TOKEN for /stats',
+      }, 503);
     }
 
     const authHeader = request.headers.get('Authorization') ?? '';
@@ -634,11 +672,6 @@ export default class GameServer {
     }
 
     const summary = await this.stats.getSummary();
-    return new Response(JSON.stringify(summary, null, 2), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-      },
-    });
+    return jsonResponse(request, env, summary);
   }
 }
