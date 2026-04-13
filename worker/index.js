@@ -1,6 +1,6 @@
 const GLOBAL_STATS_KEY = 'stats:v1:global';
 const UNIQUE_PLAYER_BUCKET_COUNT = 8192;
-const LEADERBOARD_LIMIT = 25;
+const LEADERBOARD_LIMIT = 10;
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self' 'wasm-unsafe-eval' https://vibejam.cc https://vibej.am https://static.cloudflareinsights.com",
@@ -122,9 +122,10 @@ function publicLeaderboardEntry(entry) {
 
 function publicLeaderboards(global) {
   const leaderboards = ensureLeaderboards(global);
+  const cap = (arr) => (Array.isArray(arr) ? arr.slice(0, LEADERBOARD_LIMIT) : []);
   return {
-    bestChase: leaderboards.bestChase.map(publicLeaderboardEntry),
-    bestCheeseHeld: leaderboards.bestCheeseHeld.map(publicLeaderboardEntry),
+    bestChase: cap(leaderboards.bestChase).map(publicLeaderboardEntry),
+    bestCheeseHeld: cap(leaderboards.bestCheeseHeld).map(publicLeaderboardEntry),
   };
 }
 

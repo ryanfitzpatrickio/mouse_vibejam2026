@@ -3,7 +3,7 @@ const GLOBAL_STATS_KEY = 'stats:v1:global';
 const PLAYER_KEY_PREFIX = 'stats:v1:player:';
 const FLUSH_DELAY_MS = 60000;
 const COLLECTOR_TIMEOUT_MS = 3000;
-const LEADERBOARD_LIMIT = 25;
+const LEADERBOARD_LIMIT = 10;
 
 const GLOBAL_DELTA_FIELDS = Object.freeze([
   'totalConnections',
@@ -133,9 +133,10 @@ function publicLeaderboardEntry(entry) {
 
 function publicLeaderboards(global) {
   const leaderboards = ensureLeaderboards(global);
+  const cap = (arr) => (Array.isArray(arr) ? arr.slice(0, LEADERBOARD_LIMIT) : []);
   return {
-    bestChase: leaderboards.bestChase.map(publicLeaderboardEntry),
-    bestCheeseHeld: leaderboards.bestCheeseHeld.map(publicLeaderboardEntry),
+    bestChase: cap(leaderboards.bestChase).map(publicLeaderboardEntry),
+    bestCheeseHeld: cap(leaderboards.bestCheeseHeld).map(publicLeaderboardEntry),
   };
 }
 

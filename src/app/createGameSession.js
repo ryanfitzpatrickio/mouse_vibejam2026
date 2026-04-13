@@ -42,15 +42,12 @@ function createWebGLRenderer(canvas) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.12;
   renderer.shadowMap.enabled = true;
-  // PCFSoftShadowMap uses poisson disk sampling with texture comparison
-  // functions that produce artifacts on some mobile Mali GPUs (e.g. G715).
-  // PCFShadowMap is more compatible across mobile GPU generations.
-  renderer.shadowMap.type = isMobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
+  // PCFSoftShadowMap is deprecated on WebGLRenderer (Three r183+); PCFShadowMap is the supported path.
+  // PCFShadowMap is also more compatible on some mobile Mali GPUs (e.g. G715).
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   return renderer;
 }
 
-const isMobile = typeof window !== 'undefined'
-  && (window.matchMedia?.('(pointer: coarse)')?.matches || navigator.maxTouchPoints > 0);
 const ENABLE_BUNNY_PREDATOR = false;
 const ENABLE_CAT_PREDATOR = true;
 const AUDIO_PREFS_KEY = 'mouse-trouble-audio-prefs';
@@ -505,7 +502,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         || b.deaths - a.deaths
         || a.label.localeCompare(b.label),
     );
-    return rows;
+    return rows.slice(0, 10);
   }
 
   // Visual smoothing: render position lerps toward prediction to hide small corrections

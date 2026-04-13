@@ -13,8 +13,12 @@
 export const CAT_BT = Object.freeze({
   /** Mice above the room floor, wall-holding, or airborne are targeted before floor mice. */
   offGroundTargetPriorityMinY: 0.28,
-  /** Threat lead required before the cat switches from a valid current target. */
+  /** Threat lead required before the cat switches from a valid current target (unused while chase lock is on). */
   threatSwitchMargin: 7,
+  /** Chase-jump attempts allowed toward the current target before stopping vertical leaps (path + frustration only). */
+  chaseJumpMaxAttempts: 3,
+  /** Extra frustration per second when jump budget is spent but prey is still on a higher layer. */
+  chaseJumpExhaustedFrustrationPerSecond: 2.85,
   threatCurrentTargetBonus: 6,
   threatDistanceWeight: 18,
   threatOffGroundBonus: 100,
@@ -79,6 +83,23 @@ export const CAT_BT = Object.freeze({
   chaseSurfaceLeapMaxGapXZ: 8.5,
   chaseSurfaceLeapMaxDrop: 1.15,
   chaseSurfaceLeapMaxRise: 1.2,
+  /** Prey walk layer this far below the cat → hop off ledge toward them (chase). */
+  chaseDropMinGap: 0.36,
+  /** Safety: do not auto-drop farther than this. */
+  chaseDropMaxGap: 4.35,
+  chaseDropMaxDistXZ: 9.5,
+  chaseDropMinDistXZ: 0.22,
+  chaseDropPrepTime: 0.15,
+  /** Tiny upward kick to clear counter lips before gravity takes over. */
+  chaseDropHopUpSpeed: 2.35,
+  chaseDropForwardSpeed: 6.6,
+  chaseDropAirTimeMin: 0.52,
+  chaseDropAirTimeMax: 2.55,
+  /** Let the cat fall through nav snapping briefly after leaving a ledge. */
+  chaseDropIgnoreNavTime: 1.08,
+  chaseDropCooldown: 1.05,
+  /** With prey below, treat this plateau time + no nav move as “stuck on the ledge”. */
+  chaseDropStuckPlateauSeconds: 0.2,
   chaseSurfaceLeapPathRatio: 1.7,
   chaseSurfaceLeapMinPathSaving: 2.0,
   chaseSurfaceLeapNoPathCooldown: 0.85,

@@ -166,11 +166,11 @@ export default {
         "z": 24
       },
       "texture": {
-        "atlas": "textures2",
-        "cell": 37,
+        "atlas": "textures4",
+        "cell": 10,
         "repeat": {
-          "x": 6,
-          "y": 0.5
+          "x": 1,
+          "y": 2
         },
         "rotation": 4.71238898038469
       },
@@ -3963,8 +3963,8 @@ export default {
         "z": 1
       },
       "texture": {
-        "atlas": "textures3",
-        "cell": 94,
+        "atlas": "textures4",
+        "cell": 59,
         "repeat": {
           "x": 2,
           "y": 3
@@ -4011,8 +4011,8 @@ export default {
         "z": 1
       },
       "texture": {
-        "atlas": "textures3",
-        "cell": 94,
+        "atlas": "textures4",
+        "cell": 56,
         "repeat": {
           "x": 2,
           "y": 3
@@ -4059,13 +4059,13 @@ export default {
         "z": 1
       },
       "texture": {
-        "atlas": "textures",
-        "cell": 0,
+        "atlas": "textures4",
+        "cell": 43,
         "repeat": {
-          "x": 1,
-          "y": 1
+          "x": 2,
+          "y": 0.8
         },
-        "rotation": 0
+        "rotation": 4.71238898038469
       },
       "faceTextures": {},
       "material": {
@@ -4107,8 +4107,8 @@ export default {
         "z": 1
       },
       "texture": {
-        "atlas": "textures",
-        "cell": 0,
+        "atlas": "textures4",
+        "cell": 43,
         "repeat": {
           "x": 1,
           "y": 1
@@ -4155,10 +4155,58 @@ export default {
         "z": 1
       },
       "texture": {
-        "atlas": "textures",
-        "cell": 0,
+        "atlas": "textures4",
+        "cell": 10,
         "repeat": {
           "x": 1,
+          "y": 1.6
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mnx4ro6z-pnp6n",
+      "name": "plane-mp0",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": -30,
+        "y": 0.1,
+        "z": -14
+      },
+      "rotation": {
+        "x": -1.5707963267948966,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 52,
+        "y": 16.3,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures5",
+        "cell": 78,
+        "repeat": {
+          "x": 4,
           "y": 1
         },
         "rotation": 0

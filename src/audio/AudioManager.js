@@ -33,13 +33,15 @@ const AMBIENT_CHASE_STEMS = [
   'assets/Corn-Dog-Alarm',
   'assets/corndogalarm',
 ];
-const AMBIENT_FORMATS = ['.m4a', '.mp3', '.ogg', '.wav'];
+/** Prefer .mp3 when `public/assets` ships mp3 without running `optimize-ambient-audio` (m4a). */
+const AMBIENT_FORMATS = ['.mp3', '.m4a', '.ogg', '.wav'];
 /** Crossfade responsiveness (higher = quicker transitions). */
 const AMBIENT_CROSSFADE_RATE = 2.85;
 const AMBIENT_TRACK_GAIN = 0.92;
 
 const MOVE_LOOP_STEMS = ['assets/run', 'assets/Run'];
-const WALL_RUN_STEMS = ['assets/wall run', 'assets/Wall Run', 'assets/wallrun', 'assets/WallRun'];
+/** `wallrun` first matches `public/assets/wallrun.mp3`; space variants match optimize-ambient-audio `wall run.m4a`. */
+const WALL_RUN_STEMS = ['assets/wallrun', 'assets/WallRun', 'assets/wall run', 'assets/Wall Run'];
 const JUMP_SFX_STEMS = ['assets/jump', 'assets/Jump'];
 const JUMP_SFX_GAIN = 0.62;
 const MOVE_LOOP_FADE_RATE = 5.5;

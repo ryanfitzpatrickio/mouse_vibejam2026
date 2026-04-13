@@ -11,7 +11,7 @@ const OUTPUT_DIR = path.join(ROOT, 'public');
 const SHEET_DIR = path.join(ROOT, 'artifacts');
 
 function atlasIdFromFilename(filename) {
-  const match = /^textures(?:(\d+))?\.webp$/i.exec(filename);
+  const match = /^textures(?:(\d+))?\.(webp|jpg|jpeg|png)$/i.exec(filename);
   if (!match) return null;
   return match[1] ? `textures${match[1]}` : 'textures';
 }

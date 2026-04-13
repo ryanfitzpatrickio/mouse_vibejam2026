@@ -8,7 +8,7 @@ const ROOT = process.cwd();
 const SOURCE_DIR = path.join(ROOT, 'assets', 'source');
 
 function atlasIdFromFilename(filename) {
-  const match = /^textures(?:(\d+))?\.webp$/i.exec(filename);
+  const match = /^textures(?:(\d+))?\.(webp|jpg|jpeg|png)$/i.exec(filename);
   if (!match) return null;
   return match[1] ? `textures${match[1]}` : 'textures';
 }

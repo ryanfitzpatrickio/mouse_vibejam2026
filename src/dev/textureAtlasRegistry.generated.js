@@ -19,4 +19,16 @@ export const GENERATED_TEXTURE_ATLASES = Object.freeze([
     imageUrl: assetUrl('textures3.optimized.webp'),
     manifestUrl: assetUrl('textures3.manifest.json'),
   }),
+  Object.freeze({
+    id: 'textures4',
+    label: 'textures4.webp',
+    imageUrl: assetUrl('textures4.optimized.webp'),
+    manifestUrl: assetUrl('textures4.manifest.json'),
+  }),
+  Object.freeze({
+    id: 'textures5',
+    label: 'textures5.webp',
+    imageUrl: assetUrl('textures5.optimized.webp'),
+    manifestUrl: assetUrl('textures5.manifest.json'),
+  }),
 ]);
