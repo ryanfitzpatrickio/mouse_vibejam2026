@@ -1,10 +1,12 @@
 import { createPlayerState, simulateTick, respawnPlayer } from '../shared/physics.js';
 import { createMouseBotBrain, buildMouseBotInput, resetMouseBotBrain } from '../shared/mouseBot.js';
 import { createPredatorState, simulatePredatorTick, serializePredatorState } from '../shared/predator.js';
+import { createRoombaState, simulateRoombaTick, serializeRoombaState } from '../shared/roomba.js';
 import { buildRoomCollidersFromLayout } from '../shared/roomCollision.js';
 import kitchenLayout from '../shared/kitchen-layout.generated.js';
 import kitchenNavMesh from '../shared/kitchen-navmesh.generated.js';
 import kitchenMouseNavMesh from '../shared/kitchen-mouse-navmesh.generated.js';
+import kitchenRoombaNavMesh from '../shared/kitchen-roomba-navmesh.generated.js';
 import { collectSpawnPointsFromLayout } from '../shared/spawnPoints.js';
 import { applyPortalArrivalToPlayerState, collectVibePortalPlacementsFromLayout, sanitizePortalArrivalPayload } from '../shared/vibePortal.js';
 import { isValidDevSyncLayout } from '../shared/devLayoutValidation.js';
@@ -13,6 +15,7 @@ import { sanitizeDisplayName } from '../shared/displayName.js';
 import { playerChaseRecordSeconds, tickPlayerChaseScores } from '../shared/chaseScore.js';
 import { StatsTracker } from './stats.js';
 import { createPushBallWorld } from './pushBallWorld.js';
+import { createRoombaCannonWorld } from './roombaCannonWorld.js';
 import { CheeseWorld } from './cheeseWorld.js';
 import { LEVEL_WORLD_BOUNDS_XZ } from '../shared/levelWorldBounds.js';
 
@@ -167,6 +170,8 @@ export default class GameServer {
   levelNavMesh = kitchenNavMesh;
   /** Walk mesh for mice (mouse-only nav polys); cats use levelNavMesh. */
   levelMouseNavMesh = kitchenMouseNavMesh;
+  /** Wide agent mesh for roomba pathing (matches disk radius in nav bake). */
+  levelRoombaNavMesh = kitchenRoombaNavMesh;
   spawnPoints = collectSpawnPointsFromLayout(kitchenLayout);
   portalPlacements = collectVibePortalPlacementsFromLayout(kitchenLayout);
   stats = null;
@@ -185,6 +190,7 @@ export default class GameServer {
     this.stats = new StatsTracker(room);
     this.predators = [];
     this.pushBallWorld = createPushBallWorld();
+    this.roombaCannonWorld = createRoombaCannonWorld();
     this.cheeseWorld = new CheeseWorld();
     this._applyLayout(kitchenLayout, { resetPredators: true });
   }
@@ -194,12 +200,31 @@ export default class GameServer {
     this.spawnPoints = collectSpawnPointsFromLayout(layout);
     this.portalPlacements = collectVibePortalPlacementsFromLayout(layout);
     this.pushBallWorld?.setLevelColliders?.(this.levelColliders);
+    this.roombaCannonWorld?.setLevelColliders?.(this.levelColliders);
     this.cheeseWorld.setNavMesh(this.levelMouseNavMesh);
     if (resetPredators) {
       this.predators = [];
       this._initPredators();
       this.cheeseWorld.seedScatter();
     }
+  }
+
+  _pickRoombaDock() {
+    const enemySpawns = this.spawnPoints.enemy.length ? this.spawnPoints.enemy : DEFAULT_ENEMY_SPAWNS;
+    const e = enemySpawns[0];
+    const ex = e?.x ?? -12;
+    const ez = e?.z ?? 0;
+    const floorY = e?.y ?? 0;
+    // Opposite the cat in XZ, but only ~20m from center so the dock is easy to spot (not a far map corner).
+    const dist = 20;
+    const len = Math.hypot(ex, ez);
+    const ux = len > 0.75 ? ex / len : 1;
+    const uz = len > 0.75 ? ez / len : 0;
+    return {
+      x: -ux * dist,
+      y: floorY,
+      z: -uz * dist,
+    };
   }
 
   _initPredators() {
@@ -213,6 +238,14 @@ export default class GameServer {
         spawnZ: spawn.z,
       }));
     });
+    const dock = this._pickRoombaDock();
+    this.predators.push(createRoombaState({
+      id: 'roomba-0',
+      dockX: dock.x,
+      dockY: dock.y,
+      dockZ: dock.z,
+    }));
+    this.roombaCannonWorld?.resetBody?.();
   }
 
   _pickPlayerSpawn(joinIndex = 0) {
@@ -321,7 +354,7 @@ export default class GameServer {
       type: 'init',
       id: conn.id,
       players: Object.fromEntries(this.players),
-      predators: this.predators.map(serializePredatorState),
+      predators: this.predators.map((p) => (p.type === 'roomba' ? serializeRoombaState(p) : serializePredatorState(p))),
       pushBalls: this.pushBallWorld.getBallsState(),
       cheesePickups: this.cheeseWorld.serializePickups(),
     }));
@@ -575,7 +608,20 @@ export default class GameServer {
     this.pushBallWorld.step(dt);
 
     const playersObj = Object.fromEntries(this.players);
+    const catPredators = this.predators.filter((p) => p.type !== 'roomba');
     for (const pred of this.predators) {
+      if (pred.type === 'roomba') {
+        simulateRoombaTick(
+          pred,
+          playersObj,
+          catPredators,
+          dt,
+          this.levelColliders,
+          this.levelRoombaNavMesh,
+          this.roombaCannonWorld,
+        );
+        continue;
+      }
       const hit = simulatePredatorTick(pred, playersObj, dt, this.levelColliders, this.levelNavMesh);
       if (hit) {
         const target = this.players.get(hit.playerId);
@@ -613,7 +659,7 @@ export default class GameServer {
       tick: Date.now(),
       seqs,
       players: playersObj,
-      predators: this.predators.map(serializePredatorState),
+      predators: this.predators.map((p) => (p.type === 'roomba' ? serializeRoombaState(p) : serializePredatorState(p))),
       pushBalls: this.pushBallWorld.getBallsState(),
       cheesePickups: this.cheeseWorld.serializePickups(),
     };

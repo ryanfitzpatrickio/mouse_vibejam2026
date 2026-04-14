@@ -12,6 +12,7 @@ import { isAssetBuildUpToDate, markAssetBuildCurrent } from './build-cache.mjs';
 const ROOT = process.cwd();
 const CAT_OUTPUT = path.join(ROOT, 'shared', 'kitchen-navmesh.generated.js');
 const MOUSE_OUTPUT = path.join(ROOT, 'shared', 'kitchen-mouse-navmesh.generated.js');
+const ROOMBA_OUTPUT = path.join(ROOT, 'shared', 'kitchen-roomba-navmesh.generated.js');
 const CACHE_NAME = 'generate-kitchen-navmesh-module';
 
 const SURFACE_THICKNESS = 0.05;
@@ -300,6 +301,7 @@ const cacheInputs = [
   path.join(ROOT, 'public', 'levels', 'kitchen-layout.json'),
   path.join(ROOT, 'shared', 'kitchen-layout.generated.js'),
   path.join(ROOT, 'shared', 'navConfig.js'),
+  path.join(ROOT, 'shared', 'roombaDimensions.js'),
   path.join(ROOT, 'shared', 'roomCollision.js'),
   path.join(ROOT, 'scripts', 'generate-kitchen-navmesh-module.mjs'),
   path.join(ROOT, 'scripts', 'build-cache.mjs'),
@@ -308,9 +310,9 @@ const cacheInputs = [
 if (await isAssetBuildUpToDate({
   cacheName: CACHE_NAME,
   inputs: cacheInputs,
-  outputs: [CAT_OUTPUT, MOUSE_OUTPUT],
+  outputs: [CAT_OUTPUT, MOUSE_OUTPUT, ROOMBA_OUTPUT],
 })) {
-  console.log(`Skipped ${path.relative(ROOT, CAT_OUTPUT)} and ${path.relative(ROOT, MOUSE_OUTPUT)} (up to date)`);
+  console.log(`Skipped ${path.relative(ROOT, CAT_OUTPUT)}, ${path.relative(ROOT, MOUSE_OUTPUT)}, ${path.relative(ROOT, ROOMBA_OUTPUT)} (up to date)`);
   process.exit(0);
 }
 
@@ -332,12 +334,20 @@ const mouseResult = generateSoloNavMesh(
 applyAreaTags(mouseResult.navMesh, areaColliders);
 writeGeneratedModule(MOUSE_OUTPUT, mouseResult.navMesh);
 
+const roombaResult = generateSoloNavMesh(
+  { positions, indices },
+  createNavMeshOptions(NAV_AGENT_CONFIGS.roomba),
+);
+applyAreaTags(roombaResult.navMesh, areaColliders);
+writeGeneratedModule(ROOMBA_OUTPUT, roombaResult.navMesh);
+
 await markAssetBuildCurrent({
   cacheName: CACHE_NAME,
   inputs: cacheInputs,
 });
 
 console.log(
-  `Wrote ${path.relative(ROOT, CAT_OUTPUT)} (${catResult.navMesh.nodes.length} nodes) and `
-  + `${path.relative(ROOT, MOUSE_OUTPUT)} (${mouseResult.navMesh.nodes.length} nodes)`,
+  `Wrote ${path.relative(ROOT, CAT_OUTPUT)} (${catResult.navMesh.nodes.length} nodes), `
+  + `${path.relative(ROOT, MOUSE_OUTPUT)} (${mouseResult.navMesh.nodes.length} nodes), `
+  + `${path.relative(ROOT, ROOMBA_OUTPUT)} (${roombaResult.navMesh.nodes.length} nodes)`,
 );

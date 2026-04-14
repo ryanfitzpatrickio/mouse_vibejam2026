@@ -19,6 +19,7 @@
   "dependencies": {
     "@chenglou/pretext": "^0.0.4",
     "cannon-es": "^0.20.0",
+    "mathcat": "^0.0.11",
     "navcat": "^0.2.0",
     "nipplejs": "^1.0.1",
     "obscenity": "^0.4.6",

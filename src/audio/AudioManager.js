@@ -474,6 +474,13 @@ export class AudioManager {
     this._jumpBuffer = undefined;
     this._jumpLoadPromise = null;
 
+    /** Procedural loop: Roomba motor + vacuum hiss (gain + pan updated each frame). */
+    this._roombaMotorBuilt = false;
+    this._roombaMotorGain = null;
+    this._roombaMotorPanner = null;
+    this._roombaHumOsc = null;
+    this._roombaNoiseSrc = null;
+
     AudioManager.instance = this;
   }
 
@@ -1267,6 +1274,113 @@ export class AudioManager {
     return this.listener;
   }
 
+  _ensureRoombaMotorGraph() {
+    if (this._roombaMotorBuilt) return;
+    const ctx = this.audioContext;
+    this._roombaMotorPanner = ctx.createStereoPanner();
+    this._roombaMotorPanner.connect(this.sfxContext);
+
+    this._roombaMotorGain = ctx.createGain();
+    this._roombaMotorGain.gain.value = 0;
+    this._roombaMotorGain.connect(this._roombaMotorPanner);
+
+    const hum = ctx.createOscillator();
+    hum.type = 'triangle';
+    hum.frequency.value = 58;
+    const humGain = ctx.createGain();
+    humGain.gain.value = 0.09;
+    hum.connect(humGain);
+    humGain.connect(this._roombaMotorGain);
+    hum.start();
+    this._roombaHumOsc = hum;
+
+    const dur = 1.2;
+    const n = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, n, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    let brown = 0;
+    for (let i = 0; i < n; i += 1) {
+      const w = Math.random() * 2 - 1;
+      brown = (brown + w * 0.035) * 0.965;
+      data[i] = brown;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 1350;
+    bp.Q.value = 0.62;
+    const hissGain = ctx.createGain();
+    hissGain.gain.value = 0.06;
+    src.connect(bp);
+    bp.connect(hissGain);
+    hissGain.connect(this._roombaMotorGain);
+    src.start();
+    this._roombaNoiseSrc = src;
+
+    this._roombaMotorBuilt = true;
+  }
+
+  /**
+   * Roomba motor / vacuum: on while not charging; loudness from distance to listener.
+   * @param {THREE.Vector3 | null} roombaWorldPos
+   * @param {string} phase server `ai` (charging | deploying | vacuuming | returning)
+   * @param {THREE.Vector3} listenerWorldPos camera / listener
+   */
+  updateRoombaMotor(roombaWorldPos, phase, listenerWorldPos) {
+    const off = !roombaWorldPos || phase === 'charging' || this._sfxMuted;
+    if (off && !this._roombaMotorBuilt) return;
+
+    this._ensureRoombaMotorGraph();
+    const t = this.audioContext.currentTime;
+    let target = 0;
+
+    if (!off && listenerWorldPos) {
+      const dx = roombaWorldPos.x - listenerWorldPos.x;
+      const dy = roombaWorldPos.y - listenerWorldPos.y;
+      const dz = roombaWorldPos.z - listenerWorldPos.z;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const maxDist = 26;
+      const prox = Math.max(0, 1 - dist / maxDist);
+      const phaseBoost = phase === 'vacuuming' ? 1 : 0.55;
+      target = Math.min(0.95, prox * prox * phaseBoost * 0.78);
+      const angle = Math.atan2(dx, dz);
+      this._roombaMotorPanner.pan.setTargetAtTime(
+        Math.min(1, Math.max(-1, Math.sin(angle))),
+        t,
+        0.035,
+      );
+    } else {
+      this._roombaMotorPanner.pan.setTargetAtTime(0, t, 0.05);
+    }
+
+    this._roombaMotorGain.gain.setTargetAtTime(target, t, 0.055);
+  }
+
+  _stopRoombaMotorGraph() {
+    if (!this._roombaMotorBuilt) return;
+    try {
+      this._roombaHumOsc?.stop();
+    } catch {
+      // already stopped
+    }
+    try {
+      this._roombaNoiseSrc?.stop();
+    } catch {
+      // already stopped
+    }
+    this._roombaHumOsc?.disconnect();
+    this._roombaNoiseSrc?.disconnect();
+    this._roombaMotorGain?.disconnect();
+    this._roombaMotorPanner?.disconnect();
+    this._roombaHumOsc = null;
+    this._roombaNoiseSrc = null;
+    this._roombaMotorGain = null;
+    this._roombaMotorPanner = null;
+    this._roombaMotorBuilt = false;
+  }
+
   /**
    * Update audio context state (called each frame)
    * @param {THREE.Vector3} cameraPosition
@@ -1288,6 +1402,7 @@ export class AudioManager {
     this.stopMusic();
     this.stopAmbientBed();
     this.stopMovementLoop();
+    this._stopRoombaMotorGraph();
     this._ambientBuffers = null;
     this._ambientDecodePromise = null;
     this._movementRunBuffer = undefined;

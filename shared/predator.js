@@ -916,7 +916,7 @@ function facePosition(state, target, dt) {
   faceDirection(state, dir, dt);
 }
 
-function resolvePredatorCollisions(state, colliders, previousPosition = null) {
+export function resolvePredatorCollisions(state, colliders, previousPosition = null) {
   if (!colliders) return;
   const r = state.radius;
   const previousX = previousPosition?.x ?? state.position.x;

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Mouse } from '../entities/Mouse.js';
 import { Bunny } from '../entities/Bunny.js';
 import { Cat } from '../entities/Cat.js';
+import { Roomba } from '../entities/Roomba.js';
 import { PredatorManager } from '../entities/PredatorManager.js';
 import { Room } from '../world/Room.js';
 import { VibePortalManager } from '../world/VibePortalManager.js';
@@ -50,6 +51,14 @@ function createWebGLRenderer(canvas) {
 
 const ENABLE_BUNNY_PREDATOR = false;
 const ENABLE_CAT_PREDATOR = true;
+const ENABLE_ROOMBA_PREDATOR = true;
+
+function pickRemoteRoombaSnapshot(remotePredators) {
+  for (const p of remotePredators.values()) {
+    if (p?.type === 'roomba') return p;
+  }
+  return null;
+}
 const AUDIO_PREFS_KEY = 'mouse-trouble-audio-prefs';
 const GITHUB_URL = 'https://github.com/ryanfitzpatrickio/vibejam2026';
 
@@ -197,6 +206,16 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   await Promise.all([mouse.ready, room.ready]);
   mouse.position.set(0, mouse.groundOffset, 0);
   mouse.setViewCamera(camera);
+
+  let roomba = null;
+  function getCollisionCollidersWithRoomba() {
+    const list = room.getCollisionColliders();
+    if (ENABLE_ROOMBA_PREDATOR && roomba?.visible) {
+      const rb = roomba.getPhysicsCollider();
+      if (rb) list.push(rb);
+    }
+    return list;
+  }
   const localMouseOutlineMeshes = attachEdgeOutlines(mouse, {
     color: '#090909',
     thresholdAngle: 24,
@@ -225,13 +244,13 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     camera,
     domElement: canvas,
     armLength: 3.5,
-    collisionQuery: () => room.getCollisionColliders(),
+    collisionQuery: getCollisionCollidersWithRoomba,
   });
 
   const controller = new CharacterController({
     mouse,
     thirdPersonCamera,
-    collisionQuery: () => room.getCollisionColliders(),
+    collisionQuery: getCollisionCollidersWithRoomba,
   });
 
   controller.onEmote = () => {
@@ -247,7 +266,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     ? new PredatorManager({
       scene,
       controller,
-      collisionQuery: () => room.getCollisionColliders(),
+      collisionQuery: getCollisionCollidersWithRoomba,
     })
     : null;
 
@@ -260,6 +279,15 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   if (cat) {
     await cat.ready;
     scene.add(cat);
+  }
+
+  roomba = ENABLE_ROOMBA_PREDATOR ? new Roomba() : null;
+  if (roomba) {
+    await roomba.ready;
+    roomba.visible = false;
+    roomba.dockGroup.visible = false;
+    scene.add(roomba);
+    scene.add(roomba.dockGroup);
   }
 
   // --- Dev placement mode ---
@@ -569,7 +597,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     copyServerToPrediction(ss);
 
     const dt = 1 / 30;
-    const colliders = room.getCollisionColliders();
+    const colliders = getCollisionCollidersWithRoomba();
     for (const input of net.pendingInputs) {
       simulateTick(predictionState, input, dt, CLIENT_BOUNDS, colliders);
     }
@@ -625,6 +653,24 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   }
 
   function update(timeMs = 0, deltaSeconds = 1 / 60) {
+    if (roomba) {
+      if (net.connected) {
+        const serverRoomba = pickRemoteRoombaSnapshot(net.remotePredators);
+        if (serverRoomba) {
+          roomba.applyServerState(serverRoomba);
+          roomba.visible = true;
+          roomba.dockGroup.visible = true;
+        } else {
+          roomba.visible = false;
+          roomba.dockGroup.visible = false;
+        }
+      } else {
+        roomba.visible = false;
+        roomba.dockGroup.visible = false;
+      }
+      roomba.update(deltaSeconds);
+    }
+
     physicsAccum += deltaSeconds;
 
     let steps = 0;
@@ -677,7 +723,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         rotation: mouse.rotation.y,
       };
 
-      const colliders = room.getCollisionColliders();
+      const colliders = getCollisionCollidersWithRoomba();
       const vyBeforeJump = predictionState.velocity.y;
       simulateTick(predictionState, input, PHYSICS_STEP, CLIENT_BOUNDS, colliders);
       if (
@@ -965,6 +1011,15 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     audioManager.setMovementLoopTarget(movementBed);
     audioManager.setMovementSprintTarget(movementBed && predictionState.sprinting);
     audioManager.setMovementWallRunTarget(wallRunBed);
+    if (ENABLE_ROOMBA_PREDATOR && roomba) {
+      audioManager.updateRoombaMotor(
+        roomba.visible ? roomba.position : null,
+        roomba.visible ? roomba.motorPhase : 'charging',
+        camera.position,
+      );
+    } else {
+      audioManager.updateRoombaMotor(null, 'charging', camera.position);
+    }
     audioManager.update(camera.position, deltaSeconds);
 
     render();

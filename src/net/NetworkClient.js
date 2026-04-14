@@ -114,6 +114,7 @@ export class NetworkClient {
     this.ws.addEventListener('close', () => {
       this.connected = false;
       this.localId = null;
+      this.remotePredators.clear();
       this.pushBalls = [];
       this.cheesePickups = [];
       console.log('[net] disconnected');
@@ -231,8 +232,9 @@ export class NetworkClient {
           this.serverSeq = -1;
         }
         if (Array.isArray(data.predators)) {
+          this.remotePredators.clear();
           for (const pred of data.predators) {
-            this.remotePredators.set(pred.id, pred);
+            if (pred?.id != null) this.remotePredators.set(pred.id, pred);
           }
         }
         this._applyPushBallsPayload(data);
@@ -282,8 +284,9 @@ export class NetworkClient {
         }
 
         if (Array.isArray(data.predators)) {
+          this.remotePredators.clear();
           for (const pred of data.predators) {
-            this.remotePredators.set(pred.id, pred);
+            if (pred?.id != null) this.remotePredators.set(pred.id, pred);
           }
         }
         this._applyPushBallsPayload(data);

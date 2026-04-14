@@ -31,7 +31,7 @@ const FLOOR_SURFACE_GROUND_Y = 0;
 /**
  * @param {{ type?: string, aabb?: { min: {x,y,z}, max: {x,y,z} }, metadata?: { runnable?: boolean } }} collider
  */
-function shouldSkipLayoutColliderForBall(collider) {
+export function shouldSkipLayoutColliderForBall(collider) {
   if (!collider?.aabb?.min || !collider?.aabb?.max) return true;
   const box = collider.aabb;
   const dx = box.max.x - box.min.x;
@@ -50,7 +50,7 @@ function shouldSkipLayoutColliderForBall(collider) {
   return false;
 }
 
-function aabbToStaticBody(aabb, layoutType = 'furniture') {
+export function aabbToStaticBody(aabb, layoutType = 'furniture') {
   const dx = aabb.max.x - aabb.min.x;
   const dy = aabb.max.y - aabb.min.y;
   const dz = aabb.max.z - aabb.min.z;
