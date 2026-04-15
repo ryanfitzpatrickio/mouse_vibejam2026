@@ -28,6 +28,7 @@ import {
 } from '../utils/playerDisplayName.js';
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { simulateTick, createPlayerState } from '../../shared/physics.js';
+import { getRoombaVacuumPullAcceleration } from '../../shared/roomba.js';
 import { readVibePortalArrivalFromSearch } from '../../shared/vibePortal.js';
 import kitchenNavMesh from '../../shared/kitchen-navmesh.generated.js';
 import { playerChaseRecordSeconds } from '../../shared/chaseScore.js';
@@ -58,6 +59,21 @@ function pickRemoteRoombaSnapshot(remotePredators) {
     if (p?.type === 'roomba') return p;
   }
   return null;
+}
+
+/** Matches server vacuum pull for client prediction (snapshot uses `ai` not `phase`). */
+function vacuumPullForPrediction(net, predictionState) {
+  if (!net?.connected) return null;
+  const snap = pickRemoteRoombaSnapshot(net.remotePredators);
+  if (!snap || snap.alive === false || snap.ai !== 'vacuuming') return null;
+  return getRoombaVacuumPullAcceleration(
+    {
+      position: { x: snap.px, y: snap.py ?? 0, z: snap.pz },
+      phase: snap.ai,
+      alive: true,
+    },
+    predictionState,
+  );
 }
 const AUDIO_PREFS_KEY = 'mouse-trouble-audio-prefs';
 const GITHUB_URL = 'https://github.com/ryanfitzpatrickio/vibejam2026';
@@ -329,6 +345,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const catLocator = new CatLocatorOverlay();
 
   const audioManager = getAudioManager();
+  audioManager.attachListenerToCamera(camera);
+  if (roomba) audioManager.attachRoombaAudio(roomba);
   const audioPrefs = readAudioPrefs();
   audioManager.setMusicMuted(audioPrefs.musicMuted);
   audioManager.setSFXMuted(audioPrefs.sfxMuted);
@@ -350,6 +368,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       audioManager.prefetchMovementLoopBuffer();
       audioManager.prefetchJumpSfx();
       audioManager.prefetchEmoteBuffers();
+      audioManager.prefetchInteractionSfx();
       await audioManager.startAmbientBed();
     })();
   }
@@ -426,6 +445,11 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   });
   const remotePlayerManager = new RemotePlayerManager({ scene });
   net.connect();
+
+  /** Track previous smackStunTimer / grabbedTarget per player for audio event detection. */
+  const _prevSmackStun = new Map();
+  const _prevGrabbedTarget = new Map();
+  let _prevCatAiState = 'idle';
 
   const _localNameplateWorld = new THREE.Vector3();
 
@@ -599,7 +623,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     const dt = 1 / 30;
     const colliders = getCollisionCollidersWithRoomba();
     for (const input of net.pendingInputs) {
-      simulateTick(predictionState, input, dt, CLIENT_BOUNDS, colliders);
+      const vPull = vacuumPullForPrediction(net, predictionState);
+      simulateTick(predictionState, input, dt, CLIENT_BOUNDS, colliders, vPull);
     }
 
     // Measure correction magnitude
@@ -725,7 +750,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
       const colliders = getCollisionCollidersWithRoomba();
       const vyBeforeJump = predictionState.velocity.y;
-      simulateTick(predictionState, input, PHYSICS_STEP, CLIENT_BOUNDS, colliders);
+      const vPull = vacuumPullForPrediction(net, predictionState);
+      simulateTick(predictionState, input, PHYSICS_STEP, CLIENT_BOUNDS, colliders, vPull);
       if (
         jumpPressed
         && predictionState.alive
@@ -738,7 +764,6 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
             predictionState.position.y + mouse.groundOffset,
             predictionState.position.z,
           ),
-          camera.position,
         );
       }
 
@@ -795,6 +820,14 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         if (emoteManager.isPlaying && emoteManager.activeEmote) {
           inputWithEmote.emote = emoteManager.activeEmote.id;
         }
+        // Grab is held continuously; smack is a one-shot press.
+        if (controller.grabHeld) {
+          inputWithEmote.grab = true;
+        }
+        if (controller.smackPressed) {
+          inputWithEmote.smack = true;
+          controller.smackPressed = false;
+        }
         net.sendInput(inputWithEmote);
         reconcileWithServer();
       }
@@ -808,7 +841,17 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
     if (cat && net.connected) {
       const serverCat = net.remotePredators.get('cat-0');
-      if (serverCat) cat.applyServerState(serverCat);
+      if (serverCat) {
+        cat.applyServerState(serverCat);
+        // Play cat sound on attack/roar transitions
+        const catAi = serverCat.ai ?? 'idle';
+        if ((catAi === 'attack' || catAi === 'roar') && _prevCatAiState !== catAi) {
+          audioManager.playSoundAtPosition('cat', new THREE.Vector3(
+            serverCat.px ?? 0, (serverCat.py ?? 0) + 0.5, serverCat.pz ?? 0,
+          ));
+        }
+        _prevCatAiState = catAi;
+      }
     }
     cat?.update(deltaSeconds);
 
@@ -819,6 +862,38 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     if (net.connected) {
       remotePlayerManager.sync(net.remotePlayers);
       remotePlayerManager.update(deltaSeconds, camera);
+
+      // Detect smack / grab transitions and play spatial audio
+      const allPlayers = new Map(net.remotePlayers);
+      if (net.serverState) allPlayers.set(net.localId, net.serverState);
+      for (const [pid, pState] of allPlayers) {
+        const prevStun = _prevSmackStun.get(pid) ?? 0;
+        const curStun = pState.smackStunTimer ?? 0;
+        if (curStun > 0 && prevStun <= 0) {
+          // Just got smacked — play slap sound at their position
+          audioManager.playSoundAtPosition('smack', new THREE.Vector3(
+            pState.position.x, pState.position.y + 0.5, pState.position.z,
+          ));
+        }
+        _prevSmackStun.set(pid, curStun);
+
+        const prevGrab = _prevGrabbedTarget.get(pid) ?? null;
+        const curGrab = pState.grabbedTarget ?? null;
+        if (curGrab && !prevGrab) {
+          // Just initiated a grab — play grab sound at their position
+          audioManager.playSoundAtPosition('grab', new THREE.Vector3(
+            pState.position.x, pState.position.y + 0.5, pState.position.z,
+          ));
+        }
+        _prevGrabbedTarget.set(pid, curGrab);
+      }
+      // Clean up stale entries
+      for (const pid of _prevSmackStun.keys()) {
+        if (!allPlayers.has(pid)) {
+          _prevSmackStun.delete(pid);
+          _prevGrabbedTarget.delete(pid);
+        }
+      }
     }
 
     const isAlive = controller.alive;
@@ -1015,12 +1090,11 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       audioManager.updateRoombaMotor(
         roomba.visible ? roomba.position : null,
         roomba.visible ? roomba.motorPhase : 'charging',
-        camera.position,
       );
     } else {
-      audioManager.updateRoombaMotor(null, 'charging', camera.position);
+      audioManager.updateRoombaMotor(null, 'charging');
     }
-    audioManager.update(camera.position, deltaSeconds);
+    audioManager.update(deltaSeconds);
 
     render();
     return {

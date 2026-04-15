@@ -10,6 +10,7 @@ const DEFAULT_KEY_BINDINGS = Object.freeze({
   jump: 'Space',
   crouch: 'ControlLeft',
   interact: 'KeyE',
+  grab: 'KeyQ',
   drop: 'KeyG',
   emote: 'KeyF',
 });
@@ -93,6 +94,10 @@ export class CharacterController {
     this.inputEnabled = true;
     /** Set to true on jump keydown, cleared after network reads it */
     this.jumpRequested = false;
+    /** True while Q is held down */
+    this.grabHeld = false;
+    /** Set to true on E keydown, cleared after network reads it */
+    this.smackPressed = false;
 
     this._prevAnimState = 'idle';
 
@@ -382,8 +387,10 @@ export class CharacterController {
   _handleAbilities() {
     if (this.keys[this.keyBindings.interact]) {
       this.keys[this.keyBindings.interact] = false;
+      this.smackPressed = true;
       this.interact();
     }
+    this.grabHeld = !!this.keys[this.keyBindings.grab];
     if (this.mouseButtons.right) {
       this.mouseButtons.right = false;
       this.squeak();

@@ -32,13 +32,19 @@ const DEPLOY_SECONDS = 1.35;
 const MOVE_SPEED = 2.65;
 const TURN_SPEED = 5.5;
 const DOCK_SNAP_DIST = 0.42;
-const INTAKE_MIN_DIST = 0.12;
-const INTAKE_MAX_DIST = 1.15;
-const INTAKE_DOT_MIN = 0.45;
-const SUCTION_UP = 11;
-const SUCTION_BACK = 13;
 const CAT_BUMP_DIST = 0.82;
 const CAT_BUMP_IMPULSE = 6;
+
+/** 360° horizontal capture within radius → pull under → cannon launch (see `party/mouseLaunchWorld.js`). */
+const MOUSE_CAPTURE_MAX_DIST = 0.92;
+/** Outer edge of vacuum influence (world XZ); pull scales up as the mouse moves inward. */
+const VACUUM_PULL_MAX_DIST = 3.95;
+const VACUUM_PULL_MIN_DIST = 0.07;
+/** Peak horizontal acceleration (m/s²) at the center of the pull zone (before capture). */
+const VACUUM_PULL_ACCEL_MAX = 26;
+const VACUUM_PULL_UP_ACCEL = 6.2;
+const MOUSE_SUCK_DURATION = 0.36;
+const MOUSE_SUCK_LERP = 20;
 
 const DEFAULT_STRIPE_SPACING = 0.68;
 const STUCK_MOVE_THRESH = 0.018;
@@ -1452,30 +1458,102 @@ export function createRoombaState(opts) {
   };
 }
 
-function applyRoombaSuction(roomba, players, dt) {
-  if (roomba.phase !== ROOMBA_PHASE.VACUUMING) return;
-  const f = forwardXZ(roomba.rotation);
+/**
+ * Acceleration toward the roomba while it is vacuuming (for `simulateTick`); stronger when closer.
+ * @param {{ position: {x:number,y:number,z:number}, phase?: string, ai?: string, alive?: boolean }} roomba
+ * @param {{ position: {x:number,y:number,z:number}, alive?: boolean, roombaLaunch?: object, roombaLaunchCooldown?: number }} player
+ * @returns {{ ax: number, az: number, ay: number } | null}
+ */
+export function getRoombaVacuumPullAcceleration(roomba, player) {
+  if (!roomba || !player?.alive) return null;
+  const phase = roomba.phase ?? roomba.ai;
+  if (phase !== ROOMBA_PHASE.VACUUMING && phase !== 'vacuuming') return null;
+  if (roomba.alive === false) return null;
+  if (player.roombaLaunch?.phase === 'suck' || player.roombaLaunch?.phase === 'flight') return null;
+  if ((player.roombaLaunchCooldown ?? 0) > 0) return null;
+
+  const rbx = roomba.position?.x;
+  const rby = roomba.position?.y;
+  const rbz = roomba.position?.z;
+  if (!Number.isFinite(rbx) || !Number.isFinite(rby) || !Number.isFinite(rbz)) return null;
+
+  const px = player.position.x;
+  const py = player.position.y;
+  const pz = player.position.z;
+  const dx = rbx - px;
+  const dz = rbz - pz;
+  const flat = Math.hypot(dx, dz);
+  if (flat < VACUUM_PULL_MIN_DIST || flat > VACUUM_PULL_MAX_DIST) return null;
+
+  const playerH = PHYSICS.playerHeight ?? 0.55;
+  if (Math.abs(py - rby) > playerH + 0.52) return null;
+
+  const nx = dx / flat;
+  const nz = dz / flat;
+  const u = 1 - flat / VACUUM_PULL_MAX_DIST;
+  const strength = u * u * u;
+
+  return {
+    ax: nx * VACUUM_PULL_ACCEL_MAX * strength,
+    az: nz * VACUUM_PULL_ACCEL_MAX * strength,
+    ay: VACUUM_PULL_UP_ACCEL * strength,
+  };
+}
+
+/**
+ * Within radius on any side → suck toward center under the puck → launch opposite entry (cannon-es on server).
+ * @param {{ startFlight: (id: string, s: object, ox: number, oz: number) => void }} mouseLaunchWorld
+ */
+function applyRoombaMouseVacuum(roomba, players, dt, mouseLaunchWorld) {
+  if (!mouseLaunchWorld || roomba.phase !== ROOMBA_PHASE.VACUUMING) return;
   const rbx = roomba.position.x;
   const rbz = roomba.position.z;
   const playerH = PHYSICS.playerHeight ?? 0.55;
   const t = Math.min(0.05, Math.max(0, dt));
 
   for (const p of iterPlayerStates(players)) {
-    if (!p?.alive || !p.position) continue;
+    if (!p?.alive || !p.position || !p.id) continue;
+
+    if (p.roombaLaunch?.phase === 'suck') {
+      const lerp = 1 - Math.exp(-MOUSE_SUCK_LERP * dt);
+      const tx = rbx;
+      const ty = roomba.position.y + 0.045;
+      const tz = rbz;
+      p.position.x += (tx - p.position.x) * lerp;
+      p.position.y += (ty - p.position.y) * lerp;
+      p.position.z += (tz - p.position.z) * lerp;
+      p.velocity.x *= 0.78;
+      p.velocity.z *= 0.78;
+      p.velocity.y *= 0.68;
+      p.grounded = false;
+      p.roombaLaunch.t -= dt;
+      if (p.roombaLaunch.t <= 0) {
+        mouseLaunchWorld.startFlight(p.id, p, p.roombaLaunch.outNx, p.roombaLaunch.outNz);
+        p.roombaLaunch = { phase: 'flight' };
+      }
+      continue;
+    }
+
+    if (p.roombaLaunch?.phase === 'flight') continue;
+    if ((p.roombaLaunchCooldown ?? 0) > 0) continue;
+
     const px = p.position.x;
     const pz = p.position.z;
     const py = p.position.y;
     const dx = px - rbx;
     const dz = pz - rbz;
     const flat = Math.sqrt(dx * dx + dz * dz);
-    if (flat < INTAKE_MIN_DIST || flat > INTAKE_MAX_DIST) continue;
-    if (Math.abs(py - roomba.position.y) > playerH + 0.35) continue;
-    const dot = (dx / flat) * f.x + (dz / flat) * f.z;
-    if (dot < INTAKE_DOT_MIN) continue;
+    if (flat < 0.04 || flat > MOUSE_CAPTURE_MAX_DIST) continue;
+    if (Math.abs(py - roomba.position.y) > playerH + 0.32) continue;
 
-    p.velocity.x -= f.x * SUCTION_BACK * t;
-    p.velocity.z -= f.z * SUCTION_BACK * t;
-    p.velocity.y += SUCTION_UP * t;
+    const inNx = dx / flat;
+    const inNz = dz / flat;
+    p.roombaLaunch = {
+      phase: 'suck',
+      t: MOUSE_SUCK_DURATION,
+      outNx: -inNx,
+      outNz: -inNz,
+    };
     p.grounded = false;
   }
 }
@@ -1504,8 +1582,9 @@ function bumpCatsAway(roomba, cats, dt) {
  * @param {object[]|null} colliders
  * @param {object | null} [navMesh] roomba-wide kitchen navmesh (navcat); not the cat mesh
  * @param {{ solve: (r: object, dt: number) => void } | null} [roombaCannon] server cannon-es XZ solver (walls)
+ * @param {{ startFlight: (id: string, s: object, ox: number, oz: number) => void } | null} [mouseLaunchWorld] mouse flight physics
  */
-export function simulateRoombaTick(roomba, players, catPredators, dt, colliders, navMesh = null, roombaCannon = null) {
+export function simulateRoombaTick(roomba, players, catPredators, dt, colliders, navMesh = null, roombaCannon = null, mouseLaunchWorld = null) {
   if (!roomba?.alive || roomba.type !== 'roomba') return;
 
   const tickStartX = roomba.position.x;
@@ -1579,7 +1658,6 @@ export function simulateRoombaTick(roomba, players, catPredators, dt, colliders,
       ensureMapPolyTotal(roomba, navMesh);
       recordMappedPoly(roomba, navMesh);
       applyRoombaCoverageSteer(roomba, dt, navMesh, colliders);
-      applyRoombaSuction(roomba, players, dt);
       if (roomba.vacuumTimer <= 0) {
         roomba.phase = ROOMBA_PHASE.RETURNING;
         roomba.phaseTimer = 999;
@@ -1720,6 +1798,9 @@ export function simulateRoombaTick(roomba, players, catPredators, dt, colliders,
   clampToBounds(roomba.position, roomba.radius);
   if (roomba.phase !== ROOMBA_PHASE.CHARGING) {
     updateRoombaSafePosition(roomba, colliders);
+  }
+  if (roomba.phase === ROOMBA_PHASE.VACUUMING) {
+    applyRoombaMouseVacuum(roomba, players, dt, mouseLaunchWorld);
   }
   bumpCatsAway(roomba, catPredators, dt);
 

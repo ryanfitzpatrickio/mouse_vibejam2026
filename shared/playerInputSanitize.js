@@ -52,6 +52,8 @@ export function sanitizePlayerInputMessage(data) {
     crouch: !!data.crouch,
     rotation: clampRotation(data.rotation),
     emote: sanitizeEmote(data.emote),
+    grab: !!data.grab,
+    smack: !!data.smack,
     seq: clampSeq(data.seq),
   };
 }

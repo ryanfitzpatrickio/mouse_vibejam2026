@@ -80,6 +80,20 @@ export function createPlayerState(id) {
     cheeseCarried: 0,
     /** Current emote id while active; server updates from sanitized input. */
     emote: null,
+    /** Roomba vacuum: `suck` (pulled under) then `flight` (cannon-es); server-driven. */
+    roombaLaunch: null,
+    /** Seconds until roomba can grab this mouse again. */
+    roombaLaunchCooldown: 0,
+    /** Player id currently grabbing this player (null if free). */
+    grabbedBy: null,
+    /** Player id this player is grabbing (null if not grabbing). */
+    grabbedTarget: null,
+    /** Seconds remaining of smack stun (plays death anim, recovers when 0). */
+    smackStunTimer: 0,
+    /** Cooldown before this player can grab again (seconds). */
+    grabCooldown: 0,
+    /** Cooldown before this player can smack again (seconds). */
+    smackCooldown: 0,
   };
 }
 
@@ -424,6 +438,13 @@ export function respawnPlayer(state, spawnX, spawnZ, spawnY = 0) {
   state.animState = 'idle';
   state.emote = null;
   state.deathTime = 0;
+  state.roombaLaunch = null;
+  state.roombaLaunchCooldown = 0;
+  state.grabbedBy = null;
+  state.grabbedTarget = null;
+  state.smackStunTimer = 0;
+  state.grabCooldown = 0;
+  state.smackCooldown = 0;
 }
 
 /**
@@ -440,9 +461,19 @@ export function respawnPlayer(state, spawnX, spawnZ, spawnY = 0) {
  * @param {number} dt - delta time in seconds
  * @param {{ minX: number, maxX: number, minZ: number, maxZ: number }} bounds - world bounds
  * @param {Array<{ aabb?: { min: { x: number, y: number, z: number }, max: { x: number, y: number, z: number } }, box?: any, type?: string, metadata?: object }>} colliders
+ * @param {{ ax: number, az: number, ay?: number } | null | undefined} [vacuumPull] roomba vacuum acceleration (world space, units/s²); applied after walk input
  */
-export function simulateTick(state, input, dt, bounds, colliders = []) {
+export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPull = null) {
   if (!state.alive) return;
+
+  if (state.roombaLaunchCooldown > 0) {
+    state.roombaLaunchCooldown = Math.max(0, state.roombaLaunchCooldown - dt);
+  }
+
+  if (state.roombaLaunch?.phase === 'suck' || state.roombaLaunch?.phase === 'flight') {
+    state.animState = state.roombaLaunch.phase === 'suck' ? 'slide' : 'jump';
+    return;
+  }
 
   const { position: pos, velocity: vel } = state;
   const jumpHeld = !!(input.jumpHeld ?? input.jump);
@@ -476,6 +507,15 @@ export function simulateTick(state, input, dt, bounds, colliders = []) {
   if (!state.sliding) {
     vel.x = input.moveX * speed;
     vel.z = input.moveZ * speed;
+  }
+
+  if (!state.sliding && vacuumPull && typeof vacuumPull.ax === 'number' && typeof vacuumPull.az === 'number') {
+    vel.x += vacuumPull.ax * dt;
+    vel.z += vacuumPull.az * dt;
+    if (typeof vacuumPull.ay === 'number' && vacuumPull.ay !== 0) {
+      vel.y += vacuumPull.ay * dt;
+      if (state.grounded && vacuumPull.ay > 2) state.grounded = false;
+    }
   }
 
   // --- Jump ---

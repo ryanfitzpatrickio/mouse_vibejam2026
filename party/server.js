@@ -1,7 +1,12 @@
 import { createPlayerState, simulateTick, respawnPlayer } from '../shared/physics.js';
 import { createMouseBotBrain, buildMouseBotInput, resetMouseBotBrain } from '../shared/mouseBot.js';
 import { createPredatorState, simulatePredatorTick, serializePredatorState } from '../shared/predator.js';
-import { createRoombaState, simulateRoombaTick, serializeRoombaState } from '../shared/roomba.js';
+import {
+  createRoombaState,
+  getRoombaVacuumPullAcceleration,
+  simulateRoombaTick,
+  serializeRoombaState,
+} from '../shared/roomba.js';
 import { buildRoomCollidersFromLayout } from '../shared/roomCollision.js';
 import kitchenLayout from '../shared/kitchen-layout.generated.js';
 import kitchenNavMesh from '../shared/kitchen-navmesh.generated.js';
@@ -16,6 +21,7 @@ import { playerChaseRecordSeconds, tickPlayerChaseScores } from '../shared/chase
 import { StatsTracker } from './stats.js';
 import { createPushBallWorld } from './pushBallWorld.js';
 import { createRoombaCannonWorld } from './roombaCannonWorld.js';
+import { createMouseLaunchWorld } from './mouseLaunchWorld.js';
 import { CheeseWorld } from './cheeseWorld.js';
 import { LEVEL_WORLD_BOUNDS_XZ } from '../shared/levelWorldBounds.js';
 
@@ -34,6 +40,14 @@ const MAX_PLAYERS = 8;
 /** Max extra push-balls a human may spawn per connection (lifetime). */
 const MAX_EXTRA_BALL_SPAWNS_PER_PLAYER = 10;
 const RESPAWN_SECONDS = 10;
+const GRAB_RANGE = 2.5;
+const GRAB_COOLDOWN = 1.0;
+const GRAB_PULL_STRENGTH = 6.0;
+const GRAB_INITIATOR_ADVANTAGE = 0.65; // initiator controls 65% of direction
+const SMACK_RANGE = 2.0;
+const SMACK_COOLDOWN = 1.5;
+const SMACK_STUN_DURATION = 1.0;
+const SMACK_KNOCKBACK = 8.0;
 const DEFAULT_ENEMY_SPAWNS = Object.freeze([{ x: -5, y: 0, z: -5 }]);
 const DEFAULT_ALLOWED_ORIGINS = Object.freeze(['https://mouse.ryanfitzpatrick.io']);
 const LOCAL_ORIGIN_RE = /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/;
@@ -191,6 +205,7 @@ export default class GameServer {
     this.predators = [];
     this.pushBallWorld = createPushBallWorld();
     this.roombaCannonWorld = createRoombaCannonWorld();
+    this.mouseLaunchWorld = createMouseLaunchWorld();
     this.cheeseWorld = new CheeseWorld();
     this._applyLayout(kitchenLayout, { resetPredators: true });
   }
@@ -201,6 +216,7 @@ export default class GameServer {
     this.portalPlacements = collectVibePortalPlacementsFromLayout(layout);
     this.pushBallWorld?.setLevelColliders?.(this.levelColliders);
     this.roombaCannonWorld?.setLevelColliders?.(this.levelColliders);
+    this.mouseLaunchWorld?.setLevelColliders?.(this.levelColliders);
     this.cheeseWorld.setNavMesh(this.levelMouseNavMesh);
     if (resetPredators) {
       this.predators = [];
@@ -298,6 +314,7 @@ export default class GameServer {
     while (botIds.length > desiredBots) {
       const id = botIds.pop();
       if (!id) break;
+      this.mouseLaunchWorld?.removePlayer?.(id);
       this.players.delete(id);
       this.botBrains.delete(id);
       this._lastSeq?.delete(id);
@@ -491,6 +508,7 @@ export default class GameServer {
     this._playerExtraBallSpawnCount.delete(conn.id);
     this._messageBuckets.delete(conn.id);
     this.portalArrivals.delete(conn.id);
+    this.mouseLaunchWorld?.removePlayer?.(conn.id);
     this.players.delete(conn.id);
     this.inputQueues.delete(conn.id);
     this.broadcast(JSON.stringify({
@@ -509,12 +527,47 @@ export default class GameServer {
 
     const seqs = {};
     const now = Date.now() / 1000;
+    const roombaForVacuum = this.predators.find((p) => p.type === 'roomba') ?? null;
+    /** Collect interaction requests from this tick's inputs. */
+    const grabHeld = new Set();
+    const smackRequests = [];
     for (const [id, state] of this.players) {
       const isHuman = this.inputQueues.has(id);
+
+      // --- Tick cooldowns ---
+      if (state.grabCooldown > 0) state.grabCooldown = Math.max(0, state.grabCooldown - dt);
+      if (state.smackCooldown > 0) state.smackCooldown = Math.max(0, state.smackCooldown - dt);
+
+      // --- Smack stun recovery ---
+      if (state.smackStunTimer > 0) {
+        state.smackStunTimer = Math.max(0, state.smackStunTimer - dt);
+        if (state.smackStunTimer <= 0) {
+          // Recover from smack stun
+          state.alive = true;
+          state.animState = 'idle';
+          state.deathTime = 0;
+          state.health = Math.max(state.health, 1);
+        } else {
+          // Still stunned — skip physics for this player
+          seqs[id] = this._lastSeq?.get(id) ?? 0;
+          if (isHuman) {
+            const queue = this.inputQueues.get(id);
+            if (queue?.length) {
+              seqs[id] = queue[queue.length - 1].seq;
+              if (!this._lastSeq) this._lastSeq = new Map();
+              this._lastSeq.set(id, seqs[id]);
+              queue.length = 0;
+            }
+          }
+          continue;
+        }
+      }
+
       if (!state.alive) {
         if (state.deathTime <= 0) {
           state.deathTime = now;
         } else if (now - state.deathTime >= RESPAWN_SECONDS) {
+          this.mouseLaunchWorld.removePlayer(id);
           const spawn = this._pickRespawnPoint();
           respawnPlayer(state, spawn.x, spawn.z, spawn.y);
           this.stats?.recordRespawn(id);
@@ -528,9 +581,21 @@ export default class GameServer {
         continue;
       }
 
+      if (this.mouseLaunchWorld.isFlying(id)) {
+        seqs[id] = isHuman ? (this._lastSeq?.get(id) ?? 0) : 0;
+        continue;
+      }
+      if (state.roombaLaunch?.phase === 'suck') {
+        seqs[id] = isHuman ? (this._lastSeq?.get(id) ?? 0) : 0;
+        continue;
+      }
+
       if (isHuman) {
         const queue = this.inputQueues.get(id);
         if (!queue || queue.length === 0) {
+          const vacuumPull = roombaForVacuum?.phase === 'vacuuming'
+            ? getRoombaVacuumPullAcceleration(roombaForVacuum, state)
+            : null;
           simulateTick(state, {
             moveX: 0,
             moveZ: 0,
@@ -540,15 +605,24 @@ export default class GameServer {
             jumpHeld: false,
             crouch: false,
             rotation: state.rotation,
-          }, dt, BOUNDS, this.levelColliders);
+          }, dt, BOUNDS, this.levelColliders, vacuumPull);
           state.emote = null;
           seqs[id] = this._lastSeq?.get(id) ?? 0;
         } else {
+          let didSmack = false;
+          let lastGrab = false;
           for (const input of queue) {
-            simulateTick(state, input, dt, BOUNDS, this.levelColliders);
+            const vacuumPull = roombaForVacuum?.phase === 'vacuuming'
+              ? getRoombaVacuumPullAcceleration(roombaForVacuum, state)
+              : null;
+            simulateTick(state, input, dt, BOUNDS, this.levelColliders, vacuumPull);
             state.emote = input.emote ?? null;
             seqs[id] = input.seq;
+            lastGrab = !!input.grab;
+            if (input.smack) didSmack = true;
           }
+          if (lastGrab) grabHeld.add(id);
+          if (didSmack) smackRequests.push(id);
           if (!this._lastSeq) this._lastSeq = new Map();
           this._lastSeq.set(id, seqs[id]);
           queue.length = 0;
@@ -598,9 +672,136 @@ export default class GameServer {
             reservedGoalPositions,
           },
         );
-        simulateTick(state, input, dt, BOUNDS, this.levelColliders);
+        const vacuumPull = roombaForVacuum?.phase === 'vacuuming'
+          ? getRoombaVacuumPullAcceleration(roombaForVacuum, state)
+          : null;
+        simulateTick(state, input, dt, BOUNDS, this.levelColliders, vacuumPull);
         state.emote = input.emote ?? null;
         seqs[id] = 0;
+      }
+    }
+
+    // --- Process smack interactions ---
+    for (const attackerId of smackRequests) {
+      const attacker = this.players.get(attackerId);
+      if (!attacker?.alive || attacker.smackCooldown > 0) continue;
+      // Find nearest alive player in range
+      let bestId = null;
+      let bestDist = SMACK_RANGE;
+      for (const [otherId, other] of this.players) {
+        if (otherId === attackerId || !other.alive || other.smackStunTimer > 0) continue;
+        const dx = other.position.x - attacker.position.x;
+        const dz = other.position.z - attacker.position.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestId = otherId;
+        }
+      }
+      if (bestId) {
+        const target = this.players.get(bestId);
+        attacker.smackCooldown = SMACK_COOLDOWN;
+        target.smackStunTimer = SMACK_STUN_DURATION;
+        target.alive = false;
+        target.animState = 'death';
+        target.deathTime = 0; // prevent respawn timer — smackStunTimer handles recovery
+        // Knockback away from attacker
+        const dx = target.position.x - attacker.position.x;
+        const dz = target.position.z - attacker.position.z;
+        const len = Math.sqrt(dx * dx + dz * dz) || 1;
+        target.velocity.x += (dx / len) * SMACK_KNOCKBACK;
+        target.velocity.y += 3; // pop them up
+        target.velocity.z += (dz / len) * SMACK_KNOCKBACK;
+        // Break any grab involving this target
+        if (target.grabbedBy) {
+          const grabber = this.players.get(target.grabbedBy);
+          if (grabber) grabber.grabbedTarget = null;
+          target.grabbedBy = null;
+        }
+        if (target.grabbedTarget) {
+          const grabbed = this.players.get(target.grabbedTarget);
+          if (grabbed) grabbed.grabbedBy = null;
+          target.grabbedTarget = null;
+        }
+      }
+    }
+
+    // --- Process grab interactions (hold-based) ---
+    // Release grabs for anyone who stopped holding Q
+    for (const [id, state] of this.players) {
+      if (state.grabbedTarget && !grabHeld.has(id)) {
+        const target = this.players.get(state.grabbedTarget);
+        if (target) target.grabbedBy = null;
+        state.grabbedTarget = null;
+      }
+    }
+    // Initiate new grabs for players holding Q without an active grab
+    for (const grabberId of grabHeld) {
+      const grabber = this.players.get(grabberId);
+      if (!grabber?.alive || grabber.grabCooldown > 0 || grabber.grabbedTarget) continue;
+      // Find nearest alive player in range
+      let bestId = null;
+      let bestDist = GRAB_RANGE;
+      for (const [otherId, other] of this.players) {
+        if (otherId === grabberId || !other.alive || other.smackStunTimer > 0) continue;
+        const dx = other.position.x - grabber.position.x;
+        const dz = other.position.z - grabber.position.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestId = otherId;
+        }
+      }
+      if (bestId) {
+        const target = this.players.get(bestId);
+        // Break any existing grabs on the target
+        if (target.grabbedBy) {
+          const oldGrabber = this.players.get(target.grabbedBy);
+          if (oldGrabber) oldGrabber.grabbedTarget = null;
+        }
+        grabber.grabbedTarget = bestId;
+        target.grabbedBy = grabberId;
+      }
+    }
+
+    // --- Apply grab movement coupling ---
+    const processedGrabs = new Set();
+    for (const [id, state] of this.players) {
+      if (!state.grabbedTarget || processedGrabs.has(id)) continue;
+      const target = this.players.get(state.grabbedTarget);
+      if (!target || !target.alive || !state.alive) {
+        // Grab broken — target dead or gone
+        if (target) target.grabbedBy = null;
+        state.grabbedTarget = null;
+        continue;
+      }
+      processedGrabs.add(id);
+      processedGrabs.add(state.grabbedTarget);
+
+      const dx = target.position.x - state.position.x;
+      const dz = target.position.z - state.position.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+
+      // Blend velocities: initiator has advantage
+      const gVx = state.velocity.x;
+      const gVz = state.velocity.z;
+      const tVx = target.velocity.x;
+      const tVz = target.velocity.z;
+      const adv = GRAB_INITIATOR_ADVANTAGE;
+      const blendVx = gVx * adv + tVx * (1 - adv);
+      const blendVz = gVz * adv + tVz * (1 - adv);
+      state.velocity.x = blendVx;
+      state.velocity.z = blendVz;
+      target.velocity.x = blendVx;
+      target.velocity.z = blendVz;
+
+      // Keep grabbed player locked beside the grabber
+      const maxGrabDist = 1.5;
+      if (dist > maxGrabDist) {
+        const nx = dx / dist;
+        const nz = dz / dist;
+        target.position.x = state.position.x + nx * maxGrabDist;
+        target.position.z = state.position.z + nz * maxGrabDist;
       }
     }
 
@@ -619,6 +820,7 @@ export default class GameServer {
           this.levelColliders,
           this.levelRoombaNavMesh,
           this.roombaCannonWorld,
+          this.mouseLaunchWorld,
         );
         continue;
       }
@@ -638,9 +840,15 @@ export default class GameServer {
           }
           target.velocity.x += hit.knockbackX;
           target.velocity.z += hit.knockbackZ;
+          if (!target.alive) {
+            target.roombaLaunch = null;
+            this.mouseLaunchWorld.removePlayer(hit.playerId);
+          }
         }
       }
     }
+
+    this.mouseLaunchWorld.step(dt, (pid) => this.players.get(pid));
 
     tickPlayerChaseScores(this.players, this.predators, dt);
 

@@ -44,6 +44,11 @@ const MOVE_LOOP_STEMS = ['assets/run', 'assets/Run'];
 const WALL_RUN_STEMS = ['assets/wallrun', 'assets/WallRun', 'assets/wall run', 'assets/Wall Run'];
 const JUMP_SFX_STEMS = ['assets/jump', 'assets/Jump'];
 const JUMP_SFX_GAIN = 0.62;
+const GRAB_SFX_STEMS = ['assets/grab', 'assets/Grab'];
+const SMACK_SFX_STEMS = ['assets/smack', 'assets/Smack'];
+const CAT_SFX_STEMS = [['assets/cat1', 'assets/Cat1'], ['assets/cat2', 'assets/Cat2']];
+const VACUUM_SFX_STEMS = ['assets/vacuum', 'assets/Vacuum'];
+const VACUUM2_SFX_STEMS = ['assets/vacuum2', 'assets/Vacuum2'];
 const MOVE_LOOP_FADE_RATE = 5.5;
 const MOVE_LOOP_GAIN = 0.55;
 const WALL_RUN_GAIN = 0.5;
@@ -392,6 +397,51 @@ const SoundSynth = {
     osc.stop(now + 0.5);
     return gain;
   },
+
+  /** Cartoon slap — short noise burst with a sharp attack. */
+  smack(audioContext) {
+    const now = audioContext.currentTime;
+    const dur = 0.18;
+    const buf = audioContext.createBuffer(1, audioContext.sampleRate * dur, audioContext.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < buf.length; i++) {
+      const t = i / buf.length;
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 12);
+    }
+    const src = audioContext.createBufferSource();
+    src.buffer = buf;
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 2400;
+    filter.Q.value = 0.8;
+    const gain = audioContext.createGain();
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioContext.destination);
+    src.start(now);
+    src.stop(now + dur);
+    return gain;
+  },
+
+  /** Cartoon grab — quick rising chirp. */
+  grab(audioContext) {
+    const now = audioContext.currentTime;
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(250, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+    osc.frequency.exponentialRampToValueAtTime(400, now + 0.15);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+    return gain;
+  },
 };
 
 /**
@@ -407,6 +457,8 @@ export class AudioManager {
     // One shared context: THREE.AudioListener() otherwise creates a second AudioContext that may stay suspended.
     THREE.AudioContext.setContext(this.audioContext);
     this.listener = new THREE.AudioListener();
+    /** Set by {@link attachListenerToCamera}; enables auto position/orientation tracking. */
+    this._listenerAttached = false;
     this.masterGain = this.audioContext.createGain();
     this.masterGain.connect(this.audioContext.destination);
     this.masterGain.gain.value = 0.5; // Default volume
@@ -474,10 +526,16 @@ export class AudioManager {
     this._jumpBuffer = undefined;
     this._jumpLoadPromise = null;
 
-    /** Procedural loop: Roomba motor + vacuum hiss (gain + pan updated each frame). */
+    /** General SFX buffer cache (keyed by name, e.g. 'grab', 'smack', 'cat1'). */
+    this._sfxBuffers = new Map();
+    this._sfxLoadPromises = new Map();
+
+    /** Procedural loop: Roomba motor + vacuum hiss (spatialized via PositionalAudio or PannerNode). */
     this._roombaMotorBuilt = false;
     this._roombaMotorGain = null;
     this._roombaMotorPanner = null;
+    this._roombaPositionalAudio = null;
+    this._roombaMesh = null;
     this._roombaHumOsc = null;
     this._roombaNoiseSrc = null;
 
@@ -494,27 +552,66 @@ export class AudioManager {
   }
 
   /**
+   * Attach the THREE.AudioListener to a camera so Three.js automatically updates
+   * listener position and orientation each frame. Call once after camera creation.
+   * @param {THREE.Camera} camera
+   */
+  attachListenerToCamera(camera) {
+    if (this._listenerAttached) return;
+    camera.add(this.listener);
+    this._listenerAttached = true;
+  }
+
+  /**
+   * Create a PannerNode positioned at `worldPos` for true 3D spatialization.
+   * Uses inverse-distance model with the same max range as the old manual calc.
+   * @param {THREE.Vector3} worldPos
+   * @returns {PannerNode}
+   */
+  _createSpatialPanner(worldPos) {
+    const panner = this.audioContext.createPanner();
+    panner.panningModel = 'HRTF';
+    panner.distanceModel = 'linear';
+    panner.refDistance = 1;
+    panner.maxDistance = 20;
+    panner.rolloffFactor = 1;
+    panner.setPosition(worldPos.x, worldPos.y, worldPos.z);
+    panner.connect(this.sfxContext);
+    return panner;
+  }
+
+  /**
    * Play sound effect at world position
    */
-  playSoundAtPosition(type, position, cameraPosition) {
+  playSoundAtPosition(type, position) {
     if (this._sfxMuted) return;
 
-    const distance = position.distanceTo(cameraPosition);
-    const maxDistance = 20;
-    const volume = Math.max(0, 1 - distance / maxDistance);
-
-    if (volume <= 0) return;
-
-    const direction = new THREE.Vector3().subVectors(position, cameraPosition);
-    const angle = Math.atan2(direction.x, direction.z);
-    const pan = Math.sin(angle);
-
-    const panNode = this.audioContext.createStereoPanner();
-    panNode.pan.value = Math.min(1, Math.max(-1, pan));
-    panNode.connect(this.sfxContext);
+    const panner = this._createSpatialPanner(position);
 
     if (type === 'jump') {
-      void this._playJumpSfx(panNode, volume);
+      void this._playJumpSfx(panner);
+      return;
+    }
+
+    // File-based SFX with synth fallback
+    if (type === 'grab') {
+      void this._playSfxBufferAtPanner('grab', GRAB_SFX_STEMS, panner).then((ok) => {
+        if (!ok) SoundSynth.grab(this.audioContext)?.connect(panner);
+      });
+      return;
+    }
+    if (type === 'smack') {
+      void this._playSfxBufferAtPanner('smack', SMACK_SFX_STEMS, panner).then((ok) => {
+        if (!ok) SoundSynth.smack(this.audioContext)?.connect(panner);
+      });
+      return;
+    }
+    if (type === 'cat') {
+      const idx = Math.random() < 0.5 ? 0 : 1;
+      const name = `cat${idx + 1}`;
+      void this._playSfxBufferAtPanner(name, CAT_SFX_STEMS[idx], panner).then((ok) => {
+        if (!ok) SoundSynth.crash(this.audioContext)?.connect(panner);
+      });
       return;
     }
 
@@ -542,30 +639,16 @@ export class AudioManager {
         sound = SoundSynth.beep(this.audioContext, 500, 0.08);
     }
 
-    sound.gain.value *= volume;
-    sound.connect(panNode);
+    sound.connect(panner);
 
-    this.spatialSounds.push({ sound, panNode, position, type });
+    this.spatialSounds.push({ sound, panner, position, type });
   }
 
   playEmote(soundName, position) {
     if (this._sfxMuted) return;
 
-    const camPos = this.listener.position;
-    if (!camPos) return;
-
-    const distance = position.distanceTo(camPos);
-    const maxDistance = 20;
-    const volume = Math.max(0, 1 - distance / maxDistance);
-    if (volume <= 0) return;
-
-    const direction = new THREE.Vector3().subVectors(position, camPos);
-    const angle = Math.atan2(direction.x, direction.z);
-    const panNode = this.audioContext.createStereoPanner();
-    panNode.pan.value = Math.min(1, Math.max(-1, Math.sin(angle)));
-    panNode.connect(this.sfxContext);
-
-    void this._playEmoteClipOrSynth(soundName, panNode, volume);
+    const panner = this._createSpatialPanner(position);
+    void this._playEmoteClipOrSynth(soundName, panner);
   }
 
   /**
@@ -583,6 +666,64 @@ export class AudioManager {
   /** Pre-decode `public/assets/jump.{m4a|mp3|…}` after a user gesture. */
   prefetchJumpSfx() {
     void this._loadJumpBufferOnce();
+  }
+
+  /**
+   * Load a named SFX buffer from the given stems list. Returns cached result on repeat calls.
+   * @param {string} name - cache key (e.g. 'grab', 'smack', 'cat1')
+   * @param {string[]} stems - asset stem list to try
+   * @returns {Promise<AudioBuffer|null>}
+   */
+  async _loadSfxBuffer(name, stems) {
+    if (this._sfxBuffers.has(name)) return this._sfxBuffers.get(name);
+    if (this._sfxLoadPromises.has(name)) return this._sfxLoadPromises.get(name);
+    const promise = (async () => {
+      try {
+        const buf = await this._tryFetchDecodeAmbientStemList(stems);
+        this._sfxBuffers.set(name, buf);
+        return buf;
+      } catch {
+        this._sfxBuffers.set(name, null);
+        return null;
+      } finally {
+        this._sfxLoadPromises.delete(name);
+      }
+    })();
+    this._sfxLoadPromises.set(name, promise);
+    return promise;
+  }
+
+  /** Pre-decode grab, smack, cat, and vacuum SFX after a user gesture. */
+  prefetchInteractionSfx() {
+    void this._loadSfxBuffer('grab', GRAB_SFX_STEMS);
+    void this._loadSfxBuffer('smack', SMACK_SFX_STEMS);
+    for (let i = 0; i < CAT_SFX_STEMS.length; i++) {
+      void this._loadSfxBuffer(`cat${i + 1}`, CAT_SFX_STEMS[i]);
+    }
+    void this._loadSfxBuffer('vacuum', VACUUM_SFX_STEMS);
+    void this._loadSfxBuffer('vacuum2', VACUUM2_SFX_STEMS);
+  }
+
+  /**
+   * Play a file-based SFX at a position. Falls back to synth if file not loaded.
+   * @param {string} name - buffer cache key
+   * @param {string[]} stems - asset stems to try loading
+   * @param {PannerNode} panner
+   * @param {number} [gain=1]
+   */
+  async _playSfxBufferAtPanner(name, stems, panner, gain = 1) {
+    let buf = this._sfxBuffers.get(name) ?? null;
+    if (buf === undefined) buf = await this._loadSfxBuffer(name, stems);
+    if (!buf) return false;
+    await this.audioContext.resume();
+    const g = this.audioContext.createGain();
+    g.gain.value = gain;
+    const src = this.audioContext.createBufferSource();
+    src.buffer = buf;
+    src.connect(g);
+    g.connect(panner);
+    src.start();
+    return true;
   }
 
   async _loadJumpBufferOnce() {
@@ -609,16 +750,16 @@ export class AudioManager {
     return this._jumpLoadPromise;
   }
 
-  async _playJumpSfx(panNode, volume) {
+  async _playJumpSfx(panner) {
     await this.audioContext.resume();
     const buf = await this._loadJumpBufferOnce();
     if (buf) {
       const gain = this.audioContext.createGain();
-      gain.gain.value = Math.max(0, Math.min(1, volume * JUMP_SFX_GAIN));
+      gain.gain.value = JUMP_SFX_GAIN;
       const src = this.audioContext.createBufferSource();
       src.buffer = buf;
       src.connect(gain);
-      gain.connect(panNode);
+      gain.connect(panner);
       src.start();
       return;
     }
@@ -628,10 +769,10 @@ export class AudioManager {
     const g = this.audioContext.createGain();
     osc.type = 'square';
     osc.frequency.setValueAtTime(780, now);
-    g.gain.setValueAtTime(0.16 * volume, now);
+    g.gain.setValueAtTime(0.16, now);
     g.gain.exponentialRampToValueAtTime(0.01, now + dur);
     osc.connect(g);
-    g.connect(panNode);
+    g.connect(panner);
     osc.start(now);
     osc.stop(now + dur);
   }
@@ -662,16 +803,13 @@ export class AudioManager {
     return promise;
   }
 
-  async _playEmoteClipOrSynth(soundName, panNode, volume) {
+  async _playEmoteClipOrSynth(soundName, panner) {
     const buf = await this._getEmoteBuffer(soundName);
     if (buf) {
       void this.audioContext.resume();
-      const gain = this.audioContext.createGain();
-      gain.gain.value = Math.max(0, Math.min(1, volume));
       const src = this.audioContext.createBufferSource();
       src.buffer = buf;
-      src.connect(gain);
-      gain.connect(panNode);
+      src.connect(panner);
       src.start();
       return;
     }
@@ -689,8 +827,7 @@ export class AudioManager {
 
     const sound = synthFn ? SoundSynth[synthFn]?.(this.audioContext) : null;
     if (sound) {
-      sound.gain.value *= volume;
-      sound.connect(panNode);
+      sound.connect(panner);
     }
   }
 
@@ -755,6 +892,7 @@ export class AudioManager {
       this.prefetchMovementLoopBuffer();
       this.prefetchJumpSfx();
       this.prefetchEmoteBuffers();
+      this.prefetchInteractionSfx();
     })();
 
     try {
@@ -1274,16 +1412,69 @@ export class AudioManager {
     return this.listener;
   }
 
+  /**
+   * Attach a THREE.PositionalAudio node to the roomba mesh so Three.js
+   * auto-spatialises the motor hum based on the roomba's world transform.
+   * Call once after roomba + listener are ready.
+   * @param {THREE.Object3D} roombaMesh
+   */
+  attachRoombaAudio(roombaMesh) {
+    if (this._roombaMotorBuilt) return;
+    this._roombaMesh = roombaMesh;
+    // Defer graph build until first updateRoombaMotor call (needs resumed context).
+  }
+
   _ensureRoombaMotorGraph() {
     if (this._roombaMotorBuilt) return;
     const ctx = this.audioContext;
-    this._roombaMotorPanner = ctx.createStereoPanner();
-    this._roombaMotorPanner.connect(this.sfxContext);
 
-    this._roombaMotorGain = ctx.createGain();
-    this._roombaMotorGain.gain.value = 0;
-    this._roombaMotorGain.connect(this._roombaMotorPanner);
+    // PositionalAudio on the roomba mesh — Three.js handles panning + distance.
+    if (this._roombaMesh) {
+      const positional = new THREE.PositionalAudio(this.listener);
+      positional.setRefDistance(1);
+      positional.setMaxDistance(26);
+      positional.setDistanceModel('linear');
+      positional.setRolloffFactor(1);
+      this._roombaMesh.add(positional);
+      this._roombaPositionalAudio = positional;
+      // We'll connect our oscillator graph into the positional audio's gain node.
+      this._roombaMotorGain = ctx.createGain();
+      this._roombaMotorGain.gain.value = 0;
+      this._roombaMotorGain.connect(positional.getOutput());
+    } else {
+      // Fallback: no mesh provided, use a plain PannerNode.
+      this._roombaMotorPanner = ctx.createPanner();
+      this._roombaMotorPanner.panningModel = 'HRTF';
+      this._roombaMotorPanner.distanceModel = 'linear';
+      this._roombaMotorPanner.refDistance = 1;
+      this._roombaMotorPanner.maxDistance = 26;
+      this._roombaMotorPanner.rolloffFactor = 1;
+      this._roombaMotorPanner.connect(this.sfxContext);
 
+      this._roombaMotorGain = ctx.createGain();
+      this._roombaMotorGain.gain.value = 0;
+      this._roombaMotorGain.connect(this._roombaMotorPanner);
+    }
+
+    // Try file-based vacuum loop; fall back to procedural synth.
+    this._roombaMotorBuilt = true;
+    void this._startRoombaAudioSource(ctx);
+  }
+
+  async _startRoombaAudioSource(ctx) {
+    // Try vacuum.mp3 first, then vacuum2.mp3
+    let buf = await this._loadSfxBuffer('vacuum', VACUUM_SFX_STEMS);
+    if (!buf) buf = await this._loadSfxBuffer('vacuum2', VACUUM2_SFX_STEMS);
+    if (buf) {
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      src.connect(this._roombaMotorGain);
+      src.start();
+      this._roombaNoiseSrc = src;
+      return;
+    }
+    // Procedural fallback: hum oscillator + filtered brown noise
     const hum = ctx.createOscillator();
     hum.type = 'triangle';
     hum.frequency.value = 58;
@@ -1318,41 +1509,29 @@ export class AudioManager {
     hissGain.connect(this._roombaMotorGain);
     src.start();
     this._roombaNoiseSrc = src;
-
-    this._roombaMotorBuilt = true;
   }
 
   /**
-   * Roomba motor / vacuum: on while not charging; loudness from distance to listener.
-   * @param {THREE.Vector3 | null} roombaWorldPos
+   * Roomba motor / vacuum: phase-based gain; spatialization handled by Three.js PositionalAudio
+   * (or fallback PannerNode if no mesh was attached).
+   * @param {THREE.Vector3 | null} roombaWorldPos only used for fallback panner positioning
    * @param {string} phase server `ai` (charging | deploying | vacuuming | returning)
-   * @param {THREE.Vector3} listenerWorldPos camera / listener
    */
-  updateRoombaMotor(roombaWorldPos, phase, listenerWorldPos) {
+  updateRoombaMotor(roombaWorldPos, phase) {
     const off = !roombaWorldPos || phase === 'charging' || this._sfxMuted;
     if (off && !this._roombaMotorBuilt) return;
 
     this._ensureRoombaMotorGraph();
     const t = this.audioContext.currentTime;
-    let target = 0;
 
-    if (!off && listenerWorldPos) {
-      const dx = roombaWorldPos.x - listenerWorldPos.x;
-      const dy = roombaWorldPos.y - listenerWorldPos.y;
-      const dz = roombaWorldPos.z - listenerWorldPos.z;
-      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      const maxDist = 26;
-      const prox = Math.max(0, 1 - dist / maxDist);
-      const phaseBoost = phase === 'vacuuming' ? 1 : 0.55;
-      target = Math.min(0.95, prox * prox * phaseBoost * 0.78);
-      const angle = Math.atan2(dx, dz);
-      this._roombaMotorPanner.pan.setTargetAtTime(
-        Math.min(1, Math.max(-1, Math.sin(angle))),
-        t,
-        0.035,
-      );
-    } else {
-      this._roombaMotorPanner.pan.setTargetAtTime(0, t, 0.05);
+    // When using PositionalAudio on the mesh, Three.js handles distance/panning automatically.
+    // We only control the source gain based on phase.
+    const phaseBoost = phase === 'vacuuming' ? 0.195 : 0.1075;
+    const target = off ? 0 : phaseBoost;
+
+    // Fallback: manually position the PannerNode when no mesh was provided.
+    if (this._roombaMotorPanner && roombaWorldPos && !off) {
+      this._roombaMotorPanner.setPosition(roombaWorldPos.x, roombaWorldPos.y, roombaWorldPos.z);
     }
 
     this._roombaMotorGain.gain.setTargetAtTime(target, t, 0.055);
@@ -1374,6 +1553,11 @@ export class AudioManager {
     this._roombaNoiseSrc?.disconnect();
     this._roombaMotorGain?.disconnect();
     this._roombaMotorPanner?.disconnect();
+    if (this._roombaPositionalAudio) {
+      this._roombaPositionalAudio.disconnect();
+      this._roombaMesh?.remove(this._roombaPositionalAudio);
+      this._roombaPositionalAudio = null;
+    }
     this._roombaHumOsc = null;
     this._roombaNoiseSrc = null;
     this._roombaMotorGain = null;
@@ -1382,13 +1566,11 @@ export class AudioManager {
   }
 
   /**
-   * Update audio context state (called each frame)
-   * @param {THREE.Vector3} cameraPosition
+   * Update audio state (called each frame).
+   * Listener position/orientation is auto-tracked by Three.js when attached to the camera.
    * @param {number} [deltaSeconds]
    */
-  update(cameraPosition, deltaSeconds) {
-    // Update listener position for spatial audio
-    this.listener.position.copy(cameraPosition);
+  update(deltaSeconds) {
     if (typeof deltaSeconds === 'number' && deltaSeconds > 0) {
       this._tickAmbientCrossfade(deltaSeconds);
       this._tickMovementLoopFade(deltaSeconds);
@@ -1410,6 +1592,8 @@ export class AudioManager {
     this._movementDecodePromise = null;
     this._emoteBufferCache.clear();
     this._emoteBufferInflight.clear();
+    this._sfxBuffers.clear();
+    this._sfxLoadPromises.clear();
     this._jumpBuffer = undefined;
     this._jumpLoadPromise = null;
     this.audioContext.close();

@@ -57,6 +57,7 @@ export async function createAudioScene({ canvas, forceWebGL = false } = {}) {
 
   // Audio manager
   const audioManager = getAudioManager();
+  audioManager.attachListenerToCamera(camera);
   await audioManager.resume();
   audioManager.startMusic();
 
@@ -80,10 +81,10 @@ export async function createAudioScene({ canvas, forceWebGL = false } = {}) {
   const eventDuration = 2.5;
   let currentEvent = 0;
   const audioEvents = [
-    { name: 'Squeak', fn: () => audioManager.playSoundAtPosition('squeak', mouse.position, camera.position) },
-    { name: 'Footstep', fn: () => audioManager.playSoundAtPosition('footstep', mouse.position, camera.position) },
-    { name: 'Crash', fn: () => audioManager.playSoundAtPosition('crash', new THREE.Vector3(2, 1, 2), camera.position) },
-    { name: 'Pickup', fn: () => audioManager.playSoundAtPosition('pickup', mouse.position, camera.position) },
+    { name: 'Squeak', fn: () => audioManager.playSoundAtPosition('squeak', mouse.position) },
+    { name: 'Footstep', fn: () => audioManager.playSoundAtPosition('footstep', mouse.position) },
+    { name: 'Crash', fn: () => audioManager.playSoundAtPosition('crash', new THREE.Vector3(2, 1, 2)) },
+    { name: 'Pickup', fn: () => audioManager.playSoundAtPosition('pickup', mouse.position) },
     { name: 'Tense Music', fn: () => audioManager.setMusicTense() },
     { name: 'Triumph', fn: () => audioManager.playTriumph() },
     { name: 'Reset', fn: () => audioManager.playAmbientMusic() },
@@ -102,7 +103,7 @@ export async function createAudioScene({ canvas, forceWebGL = false } = {}) {
     const deltaTime = 0.016;
 
     // Update audio
-    audioManager.update(camera.position);
+    audioManager.update(0.016);
 
     // Update mouse
     mouse.update(deltaTime);
