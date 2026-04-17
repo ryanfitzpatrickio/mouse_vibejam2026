@@ -335,6 +335,7 @@ function gatherMiceSortedByDistance(state, players) {
   const out = [];
   for (const player of Object.values(players)) {
     if (!player?.alive || !player.position) continue;
+    if (player.spectator || player.extracted) continue;
     const d = distXZ(state.position, player.position);
     out.push({
       player,

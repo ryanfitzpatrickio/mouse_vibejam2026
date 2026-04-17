@@ -2,7 +2,21 @@ import * as THREE from 'three';
 import { PrefabEditorDialog } from './PrefabEditorDialog.js';
 import { DEFAULT_PREFAB_LIBRARY, normalizePrefabLibrary } from './prefabRegistry.js';
 import { clamp, createAtlasButtonStyle, deepClone } from './editorShared.js';
-import { createDefaultPrimitive, createDefaultLight, createDefaultPortal, createDefaultRope, createPrimitiveId, createPortalId, createRopeId, createSpawnMarkerPrimitive, loadPrefabLibraryFromAsset } from './buildModeSupport.js';
+import {
+  createDefaultPrimitive,
+  createDefaultLight,
+  createDefaultPortal,
+  createDefaultRope,
+  createDefaultExtractionPortal,
+  createDefaultRaidTask,
+  createPrimitiveId,
+  createPortalId,
+  createRopeId,
+  createExtractionPortalId,
+  createRaidTaskId,
+  createSpawnMarkerPrimitive,
+  loadPrefabLibraryFromAsset,
+} from './buildModeSupport.js';
 import {
   styleField,
   addActionButton,
@@ -23,6 +37,8 @@ import { installPrefabSection } from './sections/prefab.js';
 import { installPaletteSection } from './sections/palette.js';
 import { installGlbSection } from './sections/glb.js';
 import { installRopeSection } from './sections/rope.js';
+import { installExtractionSection } from './sections/extraction.js';
+import { installRaidTaskSection } from './sections/raidTask.js';
 import { installOrbitControls } from './subsystems/orbitControls.js';
 import {
   installProbeVisuals,
@@ -41,6 +57,7 @@ import { loadTextureAtlases, TEXTURE_ATLASES } from './textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
 import { SPAWN_TYPES, normalizeSpawnType } from '../../shared/spawnPoints.js';
 import { NAV_AREA_TYPES, normalizeNavArea } from '../../shared/navConfig.js';
+import { DEFAULT_ROPE_COLOR } from '../../shared/ropes.js';
 import { VIBE_PORTAL_TYPES, normalizeVibePortalType } from '../../shared/vibePortal.js';
 
 const RAD_TO_DEG = 180 / Math.PI;
@@ -94,6 +111,8 @@ class BuildModeEditor {
     this.app.room.setSpawnMarkersVisible(this.visible);
     this.app.room.setLightHelpersVisible(this.visible);
     this.app.room.setPortalHelpersVisible(this.visible);
+    this.app.room.setExtractionHelpersVisible?.(this.visible);
+    this.app.room.setRaidTaskHelpersVisible?.(this.visible);
     this.app.room.setRopeHelpersVisible?.(this.visible);
     if (this.visible) {
       this.app.thirdPersonCamera?.setEnabled(false);
@@ -219,6 +238,8 @@ class BuildModeEditor {
     this._addActionButton('Vibe Portal', () => this._addPortal(VIBE_PORTAL_TYPES.EXIT), '#125341');
     this._addActionButton('Return Portal', () => this._addPortal(VIBE_PORTAL_TYPES.RETURN), '#5b241c');
     this._addActionButton('Rope', () => this._addRope(), '#5e4322');
+    this._addActionButton('Extract hole', () => this._addExtractionPortal(), '#1a4d42');
+    this._addActionButton('Task marker', () => this._addRaidTask(), '#4d3a1a');
     this._addActionButton('Move', () => this._setTransformMode('translate'));
     this._addActionButton('Rotate', () => this._setTransformMode('rotate'));
     this._addActionButton('Scale', () => this._setTransformMode('scale'));
@@ -233,6 +254,8 @@ class BuildModeEditor {
     this._createLightSection();
     this._createPortalSection();
     this._createRopeSection();
+    this._createExtractionSection();
+    this._createRaidTaskSection();
     this._createPrefabSection();
     this._createGlbSection();
     this._createPaletteSection();
@@ -296,6 +319,21 @@ class BuildModeEditor {
     return editableIdFromObject(object);
   }
 
+  _syncRopeTextureFromFields() {
+    this._updateSelected((rope) => {
+      const raw = this.ropeTextureCellInput?.value;
+      const cell = raw === '' || raw == null ? NaN : Number(raw);
+      if (!Number.isFinite(cell) || cell < 0) {
+        rope.texture = null;
+      } else {
+        rope.texture = {
+          atlas: this.ropeTextureAtlasSelect?.value ?? 'textures',
+          cell: Math.round(cell),
+        };
+      }
+    }, { snapPosition: false, snapScale: false });
+  }
+
   _updateProbe() {
     updateProbe(this);
   }
@@ -335,6 +373,14 @@ class BuildModeEditor {
 
   _createRopeSection() {
     installRopeSection(this);
+  }
+
+  _createExtractionSection() {
+    installExtractionSection(this);
+  }
+
+  _createRaidTaskSection() {
+    installRaidTaskSection(this);
   }
 
   _createPrefabSection() {
@@ -636,8 +682,21 @@ class BuildModeEditor {
     return this._editorRopes().find((entry) => entry.id === this.selectedId) ?? null;
   }
 
+  _selectedExtractionPortal() {
+    return this._editorExtractionPortals().find((entry) => entry.id === this.selectedId) ?? null;
+  }
+
+  _selectedRaidTask() {
+    return this._editorRaidTasks().find((entry) => entry.id === this.selectedId) ?? null;
+  }
+
   _selectedEntry() {
-    return this._selectedPrimitive() ?? this._selectedLight() ?? this._selectedPortal() ?? this._selectedRope();
+    return this._selectedPrimitive()
+      ?? this._selectedLight()
+      ?? this._selectedPortal()
+      ?? this._selectedExtractionPortal()
+      ?? this._selectedRaidTask()
+      ?? this._selectedRope();
   }
 
   _spawnLabel(spawnType) {
@@ -662,12 +721,22 @@ class BuildModeEditor {
     return (this.layout.ropes ?? []).filter((entry) => entry.deleted !== true);
   }
 
+  _editorExtractionPortals() {
+    return (this.layout.extractionPortals ?? []).filter((entry) => entry.deleted !== true);
+  }
+
+  _editorRaidTasks() {
+    return (this.layout.raidTasks ?? []).filter((entry) => entry.deleted !== true);
+  }
+
   _editorEntries() {
     return [
       ...this._editorPrimitives(),
       ...this._editorLights(),
       ...this._editorPortals(),
       ...this._editorRopes(),
+      ...this._editorExtractionPortals(),
+      ...this._editorRaidTasks(),
     ];
   }
 
@@ -697,6 +766,10 @@ class BuildModeEditor {
         option.textContent = `${entry.name} (${normalizeVibePortalType(entry.portalType)} portal)`;
       } else if (entry.segmentCount != null && entry.anchor) {
         option.textContent = `${entry.name} (rope)`;
+      } else if (entry.taskType != null) {
+        option.textContent = `${entry.name} (task · ${entry.taskType})`;
+      } else if (entry.radius != null && entry.portalType == null) {
+        option.textContent = `${entry.name} (extraction · r ${Number(entry.radius).toFixed(2)})`;
       } else {
         const spawnLabel = this._spawnLabel(normalizeSpawnType(entry.spawnType));
         option.textContent = spawnLabel
@@ -716,12 +789,16 @@ class BuildModeEditor {
     const light = this._selectedLight();
     const portal = this._selectedPortal();
     const rope = this._selectedRope();
-    const entry = primitive ?? light ?? portal ?? rope;
+    const extraction = this._selectedExtractionPortal();
+    const raidTask = this._selectedRaidTask();
+    const entry = primitive ?? light ?? portal ?? rope ?? extraction ?? raidTask;
     const disabled = !entry;
     const primitiveDisabled = !primitive;
     const lightDisabled = !light;
     const portalDisabled = !portal;
     const ropeDisabled = !rope;
+    const extractionDisabled = !extraction;
+    const raidTaskDisabled = !raidTask;
 
     [
       this.nameInput,
@@ -772,8 +849,24 @@ class BuildModeEditor {
     });
 
     [
+      this.extractionRadiusInput,
+    ].forEach((field) => {
+      if (field) field.disabled = extractionDisabled;
+    });
+
+    [
+      this.raidTaskTypeSelect,
+    ].forEach((field) => {
+      if (field) field.disabled = raidTaskDisabled;
+    });
+
+    [
       this.ropeLengthInput,
       this.ropeSegmentsInput,
+      this.ropeThicknessInput,
+      this.ropeColorInput,
+      this.ropeTextureAtlasSelect,
+      this.ropeTextureCellInput,
     ].forEach((field) => {
       if (field) field.disabled = ropeDisabled;
     });
@@ -782,6 +875,8 @@ class BuildModeEditor {
     this.lightSection.style.display = light ? 'block' : 'none';
     this.portalSection.style.display = portal ? 'block' : 'none';
     if (this.ropeSection) this.ropeSection.style.display = rope ? 'block' : 'none';
+    if (this.extractionSection) this.extractionSection.style.display = extraction ? 'block' : 'none';
+    if (this.raidTaskSection) this.raidTaskSection.style.display = raidTask ? 'block' : 'none';
     this.scaleInputs._wrap.style.display = primitive ? 'block' : 'none';
     this.colliderToggle._wrap.style.display = primitive ? 'flex' : 'none';
     this.castShadowToggle._wrap.style.display = primitive || light ? 'flex' : 'none';
@@ -848,12 +943,41 @@ class BuildModeEditor {
       this.portalTriggerRadiusInput._output.textContent = Number(portal.triggerRadius).toFixed(2);
     }
 
+    if (extraction && this.extractionRadiusInput) {
+      this.extractionRadiusInput.value = extraction.radius;
+      if (this.extractionRadiusInput._output) {
+        this.extractionRadiusInput._output.textContent = Number(extraction.radius).toFixed(2);
+      }
+    }
+
+    if (raidTask && this.raidTaskTypeSelect) {
+      this.raidTaskTypeSelect.value = raidTask.taskType;
+    }
+
     if (rope && this.ropeLengthInput) {
       this.ropeLengthInput.value = rope.length;
       if (this.ropeLengthInput._output) {
         this.ropeLengthInput._output.textContent = Number(rope.length).toFixed(2);
       }
       this.ropeSegmentsInput.value = rope.segmentCount;
+      if (this.ropeThicknessInput) {
+        const d = Number(rope.segmentRadius ?? 0) * 2;
+        this.ropeThicknessInput.value = d;
+        if (this.ropeThicknessInput._output) {
+          this.ropeThicknessInput._output.textContent = d.toFixed(3);
+        }
+      }
+      if (this.ropeColorInput) {
+        this.ropeColorInput.value = rope.color ?? DEFAULT_ROPE_COLOR;
+      }
+      if (this.ropeTextureAtlasSelect && rope.texture?.atlas) {
+        this.ropeTextureAtlasSelect.value = rope.texture.atlas;
+      } else if (this.ropeTextureAtlasSelect) {
+        this.ropeTextureAtlasSelect.value = this.activeTextureAtlasId;
+      }
+      if (this.ropeTextureCellInput) {
+        this.ropeTextureCellInput.value = rope.texture?.cell != null ? String(rope.texture.cell) : '';
+      }
     }
 
     this._highlightPalette();
@@ -1034,6 +1158,38 @@ class BuildModeEditor {
       return;
     }
 
+    const extraction = this._selectedExtractionPortal();
+    if (extraction) {
+      const next = deepClone(extraction);
+      mutator(next);
+      const snapped = this.app.room.snapExtractionPortalToGrid(next, {
+        snapY,
+        snapPosition,
+        allowEdgeOverflow: true,
+      });
+      this.app.room.upsertEditableExtractionPortal(snapped);
+      this.layout = this.app.room.getEditableLayout();
+      this._syncForm();
+      this._attachTransformControls();
+      return;
+    }
+
+    const raidTask = this._selectedRaidTask();
+    if (raidTask) {
+      const next = deepClone(raidTask);
+      mutator(next);
+      const snapped = this.app.room.snapRaidTaskToGrid(next, {
+        snapY,
+        snapPosition,
+        allowEdgeOverflow: true,
+      });
+      this.app.room.upsertEditableRaidTask(snapped);
+      this.layout = this.app.room.getEditableLayout();
+      this._syncForm();
+      this._attachTransformControls();
+      return;
+    }
+
     const rope = this._selectedRope();
     if (!rope) {
       return;
@@ -1113,6 +1269,32 @@ class BuildModeEditor {
     this._setStatus(`Added ${rope.name}.`);
   }
 
+  _addExtractionPortal() {
+    const ep = this.app.room.snapExtractionPortalToGrid(
+      createDefaultExtractionPortal(this.app),
+      { snapY: true, snapPosition: true, allowEdgeOverflow: true },
+    );
+    this.app.room.upsertEditableExtractionPortal(ep);
+    this.layout = this.app.room.getEditableLayout();
+    this.selectedId = ep.id;
+    this._syncForm();
+    this._attachTransformControls();
+    this._setStatus(`Added ${ep.name}.`);
+  }
+
+  _addRaidTask() {
+    const task = this.app.room.snapRaidTaskToGrid(
+      createDefaultRaidTask(this.app),
+      { snapY: true, snapPosition: true, allowEdgeOverflow: true },
+    );
+    this.app.room.upsertEditableRaidTask(task);
+    this.layout = this.app.room.getEditableLayout();
+    this.selectedId = task.id;
+    this._syncForm();
+    this._attachTransformControls();
+    this._setStatus(`Added ${task.name}.`);
+  }
+
   _duplicateSelected() {
     const primitive = this._selectedPrimitive();
     const light = this._selectedLight();
@@ -1163,6 +1345,38 @@ class BuildModeEditor {
       this._setStatus(`Duplicated ${portal.name}.`);
       return;
     }
+    const extraction = this._selectedExtractionPortal();
+    if (extraction) {
+      const copy = deepClone(extraction);
+      copy.id = createExtractionPortalId();
+      copy.name = `${extraction.name}-copy`;
+      copy.position.x += grid.cellWidth;
+      copy.position.z += grid.cellDepth;
+      const snapped = this.app.room.snapExtractionPortalToGrid(copy, { snapY: true, allowEdgeOverflow: true });
+      this.app.room.upsertEditableExtractionPortal(snapped);
+      this.layout = this.app.room.getEditableLayout();
+      this.selectedId = snapped.id;
+      this._syncForm();
+      this._attachTransformControls();
+      this._setStatus(`Duplicated ${extraction.name}.`);
+      return;
+    }
+    const raidTask = this._selectedRaidTask();
+    if (raidTask) {
+      const copy = deepClone(raidTask);
+      copy.id = createRaidTaskId();
+      copy.name = `${raidTask.name}-copy`;
+      copy.position.x += grid.cellWidth;
+      copy.position.z += grid.cellDepth;
+      const snapped = this.app.room.snapRaidTaskToGrid(copy, { snapY: true, allowEdgeOverflow: true });
+      this.app.room.upsertEditableRaidTask(snapped);
+      this.layout = this.app.room.getEditableLayout();
+      this.selectedId = snapped.id;
+      this._syncForm();
+      this._attachTransformControls();
+      this._setStatus(`Duplicated ${raidTask.name}.`);
+      return;
+    }
     const rope = this._selectedRope();
     if (!rope) return;
     const ropeCopy = deepClone(rope);
@@ -1185,11 +1399,18 @@ class BuildModeEditor {
     const light = this._selectedLight();
     const portal = this._selectedPortal();
     const rope = this._selectedRope();
-    const currentName = primitive?.name ?? light?.name ?? portal?.name ?? rope?.name ?? 'object';
+    const extraction = this._selectedExtractionPortal();
+    const raidTask = this._selectedRaidTask();
+    const currentName = primitive?.name ?? light?.name ?? portal?.name ?? rope?.name
+      ?? extraction?.name ?? raidTask?.name ?? 'object';
     if (light) {
       this.app.room.purgeEditableLight(this.selectedId);
     } else if (portal) {
       this.app.room.purgeEditablePortal(this.selectedId);
+    } else if (extraction) {
+      this.app.room.purgeEditableExtractionPortal(this.selectedId);
+    } else if (raidTask) {
+      this.app.room.purgeEditableRaidTask(this.selectedId);
     } else if (rope) {
       this.app.room.purgeEditableRope(this.selectedId);
     } else {
@@ -1200,6 +1421,8 @@ class BuildModeEditor {
       ?? this.layout.lights?.[0]?.id
       ?? this.layout.portals?.[0]?.id
       ?? this.layout.ropes?.[0]?.id
+      ?? this.layout.extractionPortals?.[0]?.id
+      ?? this.layout.raidTasks?.[0]?.id
       ?? null;
     this._syncForm();
     this._attachTransformControls();

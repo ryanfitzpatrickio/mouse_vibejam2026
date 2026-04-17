@@ -10,6 +10,7 @@ import { VibePortalManager } from '../world/VibePortalManager.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
 import { HUD } from '../hud/HUD.js';
+import { RoundRaidOverlay } from '../hud/RoundRaidOverlay.js';
 import { GameToolbar } from '../hud/GameToolbar.js';
 import { CatLocatorOverlay } from '../hud/CatLocatorOverlay.js';
 import { ScoreboardOverlay } from '../hud/ScoreboardOverlay.js';
@@ -35,6 +36,7 @@ import { readVibePortalArrivalFromSearch } from '../../shared/vibePortal.js';
 import kitchenNavMesh from '../../shared/kitchen-navmesh.generated.js';
 import { playerChaseRecordSeconds } from '../../shared/chaseScore.js';
 import { LEVEL_WORLD_BOUNDS_XZ } from '../../shared/levelWorldBounds.js';
+import { normalizeRope } from '../../shared/ropes.js';
 
 function applyAtmosphere(scene) {
   scene.background = new THREE.Color('#8e7a63');
@@ -378,7 +380,20 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   }
 
   const hud = new HUD();
+  const roundRaid = new RoundRaidOverlay();
   const catLocator = new CatLocatorOverlay();
+
+  const extractionMarkerGroup = new THREE.Group();
+  extractionMarkerGroup.name = 'ExtractionPortals';
+  scene.add(extractionMarkerGroup);
+  const _portalRingGeo = new THREE.RingGeometry(0.55, 0.88, 28);
+  const _portalRingMat = new THREE.MeshBasicMaterial({
+    color: '#facc15',
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.88,
+    depthWrite: false,
+  });
 
   const audioManager = getAudioManager();
   audioManager.attachListenerToCamera(camera);
@@ -509,7 +524,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   pushBallInstanced.frustumCulled = false;
   scene.add(pushBallInstanced);
 
-  const ropeSystem = new RopeSystem();
+  const ropeSystem = new RopeSystem({
+    resolveTexture: (atlasId, cellIndex) => room._createAtlasTexture(cellIndex, atlasId),
+  });
   scene.add(ropeSystem);
 
   /** @type {Map<string, { smoothPos: THREE.Vector3, smoothQuat: THREE.Quaternion, targetPos: THREE.Vector3, targetQuat: THREE.Quaternion, radius: number }>} */
@@ -697,6 +714,13 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     // while server drives position via cannon rope, producing visible fight
     // between predicted and authoritative positions after re-grabs.
     predictionState.ropeSwing = ss.ropeSwing ?? null;
+    predictionState.livesRemaining = ss.livesRemaining ?? predictionState.livesRemaining;
+    predictionState.spectator = !!ss.spectator;
+    predictionState.extracted = !!ss.extracted;
+    predictionState.extractProgress = ss.extractProgress ?? 0;
+    if (ss.roundStats && typeof ss.roundStats === 'object') {
+      predictionState.roundStats = { ...predictionState.roundStats, ...ss.roundStats };
+    }
     if (typeof ss.displayName === 'string' && ss.displayName.trim()) {
       predictionState.displayName = ss.displayName;
     }
@@ -762,6 +786,10 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     if (data.type === 'portal-spawn' && data.player?.id === net.localId) {
       snapLocalStateToServer(data.player);
       lastReconciledSeq = -2;
+    }
+
+    if (data.type === 'round-end') {
+      roundRaid.showRoundEnd(data);
     }
   });
 
@@ -927,6 +955,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
           inputWithEmote.smack = true;
           controller.smackPressed = false;
         }
+        inputWithEmote.interactHeld = !!controller.interactHeld;
         net.sendInput(inputWithEmote);
         reconcileWithServer();
       }
@@ -997,8 +1026,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
     const isAlive = controller.alive;
     const deathTime = net.serverState?.deathTime ?? 0;
-    const respawnCountdown = !isAlive && deathTime > 0
-      ? Math.max(0, 10 - (Date.now() / 1000 - deathTime))
+    const respawnCountdown = !isAlive && deathTime > 0 && !(net.serverState?.spectator)
+      ? Math.max(0, 8 - (Date.now() / 1000 - deathTime))
       : 0;
 
     const playerCount = net.connected ? 1 + net.remotePlayers.size : 1;
@@ -1010,9 +1039,35 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       cheese: net.connected
         ? (net.serverState?.cheeseCarried ?? 0)
         : Math.max(0, Math.floor(predictionState.cheeseCarried ?? 0)),
+      lives: net.connected
+        ? (net.serverState?.livesRemaining ?? 2)
+        : (predictionState.livesRemaining ?? 2),
       alive: isAlive,
       respawnCountdown,
     });
+
+    roundRaid.updatePhaseBanner(net.connected ? net.round : null, Date.now() / 1000, {
+      subtitle: (net.round?.phase === 'extract' && (net.serverState?.extractProgress ?? 0) > 0.02)
+        ? `Extract ${Math.round((net.serverState?.extractProgress ?? 0) * 100)}%`
+        : '',
+    });
+
+    if (net.connected && Array.isArray(net.extractionPortals) && net.extractionPortals.length > 0) {
+      while (extractionMarkerGroup.children.length < net.extractionPortals.length) {
+        const ring = new THREE.Mesh(_portalRingGeo, _portalRingMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.renderOrder = 10;
+        extractionMarkerGroup.add(ring);
+      }
+      extractionMarkerGroup.visible = true;
+      net.extractionPortals.forEach((p, i) => {
+        const m = extractionMarkerGroup.children[i];
+        if (!m) return;
+        m.position.set(p.x ?? 0, (p.y ?? 0) + 0.03, p.z ?? 0);
+      });
+    } else {
+      extractionMarkerGroup.visible = false;
+    }
     const scoreboardRows = buildScoreboardRows();
     scoreboard.setRows(scoreboardRows);
     toolbar.setLeaderboardRows(scoreboardRows);
@@ -1082,7 +1137,14 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       if (pushBallStates.size > 0) pushBallStates.clear();
     }
 
-    ropeSystem.update(net.connected ? net.ropes : []);
+    const ropeLayout = room.getEditableLayout?.()?.ropes ?? [];
+    const ropeStyleById = new Map(
+      ropeLayout.map((r) => {
+        const n = normalizeRope(r);
+        return [n.id, { segmentRadius: n.segmentRadius, color: n.color, texture: n.texture }];
+      }),
+    );
+    ropeSystem.update(net.connected ? net.ropes : [], ropeStyleById);
 
     const cheeseList = net.connected ? net.cheesePickups : [];
     if (net.connected && Array.isArray(cheeseList) && cheeseList.length > 0) {
@@ -1211,6 +1273,10 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     cheesePickupMaterial.dispose();
     cheesePickupStates.clear();
     scene.remove(cheesePickupGroup);
+    scene.remove(extractionMarkerGroup);
+    _portalRingGeo.dispose();
+    _portalRingMat.dispose();
+    roundRaid.dispose();
     hud.dispose();
     catLocator.dispose();
     audioManager.stopAmbientBed();

@@ -6,13 +6,14 @@ import { assetUrl } from '../utils/assetUrl.js';
 import { normalizeSpawnType } from '../../shared/spawnPoints.js';
 import { normalizeNavArea } from '../../shared/navConfig.js';
 import { VIBE_PORTAL_TYPES, collectVibePortalPlacementsFromLayout, normalizeVibePortal } from '../../shared/vibePortal.js';
-import { normalizeRope, ROPE_SEGMENT_RADIUS } from '../../shared/ropes.js';
+import { normalizeRope, ROPE_SEGMENT_RADIUS, DEFAULT_ROPE_COLOR } from '../../shared/ropes.js';
 import {
   LEVEL_BUILD_GRID_COLUMNS,
   LEVEL_BUILD_GRID_ROWS,
   LEVEL_ROOM_DEPTH,
   LEVEL_ROOM_WIDTH,
 } from '../../shared/levelWorldBounds.js';
+import { normalizeExtractionPortalEntry, normalizeRaidTaskEntry } from '../../shared/raidLayout.js';
 
 const ATLAS_GRID = 10;
 const ATLAS_CELL_MARGIN_PX = 3;
@@ -40,6 +41,8 @@ const DEFAULT_EDITABLE_LAYOUT = Object.freeze({
   lights: [],
   portals: [],
   ropes: [],
+  extractionPortals: [],
+  raidTasks: [],
 });
 
 const EDITABLE_TYPE_DEFAULTS = Object.freeze({
@@ -207,7 +210,110 @@ function createPortalHelperObject(definition) {
   return group;
 }
 
-function createRopeHelperObject(definition) {
+const EXTRACTION_HELPER_BASE_RADIUS = 1.15;
+
+function createExtractionPortalHelperObject(definition) {
+  const color = '#5af0c8';
+  const group = new THREE.Group();
+  group.name = `${definition.name || 'extraction'}-helper`;
+  group.userData.extractionPortalId = definition.id;
+  group.userData.editableExtractionPortal = true;
+  group.userData.skipOutline = true;
+
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.72, 0.055, 14, 72),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.88,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  ring.position.y = 1;
+  ring.userData.extractionPortalId = definition.id;
+  ring.userData.skipOutline = true;
+  group.add(ring);
+
+  const r = definition.radius ?? EXTRACTION_HELPER_BASE_RADIUS;
+  const trigger = new THREE.Mesh(
+    new THREE.CylinderGeometry(r, r, 0.08, 48),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.2,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  trigger.position.y = 0.04;
+  trigger.userData.extractionPortalId = definition.id;
+  trigger.userData.skipOutline = true;
+  group.add(trigger);
+
+  const arrow = new THREE.Mesh(
+    new THREE.ConeGeometry(0.16, 0.38, 18),
+    new THREE.MeshBasicMaterial({
+      color: '#b8fff0',
+      transparent: true,
+      opacity: 0.82,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  arrow.rotation.x = Math.PI * 0.5;
+  arrow.position.set(0, 1, 0.82);
+  arrow.userData.extractionPortalId = definition.id;
+  arrow.userData.skipOutline = true;
+  group.add(arrow);
+
+  return group;
+}
+
+function createRaidTaskHelperObject(definition) {
+  const color = '#e8b84a';
+  const group = new THREE.Group();
+  group.name = `${definition.name || 'task'}-helper`;
+  group.userData.raidTaskId = definition.id;
+  group.userData.editableRaidTask = true;
+  group.userData.skipOutline = true;
+
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 1.1, 12),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.92,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  pole.position.y = 0.55;
+  pole.userData.raidTaskId = definition.id;
+  pole.userData.skipOutline = true;
+  group.add(pole);
+
+  const top = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.26, 0),
+    new THREE.MeshBasicMaterial({
+      color: '#ffd27a',
+      transparent: true,
+      opacity: 0.95,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  top.position.y = 1.22;
+  top.userData.raidTaskId = definition.id;
+  top.userData.skipOutline = true;
+  group.add(top);
+
+  return group;
+}
+
+function createRopeHelperObject(definition, textureMap = null) {
+  const r = definition.segmentRadius ?? ROPE_SEGMENT_RADIUS;
+  const tint = definition.color ?? DEFAULT_ROPE_COLOR;
   const group = new THREE.Group();
   group.name = `${definition.name || definition.id}-rope-helper`;
   group.userData.ropeId = definition.id;
@@ -215,7 +321,7 @@ function createRopeHelperObject(definition) {
   group.userData.skipOutline = true;
 
   const anchor = new THREE.Mesh(
-    new THREE.SphereGeometry(ROPE_SEGMENT_RADIUS * 2.4, 16, 12),
+    new THREE.SphereGeometry(r * 2.4, 16, 12),
     new THREE.MeshBasicMaterial({
       color: '#ffb347',
       transparent: true,
@@ -225,18 +331,21 @@ function createRopeHelperObject(definition) {
     }),
   );
   anchor.userData.ropeId = definition.id;
+  anchor.userData.ropePreviewAnchor = true;
   anchor.userData.skipOutline = true;
   group.add(anchor);
 
+  const strandMat = new THREE.MeshBasicMaterial({
+    map: textureMap ?? undefined,
+    color: textureMap ? 0xffffff : new THREE.Color(tint),
+    transparent: true,
+    opacity: 0.55,
+    depthWrite: false,
+    toneMapped: false,
+  });
   const strand = new THREE.Mesh(
-    new THREE.CylinderGeometry(ROPE_SEGMENT_RADIUS * 0.6, ROPE_SEGMENT_RADIUS * 0.6, 1, 10, 1, true),
-    new THREE.MeshBasicMaterial({
-      color: '#caa76a',
-      transparent: true,
-      opacity: 0.55,
-      depthWrite: false,
-      toneMapped: false,
-    }),
+    new THREE.CylinderGeometry(r * 0.6, r * 0.6, 1, 10, 1, true),
+    strandMat,
   );
   strand.name = 'rope-preview-strand';
   strand.userData.skipOutline = true;
@@ -248,9 +357,9 @@ function createRopeHelperObject(definition) {
   group.add(strand);
 
   const tip = new THREE.Mesh(
-    new THREE.SphereGeometry(ROPE_SEGMENT_RADIUS * 1.6, 12, 8),
+    new THREE.SphereGeometry(r * 1.6, 12, 8),
     new THREE.MeshBasicMaterial({
-      color: '#caa76a',
+      color: new THREE.Color(tint),
       transparent: true,
       opacity: 0.75,
       depthWrite: false,
@@ -478,10 +587,14 @@ export class Room {
     this.lightHelpersVisible = false;
     this.portalHelpersVisible = false;
     this.ropeHelpersVisible = false;
+    this.extractionHelpersVisible = false;
+    this.raidTaskHelpersVisible = false;
     this.editableMeshes = new Map();
     this.editableLightObjects = new Map();
     this.editablePortalObjects = new Map();
     this.editableRopeObjects = new Map();
+    this.editableExtractionPortalObjects = new Map();
+    this.editableRaidTaskObjects = new Map();
     this.prefabInstanceGroups = new Map();
     this.prefabInstanceIdByPrimitiveId = new Map();
     this.ready = Promise.all([
@@ -695,6 +808,12 @@ export class Room {
         lights: Array.isArray(layout?.lights) ? layout.lights.map((entry) => this._normalizeLight(entry)) : [],
         portals: Array.isArray(layout?.portals) ? layout.portals.map((entry) => this._normalizePortal(entry)) : [],
         ropes: Array.isArray(layout?.ropes) ? layout.ropes.map((entry) => this._normalizeRope(entry)) : [],
+        extractionPortals: Array.isArray(layout?.extractionPortals)
+          ? layout.extractionPortals.map((entry) => this._normalizeExtractionPortal(entry))
+          : [],
+        raidTasks: Array.isArray(layout?.raidTasks)
+          ? layout.raidTasks.map((entry) => this._normalizeRaidTask(entry))
+          : [],
       };
     } catch {
       this.loadedEditableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
@@ -1001,13 +1120,25 @@ export class Room {
     return normalizeVibePortal(entry);
   }
 
+  _normalizeExtractionPortal(entry = {}) {
+    return normalizeExtractionPortalEntry(entry);
+  }
+
+  _normalizeRaidTask(entry = {}) {
+    return normalizeRaidTaskEntry(entry);
+  }
+
   _normalizeRope(entry = {}) {
     return normalizeRope(entry);
   }
 
   _createEditableRopeObject(definition) {
     const rope = this._normalizeRope(definition);
-    const group = createRopeHelperObject(rope);
+    let textureMap = null;
+    if (rope.texture?.cell != null && Number.isFinite(rope.texture.cell)) {
+      textureMap = this._createAtlasTexture(rope.texture.cell, rope.texture.atlas ?? DEFAULT_TEXTURE_ATLAS);
+    }
+    const group = createRopeHelperObject(rope, textureMap);
     group.position.set(rope.anchor.x, rope.anchor.y, rope.anchor.z);
     group.visible = this.ropeHelpersVisible && !rope.deleted;
     return { definition: rope, group };
@@ -1023,12 +1154,24 @@ export class Room {
     entry.group.visible = this.ropeHelpersVisible && !rope.deleted;
     entry.group.userData.ropeId = rope.id;
 
+    const tint = new THREE.Color(rope.color ?? DEFAULT_ROPE_COLOR);
+    let textureMap = null;
+    if (rope.texture?.cell != null && Number.isFinite(rope.texture.cell)) {
+      textureMap = this._createAtlasTexture(rope.texture.cell, rope.texture.atlas ?? DEFAULT_TEXTURE_ATLAS);
+    }
+
     entry.group.traverse((child) => {
-      if (child.userData?.ropePreviewStrand) {
+      if (child.userData?.ropePreviewStrand && child.isMesh) {
         child.position.y = -rope.length * 0.5;
         child.scale.y = rope.length;
-      } else if (child.userData?.ropePreviewTip) {
+        child.material.map = textureMap ?? null;
+        child.material.color.set(textureMap ? 0xffffff : tint);
+        child.material.needsUpdate = true;
+      } else if (child.userData?.ropePreviewTip && child.isMesh) {
         child.position.y = -rope.length;
+        child.material.color.copy(tint);
+      } else if (child.userData?.ropePreviewAnchor && child.isMesh) {
+        child.material.color.copy(tint).lerp(new THREE.Color('#ffb347'), 0.35);
       }
     });
     return rope;
@@ -1188,6 +1331,8 @@ export class Room {
     const customLights = [];
     const customPortals = [];
     const customRopes = [];
+    const customExtractionPortals = [];
+    const customRaidTasks = [];
 
     this.deletedBuiltInPrimitives.clear();
 
@@ -1222,12 +1367,26 @@ export class Room {
       }
     }
 
+    for (const ep of this.loadedEditableLayout.extractionPortals ?? []) {
+      if (!ep?.deleted) {
+        customExtractionPortals.push(ep);
+      }
+    }
+
+    for (const task of this.loadedEditableLayout.raidTasks ?? []) {
+      if (!task?.deleted) {
+        customRaidTasks.push(task);
+      }
+    }
+
     this.editableLayout = {
       version: this.loadedEditableLayout.version ?? 1,
       primitives: customPrimitives,
       lights: customLights,
       portals: customPortals,
       ropes: customRopes,
+      extractionPortals: customExtractionPortals,
+      raidTasks: customRaidTasks,
     };
 
     this._normalizePrefabInstanceTransforms();
@@ -1409,6 +1568,55 @@ export class Room {
     return portal;
   }
 
+  _createEditableExtractionPortalObject(definition) {
+    const ep = this._normalizeExtractionPortal(definition);
+    const group = createExtractionPortalHelperObject(ep);
+    group.position.set(ep.position.x, ep.position.y, ep.position.z);
+    group.rotation.set(ep.rotation.x, ep.rotation.y, ep.rotation.z);
+    group.visible = this.extractionHelpersVisible && !ep.deleted;
+    return { definition: ep, group };
+  }
+
+  _applyExtractionPortalToObject(definition, entry) {
+    const ep = this._normalizeExtractionPortal(definition);
+    entry.definition = ep;
+    entry.group.name = `${ep.name || 'extraction'}-helper`;
+    entry.group.position.set(ep.position.x, ep.position.y, ep.position.z);
+    entry.group.rotation.set(ep.rotation.x, ep.rotation.y, ep.rotation.z);
+    entry.group.visible = this.extractionHelpersVisible && !ep.deleted;
+    entry.group.userData.extractionPortalId = ep.id;
+
+    const trigger = entry.group.children.find((c) => c.isMesh && c.geometry?.type === 'CylinderGeometry');
+    if (trigger?.geometry) {
+      const old = trigger.geometry;
+      const r = ep.radius ?? EXTRACTION_HELPER_BASE_RADIUS;
+      trigger.geometry = new THREE.CylinderGeometry(r, r, 0.08, 48);
+      old.dispose?.();
+    }
+    return ep;
+  }
+
+  _createEditableRaidTaskObject(definition) {
+    const task = this._normalizeRaidTask(definition);
+    const group = createRaidTaskHelperObject(task);
+    group.position.set(task.position.x, task.position.y, task.position.z);
+    group.rotation.set(task.rotation.x, task.rotation.y, task.rotation.z);
+    group.visible = this.raidTaskHelpersVisible && !task.deleted;
+    return { definition: task, group };
+  }
+
+  _applyRaidTaskToObject(definition, entry) {
+    const task = this._normalizeRaidTask(definition);
+    entry.definition = task;
+    entry.group.name = `${task.name || 'task'}-helper`;
+    entry.group.position.set(task.position.x, task.position.y, task.position.z);
+    entry.group.rotation.set(task.rotation.x, task.rotation.y, task.rotation.z);
+    entry.group.scale.set(1, 1, 1);
+    entry.group.visible = this.raidTaskHelpersVisible && !task.deleted;
+    entry.group.userData.raidTaskId = task.id;
+    return task;
+  }
+
   _applyLightToObject(definition, entry) {
     const light = this._normalizeLight(definition);
     entry.definition = light;
@@ -1471,6 +1679,8 @@ export class Room {
     this.editableLightObjects.clear();
     this.editablePortalObjects.clear();
     this.editableRopeObjects.clear();
+    this.editableExtractionPortalObjects.clear();
+    this.editableRaidTaskObjects.clear();
     this.prefabInstanceGroups.clear();
     this.prefabInstanceIdByPrimitiveId.clear();
 
@@ -1642,6 +1852,18 @@ export class Room {
       const entry = this._createEditableRopeObject(definition);
       this.editableGroup.add(entry.group);
       this.editableRopeObjects.set(entry.definition.id, entry);
+    }
+
+    for (const definition of this.editableLayout.extractionPortals ?? []) {
+      const entry = this._createEditableExtractionPortalObject(definition);
+      this.editableGroup.add(entry.group);
+      this.editableExtractionPortalObjects.set(entry.definition.id, entry);
+    }
+
+    for (const definition of this.editableLayout.raidTasks ?? []) {
+      const entry = this._createEditableRaidTaskObject(definition);
+      this.editableGroup.add(entry.group);
+      this.editableRaidTaskObjects.set(entry.definition.id, entry);
     }
 
     this._applyTextureAtlas();
@@ -1882,6 +2104,20 @@ export class Room {
     }
   }
 
+  setExtractionHelpersVisible(visible) {
+    this.extractionHelpersVisible = visible === true;
+    for (const entry of this.editableExtractionPortalObjects.values()) {
+      entry.group.visible = this.extractionHelpersVisible && !entry.definition.deleted;
+    }
+  }
+
+  setRaidTaskHelpersVisible(visible) {
+    this.raidTaskHelpersVisible = visible === true;
+    for (const entry of this.editableRaidTaskObjects.values()) {
+      entry.group.visible = this.raidTaskHelpersVisible && !entry.definition.deleted;
+    }
+  }
+
   getVibePortalPlacements() {
     return collectVibePortalPlacementsFromLayout(this.getEditableLayout());
   }
@@ -1892,12 +2128,16 @@ export class Room {
     const lights = (this.editableLayout.lights ?? []).map((entry) => this._normalizeLight(entry));
     const portals = (this.editableLayout.portals ?? []).map((entry) => this._normalizePortal(entry));
     const ropes = (this.editableLayout.ropes ?? []).map((entry) => this._normalizeRope(entry));
+    const extractionPortals = (this.editableLayout.extractionPortals ?? []).map((entry) => this._normalizeExtractionPortal(entry));
+    const raidTasks = (this.editableLayout.raidTasks ?? []).map((entry) => this._normalizeRaidTask(entry));
     return {
       version: Math.max(this.loadedEditableLayout.version ?? 1, this.editableLayout.version ?? 1, 1),
       primitives: [...builtIns, ...customs],
       lights,
       portals,
       ropes,
+      extractionPortals,
+      raidTasks,
     };
   }
 
@@ -1908,6 +2148,12 @@ export class Room {
       lights: Array.isArray(layout?.lights) ? layout.lights.map((entry) => this._normalizeLight(entry)) : [],
       portals: Array.isArray(layout?.portals) ? layout.portals.map((entry) => this._normalizePortal(entry)) : [],
       ropes: Array.isArray(layout?.ropes) ? layout.ropes.map((entry) => this._normalizeRope(entry)) : [],
+      extractionPortals: Array.isArray(layout?.extractionPortals)
+        ? layout.extractionPortals.map((entry) => this._normalizeExtractionPortal(entry))
+        : [],
+      raidTasks: Array.isArray(layout?.raidTasks)
+        ? layout.raidTasks.map((entry) => this._normalizeRaidTask(entry))
+        : [],
     };
     this._applyLoadedEditableLayout();
     this._rebuildEditableLayout();
@@ -2049,6 +2295,73 @@ export class Room {
     this._rebuildEditableLayout();
   }
 
+  upsertEditableExtractionPortal(definition) {
+    const ep = this._normalizeExtractionPortal(definition);
+    const list = this.editableLayout.extractionPortals ?? (this.editableLayout.extractionPortals = []);
+    const index = list.findIndex((entry) => entry.id === ep.id);
+    if (index >= 0) {
+      const previous = this._normalizeExtractionPortal(list[index]);
+      list[index] = ep;
+      if (Math.abs((previous.radius ?? 0) - (ep.radius ?? 0)) > 0.0001) {
+        this._rebuildEditableLayout();
+        return ep;
+      }
+      const current = this.editableExtractionPortalObjects.get(ep.id);
+      if (current) {
+        this._applyExtractionPortalToObject(ep, current);
+      }
+      return ep;
+    }
+
+    list.push(ep);
+    this._rebuildEditableLayout();
+    return ep;
+  }
+
+  removeEditableExtractionPortal(id) {
+    const list = this.editableLayout.extractionPortals ?? [];
+    this.editableLayout.extractionPortals = list.filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
+  purgeEditableExtractionPortal(id) {
+    const list = this.editableLayout.extractionPortals ?? [];
+    this.editableLayout.extractionPortals = list.filter((entry) => entry.id !== id);
+    this.loadedEditableLayout.extractionPortals = (this.loadedEditableLayout.extractionPortals ?? []).filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
+  upsertEditableRaidTask(definition) {
+    const task = this._normalizeRaidTask(definition);
+    const list = this.editableLayout.raidTasks ?? (this.editableLayout.raidTasks = []);
+    const index = list.findIndex((entry) => entry.id === task.id);
+    if (index >= 0) {
+      list[index] = task;
+      const current = this.editableRaidTaskObjects.get(task.id);
+      if (current) {
+        this._applyRaidTaskToObject(task, current);
+      }
+      return task;
+    }
+
+    list.push(task);
+    this._rebuildEditableLayout();
+    return task;
+  }
+
+  removeEditableRaidTask(id) {
+    const list = this.editableLayout.raidTasks ?? [];
+    this.editableLayout.raidTasks = list.filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
+  purgeEditableRaidTask(id) {
+    const list = this.editableLayout.raidTasks ?? [];
+    this.editableLayout.raidTasks = list.filter((entry) => entry.id !== id);
+    this.loadedEditableLayout.raidTasks = (this.loadedEditableLayout.raidTasks ?? []).filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
   upsertEditableRope(definition) {
     const rope = this._normalizeRope(definition);
     const ropes = this.editableLayout.ropes ?? (this.editableLayout.ropes = []);
@@ -2059,6 +2372,7 @@ export class Room {
       if (
         Math.abs(previous.length - rope.length) > 0.0001
         || previous.segmentCount !== rope.segmentCount
+        || Math.abs((previous.segmentRadius ?? 0) - (rope.segmentRadius ?? 0)) > 0.0001
       ) {
         this._rebuildEditableLayout();
         return rope;
@@ -2159,6 +2473,12 @@ export class Room {
     }
     if (this.editablePortalObjects.has(id)) {
       return this.editablePortalObjects.get(id)?.group ?? null;
+    }
+    if (this.editableExtractionPortalObjects.has(id)) {
+      return this.editableExtractionPortalObjects.get(id)?.group ?? null;
+    }
+    if (this.editableRaidTaskObjects.has(id)) {
+      return this.editableRaidTaskObjects.get(id)?.group ?? null;
     }
     if (this.editableRopeObjects.has(id)) {
       return this.editableRopeObjects.get(id)?.group ?? null;
@@ -2270,6 +2590,51 @@ export class Room {
       this._applyPortalToObject(portal, current);
     }
     return portal;
+  }
+
+  updateEditableExtractionPortalTransform(id, transform = {}) {
+    const list = this.editableLayout.extractionPortals ?? [];
+    const index = list.findIndex((entry) => entry.id === id);
+    if (index < 0) return null;
+
+    const ep = this._normalizeExtractionPortal(list[index]);
+    if (transform.position) {
+      ep.position = cloneVectorLike(transform.position, ep.position);
+    }
+    if (transform.rotation) {
+      ep.rotation = cloneVectorLike(transform.rotation, ep.rotation);
+    }
+    if (Number.isFinite(transform.radius)) {
+      ep.radius = Math.max(0.35, Math.min(4, transform.radius));
+    }
+
+    list[index] = ep;
+    const current = this.editableExtractionPortalObjects.get(id);
+    if (current) {
+      this._applyExtractionPortalToObject(ep, current);
+    }
+    return ep;
+  }
+
+  updateEditableRaidTaskTransform(id, transform = {}) {
+    const list = this.editableLayout.raidTasks ?? [];
+    const index = list.findIndex((entry) => entry.id === id);
+    if (index < 0) return null;
+
+    const task = this._normalizeRaidTask(list[index]);
+    if (transform.position) {
+      task.position = cloneVectorLike(transform.position, task.position);
+    }
+    if (transform.rotation) {
+      task.rotation = cloneVectorLike(transform.rotation, task.rotation);
+    }
+
+    list[index] = task;
+    const current = this.editableRaidTaskObjects.get(id);
+    if (current) {
+      this._applyRaidTaskToObject(task, current);
+    }
+    return task;
   }
 
   updatePrefabInstanceTransform(instanceId, transform = {}) {
@@ -2531,6 +2896,77 @@ export class Room {
     portal.rotation = roundVectorLike(portal.rotation, { x: 0, y: 0, z: 0 });
     portal.triggerRadius = Number(portal.triggerRadius.toFixed(4));
     return portal;
+  }
+
+  snapExtractionPortalToGrid(definition, {
+    snapY = false,
+    snapPosition = true,
+    allowEdgeOverflow = false,
+  } = {}) {
+    const ep = this._normalizeExtractionPortal(definition);
+    const grid = this.getBuildGridConfig();
+    const footprint = (ep.radius ?? EXTRACTION_HELPER_BASE_RADIUS) * 2;
+
+    if (snapPosition) {
+      ep.position.x = this._snapGridAxisPosition(
+        ep.position.x,
+        footprint,
+        grid.roomWidth,
+        grid.cellWidth,
+        allowEdgeOverflow,
+      );
+      ep.position.z = this._snapGridAxisPosition(
+        ep.position.z,
+        footprint,
+        grid.roomDepth,
+        grid.cellDepth,
+        allowEdgeOverflow,
+      );
+    }
+
+    if (snapY) {
+      ep.position.y = snapToStep(ep.position.y, grid.verticalStep);
+    }
+
+    ep.position = roundVectorLike(ep.position, { x: 0, y: 0, z: 0 });
+    ep.rotation = roundVectorLike(ep.rotation, { x: 0, y: 0, z: 0 });
+    ep.radius = Number((ep.radius ?? EXTRACTION_HELPER_BASE_RADIUS).toFixed(4));
+    return ep;
+  }
+
+  snapRaidTaskToGrid(definition, {
+    snapY = false,
+    snapPosition = true,
+    allowEdgeOverflow = false,
+  } = {}) {
+    const task = this._normalizeRaidTask(definition);
+    const grid = this.getBuildGridConfig();
+    const footprint = 0.6;
+
+    if (snapPosition) {
+      task.position.x = this._snapGridAxisPosition(
+        task.position.x,
+        footprint,
+        grid.roomWidth,
+        grid.cellWidth,
+        allowEdgeOverflow,
+      );
+      task.position.z = this._snapGridAxisPosition(
+        task.position.z,
+        footprint,
+        grid.roomDepth,
+        grid.cellDepth,
+        allowEdgeOverflow,
+      );
+    }
+
+    if (snapY) {
+      task.position.y = snapToStep(task.position.y, grid.verticalStep);
+    }
+
+    task.position = roundVectorLike(task.position, { x: 0, y: 0, z: 0 });
+    task.rotation = roundVectorLike(task.rotation, { x: 0, y: 0, z: 0 });
+    return task;
   }
 
   setLightHelpersVisible(visible) {

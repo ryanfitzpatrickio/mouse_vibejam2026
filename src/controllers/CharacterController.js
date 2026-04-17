@@ -97,8 +97,11 @@ export class CharacterController {
     this.jumpRequested = false;
     /** True while Q is held down */
     this.grabHeld = false;
-    /** Set to true on E keydown, cleared after network reads it */
+    /** Set to true on E keydown edge, cleared after network reads it */
     this.smackPressed = false;
+    /** True while E is held (extract + UI). */
+    this.interactHeld = false;
+    this._prevInteractDown = false;
 
     this._prevAnimState = 'idle';
 
@@ -386,11 +389,14 @@ export class CharacterController {
   }
 
   _handleAbilities() {
-    if (this.keys[this.keyBindings.interact]) {
-      this.keys[this.keyBindings.interact] = false;
+    const interactKey = this.keyBindings.interact;
+    const interactNow = !!this.keys[interactKey];
+    if (interactNow && !this._prevInteractDown) {
       this.smackPressed = true;
       this.interact();
     }
+    this._prevInteractDown = interactNow;
+    this.interactHeld = interactNow;
     this.grabHeld = !!this.keys[this.keyBindings.grab];
     this.ropeGrabHeld = !!this.keys[this.keyBindings.ropeGrab];
     if (this.mouseButtons.right) {

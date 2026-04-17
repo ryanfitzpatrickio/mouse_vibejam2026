@@ -8,6 +8,7 @@ import {
   DEFAULT_ROPE_SEGMENTS,
   normalizeRope,
 } from '../../shared/ropes.js';
+import { RAID_TASK_TYPES, normalizeExtractionPortalEntry, normalizeRaidTaskEntry } from '../../shared/raidLayout.js';
 
 export function createPrimitiveId() {
   return `primitive-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -23,6 +24,14 @@ export function createPortalId() {
 
 export function createRopeId() {
   return `rope-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function createExtractionPortalId() {
+  return `extract-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function createRaidTaskId() {
+  return `raid-task-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 export function createDefaultRope(app) {
@@ -218,6 +227,64 @@ export function createDefaultLight(lightType, app) {
     penumbra: defaults.penumbra,
     castShadow: defaults.castShadow,
   };
+}
+
+export function createDefaultExtractionPortal(app) {
+  const forward = new THREE.Vector3();
+  app.camera.getWorldDirection(forward);
+  forward.y = 0;
+  if (forward.lengthSq() < 0.0001) {
+    forward.set(0, 0, -1);
+  }
+  forward.normalize();
+
+  const spawn = app.mouse.position.clone().add(forward.multiplyScalar(2.5));
+  const yaw = Math.atan2(forward.x, forward.z);
+
+  return normalizeExtractionPortalEntry({
+    id: createExtractionPortalId(),
+    name: `extraction-${Math.random().toString(36).slice(2, 5)}`,
+    position: {
+      x: Number(spawn.x.toFixed(3)),
+      y: Number(Math.max(0, app.mouse.position.y).toFixed(3)),
+      z: Number(spawn.z.toFixed(3)),
+    },
+    rotation: {
+      x: 0,
+      y: Number(yaw.toFixed(4)),
+      z: 0,
+    },
+    radius: 1.15,
+  });
+}
+
+export function createDefaultRaidTask(app) {
+  const forward = new THREE.Vector3();
+  app.camera.getWorldDirection(forward);
+  forward.y = 0;
+  if (forward.lengthSq() < 0.0001) {
+    forward.set(0, 0, -1);
+  }
+  forward.normalize();
+
+  const spawn = app.mouse.position.clone().add(forward.multiplyScalar(2.5));
+  const yaw = Math.atan2(forward.x, forward.z);
+
+  return normalizeRaidTaskEntry({
+    id: createRaidTaskId(),
+    name: `task-${Math.random().toString(36).slice(2, 5)}`,
+    taskType: RAID_TASK_TYPES.PLACEHOLDER,
+    position: {
+      x: Number(spawn.x.toFixed(3)),
+      y: Number(Math.max(0, app.mouse.position.y).toFixed(3)),
+      z: Number(spawn.z.toFixed(3)),
+    },
+    rotation: {
+      x: 0,
+      y: Number(yaw.toFixed(4)),
+      z: 0,
+    },
+  });
 }
 
 export function createDefaultPortal(portalType, app) {

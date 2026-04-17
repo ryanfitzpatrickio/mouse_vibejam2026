@@ -13,6 +13,13 @@ export const MAX_ROPE_LENGTH = 12;
 export const MIN_ROPE_SEGMENTS = 3;
 export const MAX_ROPE_SEGMENTS = 32;
 
+/** Cross-section radius of rope (physics sphere + render tube). */
+export const MIN_SEGMENT_RADIUS = 0.02;
+export const MAX_SEGMENT_RADIUS = 0.12;
+
+export const DEFAULT_ROPE_COLOR = '#c48a4a';
+const DEFAULT_TEXTURE_ATLAS = 'textures';
+
 function clampNumber(value, min, max, fallback) {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
@@ -27,6 +34,29 @@ function cloneAnchor(anchor) {
   };
 }
 
+function normalizeAtlasId(value) {
+  if (typeof value === 'string' && /^textures\d*$/i.test(value)) return value.toLowerCase();
+  return DEFAULT_TEXTURE_ATLAS;
+}
+
+function normalizeRopeTexture(entry) {
+  const raw = entry?.texture;
+  if (!raw || typeof raw !== 'object') return null;
+  const cell = Number(raw.cell);
+  if (!Number.isFinite(cell)) return null;
+  return {
+    atlas: normalizeAtlasId(raw.atlas),
+    cell: Math.round(cell),
+  };
+}
+
+function normalizeColor(value) {
+  if (typeof value !== 'string' || !/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim())) {
+    return DEFAULT_ROPE_COLOR;
+  }
+  return value.trim();
+}
+
 export function normalizeRope(entry = {}) {
   const id = typeof entry.id === 'string' && entry.id
     ? entry.id
@@ -34,6 +64,15 @@ export function normalizeRope(entry = {}) {
   const name = typeof entry.name === 'string' && entry.name.length
     ? entry.name
     : `rope-${id.slice(-5)}`;
+
+  let segmentRadius = clampNumber(entry.segmentRadius, MIN_SEGMENT_RADIUS, MAX_SEGMENT_RADIUS, ROPE_SEGMENT_RADIUS);
+  if (entry.thickness != null && entry.segmentRadius == null) {
+    const t = Number(entry.thickness);
+    if (Number.isFinite(t) && t > 0) {
+      segmentRadius = clampNumber(t * 0.5, MIN_SEGMENT_RADIUS, MAX_SEGMENT_RADIUS, ROPE_SEGMENT_RADIUS);
+    }
+  }
+
   return {
     id,
     name,
@@ -42,6 +81,9 @@ export function normalizeRope(entry = {}) {
     segmentCount: Math.round(
       clampNumber(entry.segmentCount, MIN_ROPE_SEGMENTS, MAX_ROPE_SEGMENTS, DEFAULT_ROPE_SEGMENTS),
     ),
+    segmentRadius,
+    color: normalizeColor(entry.color),
+    texture: normalizeRopeTexture(entry),
     deleted: entry.deleted === true,
   };
 }
@@ -52,5 +94,8 @@ export const ROPES = Object.freeze([
     anchor: { x: 0, y: 3.2, z: 0 },
     length: 2.4,
     segmentCount: 8,
+    segmentRadius: ROPE_SEGMENT_RADIUS,
+    color: DEFAULT_ROPE_COLOR,
+    texture: null,
   }),
 ]);

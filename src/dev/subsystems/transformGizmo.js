@@ -22,8 +22,12 @@ export function installTransformControls(editor) {
     const prefabInstanceId = object?.userData?.prefabInstanceId;
     const lightId = object?.userData?.lightId;
     const portalId = object?.userData?.portalId;
+    const extractionPortalId = object?.userData?.extractionPortalId;
+    const raidTaskId = object?.userData?.raidTaskId;
     const ropeId = object?.userData?.ropeId;
-    if (!primitiveId && !prefabInstanceId && !lightId && !portalId && !ropeId) return;
+    if (!primitiveId && !prefabInstanceId && !lightId && !portalId && !ropeId && !extractionPortalId && !raidTaskId) {
+      return;
+    }
 
     const primitive = primitiveId
       ? editor.layout.primitives.find((entry) => entry.id === primitiveId)
@@ -33,6 +37,12 @@ export function installTransformControls(editor) {
       : null;
     const portal = portalId
       ? (editor.layout.portals ?? []).find((entry) => entry.id === portalId)
+      : null;
+    const extraction = extractionPortalId
+      ? (editor.layout.extractionPortals ?? []).find((entry) => entry.id === extractionPortalId)
+      : null;
+    const raidTask = raidTaskId
+      ? (editor.layout.raidTasks ?? []).find((entry) => entry.id === raidTaskId)
       : null;
     const rope = ropeId
       ? (editor.layout.ropes ?? []).find((entry) => entry.id === ropeId)
@@ -94,25 +104,61 @@ export function installTransformControls(editor) {
           snapPosition: true,
           allowEdgeOverflow: true,
         })
-      : portal
-        ? editor.app.room.snapPortalToGrid({
-          ...deepClone(portal),
-          position: {
-            x: object.position.x,
-            y: object.position.y,
-            z: object.position.z,
-          },
-          rotation: {
-            x: object.rotation.x,
-            y: object.rotation.y,
-            z: object.rotation.z,
-          },
-        }, {
-          snapY: true,
-          snapPosition: true,
-          allowEdgeOverflow: true,
-        })
-        : {
+        : extraction
+          ? editor.app.room.snapExtractionPortalToGrid({
+            ...deepClone(extraction),
+            position: {
+              x: object.position.x,
+              y: object.position.y,
+              z: object.position.z,
+            },
+            rotation: {
+              x: object.rotation.x,
+              y: object.rotation.y,
+              z: object.rotation.z,
+            },
+          }, {
+            snapY: true,
+            snapPosition: true,
+            allowEdgeOverflow: true,
+          })
+          : raidTask
+            ? editor.app.room.snapRaidTaskToGrid({
+              ...deepClone(raidTask),
+              position: {
+                x: object.position.x,
+                y: object.position.y,
+                z: object.position.z,
+              },
+              rotation: {
+                x: object.rotation.x,
+                y: object.rotation.y,
+                z: object.rotation.z,
+              },
+            }, {
+              snapY: true,
+              snapPosition: true,
+              allowEdgeOverflow: true,
+            })
+            : portal
+              ? editor.app.room.snapPortalToGrid({
+                ...deepClone(portal),
+                position: {
+                  x: object.position.x,
+                  y: object.position.y,
+                  z: object.position.z,
+                },
+                rotation: {
+                  x: object.rotation.x,
+                  y: object.rotation.y,
+                  z: object.rotation.z,
+                },
+              }, {
+                snapY: true,
+                snapPosition: true,
+                allowEdgeOverflow: true,
+              })
+              : {
         position: {
           x: Number(object.position.x.toFixed(4)),
           y: Number(object.position.y.toFixed(4)),
@@ -128,7 +174,7 @@ export function installTransformControls(editor) {
           y: Number(object.scale.y.toFixed(4)),
           z: Number(object.scale.z.toFixed(4)),
         },
-      };
+              };
 
     const nextPos = next.position ?? next.anchor ?? { x: 0, y: 0, z: 0 };
     const nextRot = next.rotation ?? { x: 0, y: 0, z: 0 };
@@ -144,6 +190,16 @@ export function installTransformControls(editor) {
 
     if (lightId) {
       editor.app.room.updateEditableLightTransform(lightId, {
+        position: next.position,
+        rotation: next.rotation,
+      });
+    } else if (extractionPortalId) {
+      editor.app.room.updateEditableExtractionPortalTransform(extractionPortalId, {
+        position: next.position,
+        rotation: next.rotation,
+      });
+    } else if (raidTaskId) {
+      editor.app.room.updateEditableRaidTaskTransform(raidTaskId, {
         position: next.position,
         rotation: next.rotation,
       });

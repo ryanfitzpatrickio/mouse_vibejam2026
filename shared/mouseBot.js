@@ -669,16 +669,44 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
   const verticalDangerDistSq = verticalDangerDist * verticalDangerDist;
   const verticalSafeDistSq = VERTICAL_ESCAPE_SAFE_DIST * VERTICAL_ESCAPE_SAFE_DIST;
   let goal = brain.goal;
+
+  const portals = options.extractionPortals;
+  const extractMode = options.roundPhase === 'extract'
+    && Array.isArray(portals)
+    && portals.length > 0
+    && state.alive
+    && !state.extracted
+    && !state.spectator;
+
+  if (extractMode) {
+    let nearestP = portals[0];
+    let bestD = distSqXZ(state.position, nearestP);
+    for (let i = 1; i < portals.length; i += 1) {
+      const ep = portals[i];
+      const d = distSqXZ(state.position, ep);
+      if (d < bestD) {
+        bestD = d;
+        nearestP = ep;
+      }
+    }
+    brain.verticalEscapeActive = false;
+    brain.cheeseTargetId = null;
+    brain.goal = { x: nearestP.x, y: nearestP.y ?? 0, z: nearestP.z };
+    brain.goalKind = 'extract_portal';
+    goal = brain.goal;
+    clearBotPath(brain);
+  }
+
   const alreadyOnHighSurface = state.grounded && state.position.y >= VERTICAL_ESCAPE_PERCH_MIN_Y;
   const perchedHigh = state.grounded
     && state.position.y >= VERTICAL_ESCAPE_PERCH_MIN_Y
     && brain.verticalEscapeActive;
 
-  if (brain.verticalEscapeActive && perchedHigh) {
+  if (!extractMode && brain.verticalEscapeActive && perchedHigh) {
     if (brain.verticalEscapeMode !== 'perch') enterVerticalPerch(brain, now, Math.random);
   }
 
-  if (brain.verticalEscapeActive && brain.verticalEscapeMode === 'perch') {
+  if (!extractMode && brain.verticalEscapeActive && brain.verticalEscapeMode === 'perch') {
     const safe = !nearestCat || nearestCatDistSq > verticalSafeDistSq;
     if (safe) {
       if (!brain.verticalEscapeSafeSince) brain.verticalEscapeSafeSince = now;
@@ -715,7 +743,7 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
     }
   }
 
-  if (nearestCat && nearestCatDistSq < verticalDangerDistSq && !alreadyOnHighSurface) {
+  if (!extractMode && nearestCat && nearestCatDistSq < verticalDangerDistSq && !alreadyOnHighSurface) {
     if (
       !brain.verticalEscapeActive
       || !brain.goal
@@ -747,7 +775,7 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
     }
   }
 
-  if (brain.verticalEscapeActive && brain.verticalEscapeMode === 'climb' && brain.goal) {
+  if (!extractMode && brain.verticalEscapeActive && brain.verticalEscapeMode === 'climb' && brain.goal) {
     goal = brain.goal;
     brain.fleeUntil = now + FLEE_DURATION;
     brain.wanderTimer = WANDER_TIMER_MIN + Math.random() * (WANDER_TIMER_MAX - WANDER_TIMER_MIN);
@@ -787,7 +815,7 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
         goal = null;
       }
     }
-  } else if (nearestCat && nearestCatDistSq < fleeDistSq) {
+  } else if (!extractMode && nearestCat && nearestCatDistSq < fleeDistSq) {
     brain.fleeUntil = now + FLEE_DURATION;
     const away = normalizeXZ(
       state.position.x - nearestCat.position.x,
@@ -805,9 +833,9 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
     brain.cheeseTargetId = null;
     clearBotPath(brain);
     brain.wanderTimer = WANDER_TIMER_MIN + Math.random() * (WANDER_TIMER_MAX - WANDER_TIMER_MIN);
-  } else if (now < brain.fleeUntil && brain.goal) {
+  } else if (!extractMode && now < brain.fleeUntil && brain.goal) {
     goal = brain.goal;
-  } else {
+  } else if (!extractMode) {
     brain.fleeUntil = 0;
     const currentCheese = brain.cheeseTargetId
       ? cheesePickups?.find((c) => c?.id === brain.cheeseTargetId)
@@ -856,6 +884,24 @@ export function buildMouseBotInput(state, brain, navMesh, predators, dt, spawnPo
       }
     } else {
       goal = brain.goal;
+    }
+  }
+
+  if (extractMode && brain.goalKind === 'extract_portal' && goal) {
+    const dx = state.position.x - goal.x;
+    const dz = state.position.z - goal.z;
+    if (dx * dx + dz * dz <= 1.12 * 1.12) {
+      return {
+        moveX: 0,
+        moveZ: 0,
+        sprint: false,
+        jump: false,
+        jumpPressed: false,
+        jumpHeld: false,
+        crouch: false,
+        rotation: state.rotation,
+        interactHeld: true,
+      };
     }
   }
 

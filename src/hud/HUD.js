@@ -148,7 +148,18 @@ export class HUD {
 
     this.statsRow.appendChild(this.pingLabel);
     this.statsRow.appendChild(this.playersWrap);
+    this.livesLabel = document.createElement('div');
+    this.livesLabel.textContent = '♥2';
+    Object.assign(this.livesLabel.style, {
+      color: '#fda4af',
+      fontSize: '10px',
+      fontWeight: '700',
+      textShadow: '1px 1px 2px #000',
+      flexShrink: '0',
+    });
+
     this.statsRow.appendChild(this.cheeseWrap);
+    this.statsRow.appendChild(this.livesLabel);
     this.element.appendChild(this.statsRow);
 
     this.respawnOverlay = document.createElement('div');
@@ -230,6 +241,7 @@ export class HUD {
     ping,
     playerCount,
     cheese,
+    lives,
     alive = true,
     respawnCountdown = 0,
   } = {}) {
@@ -257,6 +269,10 @@ export class HUD {
       this.cheeseBadge.textContent = text;
       const measured = measureText(text, FONT, BAR_WIDTH, LINE_HEIGHT);
       this.cheeseBadge.style.height = `${measured.height}px`;
+    }
+    if (lives !== undefined) {
+      const n = Math.max(0, Math.min(3, Math.floor(Number(lives) || 0)));
+      this.livesLabel.textContent = `${'♥'.repeat(n) || '—'} lives`;
     }
 
     if (!alive && respawnCountdown > 0) {

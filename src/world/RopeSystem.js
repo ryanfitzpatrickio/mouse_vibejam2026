@@ -1,64 +1,113 @@
 import * as THREE from 'three';
+import {
+  DEFAULT_ROPE_COLOR,
+  ROPE_SEGMENT_RADIUS,
+} from '../../shared/ropes.js';
 
 /**
- * Renders server-authoritative ropes as a simple line strip per rope.
- * Segment positions come from `net.ropes` snapshots each frame.
+ * Renders server-authoritative ropes as a tube along segment positions.
+ * Style (radius, color, optional atlas texture) comes from layout merged by id.
  */
 export class RopeSystem extends THREE.Group {
-  constructor() {
+  constructor({ resolveTexture = null } = {}) {
     super();
     this.name = 'RopeSystem';
-    this._lines = new Map();
-    this._material = new THREE.LineBasicMaterial({ color: 0xc48a4a });
+    this._resolveTexture = typeof resolveTexture === 'function' ? resolveTexture : null;
+    /** @type {Map<string, { group: THREE.Group, mesh: THREE.Mesh, material: THREE.MeshStandardMaterial, styleKey: string }>} */
+    this._entries = new Map();
   }
 
-  update(ropes) {
-    if (!Array.isArray(ropes)) return;
+  /**
+   * @param {{ id: string, segments: { x: number, y: number, z: number }[] }[]} ropesSnapshot
+   * @param {Map<string, { segmentRadius?: number, color?: string, texture?: { atlas: string, cell: number } | null }>} [styleById]
+   */
+  update(ropesSnapshot, styleById) {
+    if (!Array.isArray(ropesSnapshot)) return;
+    const styles = styleById instanceof Map ? styleById : new Map();
     const seen = new Set();
-    for (const rope of ropes) {
+
+    for (const rope of ropesSnapshot) {
       if (!rope?.id || !Array.isArray(rope.segments) || rope.segments.length < 2) continue;
       seen.add(rope.id);
-      let line = this._lines.get(rope.id);
-      if (!line) {
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(rope.segments.length * 3);
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        line = new THREE.Line(geometry, this._material);
-        line.frustumCulled = false;
-        this.add(line);
-        this._lines.set(rope.id, line);
+
+      const st = styles.get(rope.id) ?? {};
+      const segmentRadius = Number.isFinite(st.segmentRadius) ? st.segmentRadius : ROPE_SEGMENT_RADIUS;
+      const color = typeof st.color === 'string' ? st.color : DEFAULT_ROPE_COLOR;
+      const tex = st.texture && Number.isFinite(st.texture.cell)
+        ? st.texture
+        : null;
+      const styleKey = `${segmentRadius}|${color}|${tex ? `${tex.atlas}:${tex.cell}` : 'none'}`;
+
+      let entry = this._entries.get(rope.id);
+      if (!entry) {
+        const group = new THREE.Group();
+        group.name = `rope-visual-${rope.id}`;
+        this.add(group);
+        entry = { group, mesh: null, material: null, styleKey: '' };
+        this._entries.set(rope.id, entry);
       }
-      const attr = line.geometry.getAttribute('position');
-      if (attr.count !== rope.segments.length) {
-        const next = new Float32Array(rope.segments.length * 3);
-        line.geometry.setAttribute('position', new THREE.BufferAttribute(next, 3));
+
+      if (!entry.material || entry.styleKey !== styleKey) {
+        if (entry.material) entry.material.dispose();
+        const map = tex && this._resolveTexture
+          ? this._resolveTexture(tex.atlas, tex.cell)
+          : null;
+        entry.material = new THREE.MeshStandardMaterial({
+          color: map ? 0xffffff : new THREE.Color(color),
+          map: map ?? null,
+          roughness: map ? 0.7 : 0.52,
+          metalness: 0.05,
+        });
+        entry.material.side = THREE.DoubleSide;
+        entry.styleKey = styleKey;
       }
-      const arr = line.geometry.getAttribute('position').array;
-      for (let i = 0; i < rope.segments.length; i += 1) {
-        const s = rope.segments[i];
-        arr[i * 3] = s.x;
-        arr[i * 3 + 1] = s.y;
-        arr[i * 3 + 2] = s.z;
+
+      const pts = rope.segments.map((s) => new THREE.Vector3(s.x, s.y, s.z));
+      let curve;
+      if (pts.length === 2) {
+        curve = new THREE.LineCurve3(pts[0], pts[1]);
+      } else {
+        curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
       }
-      line.geometry.getAttribute('position').needsUpdate = true;
-      line.geometry.computeBoundingSphere();
+
+      const tubularSegments = Math.max(16, (pts.length - 1) * 10);
+      const radialSegments = 6;
+
+      if (entry.mesh) {
+        entry.mesh.geometry.dispose();
+        entry.group.remove(entry.mesh);
+      }
+
+      const geometry = new THREE.TubeGeometry(
+        curve,
+        tubularSegments,
+        segmentRadius,
+        radialSegments,
+        false,
+      );
+      const mesh = new THREE.Mesh(geometry, entry.material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.frustumCulled = false;
+      entry.group.add(mesh);
+      entry.mesh = mesh;
     }
-    for (const id of [...this._lines.keys()]) {
-      if (!seen.has(id)) {
-        const line = this._lines.get(id);
-        this.remove(line);
-        line.geometry.dispose();
-        this._lines.delete(id);
-      }
+
+    for (const id of [...this._entries.keys()]) {
+      if (seen.has(id)) continue;
+      const entry = this._entries.get(id);
+      if (entry?.mesh) entry.mesh.geometry.dispose();
+      if (entry?.material) entry.material.dispose();
+      this.remove(entry.group);
+      this._entries.delete(id);
     }
   }
 
   dispose() {
-    for (const line of this._lines.values()) {
-      this.remove(line);
-      line.geometry.dispose();
+    for (const entry of this._entries.values()) {
+      entry.mesh?.geometry?.dispose();
+      entry.material?.dispose();
     }
-    this._lines.clear();
-    this._material.dispose();
+    this._entries.clear();
   }
 }

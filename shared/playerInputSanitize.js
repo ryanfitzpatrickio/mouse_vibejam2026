@@ -55,6 +55,8 @@ export function sanitizePlayerInputMessage(data) {
     grab: !!data.grab,
     smack: !!data.smack,
     ropeGrab: !!data.ropeGrab,
+    /** Hold E — extraction progress during extract phase. */
+    interactHeld: !!data.interactHeld,
     seq: clampSeq(data.seq),
   };
 }

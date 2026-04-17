@@ -41,6 +41,8 @@ export function resolveEditableHitObject(object) {
     && !current.userData?.prefabInstanceId
     && !current.userData?.lightId
     && !current.userData?.portalId
+    && !current.userData?.extractionPortalId
+    && !current.userData?.raidTaskId
     && !current.userData?.ropeId
   ) {
     current = current.parent;
@@ -53,6 +55,8 @@ export function editableIdFromObject(object) {
     ?? object?.userData?.prefabInstanceId
     ?? object?.userData?.lightId
     ?? object?.userData?.portalId
+    ?? object?.userData?.extractionPortalId
+    ?? object?.userData?.raidTaskId
     ?? object?.userData?.ropeId
     ?? null;
 }
@@ -94,6 +98,12 @@ export function updateProbe(editor) {
   const rope = editableId
     ? (editor.layout.ropes ?? []).find((entry) => entry.id === editableId)
     : null;
+  const extraction = editableId
+    ? (editor.layout.extractionPortals ?? []).find((entry) => entry.id === editableId)
+    : null;
+  const raidTask = editableId
+    ? (editor.layout.raidTasks ?? []).find((entry) => entry.id === editableId)
+    : null;
   const gridCell = editor._getGridCellFromPoint(hit.point);
   editor.hitTooltip.style.display = 'block';
   editor.hitTooltip.style.left = `${editor.pointerScreen.x + 14}px`;
@@ -104,6 +114,8 @@ export function updateProbe(editor) {
     primitive ? `cell ${primitive.texture.cell ?? 'none'}` : '',
     light ? `${light.lightType} light` : '',
     portal ? `${portal.portalType} portal` : '',
+    extraction ? `extraction (r ${Number(extraction.radius).toFixed(2)})` : '',
+    raidTask ? `raid task (${raidTask.taskType})` : '',
     rope ? `rope (${rope.segmentCount} seg · ${rope.length.toFixed(2)}m)` : '',
     `x ${hit.point.x.toFixed(2)} y ${hit.point.y.toFixed(2)} z ${hit.point.z.toFixed(2)}`,
   ].filter(Boolean).join('\n');

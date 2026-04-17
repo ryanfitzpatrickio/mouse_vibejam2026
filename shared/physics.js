@@ -4,6 +4,8 @@
  * Keep this file free of Three.js / DOM / Node dependencies.
  */
 
+import { LIVES_PER_ROUND, createRoundStats } from './roundState.js';
+
 export const PHYSICS = Object.freeze({
   walkSpeed: 4.0,
   sprintSpeed: 7.5,
@@ -96,6 +98,17 @@ export function createPlayerState(id) {
     grabCooldown: 0,
     /** Cooldown before this player can smack again (seconds). */
     smackCooldown: 0,
+
+    /** Extraction raid: lives left this round (cat/roomba deaths). */
+    livesRemaining: LIVES_PER_ROUND,
+    /** True when out of lives until round resets. */
+    spectator: false,
+    /** Successfully reached an extraction portal with hold-E. */
+    extracted: false,
+    /** 0–1 hold progress while in a portal during extract phase. */
+    extractProgress: 0,
+    /** Per-round scoring / task progress (server). */
+    roundStats: createRoundStats(),
   };
 }
 
@@ -448,6 +461,7 @@ export function respawnPlayer(state, spawnX, spawnZ, spawnY = 0) {
   state.smackStunTimer = 0;
   state.grabCooldown = 0;
   state.smackCooldown = 0;
+  state.extractProgress = 0;
 }
 
 /**
@@ -468,6 +482,7 @@ export function respawnPlayer(state, spawnX, spawnZ, spawnY = 0) {
  */
 export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPull = null) {
   if (!state.alive) return;
+  if (state.spectator || state.extracted) return;
 
   if (state.roombaLaunchCooldown > 0) {
     state.roombaLaunchCooldown = Math.max(0, state.roombaLaunchCooldown - dt);

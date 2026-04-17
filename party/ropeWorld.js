@@ -8,7 +8,7 @@
 
 import { World, Vec3, Sphere, Body, PointToPointConstraint, DistanceConstraint } from 'cannon-es';
 import { PHYSICS } from '../shared/physics.js';
-import { ROPES, ROPE_SEGMENT_RADIUS, ROPE_GRAB_RANGE } from '../shared/ropes.js';
+import { normalizeRope, ROPES, ROPE_GRAB_RANGE } from '../shared/ropes.js';
 import { aabbToStaticBody, shouldSkipLayoutColliderForBall } from './pushBallWorld.js';
 
 const SEGMENT_MASS = 0.6;
@@ -34,7 +34,7 @@ function _stiffen(constraint) {
 
 export function createRopeWorld(options = {}) {
   const initialRopes = Array.isArray(options?.ropes) && options.ropes.length
-    ? options.ropes
+    ? options.ropes.map((d) => normalizeRope(d))
     : ROPES;
 
   const world = new World({ gravity: new Vec3(0, -18, 0) });
@@ -67,8 +67,10 @@ export function createRopeWorld(options = {}) {
   /** @type {Body[]} */
   const levelStaticBodies = [];
 
-  function _buildRope(def) {
+  function _buildRope(rawDef) {
+    const def = normalizeRope(rawDef);
     const { id, anchor, length, segmentCount } = def;
+    const segmentRadius = def.segmentRadius;
     const segLen = length / segmentCount;
     const bodies = [];
     const constraints = [];
@@ -81,7 +83,7 @@ export function createRopeWorld(options = {}) {
     for (let i = 1; i <= segmentCount; i += 1) {
       const b = new Body({
         mass: SEGMENT_MASS,
-        shape: new Sphere(ROPE_SEGMENT_RADIUS),
+        shape: new Sphere(segmentRadius),
         linearDamping: 0.12,
         angularDamping: 0.9,
       });
@@ -114,7 +116,9 @@ export function createRopeWorld(options = {}) {
   }
 
   function setRopes(nextDefs) {
-    const defs = Array.isArray(nextDefs) && nextDefs.length ? nextDefs : ROPES;
+    const defs = Array.isArray(nextDefs) && nextDefs.length
+      ? nextDefs.map((d) => normalizeRope(d))
+      : ROPES;
     _clearRopes();
     for (const def of defs) _buildRope(def);
   }
@@ -144,7 +148,8 @@ export function createRopeWorld(options = {}) {
         const dy = b.position.y - py;
         const dz = b.position.z - pz;
         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (dist <= ROPE_GRAB_RANGE && (best === null || dist < best.dist)) {
+        const grabR = ROPE_GRAB_RANGE + (rope.def.segmentRadius ?? 0);
+        if (dist <= grabR && (best === null || dist < best.dist)) {
           best = { ropeId: rope.def.id, segmentIndex: i, body: b, dist };
         }
       }

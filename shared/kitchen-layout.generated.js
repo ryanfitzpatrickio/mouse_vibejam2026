@@ -4351,12 +4351,12 @@ export default {
   "portals": [
     {
       "id": "portal-mntle3rd-vpfu9",
-      "name": "vibe-portal-o25",
+      "name": "Vibe Jam",
       "portalType": "exit",
       "position": {
         "x": 8,
         "y": 0,
-        "z": -5
+        "z": -4
       },
       "rotation": {
         "x": -3.1416,
@@ -4393,8 +4393,66 @@ export default {
         "y": 12,
         "z": 20
       },
-      "length": 11.1,
-      "segmentCount": 12,
+      "length": 11.7,
+      "segmentCount": 8,
+      "segmentRadius": 0.06,
+      "color": "#e28a2c",
+      "texture": {
+        "atlas": "textures2",
+        "cell": 62
+      },
+      "deleted": false
+    }
+  ],
+  "extractionPortals": [
+    {
+      "id": "extract-mo3aszy1-rz1wy",
+      "name": "extraction-2lb",
+      "position": {
+        "x": 12,
+        "y": 0,
+        "z": 23
+      },
+      "rotation": {
+        "x": 3.1416,
+        "y": 0.0128,
+        "z": 3.1416
+      },
+      "radius": 1.15,
+      "deleted": false
+    },
+    {
+      "id": "extract-mo3b66lu-a60b9",
+      "name": "extraction-w6w",
+      "position": {
+        "x": -26,
+        "y": 0,
+        "z": -4
+      },
+      "rotation": {
+        "x": -3.1416,
+        "y": -0.0517,
+        "z": -3.1416
+      },
+      "radius": 1.15,
+      "deleted": false
+    }
+  ],
+  "raidTasks": [
+    {
+      "id": "raid-task-mo3avgvf-qaqml",
+      "name": "task-cal",
+      "taskType": "placeholder",
+      "position": {
+        "x": 18,
+        "y": 0,
+        "z": 14
+      },
+      "rotation": {
+        "x": 0,
+        "y": 1.7146,
+        "z": 0
+      },
       "deleted": false
     }
   ]

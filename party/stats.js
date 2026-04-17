@@ -53,6 +53,8 @@ function createPlayerStats(playerHash, displayName = 'Mouse') {
     playSeconds: 0,
     bestChaseSeconds: 0,
     bestCheeseHeld: 0,
+    chaosXp: 0,
+    chaosRank: 1,
   };
 }
 
@@ -111,6 +113,7 @@ function createLeaderboards() {
   return {
     bestChase: [],
     bestCheeseHeld: [],
+    bestExtractionRound: [],
   };
 }
 
@@ -120,6 +123,7 @@ function ensureLeaderboards(global) {
   }
   if (!Array.isArray(global.leaderboards.bestChase)) global.leaderboards.bestChase = [];
   if (!Array.isArray(global.leaderboards.bestCheeseHeld)) global.leaderboards.bestCheeseHeld = [];
+  if (!Array.isArray(global.leaderboards.bestExtractionRound)) global.leaderboards.bestExtractionRound = [];
   return global.leaderboards;
 }
 
@@ -137,6 +141,7 @@ function publicLeaderboards(global) {
   return {
     bestChase: cap(leaderboards.bestChase).map(publicLeaderboardEntry),
     bestCheeseHeld: cap(leaderboards.bestCheeseHeld).map(publicLeaderboardEntry),
+    bestExtractionRound: cap(leaderboards.bestExtractionRound).map(publicLeaderboardEntry),
   };
 }
 
@@ -450,6 +455,38 @@ export class StatsTracker {
     this._mutatePlayer(connectionId, (player) => {
       player.respawns += 1;
     }, 'respawns');
+  }
+
+  /**
+   * @param {string} connectionId
+   * @param {{ xpGained?: number, roundScore?: number, extracted?: boolean }} payload
+   */
+  recordExtractionRaid(connectionId, { xpGained = 0, roundScore = 0, extracted = false, displayName = null } = {}) {
+    const session = this.sessions.get(connectionId);
+    if (!session?.playerHash) return;
+    const name = normalizeDisplayName(displayName ?? session.displayName);
+    const player = this.players.get(session.playerHash);
+    if (!player) return;
+
+    const addXp = Math.max(0, Math.floor(Number(xpGained) || 0));
+    const now = Date.now();
+    player.chaosXp = Math.floor((player.chaosXp ?? 0) + addXp);
+    player.chaosRank = Math.min(99, 1 + Math.floor(Math.sqrt(player.chaosXp / 220)));
+    player.displayName = name;
+    player.lastSeen = now;
+
+    if (extracted && roundScore > 0) {
+      if (upsertLeaderboardEntry(this.global, 'bestExtractionRound', {
+        playerHash: session.playerHash,
+        displayName: name,
+        value: roundScore,
+        updatedAt: now,
+      })) {
+        this._markGlobalDirty();
+      }
+    }
+
+    this._markPlayerDirty(session.playerHash);
   }
 
   recordDisconnect(connectionId) {

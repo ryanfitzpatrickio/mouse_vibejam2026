@@ -1,4 +1,4 @@
-import { createPlayerState, simulateTick, respawnPlayer } from '../shared/physics.js';
+import { createPlayerState, simulateTick, respawnPlayer, PHYSICS } from '../shared/physics.js';
 import { createMouseBotBrain, buildMouseBotInput, resetMouseBotBrain } from '../shared/mouseBot.js';
 import { createPredatorState, simulatePredatorTick, serializePredatorState } from '../shared/predator.js';
 import {
@@ -25,6 +25,17 @@ import { createMouseLaunchWorld } from './mouseLaunchWorld.js';
 import { createRopeWorld } from './ropeWorld.js';
 import { CheeseWorld } from './cheeseWorld.js';
 import { LEVEL_WORLD_BOUNDS_XZ } from '../shared/levelWorldBounds.js';
+import {
+  createRoundState,
+  ROUND_DURATIONS,
+  LIVES_PER_ROUND,
+  RESPAWN_SECONDS as RAID_RESPAWN_SECONDS,
+  EXTRACT_HOLD_SECONDS,
+  computePlayerRoundScore,
+  createRoundStats,
+  resetRoundStats,
+} from '../shared/roundState.js';
+import { collectExtractionPortalsFromLayout } from '../shared/extractionPortals.js';
 
 /**
  * PartyKit env (dashboard / project .env for `partykit dev`):
@@ -40,7 +51,6 @@ const TICK_MS = 1000 / TICK_RATE;
 const MAX_PLAYERS = 8;
 /** Max extra push-balls a human may spawn per connection (lifetime). */
 const MAX_EXTRA_BALL_SPAWNS_PER_PLAYER = 10;
-const RESPAWN_SECONDS = 10;
 const GRAB_RANGE = 2.5;
 const GRAB_COOLDOWN = 1.0;
 const GRAB_PULL_STRENGTH = 6.0;
@@ -59,6 +69,18 @@ const WS_MESSAGE_BURST = 180;
 const MAX_DROPPED_MESSAGES_BEFORE_CLOSE = 180;
 
 const BOUNDS = LEVEL_WORLD_BOUNDS_XZ;
+
+function isNearExtractionPortal(px, pz, portals) {
+  if (!Array.isArray(portals)) return false;
+  for (const p of portals) {
+    if (!p) continue;
+    const dx = px - p.x;
+    const dz = pz - p.z;
+    const r = typeof p.radius === 'number' && p.radius > 0 ? p.radius : 1.15;
+    if (dx * dx + dz * dz <= r * r) return true;
+  }
+  return false;
+}
 
 /** Reject oversized WebSocket frames before JSON.parse (DoS). */
 const MAX_WS_MESSAGE_CHARS = 256 * 1024;
@@ -212,12 +234,14 @@ export default class GameServer {
     this._lastRopeJump = new Map();
     this.cheeseWorld = new CheeseWorld();
     this._applyLayout(kitchenLayout, { resetPredators: true });
+    this.round = createRoundState({ number: 1, now: Date.now() / 1000 });
   }
 
   _applyLayout(layout, { resetPredators = false } = {}) {
     this.levelColliders = buildRoomCollidersFromLayout(layout, { scaleFactor: 1 });
     this.spawnPoints = collectSpawnPointsFromLayout(layout);
     this.portalPlacements = collectVibePortalPlacementsFromLayout(layout);
+    this.extractionPortalDefs = collectExtractionPortalsFromLayout(layout, this.spawnPoints);
     this.pushBallWorld?.setLevelColliders?.(this.levelColliders);
     this.roombaCannonWorld?.setLevelColliders?.(this.levelColliders);
     this.mouseLaunchWorld?.setLevelColliders?.(this.levelColliders);
@@ -386,6 +410,8 @@ export default class GameServer {
       pushBalls: this.pushBallWorld.getBallsState(),
       cheesePickups: this.cheeseWorld.serializePickups(),
       ropes: this.ropeWorld.getRopesSnapshot(),
+      round: this.round,
+      extractionPortals: this.round.phase === 'extract' ? this.extractionPortalDefs : [],
     }));
 
     this.broadcast(JSON.stringify({
@@ -533,12 +559,114 @@ export default class GameServer {
     this._syncBots();
   }
 
+  _advanceRoundPhase(wallNow) {
+    if (wallNow < this.round.phaseEndsAt) return;
+    const phase = this.round.phase;
+    if (phase === 'forage') {
+      this.round = {
+        ...this.round,
+        phase: 'extract',
+        phaseEndsAt: wallNow + ROUND_DURATIONS.extract,
+      };
+      this.broadcast(JSON.stringify({
+        type: 'round-phase',
+        phase: 'extract',
+        phaseEndsAt: this.round.phaseEndsAt,
+        number: this.round.number,
+        message: 'HUMAN COMING HOME! Mouse holes opening — hold E to extract!',
+      }));
+      return;
+    }
+    if (phase === 'extract') {
+      this._finishRound(wallNow);
+      this.round = {
+        ...this.round,
+        phase: 'intermission',
+        phaseEndsAt: wallNow + ROUND_DURATIONS.intermission,
+      };
+      return;
+    }
+    if (phase === 'intermission') {
+      this._startNewRound(wallNow);
+      this.round = {
+        number: this.round.number + 1,
+        phase: 'forage',
+        phaseEndsAt: wallNow + ROUND_DURATIONS.forage,
+      };
+    }
+  }
+
+  _finishRound() {
+    const results = [];
+    for (const [id, state] of this.players) {
+      const br = computePlayerRoundScore(state);
+      state.roundStats.finalScore = br.finalScore;
+      state.roundStats.xpAwarded = br.xpAwarded;
+      state.roundStats.tasksCompleted = br.completedTaskIds;
+      results.push({
+        id,
+        displayName: state.displayName,
+        isBot: !!state.isBot,
+        ...br,
+      });
+      if (this.inputQueues.has(id)) {
+        this.stats?.recordExtractionRaid(id, {
+          xpGained: br.xpAwarded,
+          roundScore: br.finalScore,
+          extracted: br.extracted,
+          displayName: state.displayName,
+        });
+      }
+    }
+    results.sort((a, b) => b.finalScore - a.finalScore);
+    this.broadcast(JSON.stringify({
+      type: 'round-end',
+      roundNumber: this.round.number,
+      results,
+    }));
+  }
+
+  _startNewRound() {
+    this.cheeseWorld.seedScatter();
+    let idx = 0;
+    for (const [id, state] of this.players) {
+      if (!state.roundStats) state.roundStats = createRoundStats();
+      else resetRoundStats(state.roundStats);
+      state.livesRemaining = LIVES_PER_ROUND;
+      state.spectator = false;
+      state.extracted = false;
+      state.extractProgress = 0;
+      state.cheeseCarried = 0;
+      state.health = PHYSICS.maxHealth;
+      state.deaths = 0;
+      state.alive = true;
+      state.deathTime = 0;
+      state.animState = 'idle';
+      state.smackStunTimer = 0;
+      state.roombaLaunch = null;
+      state.ropeSwing = null;
+      const spawn = this._pickPlayerSpawn(idx);
+      idx += 1;
+      respawnPlayer(state, spawn.x, spawn.z, spawn.y);
+      this.mouseLaunchWorld?.removePlayer?.(id);
+      this.ropeWorld?.removePlayer?.(id);
+      this._lastRopeGrab.delete(id);
+      this._lastRopeJump?.delete(id);
+      if (!this.inputQueues.has(id)) {
+        resetMouseBotBrain(this.botBrains.get(id));
+      }
+    }
+    this._initPredators();
+  }
+
   tick() {
     this._syncBots();
 
     if (this.players.size === 0 && this.predators.length === 0) return;
 
     const dt = TICK_MS / 1000;
+    const wallNow = Date.now() / 1000;
+    this._advanceRoundPhase(wallNow);
 
     const seqs = {};
     const now = Date.now() / 1000;
@@ -548,6 +676,45 @@ export default class GameServer {
     const smackRequests = [];
     for (const [id, state] of this.players) {
       const isHuman = this.inputQueues.has(id);
+      state._interactHeld = false;
+
+      if (this.round.phase === 'intermission') {
+        state.velocity.x = 0;
+        state.velocity.z = 0;
+        if (isHuman) {
+          const queue = this.inputQueues.get(id);
+          if (queue?.length) {
+            seqs[id] = queue[queue.length - 1].seq;
+            if (!this._lastSeq) this._lastSeq = new Map();
+            this._lastSeq.set(id, seqs[id]);
+            queue.length = 0;
+          } else {
+            seqs[id] = this._lastSeq?.get(id) ?? 0;
+          }
+        } else {
+          seqs[id] = 0;
+        }
+        continue;
+      }
+
+      if (state.extracted && state.alive) {
+        state.velocity.x = 0;
+        state.velocity.z = 0;
+        if (isHuman) {
+          const queue = this.inputQueues.get(id);
+          if (queue?.length) {
+            seqs[id] = queue[queue.length - 1].seq;
+            if (!this._lastSeq) this._lastSeq = new Map();
+            this._lastSeq.set(id, seqs[id]);
+            queue.length = 0;
+          } else {
+            seqs[id] = this._lastSeq?.get(id) ?? 0;
+          }
+        } else {
+          seqs[id] = 0;
+        }
+        continue;
+      }
 
       // --- Tick cooldowns ---
       if (state.grabCooldown > 0) state.grabCooldown = Math.max(0, state.grabCooldown - dt);
@@ -579,9 +746,22 @@ export default class GameServer {
       }
 
       if (!state.alive) {
+        if (state.spectator) {
+          seqs[id] = this._lastSeq?.get(id) ?? 0;
+          if (isHuman) {
+            const q = this.inputQueues.get(id);
+            if (q?.length) {
+              seqs[id] = q[q.length - 1].seq;
+              if (!this._lastSeq) this._lastSeq = new Map();
+              this._lastSeq.set(id, seqs[id]);
+              q.length = 0;
+            }
+          }
+          continue;
+        }
         if (state.deathTime <= 0) {
           state.deathTime = now;
-        } else if (now - state.deathTime >= RESPAWN_SECONDS) {
+        } else if (now - state.deathTime >= RAID_RESPAWN_SECONDS) {
           this.mouseLaunchWorld.removePlayer(id);
           this.ropeWorld.removePlayer(id);
           this._lastRopeGrab.delete(id);
@@ -627,6 +807,7 @@ export default class GameServer {
               runningJump = jumpNow;
               seqs[id] = input.seq;
             }
+            state._interactHeld = !!(latest?.interactHeld);
             this._lastRopeGrab.set(id, runningGrab);
             this._lastRopeJump.set(id, runningJump);
             state._ropeInput = {
@@ -687,7 +868,9 @@ export default class GameServer {
           if (!this._lastRopeJump) this._lastRopeJump = new Map();
           let runningJump = this._lastRopeJump.get(id) ?? false;
           let grabTickJumpPress = false;
+          let latestInput = null;
           for (const input of queue) {
+            latestInput = input;
             const vacuumPull = roombaForVacuum?.phase === 'vacuuming'
               ? getRoombaVacuumPullAcceleration(roombaForVacuum, state)
               : null;
@@ -702,6 +885,7 @@ export default class GameServer {
             if (!runningJump && jumpNow) grabTickJumpPress = true;
             runningJump = jumpNow;
           }
+          state._interactHeld = !!(latestInput?.interactHeld);
           this._lastRopeGrab.set(id, lastRopeGrab);
           this._lastRopeJump.set(id, runningJump);
           // Press-and-hold grapple: while R is held we keep trying to grab each
@@ -761,6 +945,8 @@ export default class GameServer {
             cheesePickups: this.cheeseWorld.pickups,
             reservedCheeseIds,
             reservedGoalPositions,
+            roundPhase: this.round.phase,
+            extractionPortals: this.extractionPortalDefs,
           },
         );
         const vacuumPull = roombaForVacuum?.phase === 'vacuuming'
@@ -768,6 +954,7 @@ export default class GameServer {
           : null;
         simulateTick(state, input, dt, BOUNDS, this.levelColliders, vacuumPull);
         state.emote = input.emote ?? null;
+        state._interactHeld = !!input.interactHeld;
         seqs[id] = 0;
       }
     }
@@ -775,12 +962,13 @@ export default class GameServer {
     // --- Process smack interactions ---
     for (const attackerId of smackRequests) {
       const attacker = this.players.get(attackerId);
-      if (!attacker?.alive || attacker.smackCooldown > 0) continue;
+      if (!attacker?.alive || attacker.smackCooldown > 0 || attacker.extracted || attacker.spectator) continue;
       // Find nearest alive player in range
       let bestId = null;
       let bestDist = SMACK_RANGE;
       for (const [otherId, other] of this.players) {
         if (otherId === attackerId || !other.alive || other.smackStunTimer > 0) continue;
+        if (other.extracted || other.spectator) continue;
         const dx = other.position.x - attacker.position.x;
         const dz = other.position.z - attacker.position.z;
         const dist = Math.sqrt(dx * dx + dz * dz);
@@ -791,6 +979,9 @@ export default class GameServer {
       }
       if (bestId) {
         const target = this.players.get(bestId);
+        if (attacker.roundStats) {
+          attacker.roundStats.smacksLanded = (attacker.roundStats.smacksLanded ?? 0) + 1;
+        }
         attacker.smackCooldown = SMACK_COOLDOWN;
         target.smackStunTimer = SMACK_STUN_DURATION;
         target.alive = false;
@@ -829,12 +1020,13 @@ export default class GameServer {
     // Initiate new grabs for players holding Q without an active grab
     for (const grabberId of grabHeld) {
       const grabber = this.players.get(grabberId);
-      if (!grabber?.alive || grabber.grabCooldown > 0 || grabber.grabbedTarget) continue;
+      if (!grabber?.alive || grabber.grabCooldown > 0 || grabber.grabbedTarget || grabber.extracted || grabber.spectator) continue;
       // Find nearest alive player in range
       let bestId = null;
       let bestDist = GRAB_RANGE;
       for (const [otherId, other] of this.players) {
         if (otherId === grabberId || !other.alive || other.smackStunTimer > 0) continue;
+        if (other.extracted || other.spectator) continue;
         const dx = other.position.x - grabber.position.x;
         const dz = other.position.z - grabber.position.z;
         const dist = Math.sqrt(dx * dx + dz * dz);
@@ -852,6 +1044,9 @@ export default class GameServer {
         }
         grabber.grabbedTarget = bestId;
         target.grabbedBy = grabberId;
+        if (grabber.roundStats) {
+          grabber.roundStats.grabsInitiated = (grabber.roundStats.grabsInitiated ?? 0) + 1;
+        }
       }
     }
 
@@ -924,6 +1119,8 @@ export default class GameServer {
           if (target.health <= 0) {
             target.health = 0;
             target.deaths = (target.deaths ?? 0) + 1;
+            target.livesRemaining = Math.max(0, (target.livesRemaining ?? LIVES_PER_ROUND) - 1);
+            target.spectator = target.livesRemaining <= 0;
             target.alive = false;
             target.animState = 'death';
             this.cheeseWorld.onDeathDropCarried(target);
@@ -946,7 +1143,51 @@ export default class GameServer {
 
     tickPlayerChaseScores(this.players, this.predators, dt);
 
+    const cheesePre = new Map();
+    for (const [pid, st] of this.players) {
+      cheesePre.set(pid, st.cheeseCarried ?? 0);
+    }
     this.cheeseWorld.collectFromPlayers(this.players);
+    for (const [pid, state] of this.players) {
+      const prev = cheesePre.get(pid) ?? 0;
+      const gained = (state.cheeseCarried ?? 0) - prev;
+      if (gained > 0 && state.roundStats) {
+        state.roundStats.cheeseCollected += gained;
+      }
+      if (state.roundStats) {
+        state.roundStats.maxCarried = Math.max(state.roundStats.maxCarried, state.cheeseCarried ?? 0);
+        state.roundStats.maxChaseStreak = Math.max(
+          state.roundStats.maxChaseStreak ?? 0,
+          playerChaseRecordSeconds(state),
+        );
+      }
+    }
+
+    if (this.round.phase === 'extract') {
+      for (const [, state] of this.players) {
+        if (!state.alive || state.spectator || state.extracted) {
+          if (!state.extracted) state.extractProgress = 0;
+          continue;
+        }
+        const held = !!state._interactHeld;
+        const near = isNearExtractionPortal(state.position.x, state.position.z, this.extractionPortalDefs);
+        if (held && near) {
+          state.extractProgress = Math.min(1, (state.extractProgress ?? 0) + dt / EXTRACT_HOLD_SECONDS);
+          if (state.extractProgress >= 1) {
+            state.extracted = true;
+            state.extractProgress = 1;
+            state.velocity.x = 0;
+            state.velocity.z = 0;
+          }
+        } else {
+          state.extractProgress = Math.max(0, (state.extractProgress ?? 0) - dt * 1.15);
+        }
+      }
+    } else {
+      for (const state of this.players.values()) {
+        if (!state.extracted) state.extractProgress = 0;
+      }
+    }
     for (const [id, state] of this.players) {
       if (!this.inputQueues.has(id)) continue;
       this.stats?.recordPlayerBests(id, {
@@ -965,6 +1206,8 @@ export default class GameServer {
       pushBalls: this.pushBallWorld.getBallsState(),
       cheesePickups: this.cheeseWorld.serializePickups(),
       ropes: this.ropeWorld.getRopesSnapshot(),
+      round: this.round,
+      extractionPortals: this.round.phase === 'extract' ? this.extractionPortalDefs : [],
     };
     this.broadcast(JSON.stringify(snapshot));
   }

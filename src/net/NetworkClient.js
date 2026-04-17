@@ -67,6 +67,12 @@ export class NetworkClient {
   /** @type {{ id: string, x: number, y: number, z: number, amount: number }[]} */
   cheesePickups = [];
 
+  /** Raid round state from server snapshots */
+  round = null;
+
+  /** Active extraction portal markers when `round.phase === 'extract'` */
+  extractionPortals = [];
+
   /** Sequence counter for inputs */
   seq = 0;
   /** Pending inputs not yet confirmed by server (for reconciliation) */
@@ -120,6 +126,8 @@ export class NetworkClient {
       this.remotePredators.clear();
       this.pushBalls = [];
       this.cheesePickups = [];
+      this.round = null;
+      this.extractionPortals = [];
       console.log('[net] disconnected');
     });
   }
@@ -249,6 +257,8 @@ export class NetworkClient {
         this._applyPushBallsPayload(data);
         this._applyRopesPayload(data);
         this._applyCheesePayload(data);
+        if (data.round) this.round = data.round;
+        if (Array.isArray(data.extractionPortals)) this.extractionPortals = data.extractionPortals;
         break;
 
       case 'portal-spawn':
@@ -302,8 +312,23 @@ export class NetworkClient {
         this._applyPushBallsPayload(data);
         this._applyRopesPayload(data);
         this._applyCheesePayload(data);
+        if (data.round) this.round = data.round;
+        if (Array.isArray(data.extractionPortals)) this.extractionPortals = data.extractionPortals;
         break;
       }
+
+      case 'round-phase':
+        if (data.phase != null && typeof data.phaseEndsAt === 'number') {
+          this.round = {
+            ...(this.round ?? {}),
+            phase: data.phase,
+            phaseEndsAt: data.phaseEndsAt,
+            number: data.number ?? this.round?.number ?? 1,
+          };
+        }
+        break;
+      case 'round-end':
+        break;
 
       case 'player-joined':
         if (data.player.id !== this.localId) {
