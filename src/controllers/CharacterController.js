@@ -12,6 +12,7 @@ const DEFAULT_KEY_BINDINGS = Object.freeze({
   interact: 'KeyE',
   grab: 'KeyQ',
   drop: 'KeyG',
+  ropeGrab: 'KeyR',
   emote: 'KeyF',
 });
 
@@ -391,6 +392,7 @@ export class CharacterController {
       this.interact();
     }
     this.grabHeld = !!this.keys[this.keyBindings.grab];
+    this.ropeGrabHeld = !!this.keys[this.keyBindings.ropeGrab];
     if (this.mouseButtons.right) {
       this.mouseButtons.right = false;
       this.squeak();

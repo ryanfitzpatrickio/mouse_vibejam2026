@@ -5,6 +5,7 @@ import { Cat } from '../entities/Cat.js';
 import { Roomba } from '../entities/Roomba.js';
 import { PredatorManager } from '../entities/PredatorManager.js';
 import { Room } from '../world/Room.js';
+import { RopeSystem } from '../world/RopeSystem.js';
 import { VibePortalManager } from '../world/VibePortalManager.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
@@ -220,9 +221,25 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
   const room = new Room({ height: 4, scale: 1 });
   scene.add(room.getGroup());
-  await Promise.all([mouse.ready, room.ready]);
+  // The Mouse builds its primitive avatar synchronously in its constructor and
+  // streams the skinned GLB in behind the scenes. The Room synchronously
+  // builds its procedural geometry in the constructor and streams the texture
+  // atlas / editable layout / GLB prefabs in via `room.ready`. This lets us
+  // render frame 1 immediately instead of blocking the boot on network I/O.
   mouse.position.set(0, mouse.groundOffset, 0);
   mouse.setViewCamera(camera);
+  // Re-seat the mouse once the skinned model is in place — the avatar swap
+  // changes `groundOffset`, so we keep the first frame visually stable and
+  // update once the GLB lands.
+  mouse.ready.then(() => {
+    mouse.position.y = mouse.groundOffset;
+  }).catch(() => {});
+  // Static merge depends on the editable layout being materialized, which
+  // only happens once `room.ready` resolves (atlas + layout JSON + prefabs).
+  // Defer the bake until then so we don't miss any prefab geometry.
+  room.ready.then(() => {
+    room.setStaticMergeEnabled?.(true);
+  }).catch(() => {});
 
   let roomba = null;
   function getCollisionCollidersWithRoomba() {
@@ -256,7 +273,6 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     threshold: 0.012,
     strength: 0.9,
   });
-  room.setStaticMergeEnabled?.(true);
 
   function setOutlineListVisible(list, visible) {
     if (!Array.isArray(list)) return;
@@ -301,23 +317,29 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     : null;
 
   if (bunny && predatorManager) {
-    await bunny.ready;
-    predatorManager.add(bunny, new THREE.Vector3(5, 0, 5));
+    // Stream the bunny in — register it with the predator manager once its
+    // GLB lands so we don't block the initial render.
+    bunny.ready.then(() => {
+      predatorManager.add(bunny, new THREE.Vector3(5, 0, 5));
+    }).catch(() => {});
   }
 
   const cat = ENABLE_CAT_PREDATOR ? new Cat() : null;
   if (cat) {
-    await cat.ready;
-    scene.add(cat);
+    cat.ready.then(() => {
+      scene.add(cat);
+    }).catch(() => {});
   }
 
   roomba = ENABLE_ROOMBA_PREDATOR ? new Roomba() : null;
   if (roomba) {
-    await roomba.ready;
-    roomba.visible = false;
-    roomba.dockGroup.visible = false;
-    scene.add(roomba);
-    scene.add(roomba.dockGroup);
+    const roombaInstance = roomba;
+    roombaInstance.ready.then(() => {
+      roombaInstance.visible = false;
+      roombaInstance.dockGroup.visible = false;
+      scene.add(roombaInstance);
+      scene.add(roombaInstance.dockGroup);
+    }).catch(() => {});
   }
 
   // --- Dev placement mode ---
@@ -486,6 +508,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   pushBallInstanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   pushBallInstanced.frustumCulled = false;
   scene.add(pushBallInstanced);
+
+  const ropeSystem = new RopeSystem();
+  scene.add(ropeSystem);
 
   /** @type {Map<string, { smoothPos: THREE.Vector3, smoothQuat: THREE.Quaternion, targetPos: THREE.Vector3, targetQuat: THREE.Quaternion, radius: number }>} */
   const pushBallStates = new Map();
@@ -667,6 +692,11 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     predictionState.longestChaseSeconds = ss.longestChaseSeconds ?? 0;
     predictionState.chaseStreakSeconds = ss.chaseStreakSeconds ?? 0;
     predictionState.cheeseCarried = ss.cheeseCarried ?? 0;
+    // Mirror ropeSwing so simulateTick's rope early-return triggers during
+    // client prediction. Without this, client keeps running ground physics
+    // while server drives position via cannon rope, producing visible fight
+    // between predicted and authoritative positions after re-grabs.
+    predictionState.ropeSwing = ss.ropeSwing ?? null;
     if (typeof ss.displayName === 'string' && ss.displayName.trim()) {
       predictionState.displayName = ss.displayName;
     }
@@ -890,6 +920,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         if (controller.grabHeld) {
           inputWithEmote.grab = true;
         }
+        if (controller.ropeGrabHeld) {
+          inputWithEmote.ropeGrab = true;
+        }
         if (controller.smackPressed) {
           inputWithEmote.smack = true;
           controller.smackPressed = false;
@@ -1049,6 +1082,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       if (pushBallStates.size > 0) pushBallStates.clear();
     }
 
+    ropeSystem.update(net.connected ? net.ropes : []);
+
     const cheeseList = net.connected ? net.cheesePickups : [];
     if (net.connected && Array.isArray(cheeseList) && cheeseList.length > 0) {
       const seenCheese = new Set();
@@ -1163,6 +1198,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     scoreboard.dispose();
     chaseAlert.dispose();
     toolbar.dispose();
+    scene.remove(ropeSystem);
+    ropeSystem.dispose();
     scene.remove(pushBallInstanced);
     pushBallInstanced.dispose?.();
     pushBallUnitGeometry.dispose();
@@ -1196,7 +1233,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         label: 'Shadow maps (extra passes per light)',
         get: () => renderer.shadowMap.enabled,
         set: (v) => {
-          renderer.shadowMap.enabled = !!v;
+          renderer.shadowMap.enabled = !v;
         },
       },
       staticMerge: {

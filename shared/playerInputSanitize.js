@@ -54,6 +54,7 @@ export function sanitizePlayerInputMessage(data) {
     emote: sanitizeEmote(data.emote),
     grab: !!data.grab,
     smack: !!data.smack,
+    ropeGrab: !!data.ropeGrab,
     seq: clampSeq(data.seq),
   };
 }

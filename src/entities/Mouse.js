@@ -89,6 +89,11 @@ export class Mouse extends THREE.Group {
     this._occlusionOpacity = 1;
     this._fadeMaterials = new Map();
 
+    // Build the primitive mouse immediately so the first frame renders with a
+    // visible character. The skinned GLB streams in behind the scenes and
+    // replaces the primitives when it finishes loading.
+    this.buildMouse();
+
     this.ready = this._loadAvatar();
   }
 
@@ -101,15 +106,12 @@ export class Mouse extends THREE.Group {
     for (const modelUrl of modelUrls) {
       try {
         const gltf = await loader.loadAsync(modelUrl);
+        this._teardownPrimitiveParts();
         this._attachAvatar(gltf);
         break;
       } catch {
         continue;
       }
-    }
-
-    if (!this._usingModel) {
-      this.buildMouse();
     }
 
     try {
@@ -121,6 +123,23 @@ export class Mouse extends THREE.Group {
 
     this._ready = true;
     return this;
+  }
+
+  _teardownPrimitiveParts() {
+    if (this._usingModel) return;
+    for (const key of Object.keys(this.parts)) {
+      const part = this.parts[key];
+      if (!part) continue;
+      this.remove(part);
+      if (part.geometry?.dispose) part.geometry.dispose();
+      const mat = part.material;
+      if (Array.isArray(mat)) {
+        for (const m of mat) m?.dispose?.();
+      } else {
+        mat?.dispose?.();
+      }
+    }
+    this.parts = {};
   }
 
   _attachAvatar(gltf) {

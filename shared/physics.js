@@ -84,6 +84,8 @@ export function createPlayerState(id) {
     roombaLaunch: null,
     /** Seconds until roomba can grab this mouse again. */
     roombaLaunchCooldown: 0,
+    /** Rope swing: `{ ropeId, segmentIndex }` while server is driving position via cannon-es. */
+    ropeSwing: null,
     /** Player id currently grabbing this player (null if free). */
     grabbedBy: null,
     /** Player id this player is grabbing (null if not grabbing). */
@@ -440,6 +442,7 @@ export function respawnPlayer(state, spawnX, spawnZ, spawnY = 0) {
   state.deathTime = 0;
   state.roombaLaunch = null;
   state.roombaLaunchCooldown = 0;
+  state.ropeSwing = null;
   state.grabbedBy = null;
   state.grabbedTarget = null;
   state.smackStunTimer = 0;
@@ -472,6 +475,11 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
 
   if (state.roombaLaunch?.phase === 'suck' || state.roombaLaunch?.phase === 'flight') {
     state.animState = state.roombaLaunch.phase === 'suck' ? 'slide' : 'jump';
+    return;
+  }
+
+  if (state.ropeSwing) {
+    state.animState = 'jump';
     return;
   }
 

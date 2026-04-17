@@ -158,7 +158,7 @@ export class RendererModePanel {
   /**
    * @param {Record<string, { label: string, get: () => boolean, set: (v: boolean) => void }>} definitions
    */
-  bindPerformanceToggles(definitions) {
+bindPerformanceToggles(definitions) {
     if (!definitions || typeof definitions !== 'object') return;
     this._perfToggleDefs = definitions;
     this.perfTogglesRoot.replaceChildren();

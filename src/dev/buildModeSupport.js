@@ -3,6 +3,11 @@ import { normalizePrefabPrimitive } from './prefabRegistry.js';
 import { SPAWN_TYPES } from '../../shared/spawnPoints.js';
 import { NAV_AREA_TYPES } from '../../shared/navConfig.js';
 import { VIBE_PORTAL_TYPES, normalizeVibePortalType } from '../../shared/vibePortal.js';
+import {
+  DEFAULT_ROPE_LENGTH,
+  DEFAULT_ROPE_SEGMENTS,
+  normalizeRope,
+} from '../../shared/ropes.js';
 
 export function createPrimitiveId() {
   return `primitive-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -14,6 +19,35 @@ export function createLightId() {
 
 export function createPortalId() {
   return `portal-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function createRopeId() {
+  return `rope-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function createDefaultRope(app) {
+  const forward = new THREE.Vector3();
+  app.camera.getWorldDirection(forward);
+  forward.y = 0;
+  if (forward.lengthSq() < 0.0001) {
+    forward.set(0, 0, -1);
+  }
+  forward.normalize();
+
+  const spawn = app.mouse.position.clone().add(forward.multiplyScalar(1.75));
+  const anchorY = Math.max(app.mouse.position.y + 2.4, 2.6);
+
+  return normalizeRope({
+    id: createRopeId(),
+    name: `rope-${Math.random().toString(36).slice(2, 5)}`,
+    anchor: {
+      x: Number(spawn.x.toFixed(3)),
+      y: Number(anchorY.toFixed(3)),
+      z: Number(spawn.z.toFixed(3)),
+    },
+    length: DEFAULT_ROPE_LENGTH,
+    segmentCount: DEFAULT_ROPE_SEGMENTS,
+  });
 }
 
 export function createDefaultPrimitive(type, app) {

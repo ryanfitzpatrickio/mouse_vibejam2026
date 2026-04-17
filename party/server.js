@@ -22,6 +22,7 @@ import { StatsTracker } from './stats.js';
 import { createPushBallWorld } from './pushBallWorld.js';
 import { createRoombaCannonWorld } from './roombaCannonWorld.js';
 import { createMouseLaunchWorld } from './mouseLaunchWorld.js';
+import { createRopeWorld } from './ropeWorld.js';
 import { CheeseWorld } from './cheeseWorld.js';
 import { LEVEL_WORLD_BOUNDS_XZ } from '../shared/levelWorldBounds.js';
 
@@ -206,6 +207,9 @@ export default class GameServer {
     this.pushBallWorld = createPushBallWorld();
     this.roombaCannonWorld = createRoombaCannonWorld();
     this.mouseLaunchWorld = createMouseLaunchWorld();
+    this.ropeWorld = createRopeWorld({ ropes: Array.isArray(kitchenLayout?.ropes) ? kitchenLayout.ropes : null });
+    this._lastRopeGrab = new Map();
+    this._lastRopeJump = new Map();
     this.cheeseWorld = new CheeseWorld();
     this._applyLayout(kitchenLayout, { resetPredators: true });
   }
@@ -217,6 +221,10 @@ export default class GameServer {
     this.pushBallWorld?.setLevelColliders?.(this.levelColliders);
     this.roombaCannonWorld?.setLevelColliders?.(this.levelColliders);
     this.mouseLaunchWorld?.setLevelColliders?.(this.levelColliders);
+    this.ropeWorld?.setLevelColliders?.(this.levelColliders);
+    if (Array.isArray(layout?.ropes)) {
+      this.ropeWorld?.setRopes?.(layout.ropes);
+    }
     this.cheeseWorld.setNavMesh(this.levelMouseNavMesh);
     if (resetPredators) {
       this.predators = [];
@@ -315,6 +323,9 @@ export default class GameServer {
       const id = botIds.pop();
       if (!id) break;
       this.mouseLaunchWorld?.removePlayer?.(id);
+      this.ropeWorld?.removePlayer?.(id);
+      this._lastRopeGrab?.delete(id);
+      this._lastRopeJump?.delete(id);
       this.players.delete(id);
       this.botBrains.delete(id);
       this._lastSeq?.delete(id);
@@ -374,6 +385,7 @@ export default class GameServer {
       predators: this.predators.map((p) => (p.type === 'roomba' ? serializeRoombaState(p) : serializePredatorState(p))),
       pushBalls: this.pushBallWorld.getBallsState(),
       cheesePickups: this.cheeseWorld.serializePickups(),
+      ropes: this.ropeWorld.getRopesSnapshot(),
     }));
 
     this.broadcast(JSON.stringify({
@@ -509,6 +521,9 @@ export default class GameServer {
     this._messageBuckets.delete(conn.id);
     this.portalArrivals.delete(conn.id);
     this.mouseLaunchWorld?.removePlayer?.(conn.id);
+    this.ropeWorld?.removePlayer?.(conn.id);
+    this._lastRopeGrab?.delete(conn.id);
+    this._lastRopeJump?.delete(conn.id);
     this.players.delete(conn.id);
     this.inputQueues.delete(conn.id);
     this.broadcast(JSON.stringify({
@@ -568,6 +583,9 @@ export default class GameServer {
           state.deathTime = now;
         } else if (now - state.deathTime >= RESPAWN_SECONDS) {
           this.mouseLaunchWorld.removePlayer(id);
+          this.ropeWorld.removePlayer(id);
+          this._lastRopeGrab.delete(id);
+          this._lastRopeJump.delete(id);
           const spawn = this._pickRespawnPoint();
           respawnPlayer(state, spawn.x, spawn.z, spawn.y);
           this.stats?.recordRespawn(id);
@@ -587,6 +605,54 @@ export default class GameServer {
       }
       if (state.roombaLaunch?.phase === 'suck') {
         seqs[id] = isHuman ? (this._lastSeq?.get(id) ?? 0) : 0;
+        continue;
+      }
+      if (this.ropeWorld.isSwinging(id)) {
+        if (isHuman) {
+          const queue = this.inputQueues.get(id);
+          if (queue && queue.length) {
+            let latest = null;
+            let anyRelease = false;
+            let scootUp = false;
+            let runningGrab = this._lastRopeGrab.get(id) ?? false;
+            let runningJump = this._lastRopeJump?.get(id) ?? false;
+            if (!this._lastRopeJump) this._lastRopeJump = new Map();
+            for (const input of queue) {
+              latest = input;
+              if (runningGrab && !input.ropeGrab) anyRelease = true;
+              runningGrab = !!input.ropeGrab;
+              // Rising edge of jump while swinging = scoot up one segment.
+              const jumpNow = !!(input.jumpPressed ?? input.jump);
+              if (!runningJump && jumpNow) scootUp = true;
+              runningJump = jumpNow;
+              seqs[id] = input.seq;
+            }
+            this._lastRopeGrab.set(id, runningGrab);
+            this._lastRopeJump.set(id, runningJump);
+            state._ropeInput = {
+              moveX: latest?.moveX ?? 0,
+              moveZ: latest?.moveZ ?? 0,
+              scootUp,
+              releasePressed: anyRelease,
+            };
+            // When release fires this tick, clear edge trackers so the next
+            // grab session starts clean (no phantom scoot from a stale held
+            // jump, no immediate re-release from a stale grab bit).
+            if (anyRelease) {
+              this._lastRopeGrab.set(id, false);
+              this._lastRopeJump.set(id, false);
+            }
+            queue.length = 0;
+            if (!this._lastSeq) this._lastSeq = new Map();
+            this._lastSeq.set(id, seqs[id]);
+          } else {
+            seqs[id] = this._lastSeq?.get(id) ?? 0;
+            state._ropeInput = { moveX: 0, moveZ: 0, scootUp: false, releasePressed: false };
+          }
+        } else {
+          state._ropeInput = { moveX: 0, moveZ: 0, scootUp: false, releasePressed: true };
+          seqs[id] = 0;
+        }
         continue;
       }
 
@@ -611,6 +677,16 @@ export default class GameServer {
         } else {
           let didSmack = false;
           let lastGrab = false;
+          let ropeGrabPress = false;
+          const prevRopeGrab = this._lastRopeGrab.get(id) ?? false;
+          let lastRopeGrab = prevRopeGrab;
+          // Track jump edges here too so a space press that occurs on the
+          // same tick we grab the rope triggers a scoot (otherwise that
+          // rising edge gets eaten by simulateTick and the swing branch
+          // starts with jumpPressed already false).
+          if (!this._lastRopeJump) this._lastRopeJump = new Map();
+          let runningJump = this._lastRopeJump.get(id) ?? false;
+          let grabTickJumpPress = false;
           for (const input of queue) {
             const vacuumPull = roombaForVacuum?.phase === 'vacuuming'
               ? getRoombaVacuumPullAcceleration(roombaForVacuum, state)
@@ -620,6 +696,21 @@ export default class GameServer {
             seqs[id] = input.seq;
             lastGrab = !!input.grab;
             if (input.smack) didSmack = true;
+            if (!lastRopeGrab && input.ropeGrab) ropeGrabPress = true;
+            lastRopeGrab = !!input.ropeGrab;
+            const jumpNow = !!(input.jumpPressed ?? input.jump);
+            if (!runningJump && jumpNow) grabTickJumpPress = true;
+            runningJump = jumpNow;
+          }
+          this._lastRopeGrab.set(id, lastRopeGrab);
+          this._lastRopeJump.set(id, runningJump);
+          // Press-and-hold grapple: while R is held we keep trying to grab each
+          // tick so walking into a rope with R already down latches on.
+          if (lastRopeGrab && state.alive && !state.ropeSwing) {
+            const grabbed = this.ropeWorld.tryGrab(id, state);
+            if (grabbed && grabTickJumpPress) {
+              this.ropeWorld.scootUp?.(id, state);
+            }
           }
           if (lastGrab) grabHeld.add(id);
           if (didSmack) smackRequests.push(id);
@@ -842,13 +933,16 @@ export default class GameServer {
           target.velocity.z += hit.knockbackZ;
           if (!target.alive) {
             target.roombaLaunch = null;
+            target.ropeSwing = null;
             this.mouseLaunchWorld.removePlayer(hit.playerId);
+            this.ropeWorld.removePlayer(hit.playerId);
           }
         }
       }
     }
 
     this.mouseLaunchWorld.step(dt, (pid) => this.players.get(pid));
+    this.ropeWorld.step(dt, (pid) => this.players.get(pid));
 
     tickPlayerChaseScores(this.players, this.predators, dt);
 
@@ -870,6 +964,7 @@ export default class GameServer {
       predators: this.predators.map((p) => (p.type === 'roomba' ? serializeRoombaState(p) : serializePredatorState(p))),
       pushBalls: this.pushBallWorld.getBallsState(),
       cheesePickups: this.cheeseWorld.serializePickups(),
+      ropes: this.ropeWorld.getRopesSnapshot(),
     };
     this.broadcast(JSON.stringify(snapshot));
   }

@@ -61,6 +61,9 @@ export class NetworkClient {
   /** Authoritative pushable balls (cannon-es on server); empty until init/snapshot */
   pushBalls = [];
 
+  /** Authoritative rope segment positions (server-authoritative); empty until init/snapshot */
+  ropes = [];
+
   /** @type {{ id: string, x: number, y: number, z: number, amount: number }[]} */
   cheesePickups = [];
 
@@ -205,6 +208,12 @@ export class NetworkClient {
     }
   }
 
+  _applyRopesPayload(data) {
+    if (Array.isArray(data.ropes)) {
+      this.ropes = data.ropes;
+    }
+  }
+
   _applyCheesePayload(data) {
     if (Array.isArray(data.cheesePickups)) {
       this.cheesePickups = data.cheesePickups;
@@ -238,6 +247,7 @@ export class NetworkClient {
           }
         }
         this._applyPushBallsPayload(data);
+        this._applyRopesPayload(data);
         this._applyCheesePayload(data);
         break;
 
@@ -290,6 +300,7 @@ export class NetworkClient {
           }
         }
         this._applyPushBallsPayload(data);
+        this._applyRopesPayload(data);
         this._applyCheesePayload(data);
         break;
       }

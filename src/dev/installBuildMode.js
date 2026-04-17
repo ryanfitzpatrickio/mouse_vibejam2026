@@ -2,7 +2,41 @@ import * as THREE from 'three';
 import { PrefabEditorDialog } from './PrefabEditorDialog.js';
 import { DEFAULT_PREFAB_LIBRARY, normalizePrefabLibrary } from './prefabRegistry.js';
 import { clamp, createAtlasButtonStyle, deepClone } from './editorShared.js';
-import { createDefaultPrimitive, createDefaultLight, createDefaultPortal, createPrimitiveId, createPortalId, createSpawnMarkerPrimitive, loadPrefabLibraryFromAsset } from './buildModeSupport.js';
+import { createDefaultPrimitive, createDefaultLight, createDefaultPortal, createDefaultRope, createPrimitiveId, createPortalId, createRopeId, createSpawnMarkerPrimitive, loadPrefabLibraryFromAsset } from './buildModeSupport.js';
+import {
+  styleField,
+  addActionButton,
+  addInlineButton,
+  createSection,
+  createVectorInputs,
+  createVector2Inputs,
+  createNumberField,
+  createRangeField,
+  createCheckbox,
+} from './ui/fields.js';
+import { installSelectionSection } from './sections/selection.js';
+import { installTransformSection } from './sections/transform.js';
+import { installMaterialSection } from './sections/material.js';
+import { installLightSection } from './sections/light.js';
+import { installPortalSection } from './sections/portal.js';
+import { installPrefabSection } from './sections/prefab.js';
+import { installPaletteSection } from './sections/palette.js';
+import { installGlbSection } from './sections/glb.js';
+import { installRopeSection } from './sections/rope.js';
+import { installOrbitControls } from './subsystems/orbitControls.js';
+import {
+  installProbeVisuals,
+  updateProbe,
+  hideProbe,
+  resolveEditableHitObject,
+  editableIdFromObject,
+} from './subsystems/probeVisuals.js';
+import { bindCanvasEvents } from './subsystems/canvasInput.js';
+import {
+  installTransformControls,
+  attachTransformControls,
+  setTransformMode,
+} from './subsystems/transformGizmo.js';
 import { loadTextureAtlases, TEXTURE_ATLASES } from './textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
 import { SPAWN_TYPES, normalizeSpawnType } from '../../shared/spawnPoints.js';
@@ -60,6 +94,7 @@ class BuildModeEditor {
     this.app.room.setSpawnMarkersVisible(this.visible);
     this.app.room.setLightHelpersVisible(this.visible);
     this.app.room.setPortalHelpersVisible(this.visible);
+    this.app.room.setRopeHelpersVisible?.(this.visible);
     if (this.visible) {
       this.app.thirdPersonCamera?.setEnabled(false);
       this.controls.target.copy(this.app.mouse.position);
@@ -183,6 +218,7 @@ class BuildModeEditor {
     this._addActionButton('Sun Light', () => this._addLight('directional'), '#5a4c20');
     this._addActionButton('Vibe Portal', () => this._addPortal(VIBE_PORTAL_TYPES.EXIT), '#125341');
     this._addActionButton('Return Portal', () => this._addPortal(VIBE_PORTAL_TYPES.RETURN), '#5b241c');
+    this._addActionButton('Rope', () => this._addRope(), '#5e4322');
     this._addActionButton('Move', () => this._setTransformMode('translate'));
     this._addActionButton('Rotate', () => this._setTransformMode('rotate'));
     this._addActionButton('Scale', () => this._setTransformMode('scale'));
@@ -196,6 +232,7 @@ class BuildModeEditor {
     this._createMaterialSection();
     this._createLightSection();
     this._createPortalSection();
+    this._createRopeSection();
     this._createPrefabSection();
     this._createGlbSection();
     this._createPaletteSection();
@@ -219,46 +256,11 @@ class BuildModeEditor {
   }
 
   _createOrbitControls() {
-    this.controls = new this.OrbitControls(this.app.camera, this.app.renderer.domElement);
-    this.controls.enabled = false;
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.08;
-    this.controls.screenSpacePanning = true;
-    this.controls.minDistance = 1.5;
-    this.controls.maxDistance = 28;
+    installOrbitControls(this);
   }
 
   _createProbeVisuals() {
-    const positions = new Float32Array(6);
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const material = new THREE.LineBasicMaterial({
-      color: '#ffdf8a',
-      transparent: true,
-      opacity: 0.9,
-    });
-    this.pointerLine = new THREE.Line(geometry, material);
-    this.pointerLine.visible = false;
-    this.pointerLine.renderOrder = 999;
-    this.pointerLine.userData.editorHelper = true;
-    this.app.scene.add(this.pointerLine);
-
-    this.hitTooltip = document.createElement('div');
-    Object.assign(this.hitTooltip.style, {
-      position: 'fixed',
-      zIndex: '141',
-      pointerEvents: 'none',
-      padding: '6px 8px',
-      borderRadius: '8px',
-      background: 'rgba(12, 10, 9, 0.9)',
-      color: '#fff6ec',
-      border: '1px solid rgba(255,255,255,0.12)',
-      fontFamily: 'monospace',
-      fontSize: '11px',
-      whiteSpace: 'pre',
-      display: 'none',
-    });
-    document.body.appendChild(this.hitTooltip);
+    installProbeVisuals(this);
   }
 
   _createPrefabEditorDialog() {
@@ -279,655 +281,72 @@ class BuildModeEditor {
   }
 
   _createTransformControls() {
-    this.transformControls = new this.TransformControls(this.app.camera, this.app.renderer.domElement);
-    this.transformControls.enabled = false;
-    this.transformControls.setMode('translate');
-    this.transformControls.size = 0.85;
-    this.transformControlsHelper = this.transformControls.getHelper();
-    this.transformControlsHelper.userData.editorHelper = true;
-    this.transformControls.addEventListener('dragging-changed', (event) => {
-      this.controls.enabled = !event.value && this.visible;
-      if (!event.value) {
-        this.layout = this.app.room.getEditableLayout();
-        this._syncForm();
-        this._attachTransformControls();
-      }
-    });
-    this.transformControls.addEventListener('objectChange', () => {
-      if (this._suppressTransformSync) return;
-      const object = this.transformControls.object;
-      const primitiveId = object?.userData?.primitiveId;
-      const prefabInstanceId = object?.userData?.prefabInstanceId;
-      const lightId = object?.userData?.lightId;
-      const portalId = object?.userData?.portalId;
-      if (!primitiveId && !prefabInstanceId && !lightId && !portalId) return;
-
-      const primitive = primitiveId
-        ? this.layout.primitives.find((entry) => entry.id === primitiveId)
-        : null;
-      const light = lightId
-        ? (this.layout.lights ?? []).find((entry) => entry.id === lightId)
-        : null;
-      const portal = portalId
-        ? (this.layout.portals ?? []).find((entry) => entry.id === portalId)
-        : null;
-      const mode = this.transformMode || this.transformControls?.mode || 'translate';
-      const isGlb = primitive?.type === 'glb';
-      const next = primitive
-        ? this.app.room.snapPrimitiveToGrid({
-          ...deepClone(primitive),
-          position: {
-            x: object.position.x,
-            y: object.position.y,
-            z: object.position.z,
-          },
-          rotation: {
-            x: object.rotation.x,
-            y: object.rotation.y,
-            z: object.rotation.z,
-          },
-          scale: {
-            x: object.scale.x,
-            y: object.scale.y,
-            z: object.scale.z,
-          },
-        }, {
-          snapY: true,
-          snapPosition: mode !== 'scale',
-          snapScale: mode === 'scale' && !isGlb,
-          allowEdgeOverflow: true,
-        })
-        : light
-          ? this.app.room.snapLightToGrid({
-            ...deepClone(light),
-            position: {
-              x: object.position.x,
-              y: object.position.y,
-              z: object.position.z,
-            },
-            rotation: {
-              x: object.rotation.x,
-              y: object.rotation.y,
-              z: object.rotation.z,
-            },
-          }, {
-            snapY: true,
-            snapPosition: true,
-            allowEdgeOverflow: true,
-          })
-        : portal
-          ? this.app.room.snapPortalToGrid({
-            ...deepClone(portal),
-            position: {
-              x: object.position.x,
-              y: object.position.y,
-              z: object.position.z,
-            },
-            rotation: {
-              x: object.rotation.x,
-              y: object.rotation.y,
-              z: object.rotation.z,
-            },
-          }, {
-            snapY: true,
-            snapPosition: true,
-            allowEdgeOverflow: true,
-          })
-          : {
-          position: {
-            x: Number(object.position.x.toFixed(4)),
-            y: Number(object.position.y.toFixed(4)),
-            z: Number(object.position.z.toFixed(4)),
-          },
-          rotation: {
-            x: Number(object.rotation.x.toFixed(4)),
-            y: Number(object.rotation.y.toFixed(4)),
-            z: Number(object.rotation.z.toFixed(4)),
-          },
-          scale: {
-            x: Number(object.scale.x.toFixed(4)),
-            y: Number(object.scale.y.toFixed(4)),
-            z: Number(object.scale.z.toFixed(4)),
-          },
-        };
-
-      this._suppressTransformSync = true;
-      object.position.set(next.position.x, next.position.y, next.position.z);
-      object.rotation.set(next.rotation.x, next.rotation.y, next.rotation.z);
-      if (next.scale) {
-        object.scale.set(next.scale.x, next.scale.y, next.scale.z);
-      } else {
-        object.scale.set(1, 1, 1);
-      }
-      this._suppressTransformSync = false;
-
-      if (lightId) {
-        this.app.room.updateEditableLightTransform(lightId, {
-          position: next.position,
-          rotation: next.rotation,
-        });
-      } else if (portalId) {
-        this.app.room.updateEditablePortalTransform(portalId, {
-          position: next.position,
-          rotation: next.rotation,
-        });
-      } else {
-        this.app.room.updateEditablePrimitiveTransform(primitiveId || prefabInstanceId, {
-          position: next.position,
-          rotation: next.rotation,
-          scale: next.scale,
-        });
-      }
-      this.layout = this.app.room.getEditableLayout();
-      this._syncForm();
-    });
-    this.app.scene.add(this.transformControlsHelper);
+    installTransformControls(this);
   }
 
   _bindCanvasEvents() {
-    const canvas = this.app.renderer.domElement;
-
-    canvas.addEventListener('pointermove', (event) => {
-      this.pointerInsideCanvas = true;
-      const rect = canvas.getBoundingClientRect();
-      this.pointerNdc.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      this.pointerNdc.y = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
-      this.pointerScreen.x = event.clientX;
-      this.pointerScreen.y = event.clientY;
-    });
-
-    canvas.addEventListener('pointerleave', () => {
-      this.pointerInsideCanvas = false;
-      this._hideProbe();
-    });
-
-    canvas.addEventListener('dblclick', (event) => {
-      if (!this.visible) return;
-      event.preventDefault();
-      const hitObject = this._resolveEditableHitObject(this.currentHit?.object);
-      const editableId = this._editableIdFromObject(hitObject);
-      if (!editableId) return;
-      this.selectedId = editableId;
-      this._syncForm();
-      this._setStatus(`Selected ${hitObject.name || 'object'}.`);
-    });
+    bindCanvasEvents(this);
   }
 
   _resolveEditableHitObject(object) {
-    let current = object ?? null;
-    while (
-      current
-      && !current.userData?.primitiveId
-      && !current.userData?.prefabInstanceId
-      && !current.userData?.lightId
-      && !current.userData?.portalId
-    ) {
-      current = current.parent;
-    }
-    return current;
+    return resolveEditableHitObject(object);
   }
 
   _editableIdFromObject(object) {
-    return object?.userData?.primitiveId
-      ?? object?.userData?.prefabInstanceId
-      ?? object?.userData?.lightId
-      ?? object?.userData?.portalId
-      ?? null;
+    return editableIdFromObject(object);
   }
 
   _updateProbe() {
-    if (!this.pointerInsideCanvas) {
-      this._hideProbe();
-      return;
-    }
-
-    this.raycaster.setFromCamera(this.pointerNdc, this.app.camera);
-    const hits = this.raycaster.intersectObjects(this.app.scene.children, true)
-      .filter((hit) => hit.object?.visible !== false && hit.object?.userData?.editorHelper !== true);
-
-    const hit = hits[0] ?? null;
-    this.currentHit = hit;
-    if (!hit) {
-      this._hideProbe();
-      return;
-    }
-
-    const position = this.pointerLine.geometry.attributes.position;
-    position.setXYZ(0, this.app.camera.position.x, this.app.camera.position.y, this.app.camera.position.z);
-    position.setXYZ(1, hit.point.x, hit.point.y, hit.point.z);
-    position.needsUpdate = true;
-    this.pointerLine.visible = true;
-
-    const hitObject = this._resolveEditableHitObject(hit.object);
-    const editableId = this._editableIdFromObject(hitObject);
-    const primitive = editableId
-      ? this.layout.primitives.find((entry) => entry.id === editableId)
-      : null;
-    const light = editableId
-      ? (this.layout.lights ?? []).find((entry) => entry.id === editableId)
-      : null;
-    const portal = editableId
-      ? (this.layout.portals ?? []).find((entry) => entry.id === editableId)
-      : null;
-    const gridCell = this._getGridCellFromPoint(hit.point);
-    this.hitTooltip.style.display = 'block';
-    this.hitTooltip.style.left = `${this.pointerScreen.x + 14}px`;
-    this.hitTooltip.style.top = `${this.pointerScreen.y + 14}px`;
-    this.hitTooltip.textContent = [
-      hitObject?.name || hit.object.name || 'unnamed',
-      gridCell ? `grid ${gridCell.col + 1}, ${gridCell.row + 1}` : '',
-      primitive ? `cell ${primitive.texture.cell ?? 'none'}` : '',
-      light ? `${light.lightType} light` : '',
-      portal ? `${portal.portalType} portal` : '',
-      `x ${hit.point.x.toFixed(2)} y ${hit.point.y.toFixed(2)} z ${hit.point.z.toFixed(2)}`,
-    ].filter(Boolean).join('\n');
+    updateProbe(this);
   }
 
   _hideProbe() {
-    this.currentHit = null;
-    if (this.pointerLine) {
-      this.pointerLine.visible = false;
-    }
-    if (this.hitTooltip) {
-      this.hitTooltip.style.display = 'none';
-    }
+    hideProbe(this);
   }
 
   _setTransformMode(mode) {
-    this.transformMode = mode;
-    this.transformControls?.setMode(mode);
-    this._setStatus(`Transform mode: ${mode}`);
+    setTransformMode(this, mode);
   }
 
   _attachTransformControls() {
-    if (!this.transformControls || !this.visible) return;
-    const object = this.app.room.getEditableObject(this.selectedId);
-    if (!object || object.visible === false) {
-      this.transformControls.detach();
-      return;
-    }
-    this.transformControls.attach(object);
+    attachTransformControls(this);
   }
 
+
   _createSelectionSection() {
-    const section = this._createSection('Selection');
-
-    this.primitiveSelect = document.createElement('select');
-    this._styleField(this.primitiveSelect);
-    this.primitiveSelect.addEventListener('change', () => {
-      this.selectedId = this.primitiveSelect.value || null;
-      this._syncForm();
-    });
-    section.appendChild(this.primitiveSelect);
-
-    this.nameInput = document.createElement('input');
-    this.nameInput.type = 'text';
-    this.nameInput.placeholder = 'Primitive name';
-    this._styleField(this.nameInput);
-    this.nameInput.style.marginTop = '8px';
-    this.nameInput.addEventListener('input', () => {
-      this._updateSelected((entry) => {
-        entry.name = this.nameInput.value
-          || entry.type
-          || (entry.lightType ? `${entry.lightType}-light` : null)
-          || (entry.portalType ? `${entry.portalType}-portal` : 'editable');
-      });
-    });
-    section.appendChild(this.nameInput);
-
-    const toggles = document.createElement('div');
-    Object.assign(toggles.style, {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-      gap: '8px',
-      marginTop: '8px',
-    });
-    section.appendChild(toggles);
-
-    this.colliderToggle = this._createCheckbox('Collider', toggles, (checked) => {
-      this._updateSelected((primitive) => {
-        primitive.collider = checked;
-      });
-    });
-    this.castShadowToggle = this._createCheckbox('Cast Shadow', toggles, (checked) => {
-      this._updateSelected((primitive) => {
-        primitive.castShadow = checked;
-      });
-    });
-    this.receiveShadowToggle = this._createCheckbox('Recv Shadow', toggles, (checked) => {
-      this._updateSelected((primitive) => {
-        primitive.receiveShadow = checked;
-      });
-    });
-
-    this.clearanceInput = this._createRangeField(section, 'Clearance', 0, 2, 0.05, (value) => {
-      this._updateSelected((primitive) => {
-        primitive.colliderClearance = value;
-      });
-    });
-
-    const navAreaWrap = document.createElement('label');
-    navAreaWrap.textContent = 'Nav Area';
-    Object.assign(navAreaWrap.style, {
-      display: 'grid',
-      gap: '4px',
-      color: '#d7c5a7',
-      marginTop: '8px',
-    });
-    this.navAreaSelect = document.createElement('select');
-    this._styleField(this.navAreaSelect);
-    [
-      [NAV_AREA_TYPES.DEFAULT, 'Default'],
-      [NAV_AREA_TYPES.MOUSE_ONLY, 'Mouse Only'],
-    ].forEach(([value, label]) => {
-      const option = document.createElement('option');
-      option.value = value;
-      option.textContent = label;
-      this.navAreaSelect.appendChild(option);
-    });
-    this.navAreaSelect.addEventListener('change', () => {
-      this._updateSelected((primitive) => {
-        primitive.navArea = normalizeNavArea(this.navAreaSelect.value);
-      });
-    });
-    navAreaWrap.appendChild(this.navAreaSelect);
-    this.navAreaSelect._wrap = navAreaWrap;
-    section.appendChild(navAreaWrap);
+    installSelectionSection(this);
   }
 
   _createTransformSection() {
-    const section = this._createSection('Transform');
-
-    this.positionInputs = this._createVectorInputs(section, 'Position', { step: 0.05 }, (axis, value) => {
-      this._updateSelected((primitive) => {
-        primitive.position[axis] = value;
-      }, { snapPosition: true, snapScale: false });
-    });
-    this.rotationInputs = this._createVectorInputs(section, 'Rotation', { step: 1 }, (axis, value) => {
-      this._updateSelected((primitive) => {
-        primitive.rotation[axis] = value * DEG_TO_RAD;
-      }, { snapPosition: false, snapScale: false });
-    });
-    this.scaleInputs = this._createVectorInputs(section, 'Scale', { step: 0.1, min: 0.1 }, (axis, value) => {
-      this._updateSelected((primitive) => {
-        primitive.scale[axis] = Math.max(0.1, value);
-      }, { snapPosition: false, snapScale: true });
-    });
+    installTransformSection(this);
   }
 
   _createMaterialSection() {
-    const section = this._createSection('Surface');
-    this.surfaceSection = section;
-
-    const grid = document.createElement('div');
-    Object.assign(grid.style, {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-      gap: '8px',
-    });
-    section.appendChild(grid);
-
-    this.textureCellInput = this._createNumberField(grid, 'Texture Cell', {
-      step: 1,
-      min: 0,
-      max: (this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1,
-    }, (value) => {
-      this._updateSelected((primitive) => {
-        primitive.texture.cell = Number.isFinite(value)
-          ? clamp(Math.round(value), 0, (this._activeTextureAtlas().manifest?.cells?.length ?? 100) - 1)
-          : null;
-        primitive.texture.atlas = this.activeTextureAtlasId;
-      });
-      this._highlightPalette();
-    });
-
-    this.colorInput = document.createElement('input');
-    this.colorInput.type = 'color';
-    this._styleField(this.colorInput);
-    this.colorInput.addEventListener('input', () => {
-      this._updateSelected((primitive) => {
-        primitive.material.color = this.colorInput.value;
-      });
-    });
-    const colorWrap = document.createElement('label');
-    colorWrap.textContent = 'Tint';
-    Object.assign(colorWrap.style, { display: 'grid', gap: '4px', color: '#d7c5a7' });
-    colorWrap.appendChild(this.colorInput);
-    grid.appendChild(colorWrap);
-
-    this.repeatInputs = this._createVector2Inputs(section, 'Texture Repeat', { step: 0.1, min: 0.1 }, (axis, value) => {
-      this._updateSelected((primitive) => {
-        primitive.texture.repeat[axis] = Math.max(0.1, value);
-      });
-    });
-
-    this.textureRotationInput = this._createNumberField(section, 'Texture Rotation', {
-      step: 1,
-    }, (value) => {
-      this._updateSelected((primitive) => {
-        primitive.texture.rotation = value * DEG_TO_RAD;
-      });
-    });
-
-    this.roughnessInput = this._createRangeField(section, 'Roughness', 0, 1, 0.01, (value) => {
-      this._updateSelected((primitive) => {
-        primitive.material.roughness = value;
-      });
-    });
-
-    this.metalnessInput = this._createRangeField(section, 'Metalness', 0, 1, 0.01, (value) => {
-      this._updateSelected((primitive) => {
-        primitive.material.metalness = value;
-      });
-    });
+    installMaterialSection(this);
   }
 
   _createLightSection() {
-    const section = this._createSection('Light');
-    this.lightSection = section;
-
-    this.lightColorInput = document.createElement('input');
-    this.lightColorInput.type = 'color';
-    this._styleField(this.lightColorInput);
-    this.lightColorInput.addEventListener('input', () => {
-      this._updateSelected((light) => {
-        light.color = this.lightColorInput.value;
-      }, { snapPosition: false, snapScale: false });
-    });
-    const colorWrap = document.createElement('label');
-    colorWrap.textContent = 'Color';
-    Object.assign(colorWrap.style, { display: 'grid', gap: '4px', color: '#d7c5a7' });
-    colorWrap.appendChild(this.lightColorInput);
-    colorWrap.style.marginTop = '0';
-    section.appendChild(colorWrap);
-    this.lightColorInput._wrap = colorWrap;
-
-    this.lightTypeSelect = document.createElement('select');
-    this._styleField(this.lightTypeSelect);
-    this.lightTypeSelect.style.marginTop = '8px';
-    [
-      ['point', 'Point'],
-      ['spot', 'Spot'],
-      ['directional', 'Directional'],
-    ].forEach(([value, label]) => {
-      const option = document.createElement('option');
-      option.value = value;
-      option.textContent = label;
-      this.lightTypeSelect.appendChild(option);
-    });
-    this.lightTypeSelect.addEventListener('change', () => {
-      this._updateSelected((light) => {
-        light.lightType = this.lightTypeSelect.value;
-      }, { snapPosition: false, snapScale: false });
-    });
-    section.appendChild(this.lightTypeSelect);
-
-    this.lightIntensityInput = this._createRangeField(section, 'Intensity', 0, 50, 0.1, (value) => {
-      this._updateSelected((light) => {
-        light.intensity = value;
-      }, { snapPosition: false, snapScale: false });
-    });
-
-    this.lightDistanceInput = this._createNumberField(section, 'Distance', { step: 0.1, min: 0 }, (value) => {
-      this._updateSelected((light) => {
-        light.distance = Math.max(0, value ?? 0);
-      }, { snapPosition: false, snapScale: false });
-    });
-
-    this.lightDecayInput = this._createNumberField(section, 'Decay', { step: 0.05, min: 0 }, (value) => {
-      this._updateSelected((light) => {
-        light.decay = Math.max(0, value ?? 0);
-      }, { snapPosition: false, snapScale: false });
-    });
-
-    this.lightAngleInput = this._createRangeField(section, 'Cone Angle', 5, 85, 1, (value) => {
-      this._updateSelected((light) => {
-        light.angle = value * DEG_TO_RAD;
-      }, { snapPosition: false, snapScale: false });
-    });
-
-    this.lightPenumbraInput = this._createRangeField(section, 'Penumbra', 0, 1, 0.01, (value) => {
-      this._updateSelected((light) => {
-        light.penumbra = value;
-      }, { snapPosition: false, snapScale: false });
-    });
+    installLightSection(this);
   }
 
   _createPortalSection() {
-    const section = this._createSection('Portal');
-    this.portalSection = section;
+    installPortalSection(this);
+  }
 
-    const typeWrap = document.createElement('label');
-    typeWrap.textContent = 'Portal Type';
-    Object.assign(typeWrap.style, {
-      display: 'grid',
-      gap: '4px',
-      color: '#d7c5a7',
-    });
-    this.portalTypeSelect = document.createElement('select');
-    this._styleField(this.portalTypeSelect);
-    [
-      [VIBE_PORTAL_TYPES.EXIT, 'Vibe Jam Exit'],
-      [VIBE_PORTAL_TYPES.RETURN, 'Return / Start'],
-    ].forEach(([value, label]) => {
-      const option = document.createElement('option');
-      option.value = value;
-      option.textContent = label;
-      this.portalTypeSelect.appendChild(option);
-    });
-    this.portalTypeSelect.addEventListener('change', () => {
-      this._updateSelected((portal) => {
-        portal.portalType = normalizeVibePortalType(this.portalTypeSelect.value);
-        portal.name = portal.portalType === VIBE_PORTAL_TYPES.RETURN ? 'Return Portal' : 'Vibe Jam Portal';
-      }, { snapPosition: false, snapScale: false });
-    });
-    typeWrap.appendChild(this.portalTypeSelect);
-    section.appendChild(typeWrap);
-
-    this.portalTriggerRadiusInput = this._createRangeField(section, 'Trigger Radius', 0.25, 3, 0.05, (value) => {
-      this._updateSelected((portal) => {
-        portal.triggerRadius = value;
-      }, { snapPosition: false, snapScale: false });
-    });
+  _createRopeSection() {
+    installRopeSection(this);
   }
 
   _createPrefabSection() {
-    const section = this._createSection('Prefabs');
-
-    this.prefabSelect = document.createElement('select');
-    this._styleField(this.prefabSelect);
-    this.prefabSelect.addEventListener('change', () => {
-      this._syncPrefabSection();
-    });
-
-    section.appendChild(this.prefabSelect);
-
-    const actions = document.createElement('div');
-    Object.assign(actions.style, {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-      gap: '8px',
-      marginTop: '8px',
-    });
-    section.appendChild(actions);
-
-    this._addInlineButton(actions, 'New / Edit', () => this._openPrefabEditor());
-    this._addInlineButton(actions, 'Place', () => this._placeSelectedPrefab(), '#23472d');
-    this._addInlineButton(actions, 'Delete', () => this._deleteSelectedPrefab(), '#5d221f');
-    this._addInlineButton(actions, 'Save Lib', () => this._savePrefabLibrary());
-
-    this.prefabMeta = document.createElement('div');
-    Object.assign(this.prefabMeta.style, {
-      color: '#d8c3a8',
-      marginTop: '8px',
-      fontSize: '11px',
-      lineHeight: '1.35',
-      whiteSpace: 'pre-wrap',
-    });
-    section.appendChild(this.prefabMeta);
+    installPrefabSection(this);
   }
 
   _createPaletteSection() {
-    const section = this._createSection('Texture Palette');
-
-    this.textureAtlasTabs = document.createElement('div');
-    Object.assign(this.textureAtlasTabs.style, {
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '6px',
-      marginBottom: '8px',
-    });
-    section.appendChild(this.textureAtlasTabs);
-
-    this.paletteGrid = document.createElement('div');
-    Object.assign(this.paletteGrid.style, {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-      gap: '6px',
-    });
-    section.appendChild(this.paletteGrid);
+    installPaletteSection(this);
   }
 
   _createGlbSection() {
-    const section = this._createSection('GLB Models');
-
-    this._glbFileInput = document.createElement('input');
-    this._glbFileInput.type = 'file';
-    this._glbFileInput.accept = '.glb';
-    this._glbFileInput.style.display = 'none';
-    this._glbFileInput.addEventListener('change', () => this._handleGlbUpload());
-    document.body.appendChild(this._glbFileInput);
-
-    const uploadRow = document.createElement('div');
-    Object.assign(uploadRow.style, {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-      gap: '8px',
-    });
-    section.appendChild(uploadRow);
-
-    this._addInlineButton(uploadRow, 'Upload GLB', () => this._glbFileInput.click());
-    this._addInlineButton(uploadRow, 'Refresh', () => this._loadGlbRegistry());
-
-    this.glbSelect = document.createElement('select');
-    this._styleField(this.glbSelect);
-    this.glbSelect.style.marginTop = '8px';
-    section.appendChild(this.glbSelect);
-
-    this._addInlineButton(section, 'Place GLB', () => this._placeSelectedGlb(), '#23472d');
-    this._addInlineButton(section, 'Delete Asset', () => this._deleteSelectedGlb(), '#5d221f');
-
-    this.glbStatus = document.createElement('div');
-    Object.assign(this.glbStatus.style, {
-      color: '#d8c3a8',
-      marginTop: '8px',
-      fontSize: '11px',
-      lineHeight: '1.35',
-      whiteSpace: 'pre-wrap',
-    });
-    section.appendChild(this.glbStatus);
-
-    this._loadGlbRegistry();
+    installGlbSection(this);
   }
 
   async _loadGlbRegistry() {
@@ -1166,219 +585,39 @@ class BuildModeEditor {
   }
 
   _addActionButton(label, onClick, background = '#2f2c28') {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = label;
-    Object.assign(button.style, {
-      padding: '8px 10px',
-      borderRadius: '8px',
-      border: '1px solid rgba(255,255,255,0.12)',
-      background,
-      color: '#fff4e8',
-      cursor: 'pointer',
-      fontFamily: 'inherit',
-      fontSize: '11px',
-    });
-    button.addEventListener('click', onClick);
-    this.actions.appendChild(button);
+    return addActionButton(this.actions, label, onClick, background);
   }
 
   _addInlineButton(parent, label, onClick, background = '#2f2c28') {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = label;
-    Object.assign(button.style, {
-      padding: '8px 10px',
-      borderRadius: '8px',
-      border: '1px solid rgba(255,255,255,0.12)',
-      background,
-      color: '#fff4e8',
-      cursor: 'pointer',
-      fontFamily: 'inherit',
-      fontSize: '11px',
-    });
-    button.addEventListener('click', onClick);
-    parent.appendChild(button);
+    return addInlineButton(parent, label, onClick, background);
   }
 
   _createSection(title) {
-    const section = document.createElement('section');
-    Object.assign(section.style, {
-      marginTop: '12px',
-      paddingTop: '12px',
-      borderTop: '1px solid rgba(255,255,255,0.08)',
-    });
-
-    const heading = document.createElement('div');
-    heading.textContent = title.toUpperCase();
-    Object.assign(heading.style, {
-      color: '#ffd7a4',
-      marginBottom: '8px',
-      fontWeight: '700',
-      fontSize: '11px',
-    });
-
-    section.appendChild(heading);
-    this.panel.appendChild(section);
-    return section;
+    return createSection(this.panel, title);
   }
 
   _createVectorInputs(parent, label, attrs, onChange) {
-    const wrap = document.createElement('div');
-    Object.assign(wrap.style, { marginTop: '6px' });
-    parent.appendChild(wrap);
-
-    const title = document.createElement('div');
-    title.textContent = label;
-    title.style.color = '#d7c5a7';
-    wrap.appendChild(title);
-
-    const grid = document.createElement('div');
-    Object.assign(grid.style, {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-      gap: '6px',
-      marginTop: '4px',
-    });
-    wrap.appendChild(grid);
-
-    const inputs = {};
-    ['x', 'y', 'z'].forEach((axis) => {
-      const input = document.createElement('input');
-      input.type = 'number';
-      Object.assign(input, attrs);
-      input.removeAttribute('max');
-      input.removeAttribute('min');
-      this._styleField(input);
-      input.addEventListener('input', () => {
-        onChange(axis, Number(input.value || 0));
-      });
-      grid.appendChild(input);
-      inputs[axis] = input;
-    });
-    inputs._wrap = wrap;
-    return inputs;
+    return createVectorInputs(parent, label, attrs, onChange);
   }
 
   _createVector2Inputs(parent, label, attrs, onChange) {
-    const wrap = document.createElement('div');
-    Object.assign(wrap.style, { marginTop: '8px' });
-    parent.appendChild(wrap);
-
-    const title = document.createElement('div');
-    title.textContent = label;
-    title.style.color = '#d7c5a7';
-    wrap.appendChild(title);
-
-    const grid = document.createElement('div');
-    Object.assign(grid.style, {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-      gap: '6px',
-      marginTop: '4px',
-    });
-    wrap.appendChild(grid);
-
-    const inputs = {};
-    ['x', 'y'].forEach((axis) => {
-      const input = document.createElement('input');
-      input.type = 'number';
-      Object.assign(input, attrs);
-      input.removeAttribute('max');
-      input.removeAttribute('min');
-      this._styleField(input);
-      input.addEventListener('input', () => {
-        onChange(axis, Number(input.value || 0));
-      });
-      grid.appendChild(input);
-      inputs[axis] = input;
-    });
-    inputs._wrap = wrap;
-    return inputs;
+    return createVector2Inputs(parent, label, attrs, onChange);
   }
 
   _createNumberField(parent, label, attrs, onChange) {
-    const wrap = document.createElement('label');
-    wrap.textContent = label;
-    Object.assign(wrap.style, {
-      display: 'grid',
-      gap: '4px',
-      color: '#d7c5a7',
-      marginTop: parent === this.panel ? '8px' : '0',
-    });
-    const input = document.createElement('input');
-    input.type = 'number';
-    Object.assign(input, attrs);
-    input.removeAttribute('max');
-    input.removeAttribute('min');
-    this._styleField(input);
-    input.addEventListener('input', () => {
-      onChange(input.value === '' ? null : Number(input.value));
-    });
-    wrap.appendChild(input);
-    parent.appendChild(wrap);
-    input._wrap = wrap;
-    return input;
+    return createNumberField(parent, label, attrs, onChange, { topLevel: parent === this.panel });
   }
 
   _createRangeField(parent, label, min, max, step, onChange) {
-    const wrap = document.createElement('label');
-    wrap.textContent = label;
-    Object.assign(wrap.style, {
-      display: 'grid',
-      gap: '4px',
-      color: '#d7c5a7',
-      marginTop: '8px',
-    });
-    const input = document.createElement('input');
-    input.type = 'range';
-    input.min = String(min);
-    input.max = String(max);
-    input.step = String(step);
-    input.addEventListener('input', () => {
-      onChange(Number(input.value));
-      output.textContent = Number(input.value).toFixed(2);
-    });
-    const output = document.createElement('div');
-    output.style.color = '#f2e5cf';
-    output.style.fontSize = '11px';
-    wrap.append(input, output);
-    parent.appendChild(wrap);
-    input._output = output;
-    input._wrap = wrap;
-    return input;
+    return createRangeField(parent, label, min, max, step, onChange);
   }
 
   _createCheckbox(label, parent, onChange) {
-    const wrap = document.createElement('label');
-    Object.assign(wrap.style, {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      color: '#d7c5a7',
-      fontSize: '11px',
-    });
-    const input = document.createElement('input');
-    input.type = 'checkbox';
-    input.addEventListener('change', () => onChange(input.checked));
-    wrap.append(input, document.createTextNode(label));
-    parent.appendChild(wrap);
-    input._wrap = wrap;
-    return input;
+    return createCheckbox(label, parent, onChange);
   }
 
   _styleField(field) {
-    Object.assign(field.style, {
-      width: '100%',
-      padding: '6px 8px',
-      borderRadius: '8px',
-      border: '1px solid rgba(255,255,255,0.16)',
-      background: 'rgba(255,255,255,0.06)',
-      color: '#fff6ec',
-      fontFamily: 'inherit',
-      fontSize: '12px',
-      boxSizing: 'border-box',
-    });
+    styleField(field);
   }
 
   _selectedPrimitive() {
@@ -1393,8 +632,12 @@ class BuildModeEditor {
     return this._editorPortals().find((entry) => entry.id === this.selectedId) ?? null;
   }
 
+  _selectedRope() {
+    return this._editorRopes().find((entry) => entry.id === this.selectedId) ?? null;
+  }
+
   _selectedEntry() {
-    return this._selectedPrimitive() ?? this._selectedLight() ?? this._selectedPortal();
+    return this._selectedPrimitive() ?? this._selectedLight() ?? this._selectedPortal() ?? this._selectedRope();
   }
 
   _spawnLabel(spawnType) {
@@ -1415,8 +658,17 @@ class BuildModeEditor {
     return (this.layout.portals ?? []).filter((entry) => entry.deleted !== true);
   }
 
+  _editorRopes() {
+    return (this.layout.ropes ?? []).filter((entry) => entry.deleted !== true);
+  }
+
   _editorEntries() {
-    return [...this._editorPrimitives(), ...this._editorLights(), ...this._editorPortals()];
+    return [
+      ...this._editorPrimitives(),
+      ...this._editorLights(),
+      ...this._editorPortals(),
+      ...this._editorRopes(),
+    ];
   }
 
   _refreshList() {
@@ -1443,6 +695,8 @@ class BuildModeEditor {
         option.textContent = `${entry.name} (${entry.lightType} light)`;
       } else if (entry.portalType) {
         option.textContent = `${entry.name} (${normalizeVibePortalType(entry.portalType)} portal)`;
+      } else if (entry.segmentCount != null && entry.anchor) {
+        option.textContent = `${entry.name} (rope)`;
       } else {
         const spawnLabel = this._spawnLabel(normalizeSpawnType(entry.spawnType));
         option.textContent = spawnLabel
@@ -1461,18 +715,23 @@ class BuildModeEditor {
     const primitive = this._selectedPrimitive();
     const light = this._selectedLight();
     const portal = this._selectedPortal();
-    const entry = primitive ?? light ?? portal;
+    const rope = this._selectedRope();
+    const entry = primitive ?? light ?? portal ?? rope;
     const disabled = !entry;
     const primitiveDisabled = !primitive;
     const lightDisabled = !light;
     const portalDisabled = !portal;
+    const ropeDisabled = !rope;
 
     [
       this.nameInput,
       ...Object.values(this.positionInputs),
-      ...Object.values(this.rotationInputs),
     ].forEach((field) => {
       field.disabled = disabled;
+    });
+
+    Object.values(this.rotationInputs).forEach((field) => {
+      field.disabled = disabled || !!rope;
     });
 
     [
@@ -1512,9 +771,17 @@ class BuildModeEditor {
       field.disabled = portalDisabled;
     });
 
+    [
+      this.ropeLengthInput,
+      this.ropeSegmentsInput,
+    ].forEach((field) => {
+      if (field) field.disabled = ropeDisabled;
+    });
+
     this.surfaceSection.style.display = primitive ? 'block' : 'none';
     this.lightSection.style.display = light ? 'block' : 'none';
     this.portalSection.style.display = portal ? 'block' : 'none';
+    if (this.ropeSection) this.ropeSection.style.display = rope ? 'block' : 'none';
     this.scaleInputs._wrap.style.display = primitive ? 'block' : 'none';
     this.colliderToggle._wrap.style.display = primitive ? 'flex' : 'none';
     this.castShadowToggle._wrap.style.display = primitive || light ? 'flex' : 'none';
@@ -1529,12 +796,14 @@ class BuildModeEditor {
     }
 
     this.nameInput.value = entry.name;
-    this.positionInputs.x.value = entry.position.x;
-    this.positionInputs.y.value = entry.position.y;
-    this.positionInputs.z.value = entry.position.z;
-    this.rotationInputs.x.value = (entry.rotation.x * RAD_TO_DEG).toFixed(1);
-    this.rotationInputs.y.value = (entry.rotation.y * RAD_TO_DEG).toFixed(1);
-    this.rotationInputs.z.value = (entry.rotation.z * RAD_TO_DEG).toFixed(1);
+    const entryPosition = entry.position ?? entry.anchor ?? { x: 0, y: 0, z: 0 };
+    this.positionInputs.x.value = entryPosition.x;
+    this.positionInputs.y.value = entryPosition.y;
+    this.positionInputs.z.value = entryPosition.z;
+    const entryRotation = entry.rotation ?? { x: 0, y: 0, z: 0 };
+    this.rotationInputs.x.value = (entryRotation.x * RAD_TO_DEG).toFixed(1);
+    this.rotationInputs.y.value = (entryRotation.y * RAD_TO_DEG).toFixed(1);
+    this.rotationInputs.z.value = (entryRotation.z * RAD_TO_DEG).toFixed(1);
     this.castShadowToggle.checked = entry.castShadow === true;
 
     if (primitive) {
@@ -1577,6 +846,14 @@ class BuildModeEditor {
       this.portalTypeSelect.value = normalizeVibePortalType(portal.portalType);
       this.portalTriggerRadiusInput.value = portal.triggerRadius;
       this.portalTriggerRadiusInput._output.textContent = Number(portal.triggerRadius).toFixed(2);
+    }
+
+    if (rope && this.ropeLengthInput) {
+      this.ropeLengthInput.value = rope.length;
+      if (this.ropeLengthInput._output) {
+        this.ropeLengthInput._output.textContent = Number(rope.length).toFixed(2);
+      }
+      this.ropeSegmentsInput.value = rope.segmentCount;
     }
 
     this._highlightPalette();
@@ -1742,17 +1019,33 @@ class BuildModeEditor {
     }
 
     const portal = this._selectedPortal();
-    if (!portal) {
+    if (portal) {
+      const nextPortal = deepClone(portal);
+      mutator(nextPortal);
+      const snappedPortal = this.app.room.snapPortalToGrid(nextPortal, {
+        snapY,
+        snapPosition,
+        allowEdgeOverflow: true,
+      });
+      this.app.room.upsertEditablePortal(snappedPortal);
+      this.layout = this.app.room.getEditableLayout();
+      this._syncForm();
+      this._attachTransformControls();
       return;
     }
-    const nextPortal = deepClone(portal);
-    mutator(nextPortal);
-    const snappedPortal = this.app.room.snapPortalToGrid(nextPortal, {
+
+    const rope = this._selectedRope();
+    if (!rope) {
+      return;
+    }
+    const nextRope = deepClone(rope);
+    mutator(nextRope);
+    const snappedRope = this.app.room.snapRopeToGrid(nextRope, {
       snapY,
       snapPosition,
       allowEdgeOverflow: true,
     });
-    this.app.room.upsertEditablePortal(snappedPortal);
+    this.app.room.upsertEditableRope(snappedRope);
     this.layout = this.app.room.getEditableLayout();
     this._syncForm();
     this._attachTransformControls();
@@ -1807,6 +1100,19 @@ class BuildModeEditor {
     this._setStatus(`Added ${portal.name}.`);
   }
 
+  _addRope() {
+    const rope = this.app.room.snapRopeToGrid(
+      createDefaultRope(this.app),
+      { snapY: true, snapPosition: true, allowEdgeOverflow: true },
+    );
+    this.app.room.upsertEditableRope(rope);
+    this.layout = this.app.room.getEditableLayout();
+    this.selectedId = rope.id;
+    this._syncForm();
+    this._attachTransformControls();
+    this._setStatus(`Added ${rope.name}.`);
+  }
+
   _duplicateSelected() {
     const primitive = this._selectedPrimitive();
     const light = this._selectedLight();
@@ -1842,19 +1148,35 @@ class BuildModeEditor {
       this._setStatus(`Duplicated ${light.name}.`);
       return;
     }
-    if (!portal) return;
-    const portalCopy = deepClone(portal);
-    portalCopy.id = createPortalId();
-    portalCopy.name = `${portal.name}-copy`;
-    portalCopy.position.x += grid.cellWidth;
-    portalCopy.position.z += grid.cellDepth;
-    const snapped = this.app.room.snapPortalToGrid(portalCopy, { snapY: true, allowEdgeOverflow: true });
-    this.app.room.upsertEditablePortal(snapped);
+    if (portal) {
+      const portalCopy = deepClone(portal);
+      portalCopy.id = createPortalId();
+      portalCopy.name = `${portal.name}-copy`;
+      portalCopy.position.x += grid.cellWidth;
+      portalCopy.position.z += grid.cellDepth;
+      const snapped = this.app.room.snapPortalToGrid(portalCopy, { snapY: true, allowEdgeOverflow: true });
+      this.app.room.upsertEditablePortal(snapped);
+      this.layout = this.app.room.getEditableLayout();
+      this.selectedId = snapped.id;
+      this._syncForm();
+      this._attachTransformControls();
+      this._setStatus(`Duplicated ${portal.name}.`);
+      return;
+    }
+    const rope = this._selectedRope();
+    if (!rope) return;
+    const ropeCopy = deepClone(rope);
+    ropeCopy.id = createRopeId();
+    ropeCopy.name = `${rope.name}-copy`;
+    ropeCopy.anchor.x += grid.cellWidth;
+    ropeCopy.anchor.z += grid.cellDepth;
+    const snappedRope = this.app.room.snapRopeToGrid(ropeCopy, { snapY: true, allowEdgeOverflow: true });
+    this.app.room.upsertEditableRope(snappedRope);
     this.layout = this.app.room.getEditableLayout();
-    this.selectedId = snapped.id;
+    this.selectedId = snappedRope.id;
     this._syncForm();
     this._attachTransformControls();
-    this._setStatus(`Duplicated ${portal.name}.`);
+    this._setStatus(`Duplicated ${rope.name}.`);
   }
 
   _deleteSelected() {
@@ -1862,16 +1184,23 @@ class BuildModeEditor {
     const primitive = this._selectedPrimitive();
     const light = this._selectedLight();
     const portal = this._selectedPortal();
-    const currentName = primitive?.name ?? light?.name ?? portal?.name ?? 'object';
+    const rope = this._selectedRope();
+    const currentName = primitive?.name ?? light?.name ?? portal?.name ?? rope?.name ?? 'object';
     if (light) {
       this.app.room.purgeEditableLight(this.selectedId);
     } else if (portal) {
       this.app.room.purgeEditablePortal(this.selectedId);
+    } else if (rope) {
+      this.app.room.purgeEditableRope(this.selectedId);
     } else {
       this.app.room.purgeEditablePrimitive(this.selectedId);
     }
     this.layout = this.app.room.getEditableLayout();
-    this.selectedId = this.layout.primitives[0]?.id ?? this.layout.lights?.[0]?.id ?? this.layout.portals?.[0]?.id ?? null;
+    this.selectedId = this.layout.primitives[0]?.id
+      ?? this.layout.lights?.[0]?.id
+      ?? this.layout.portals?.[0]?.id
+      ?? this.layout.ropes?.[0]?.id
+      ?? null;
     this._syncForm();
     this._attachTransformControls();
     this._setStatus(`Deleted ${currentName}.`);

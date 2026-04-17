@@ -4383,5 +4383,19 @@ export default {
       "triggerRadius": 0.9,
       "deleted": false
     }
+  ],
+  "ropes": [
+    {
+      "id": "rope-mo33qnj1-6hamf",
+      "name": "rope-kg6",
+      "anchor": {
+        "x": 13.5,
+        "y": 12,
+        "z": 20
+      },
+      "length": 11.1,
+      "segmentCount": 12,
+      "deleted": false
+    }
   ]
 };

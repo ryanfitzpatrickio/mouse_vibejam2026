@@ -6,6 +6,7 @@ import { assetUrl } from '../utils/assetUrl.js';
 import { normalizeSpawnType } from '../../shared/spawnPoints.js';
 import { normalizeNavArea } from '../../shared/navConfig.js';
 import { VIBE_PORTAL_TYPES, collectVibePortalPlacementsFromLayout, normalizeVibePortal } from '../../shared/vibePortal.js';
+import { normalizeRope, ROPE_SEGMENT_RADIUS } from '../../shared/ropes.js';
 import {
   LEVEL_BUILD_GRID_COLUMNS,
   LEVEL_BUILD_GRID_ROWS,
@@ -38,6 +39,7 @@ const DEFAULT_EDITABLE_LAYOUT = Object.freeze({
   primitives: [],
   lights: [],
   portals: [],
+  ropes: [],
 });
 
 const EDITABLE_TYPE_DEFAULTS = Object.freeze({
@@ -201,6 +203,67 @@ function createPortalHelperObject(definition) {
   arrow.userData.portalId = definition.id;
   arrow.userData.skipOutline = true;
   group.add(arrow);
+
+  return group;
+}
+
+function createRopeHelperObject(definition) {
+  const group = new THREE.Group();
+  group.name = `${definition.name || definition.id}-rope-helper`;
+  group.userData.ropeId = definition.id;
+  group.userData.editableRope = true;
+  group.userData.skipOutline = true;
+
+  const anchor = new THREE.Mesh(
+    new THREE.SphereGeometry(ROPE_SEGMENT_RADIUS * 2.4, 16, 12),
+    new THREE.MeshBasicMaterial({
+      color: '#ffb347',
+      transparent: true,
+      opacity: 0.95,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  anchor.userData.ropeId = definition.id;
+  anchor.userData.skipOutline = true;
+  group.add(anchor);
+
+  const strand = new THREE.Mesh(
+    new THREE.CylinderGeometry(ROPE_SEGMENT_RADIUS * 0.6, ROPE_SEGMENT_RADIUS * 0.6, 1, 10, 1, true),
+    new THREE.MeshBasicMaterial({
+      color: '#caa76a',
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  strand.name = 'rope-preview-strand';
+  strand.userData.skipOutline = true;
+  strand.userData.ropePreviewStrand = true;
+  strand.userData.editorHelper = true;
+  strand.raycast = () => {};
+  strand.position.y = -definition.length * 0.5;
+  strand.scale.y = definition.length;
+  group.add(strand);
+
+  const tip = new THREE.Mesh(
+    new THREE.SphereGeometry(ROPE_SEGMENT_RADIUS * 1.6, 12, 8),
+    new THREE.MeshBasicMaterial({
+      color: '#caa76a',
+      transparent: true,
+      opacity: 0.75,
+      depthWrite: false,
+      toneMapped: false,
+    }),
+  );
+  tip.name = 'rope-preview-tip';
+  tip.userData.skipOutline = true;
+  tip.userData.ropePreviewTip = true;
+  tip.userData.editorHelper = true;
+  tip.raycast = () => {};
+  tip.position.y = -definition.length;
+  group.add(tip);
 
   return group;
 }
@@ -414,9 +477,11 @@ export class Room {
     this.spawnMarkersVisible = false;
     this.lightHelpersVisible = false;
     this.portalHelpersVisible = false;
+    this.ropeHelpersVisible = false;
     this.editableMeshes = new Map();
     this.editableLightObjects = new Map();
     this.editablePortalObjects = new Map();
+    this.editableRopeObjects = new Map();
     this.prefabInstanceGroups = new Map();
     this.prefabInstanceIdByPrimitiveId = new Map();
     this.ready = Promise.all([
@@ -629,6 +694,7 @@ export class Room {
         primitives: Array.isArray(layout?.primitives) ? layout.primitives.map((entry) => this._normalizePrimitive(entry)) : [],
         lights: Array.isArray(layout?.lights) ? layout.lights.map((entry) => this._normalizeLight(entry)) : [],
         portals: Array.isArray(layout?.portals) ? layout.portals.map((entry) => this._normalizePortal(entry)) : [],
+        ropes: Array.isArray(layout?.ropes) ? layout.ropes.map((entry) => this._normalizeRope(entry)) : [],
       };
     } catch {
       this.loadedEditableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
@@ -935,6 +1001,39 @@ export class Room {
     return normalizeVibePortal(entry);
   }
 
+  _normalizeRope(entry = {}) {
+    return normalizeRope(entry);
+  }
+
+  _createEditableRopeObject(definition) {
+    const rope = this._normalizeRope(definition);
+    const group = createRopeHelperObject(rope);
+    group.position.set(rope.anchor.x, rope.anchor.y, rope.anchor.z);
+    group.visible = this.ropeHelpersVisible && !rope.deleted;
+    return { definition: rope, group };
+  }
+
+  _applyRopeToObject(definition, entry) {
+    const rope = this._normalizeRope(definition);
+    entry.definition = rope;
+    entry.group.name = `${rope.name || rope.id}-rope-helper`;
+    entry.group.position.set(rope.anchor.x, rope.anchor.y, rope.anchor.z);
+    entry.group.rotation.set(0, 0, 0);
+    entry.group.scale.set(1, 1, 1);
+    entry.group.visible = this.ropeHelpersVisible && !rope.deleted;
+    entry.group.userData.ropeId = rope.id;
+
+    entry.group.traverse((child) => {
+      if (child.userData?.ropePreviewStrand) {
+        child.position.y = -rope.length * 0.5;
+        child.scale.y = rope.length;
+      } else if (child.userData?.ropePreviewTip) {
+        child.position.y = -rope.length;
+      }
+    });
+    return rope;
+  }
+
   _registerBuiltInPrimitive(mesh, definition, collider = null) {
     this._ensureUniqueEditableMaterials(mesh);
 
@@ -1088,6 +1187,7 @@ export class Room {
     const customPrimitives = [];
     const customLights = [];
     const customPortals = [];
+    const customRopes = [];
 
     this.deletedBuiltInPrimitives.clear();
 
@@ -1116,11 +1216,18 @@ export class Room {
       }
     }
 
+    for (const rope of this.loadedEditableLayout.ropes ?? []) {
+      if (!rope?.deleted) {
+        customRopes.push(rope);
+      }
+    }
+
     this.editableLayout = {
       version: this.loadedEditableLayout.version ?? 1,
       primitives: customPrimitives,
       lights: customLights,
       portals: customPortals,
+      ropes: customRopes,
     };
 
     this._normalizePrefabInstanceTransforms();
@@ -1363,6 +1470,7 @@ export class Room {
     this.editableMeshes.clear();
     this.editableLightObjects.clear();
     this.editablePortalObjects.clear();
+    this.editableRopeObjects.clear();
     this.prefabInstanceGroups.clear();
     this.prefabInstanceIdByPrimitiveId.clear();
 
@@ -1528,6 +1636,12 @@ export class Room {
       const entry = this._createEditablePortalObject(definition);
       this.editableGroup.add(entry.group);
       this.editablePortalObjects.set(entry.definition.id, entry);
+    }
+
+    for (const definition of this.editableLayout.ropes ?? []) {
+      const entry = this._createEditableRopeObject(definition);
+      this.editableGroup.add(entry.group);
+      this.editableRopeObjects.set(entry.definition.id, entry);
     }
 
     this._applyTextureAtlas();
@@ -1777,11 +1891,13 @@ export class Room {
     const customs = this.editableLayout.primitives.map((entry) => this._normalizePrimitive(entry));
     const lights = (this.editableLayout.lights ?? []).map((entry) => this._normalizeLight(entry));
     const portals = (this.editableLayout.portals ?? []).map((entry) => this._normalizePortal(entry));
+    const ropes = (this.editableLayout.ropes ?? []).map((entry) => this._normalizeRope(entry));
     return {
       version: Math.max(this.loadedEditableLayout.version ?? 1, this.editableLayout.version ?? 1, 1),
       primitives: [...builtIns, ...customs],
       lights,
       portals,
+      ropes,
     };
   }
 
@@ -1791,10 +1907,18 @@ export class Room {
       primitives: Array.isArray(layout?.primitives) ? layout.primitives.map((entry) => this._normalizePrimitive(entry)) : [],
       lights: Array.isArray(layout?.lights) ? layout.lights.map((entry) => this._normalizeLight(entry)) : [],
       portals: Array.isArray(layout?.portals) ? layout.portals.map((entry) => this._normalizePortal(entry)) : [],
+      ropes: Array.isArray(layout?.ropes) ? layout.ropes.map((entry) => this._normalizeRope(entry)) : [],
     };
     this._applyLoadedEditableLayout();
     this._rebuildEditableLayout();
     return this.getEditableLayout();
+  }
+
+  getEditableRopeDefinitions() {
+    return (this.editableLayout.ropes ?? [])
+      .map((entry) => this._normalizeRope(entry))
+      .filter((entry) => !entry.deleted)
+      .map(({ id, anchor, length, segmentCount }) => ({ id, anchor, length, segmentCount }));
   }
 
   upsertEditablePrimitive(definition) {
@@ -1925,6 +2049,106 @@ export class Room {
     this._rebuildEditableLayout();
   }
 
+  upsertEditableRope(definition) {
+    const rope = this._normalizeRope(definition);
+    const ropes = this.editableLayout.ropes ?? (this.editableLayout.ropes = []);
+    const index = ropes.findIndex((entry) => entry.id === rope.id);
+    if (index >= 0) {
+      const previous = this._normalizeRope(ropes[index]);
+      ropes[index] = rope;
+      if (
+        Math.abs(previous.length - rope.length) > 0.0001
+        || previous.segmentCount !== rope.segmentCount
+      ) {
+        this._rebuildEditableLayout();
+        return rope;
+      }
+      const current = this.editableRopeObjects.get(rope.id);
+      if (current) {
+        this._applyRopeToObject(rope, current);
+      }
+      return rope;
+    }
+
+    ropes.push(rope);
+    this._rebuildEditableLayout();
+    return rope;
+  }
+
+  removeEditableRope(id) {
+    this.editableLayout.ropes = (this.editableLayout.ropes ?? []).filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
+  purgeEditableRope(id) {
+    this.editableLayout.ropes = (this.editableLayout.ropes ?? []).filter((entry) => entry.id !== id);
+    this.loadedEditableLayout.ropes = (this.loadedEditableLayout.ropes ?? []).filter((entry) => entry.id !== id);
+    this._rebuildEditableLayout();
+  }
+
+  updateEditableRopeTransform(id, transform = {}) {
+    const ropes = this.editableLayout.ropes ?? [];
+    const index = ropes.findIndex((entry) => entry.id === id);
+    if (index < 0) return null;
+
+    const rope = this._normalizeRope(ropes[index]);
+    if (transform.position) {
+      rope.anchor = cloneVectorLike(transform.position, rope.anchor);
+    } else if (transform.anchor) {
+      rope.anchor = cloneVectorLike(transform.anchor, rope.anchor);
+    }
+
+    ropes[index] = rope;
+    const current = this.editableRopeObjects.get(id);
+    if (current) {
+      this._applyRopeToObject(rope, current);
+    }
+    return rope;
+  }
+
+  snapRopeToGrid(definition, {
+    snapY = false,
+    snapPosition = true,
+    allowEdgeOverflow = false,
+  } = {}) {
+    const rope = this._normalizeRope(definition);
+    const grid = this.getBuildGridConfig();
+
+    if (snapPosition) {
+      rope.anchor.x = this._snapGridAxisPosition(
+        rope.anchor.x,
+        0.3,
+        grid.roomWidth,
+        grid.cellWidth,
+        allowEdgeOverflow,
+      );
+      rope.anchor.z = this._snapGridAxisPosition(
+        rope.anchor.z,
+        0.3,
+        grid.roomDepth,
+        grid.cellDepth,
+        allowEdgeOverflow,
+      );
+    }
+
+    if (snapY) {
+      rope.anchor.y = snapToStep(rope.anchor.y, grid.verticalStep);
+    }
+
+    rope.anchor = roundVectorLike(rope.anchor, { x: 0, y: 0, z: 0 });
+    rope.length = Number(rope.length.toFixed(4));
+    return rope;
+  }
+
+  setRopeHelpersVisible(visible) {
+    this.ropeHelpersVisible = visible === true;
+    this.editableRopeObjects.forEach((entry) => {
+      if (entry?.group) {
+        entry.group.visible = this.ropeHelpersVisible && !entry.definition?.deleted;
+      }
+    });
+  }
+
   getEditableMesh(id) {
     return this.getEditableObject(id);
   }
@@ -1935,6 +2159,9 @@ export class Room {
     }
     if (this.editablePortalObjects.has(id)) {
       return this.editablePortalObjects.get(id)?.group ?? null;
+    }
+    if (this.editableRopeObjects.has(id)) {
+      return this.editableRopeObjects.get(id)?.group ?? null;
     }
     const prefabInstanceId = this.prefabInstanceIdByPrimitiveId.get(id);
     if (prefabInstanceId) {
