@@ -260,12 +260,21 @@ export class RendererModePanel {
     this.element.appendChild(section);
   }
 
-  updatePerformance({ timeMs = 0, deltaSeconds = 0, drawCalls = 0 } = {}) {
+  updatePerformance({
+    timeMs = 0,
+    deltaSeconds = 0,
+    drawCalls = 0,
+    triangles = 0,
+    geometries = 0,
+    textures = 0,
+    programs = 0,
+    bakeStats = null,
+  } = {}) {
     if (!Number.isFinite(deltaSeconds) || deltaSeconds <= 0) return;
 
     const now = timeMs;
     const fps = 1 / deltaSeconds;
-    this.samples.push({ timeMs: now, fps, drawCalls });
+    this.samples.push({ timeMs: now, fps, drawCalls, triangles });
 
     while (this.samples.length > 1 && now - this.samples[0].timeMs > this.sampleWindowMs) {
       this.samples.shift();
@@ -278,11 +287,12 @@ export class RendererModePanel {
     const avgFps = this.samples.reduce((sum, sample) => sum + sample.fps, 0) / this.samples.length;
     const drawCallsPerSecond = this.samples.reduce((sum, sample) => sum + sample.drawCalls, 0) / totalTime;
     const avgDrawCalls = this.samples.reduce((sum, sample) => sum + sample.drawCalls, 0) / this.samples.length;
+    const avgTriangles = this.samples.reduce((sum, sample) => sum + (sample.triangles ?? 0), 0) / this.samples.length;
 
-    this._renderPerformance(avgFps, avgDrawCalls, drawCallsPerSecond);
+    this._renderPerformance(avgFps, avgDrawCalls, drawCallsPerSecond, avgTriangles, geometries, textures, programs, bakeStats);
   }
 
-  _renderPerformance(avgFps, avgDrawCalls, drawCallsPerSecond) {
+  _renderPerformance(avgFps, avgDrawCalls, drawCallsPerSecond, avgTriangles, geometries, textures, programs, bakeStats) {
     if (!this.chartCtx) return;
 
     const ctx = this.chartCtx;
@@ -340,15 +350,35 @@ export class RendererModePanel {
     const fpsText = `Avg FPS: ${avgFps.toFixed(1)}`;
     const dcText = `Draw calls/frame: ${avgDrawCalls.toFixed(1)}`;
     const dcsText = `Draw calls/sec: ${drawCallsPerSecond.toFixed(1)}`;
+    const triText = `Triangles: ${Math.round(avgTriangles).toLocaleString()}`;
+    const geoText = `Geometries: ${geometries} · Textures: ${textures} · Programs: ${programs}`;
 
     const fpsMeasured = measureText(fpsText, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
     const dcMeasured = measureText(dcText, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
     const dcsMeasured = measureText(dcsText, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
+    const triMeasured = measureText(triText, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
+    const geoMeasured = measureText(geoText, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
+
+    let bakeHtml = '';
+    if (bakeStats) {
+      const saved = Math.max(0, (bakeStats.replacedDrawCalls ?? 0) - (bakeStats.bakedDrawCalls ?? 0));
+      const bakeLine = `Bake: ${bakeStats.instancedGroups ?? 0} inst · ${bakeStats.mergedGroups ?? 0} merge · -${saved} dc`;
+      const detailLine = `Inst prims: ${bakeStats.instancedPrimitives ?? 0} · Merge prims: ${bakeStats.mergedPrimitives ?? 0} · Skipped: ${bakeStats.skippedPrimitives ?? 0}`;
+      const bakeMeasured = measureText(bakeLine, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
+      const detailMeasured = measureText(detailLine, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
+      bakeHtml = `
+      <div style="height:${bakeMeasured.height}px">Bake: <span style="color:#9ee8b2">${bakeStats.instancedGroups ?? 0}</span> inst · <span style="color:#9ee8b2">${bakeStats.mergedGroups ?? 0}</span> merge · <span style="color:#9ee8b2">-${saved}</span> dc</div>
+      <div style="height:${detailMeasured.height}px">Inst prims: <span style="color:#b7c7d6">${bakeStats.instancedPrimitives ?? 0}</span> · Merge prims: <span style="color:#b7c7d6">${bakeStats.mergedPrimitives ?? 0}</span> · Skipped: <span style="color:#b7c7d6">${bakeStats.skippedPrimitives ?? 0}</span></div>
+      `;
+    }
 
     this.metrics.innerHTML = `
       <div style="height:${fpsMeasured.height}px">Avg FPS: <span style="color:#9ee8b2">${avgFps.toFixed(1)}</span></div>
       <div style="height:${dcMeasured.height}px">Draw calls/frame: <span style="color:#ffd97a">${avgDrawCalls.toFixed(1)}</span></div>
       <div style="height:${dcsMeasured.height}px">Draw calls/sec: <span style="color:#ffd97a">${drawCallsPerSecond.toFixed(1)}</span></div>
+      <div style="height:${triMeasured.height}px">Triangles: <span style="color:#c9b8ff">${Math.round(avgTriangles).toLocaleString()}</span></div>
+      <div style="height:${geoMeasured.height}px">Geo: <span style="color:#b7c7d6">${geometries}</span> · Tex: <span style="color:#b7c7d6">${textures}</span> · Prog: <span style="color:#b7c7d6">${programs}</span></div>
+      ${bakeHtml}
     `;
   }
 

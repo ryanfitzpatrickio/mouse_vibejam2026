@@ -143,6 +143,11 @@ function animate(timeMs) {
     timeMs,
     deltaSeconds: dt,
     drawCalls: perf?.drawCalls ?? 0,
+    triangles: perf?.triangles ?? 0,
+    geometries: perf?.geometries ?? 0,
+    textures: perf?.textures ?? 0,
+    programs: perf?.programs ?? 0,
+    bakeStats: perf?.bakeStats ?? null,
   });
 }
 

@@ -454,8 +454,27 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const _localNameplateWorld = new THREE.Vector3();
 
   const DEFAULT_PUSH_BALL_RADIUS = 0.38;
-  /** @type {Map<string, { mesh: THREE.Mesh, geom: THREE.BufferGeometry, mat: THREE.MeshStandardMaterial, targetPos: THREE.Vector3, targetQuat: THREE.Quaternion, lastR: number }>} */
-  const pushBallMeshes = new Map();
+  const PUSH_BALL_MAX_INSTANCES = 128;
+  const pushBallUnitGeometry = new THREE.SphereGeometry(1, 20, 14);
+  const pushBallSharedMaterial = new THREE.MeshStandardMaterial({ metalness: 0.16, roughness: 0.52 });
+  const pushBallInstanced = new THREE.InstancedMesh(
+    pushBallUnitGeometry,
+    pushBallSharedMaterial,
+    PUSH_BALL_MAX_INSTANCES,
+  );
+  pushBallInstanced.name = 'PushBallsInstanced';
+  pushBallInstanced.castShadow = true;
+  pushBallInstanced.receiveShadow = true;
+  pushBallInstanced.count = 0;
+  pushBallInstanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  pushBallInstanced.frustumCulled = false;
+  scene.add(pushBallInstanced);
+
+  /** @type {Map<string, { smoothPos: THREE.Vector3, smoothQuat: THREE.Quaternion, targetPos: THREE.Vector3, targetQuat: THREE.Quaternion, radius: number }>} */
+  const pushBallStates = new Map();
+  const _pushBallMatrix = new THREE.Matrix4();
+  const _pushBallScale = new THREE.Vector3();
+  const _pushBallColor = new THREE.Color();
   let pushBallsRenderVisible = true;
 
   const cheesePickupGroup = new THREE.Group();
@@ -938,68 +957,49 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     }
 
     const balls = net.pushBalls;
-    if (net.connected && Array.isArray(balls) && balls.length > 0) {
+    if (pushBallsRenderVisible && net.connected && Array.isArray(balls) && balls.length > 0) {
       const seen = new Set();
+      let count = 0;
       for (const b of balls) {
         if (!b?.id) continue;
+        if (count >= PUSH_BALL_MAX_INSTANCES) break;
         seen.add(b.id);
         const r = typeof b.r === 'number' && b.r > 0 ? b.r : DEFAULT_PUSH_BALL_RADIUS;
-        let entry = pushBallMeshes.get(b.id);
-        if (!entry) {
-          const geom = new THREE.SphereGeometry(r, 28, 20);
-          const mat = new THREE.MeshStandardMaterial({
-            color: b.color || '#e8945c',
-            metalness: 0.16,
-            roughness: 0.52,
-          });
-          const mesh = new THREE.Mesh(geom, mat);
-          mesh.name = `PushBall:${b.id}`;
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
-          mesh.visible = pushBallsRenderVisible;
-          scene.add(mesh);
-          entry = {
-            mesh,
-            geom,
-            mat,
-            targetPos: new THREE.Vector3(),
-            targetQuat: new THREE.Quaternion(),
-            lastR: r,
+        let state = pushBallStates.get(b.id);
+        if (!state) {
+          state = {
+            smoothPos: new THREE.Vector3(b.x, b.y, b.z),
+            smoothQuat: new THREE.Quaternion(b.qx, b.qy, b.qz, b.qw),
+            targetPos: new THREE.Vector3(b.x, b.y, b.z),
+            targetQuat: new THREE.Quaternion(b.qx, b.qy, b.qz, b.qw),
+            radius: r,
           };
-          pushBallMeshes.set(b.id, entry);
+          pushBallStates.set(b.id, state);
         }
-        if (Math.abs(entry.lastR - r) > 0.005) {
-          const newGeom = new THREE.SphereGeometry(r, 28, 20);
-          entry.mesh.geometry.dispose();
-          entry.mesh.geometry = newGeom;
-          entry.geom = newGeom;
-          entry.lastR = r;
-        }
-        if (typeof b.color === 'string' && b.color) {
-          entry.mat.color.set(b.color);
-        }
-        entry.targetPos.set(b.x, b.y, b.z);
-        entry.targetQuat.set(b.qx, b.qy, b.qz, b.qw);
+        state.targetPos.set(b.x, b.y, b.z);
+        state.targetQuat.set(b.qx, b.qy, b.qz, b.qw);
+        state.smoothPos.lerp(state.targetPos, 0.42);
+        state.smoothQuat.slerp(state.targetQuat, 0.42);
+        state.radius = r;
+
+        _pushBallScale.setScalar(r);
+        _pushBallMatrix.compose(state.smoothPos, state.smoothQuat, _pushBallScale);
+        pushBallInstanced.setMatrixAt(count, _pushBallMatrix);
+        _pushBallColor.set(typeof b.color === 'string' && b.color ? b.color : '#e8945c');
+        pushBallInstanced.setColorAt(count, _pushBallColor);
+        count++;
       }
-      for (const [id, entry] of pushBallMeshes) {
-        if (!seen.has(id)) {
-          scene.remove(entry.mesh);
-          entry.geom.dispose();
-          entry.mat.dispose();
-          pushBallMeshes.delete(id);
-        }
+      for (const id of Array.from(pushBallStates.keys())) {
+        if (!seen.has(id)) pushBallStates.delete(id);
       }
-      for (const entry of pushBallMeshes.values()) {
-        entry.mesh.position.lerp(entry.targetPos, 0.42);
-        entry.mesh.quaternion.slerp(entry.targetQuat, 0.42);
-      }
-    } else if (pushBallMeshes.size > 0) {
-      for (const [, entry] of pushBallMeshes) {
-        scene.remove(entry.mesh);
-        entry.geom.dispose();
-        entry.mat.dispose();
-      }
-      pushBallMeshes.clear();
+      pushBallInstanced.count = count;
+      pushBallInstanced.instanceMatrix.needsUpdate = true;
+      if (pushBallInstanced.instanceColor) pushBallInstanced.instanceColor.needsUpdate = true;
+      pushBallInstanced.visible = count > 0;
+    } else {
+      pushBallInstanced.count = 0;
+      pushBallInstanced.visible = false;
+      if (pushBallStates.size > 0) pushBallStates.clear();
     }
 
     const cheeseList = net.connected ? net.cheesePickups : [];
@@ -1097,8 +1097,14 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     audioManager.update(deltaSeconds);
 
     render();
+    const info = renderer.info;
     return {
-      drawCalls: renderer.info?.render?.calls ?? 0,
+      drawCalls: info?.render?.calls ?? 0,
+      triangles: info?.render?.triangles ?? 0,
+      geometries: info?.memory?.geometries ?? 0,
+      textures: info?.memory?.textures ?? 0,
+      programs: info?.programs?.length ?? 0,
+      bakeStats: room.getStaticBakeStats?.() ?? null,
     };
   }
 
@@ -1120,12 +1126,11 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     scoreboard.dispose();
     chaseAlert.dispose();
     toolbar.dispose();
-    for (const [, entry] of pushBallMeshes) {
-      scene.remove(entry.mesh);
-      entry.geom.dispose();
-      entry.mat.dispose();
-    }
-    pushBallMeshes.clear();
+    scene.remove(pushBallInstanced);
+    pushBallInstanced.dispose?.();
+    pushBallUnitGeometry.dispose();
+    pushBallSharedMaterial.dispose();
+    pushBallStates.clear();
     for (const [, ch] of cheesePickupMeshes) {
       cheesePickupGroup.remove(ch.mesh);
       ch.geom.dispose();
@@ -1156,6 +1161,11 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         set: (v) => {
           renderer.shadowMap.enabled = !!v;
         },
+      },
+      staticMerge: {
+        label: 'Static geometry merge (combine by material)',
+        get: () => room.isStaticMergeEnabled?.() === true,
+        set: (v) => room.setStaticMergeEnabled?.(!!v),
       },
       roomOutlines: {
         label: 'Room edge outlines (batched)',
@@ -1196,8 +1206,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         get: () => pushBallsRenderVisible,
         set: (v) => {
           pushBallsRenderVisible = !!v;
-          for (const e of pushBallMeshes.values()) {
-            if (e?.mesh) e.mesh.visible = pushBallsRenderVisible;
+          if (!pushBallsRenderVisible) {
+            pushBallInstanced.count = 0;
+            pushBallInstanced.visible = false;
           }
         },
       },

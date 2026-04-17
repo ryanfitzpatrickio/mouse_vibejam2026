@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { FACE_TEXTURE_SLOTS } from '../dev/prefabRegistry.js';
 import { DEFAULT_TEXTURE_ATLAS, TEXTURE_ATLASES } from '../dev/textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
@@ -394,13 +395,21 @@ export class Room {
     };
     this.textureAtlasImage = null;
     this.textureAtlasImages = new Map();
+    // Single base texture per (atlas, cell). Repeat/rotation is baked into geometry UVs
+    // rather than cloned onto the texture, so every primitive sharing this cell also
+    // shares one GPU texture + one material instance.
     this.textureCache = new Map();
+    // BufferGeometry shared per (type, repeat.x, repeat.y, rotation) — UV-transform is baked in.
+    this._editableGeometryCache = new Map();
     this.surfaceMaterials = new Set();
     this.builtInEditableMeshes = new Map();
     this.deletedBuiltInPrimitives = new Set();
     this.loadedEditableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
     this.editableGroup = new THREE.Group();
     this.editableGroup.name = 'EditableLayout';
+    this._staticMergeEnabled = false;
+    this._staticMergedGroup = new THREE.Group();
+    this._staticMergedGroup.name = 'StaticMerged';
     this.editableLayout = cloneLayout(DEFAULT_EDITABLE_LAYOUT);
     this.spawnMarkersVisible = false;
     this.lightHelpersVisible = false;
@@ -428,21 +437,21 @@ export class Room {
 
     this.buildRoom();
     this.group.add(this.editableGroup);
+    this.group.add(this._staticMergedGroup);
   }
 
   _createSurfaceMaterial(baseColor, {
     textureCell = null,
     textureAtlas = DEFAULT_TEXTURE_ATLAS,
-    textureRepeat = 1,
+    // textureRepeat is intentionally NOT part of the cache key — it's baked into
+    // per-mesh UVs via _bakeUvTransform so a single material can serve any repeat
+    // or rotation value, which is what lets later batching (instanced groups,
+    // mergeGeometries) actually collapse draw calls.
     roughness = 0.92,
     metalness = 0.04,
     side = THREE.FrontSide,
     } = {}) {
-    // Deduplicate materials with identical parameters
-    const repeatKey = typeof textureRepeat === 'object'
-      ? `${textureRepeat.x ?? 1},${textureRepeat.y ?? 1},${textureRepeat.rotation ?? 0}`
-      : `${textureRepeat},${textureRepeat},0`;
-    const cacheKey = `${baseColor}|${textureCell}|${textureAtlas}|${repeatKey}|${roughness}|${metalness}|${side}`;
+    const cacheKey = `${baseColor}|${textureCell}|${textureAtlas}|${roughness}|${metalness}|${side}`;
 
     if (!this._materialCache) this._materialCache = new Map();
     const cached = this._materialCache.get(cacheKey);
@@ -458,7 +467,6 @@ export class Room {
     material.dithering = true;
     material.userData.textureAtlas = textureAtlas;
     material.userData.textureCell = textureCell;
-    material.userData.textureRepeat = textureRepeat;
     this.surfaceMaterials.add(material);
     this._materialCache.set(cacheKey, material);
     return material;
@@ -479,13 +487,15 @@ export class Room {
     return this.textureAtlasImage;
   }
 
-  _createAtlasTexture(cellIndex, repeat = 1, atlas = DEFAULT_TEXTURE_ATLAS) {
-    const atlasId = typeof repeat === 'object' && repeat?.atlas ? repeat.atlas : atlas;
+  _createAtlasTexture(cellIndex, atlas = DEFAULT_TEXTURE_ATLAS) {
+    const atlasId = atlas ?? DEFAULT_TEXTURE_ATLAS;
     const image = this.textureAtlasImages.get(atlasId) ?? this.textureAtlasImage;
     if (!image) return null;
-    const textureSettings = normalizeTextureSettings(repeat);
-    const cacheKey = `${atlasId}:${cellIndex}:${textureSettings.x}:${textureSettings.y}:${textureSettings.rotation}`;
-    if (this.textureCache.has(cacheKey)) return this.textureCache.get(cacheKey);
+    // One base texture per (atlas, cell). Repeat/rotation is baked into mesh UVs,
+    // so a single texture serves every variant.
+    const cacheKey = `${atlasId}:${cellIndex}`;
+    const cached = this.textureCache.get(cacheKey);
+    if (cached) return cached;
 
     const col = cellIndex % ATLAS_GRID;
     const row = Math.floor(cellIndex / ATLAS_GRID);
@@ -522,11 +532,70 @@ export class Room {
     texture.generateMipmaps = true;
     texture.anisotropy = 8;
     texture.center.set(0.5, 0.5);
-    texture.rotation = textureSettings.rotation;
     texture.needsUpdate = true;
-    texture.repeat.set(textureSettings.x, textureSettings.y);
     this.textureCache.set(cacheKey, texture);
     return texture;
+  }
+
+  _bakeUvTransform(geometry, settings) {
+    const uv = geometry.getAttribute('uv');
+    if (!uv) return geometry;
+    const rx = settings?.x ?? 1;
+    const ry = settings?.y ?? rx;
+    const rot = settings?.rotation ?? 0;
+    if (rx === 1 && ry === 1 && rot === 0) return geometry;
+    const cos = Math.cos(rot);
+    const sin = Math.sin(rot);
+    const array = uv.array;
+    for (let i = 0; i < array.length; i += 2) {
+      // Rotate around (0.5, 0.5), then scale by repeat from the same pivot.
+      const u = array[i] - 0.5;
+      const v = array[i + 1] - 0.5;
+      const ru = (cos * u - sin * v) * rx + 0.5;
+      const rv = (sin * u + cos * v) * ry + 0.5;
+      array[i] = ru;
+      array[i + 1] = rv;
+    }
+    uv.needsUpdate = true;
+    return geometry;
+  }
+
+  _rebakeMeshUvs(mesh, settings) {
+    const geometry = mesh?.geometry;
+    const uv = geometry?.getAttribute?.('uv');
+    if (!uv) return;
+    let base = mesh.userData?._baseUvs;
+    if (!base) {
+      // First rebake: snapshot the original UVs so subsequent changes start clean.
+      base = new Float32Array(uv.array);
+      if (!mesh.userData) mesh.userData = {};
+      mesh.userData._baseUvs = base;
+    }
+    uv.array.set(base);
+    this._bakeUvTransform(geometry, normalizeTextureSettings(settings));
+    uv.needsUpdate = true;
+  }
+
+  _getEditableGeometry(primitive) {
+    const settings = normalizeTextureSettings({
+      x: primitive.texture?.repeat?.x ?? 1,
+      y: primitive.texture?.repeat?.y ?? 1,
+      rotation: primitive.texture?.rotation ?? 0,
+    });
+    const rxKey = Number(settings.x.toFixed(4));
+    const ryKey = Number(settings.y.toFixed(4));
+    const rotKey = Number(settings.rotation.toFixed(4));
+    const key = `${primitive.type}|${rxKey}|${ryKey}|${rotKey}`;
+    const cached = this._editableGeometryCache.get(key);
+    if (cached) return cached;
+    const geometry = createPrimitiveGeometry(primitive.type);
+    this._bakeUvTransform(geometry, settings);
+    // Marker so _rebuildEditableLayout doesn't dispose a geometry that's still
+    // being reused by other meshes (and by the next rebuild).
+    geometry.userData = geometry.userData || {};
+    geometry.userData.isCachedEditableGeometry = true;
+    this._editableGeometryCache.set(key, geometry);
+    return geometry;
   }
 
   _applyTextureAtlas() {
@@ -542,7 +611,6 @@ export class Room {
 
       const texture = this._createAtlasTexture(
         cellIndex,
-        material.userData.textureRepeat ?? 1,
         material.userData.textureAtlas ?? DEFAULT_TEXTURE_ATLAS,
       );
       if (!texture) return;
@@ -646,12 +714,121 @@ export class Room {
       const scene = gltf.scene;
       this._applyGlbChromaKey(scene);
       scene.updateMatrixWorld(true);
+      this._flattenGlbScene(scene);
       this.glbModelCache.set(assetId, scene);
       return scene;
     } catch (err) {
       console.warn(`Failed to load GLB asset ${assetId}:`, err);
       return null;
     }
+  }
+
+  _flattenGlbScene(scene) {
+    // Collapse a GLB's mesh tree down to one mesh per material. Each prefab
+    // instance still clones + clones materials for independent state, but at
+    // runtime it draws as (materials.length) calls instead of (nodes.length).
+    //
+    // Bail-outs: anything skinned/morphed/animated keeps its original hierarchy
+    // because the merged geometry wouldn't respect bone transforms.
+    let hasSkinned = false;
+    let hasMorphs = false;
+    const meshes = [];
+    scene.traverse((child) => {
+      if (child.isSkinnedMesh || child.isBone) {
+        hasSkinned = true;
+        return;
+      }
+      if (!child.isMesh) return;
+      if (child.geometry?.morphAttributes && Object.keys(child.geometry.morphAttributes).length) {
+        hasMorphs = true;
+      }
+      meshes.push(child);
+    });
+    if (hasSkinned || hasMorphs) return;
+    if (meshes.length < 2) return;
+
+    const groups = new Map();
+    let unflattenable = false;
+    for (const mesh of meshes) {
+      const material = Array.isArray(mesh.material) ? null : mesh.material;
+      if (!material) {
+        // Multi-material submeshes would need per-material splitting; not worth
+        // it for our prefabs, so abort flattening for this scene.
+        unflattenable = true;
+        break;
+      }
+      const key = `${material.uuid}|${mesh.castShadow ? 1 : 0}|${mesh.receiveShadow ? 1 : 0}`;
+      let bucket = groups.get(key);
+      if (!bucket) {
+        bucket = {
+          material,
+          castShadow: mesh.castShadow,
+          receiveShadow: mesh.receiveShadow,
+          meshes: [],
+        };
+        groups.set(key, bucket);
+      }
+      bucket.meshes.push(mesh);
+    }
+    if (unflattenable) return;
+
+    // Preserve any userData from the root before we rebuild.
+    const rootUserData = scene.userData;
+    const rootName = scene.name;
+    const flatGroup = new THREE.Group();
+    flatGroup.name = rootName;
+    flatGroup.userData = rootUserData;
+
+    // Keep only (position, normal, uv) so siblings from different source meshes
+    // can merge cleanly. mergeGeometries fails silently when attribute sets differ.
+    const ALLOWED_ATTRS = new Set(['position', 'normal', 'uv']);
+
+    let flattenedAny = false;
+    scene.updateMatrixWorld(true);
+
+    for (const bucket of groups.values()) {
+      const baked = [];
+      for (const mesh of bucket.meshes) {
+        const source = mesh.geometry;
+        if (!source?.attributes?.position) continue;
+        const clone = source.clone();
+        if (clone.groups?.length) clone.clearGroups();
+        if (clone.index && bucket.meshes.length > 1) {
+          // Strip index if siblings vary in indexed-ness; mergeGeometries needs uniformity.
+        }
+        for (const name of Object.keys(clone.attributes)) {
+          if (!ALLOWED_ATTRS.has(name)) clone.deleteAttribute(name);
+        }
+        clone.applyMatrix4(mesh.matrixWorld);
+        baked.push(clone);
+      }
+
+      if (!baked.length) continue;
+
+      let outGeometry;
+      let outMaterial = bucket.material;
+      if (baked.length === 1) {
+        outGeometry = baked[0];
+      } else {
+        const merged = mergeGeometries(baked, false);
+        baked.forEach((g) => g.dispose());
+        if (!merged) continue;
+        outGeometry = merged;
+      }
+      const outMesh = new THREE.Mesh(outGeometry, outMaterial);
+      outMesh.castShadow = bucket.castShadow;
+      outMesh.receiveShadow = bucket.receiveShadow;
+      flatGroup.add(outMesh);
+      flattenedAny = true;
+    }
+
+    if (!flattenedAny) return;
+
+    // Drop the original tree wholesale and replace with the flat group's children.
+    // We mutate `scene` in place so the cache / clone paths keep working unchanged.
+    while (scene.children.length) scene.remove(scene.children[0]);
+    while (flatGroup.children.length) scene.add(flatGroup.children[0]);
+    scene.updateMatrixWorld(true);
   }
 
   async loadGlbModel(assetId) {
@@ -782,7 +959,7 @@ export class Room {
     const clonedMaterials = sourceMaterials.map((material) => {
       if (!material) return material;
       const clone = material.clone();
-      if (clone.userData?.textureCell != null || clone.userData?.textureRepeat != null) {
+      if (clone.userData?.textureCell != null) {
         this.surfaceMaterials.add(clone);
       }
       return clone;
@@ -795,7 +972,9 @@ export class Room {
     const { mesh } = entry;
     const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     const material = materials[0];
-    const textureRepeat = normalizeTextureSettings(material?.userData?.textureRepeat ?? 1);
+    // textureRepeat used to live on the material; now it's per-mesh since materials
+    // are shared across repeat variants.
+    const textureRepeat = normalizeTextureSettings(mesh.userData?.textureRepeat ?? 1);
     const faceTextures = {};
 
     (FACE_TEXTURE_SLOTS[entry.primitive.type] ?? []).forEach((slot, index) => {
@@ -871,6 +1050,17 @@ export class Room {
     mesh.userData.skipOutline = primitive.spawnType != null;
     this._syncCameraOccluderUserData(mesh, primitive);
 
+    // Built-in meshes own their geometry. Rebake UVs when repeat/rotation changes
+    // so the (shared) material stays stable. mesh.userData.textureRepeat is the
+    // source of truth for serialization on built-ins.
+    const nextRepeat = {
+      x: primitive.texture.repeat.x,
+      y: primitive.texture.repeat.y,
+      rotation: primitive.texture.rotation,
+    };
+    this._rebakeMeshUvs(mesh, nextRepeat);
+    mesh.userData.textureRepeat = nextRepeat;
+
     const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     const faceSlots = FACE_TEXTURE_SLOTS[primitive.type] ?? [];
     materials.forEach((material, index) => {
@@ -888,11 +1078,6 @@ export class Room {
       const ref = slot ? getFaceTextureRef(primitive, slot) : primitive.texture;
       material.userData.textureCell = ref?.cell ?? null;
       material.userData.textureAtlas = ref?.atlas ?? DEFAULT_TEXTURE_ATLAS;
-      material.userData.textureRepeat = {
-        x: primitive.texture.repeat.x,
-        y: primitive.texture.repeat.y,
-        rotation: primitive.texture.rotation,
-      };
       material.side = primitive.type === 'plane' ? THREE.DoubleSide : material.side;
       material.needsUpdate = true;
     });
@@ -942,23 +1127,29 @@ export class Room {
   }
 
   _createEditablePrimitiveMaterial(definition) {
+    // Note: texture.repeat/rotation intentionally isn't passed to the material —
+    // it's baked into the mesh's cloned-and-cached geometry via _getEditableGeometry,
+    // which lets one material instance serve every repeat/rotation variant.
     const materialOptions = {
-      textureRepeat: {
-        x: definition.texture.repeat.x,
-        y: definition.texture.repeat.y,
-        rotation: definition.texture.rotation,
-      },
       roughness: definition.material.roughness,
       metalness: definition.material.metalness,
     };
     const faceSlots = FACE_TEXTURE_SLOTS[definition.type] ?? [];
 
     if (faceSlots.length > 0) {
-      return faceSlots.map((slot) => this._createSurfaceMaterial(definition.material.color, {
+      const materials = faceSlots.map((slot) => this._createSurfaceMaterial(definition.material.color, {
         ...materialOptions,
         textureCell: getFaceTextureCell(definition, slot),
         textureAtlas: getFaceTextureAtlas(definition, slot),
       }));
+      // _createSurfaceMaterial dedupes by cache key, so identical face refs share one instance.
+      // When every face resolves to the same material, return it as a single non-array material so
+      // Three.js ignores the geometry's face groups and draws the primitive in one call instead of N.
+      const first = materials[0];
+      if (first && materials.every((material) => material === first)) {
+        return first;
+      }
+      return materials;
     }
 
     const material = this._createSurfaceMaterial(definition.material.color, {
@@ -1012,7 +1203,8 @@ export class Room {
     if (!('castShadow' in light)) return;
     light.castShadow = definition.castShadow === true;
     if (!light.castShadow || !light.shadow) return;
-    light.shadow.mapSize.set(1024, 1024);
+    const size = this.shadowMapSize ?? 512;
+    light.shadow.mapSize.set(size, size);
     light.shadow.bias = -0.0004;
     light.shadow.normalBias = 0.02;
     if (light.isDirectionalLight) {
@@ -1026,6 +1218,17 @@ export class Room {
       light.shadow.camera.near = 0.5;
       light.shadow.camera.far = Math.max(8, definition.distance || 18);
       light.shadow.focus = 1;
+    }
+  }
+
+  setShadowMapSize(size) {
+    const next = Math.max(128, Math.min(2048, Math.round(size) || 512));
+    if (next === this.shadowMapSize) return;
+    this.shadowMapSize = next;
+    for (const entry of this.editableLightObjects.values()) {
+      if (entry?.light) {
+        this._configureEditableLightShadow(entry.light, entry.definition);
+      }
     }
   }
 
@@ -1149,7 +1352,7 @@ export class Room {
         }
         return;
       }
-      if (child.geometry) child.geometry.dispose();
+      if (child.geometry && !child.geometry.userData?.isCachedEditableGeometry) child.geometry.dispose();
       if (Array.isArray(child.material)) {
         child.material.forEach((material) => material?.dispose?.());
       } else if (child.material) {
@@ -1220,7 +1423,7 @@ export class Room {
         continue;
       }
 
-      const geometry = createPrimitiveGeometry(primitive.type);
+      const geometry = this._getEditableGeometry(primitive);
       const material = this._createEditablePrimitiveMaterial(primitive);
       const mesh = new THREE.Mesh(geometry, material);
       mesh.name = primitive.name;
@@ -1276,7 +1479,7 @@ export class Room {
       });
 
       primitives.forEach((primitive) => {
-        const geometry = createPrimitiveGeometry(primitive.type);
+        const geometry = this._getEditableGeometry(primitive);
         const material = this._createEditablePrimitiveMaterial(primitive);
         const mesh = new THREE.Mesh(geometry, material);
         mesh.name = primitive.name;
@@ -1329,6 +1532,215 @@ export class Room {
 
     this._applyTextureAtlas();
     this.refreshColliders();
+
+    if (this._staticMergeEnabled) {
+      this._buildStaticMergedMeshes();
+    }
+  }
+
+  setStaticMergeEnabled(enabled) {
+    const next = !!enabled;
+    if (next === this._staticMergeEnabled) return;
+    this._staticMergeEnabled = next;
+    if (next) {
+      this._buildStaticMergedMeshes();
+    } else {
+      this._clearStaticMergedMeshes();
+      this._staticBakeStats = null;
+    }
+  }
+
+  isStaticMergeEnabled() {
+    return this._staticMergeEnabled;
+  }
+
+  _clearStaticMergedMeshes() {
+    // Unhide originals that were merged. Materials on merged meshes are shared
+    // references to the originals, so do NOT dispose them. Only dispose
+    // geometries we created (the merged path); instanced path reuses the
+    // primitive's cached geometry and must not be disposed.
+    this._staticMergedGroup.traverse((child) => {
+      if (!child.isMesh) return;
+      if (child.isInstancedMesh) {
+        child.dispose?.();
+        return;
+      }
+      if (child.userData?.staticInstanceKind === 'merged' && child.geometry) {
+        child.geometry.dispose();
+      }
+    });
+    this._staticMergedGroup.clear();
+    for (const mesh of this.editableMeshes.values()) {
+      if (mesh?.userData?.mergedIntoStatic) {
+        mesh.userData.mergedIntoStatic = false;
+        mesh.visible = this._isPrimitiveVisible(
+          this.editableLayout.primitives.find((p) => p.id === mesh.userData.primitiveId) ?? {},
+        );
+      }
+    }
+  }
+
+  getStaticBakeStats() {
+    return this._staticBakeStats ?? null;
+  }
+
+  _buildStaticMergedMeshes() {
+    this._clearStaticMergedMeshes();
+    const stats = {
+      instancedGroups: 0,
+      instancedPrimitives: 0,
+      mergedGroups: 0,
+      mergedPrimitives: 0,
+      skippedPrimitives: 0,
+      totalEligible: 0,
+      // One draw call per instanced group + one per merged group, replacing
+      // `instancedPrimitives + mergedPrimitives` original per-mesh calls.
+      bakedDrawCalls: 0,
+      replacedDrawCalls: 0,
+    };
+
+    // Two-pass bake:
+    //   Pass A — INSTANCE groups: meshes that share geometry AND material are
+    //            drawn through a single InstancedMesh (one draw call for the
+    //            group, plus one shadow pass). This is strictly better than
+    //            mergeGeometries when the same geometry repeats, because we
+    //            keep one small buffer instead of baking N copies.
+    //   Pass B — MERGE groups: remaining meshes (unique geometry but shared
+    //            material) fall back to mergeGeometries so we still collapse
+    //            mixed-sized primitives that happen to share a material.
+    //
+    // Skip meshes we can't safely bake: GLB clones (their own tree), spawn
+    // markers, invisible meshes, and array materials (unmerged face textures).
+    const instanceGroups = new Map();
+    const mergeCandidates = [];
+
+    for (const [primitiveId, mesh] of this.editableMeshes.entries()) {
+      if (!mesh?.isMesh) continue;
+      if (mesh.userData?.isGlbClone) { stats.skippedPrimitives += 1; continue; }
+      if (mesh.userData?.spawnType) { stats.skippedPrimitives += 1; continue; }
+      if (!mesh.visible) { stats.skippedPrimitives += 1; continue; }
+      if (!mesh.geometry || !mesh.material) { stats.skippedPrimitives += 1; continue; }
+      if (Array.isArray(mesh.material)) { stats.skippedPrimitives += 1; continue; }
+      stats.totalEligible += 1;
+
+      const castShadow = mesh.castShadow ? 1 : 0;
+      const receiveShadow = mesh.receiveShadow ? 1 : 0;
+      const instanceKey = `${mesh.geometry.uuid}|${mesh.material.uuid}|${castShadow}|${receiveShadow}`;
+      let bucket = instanceGroups.get(instanceKey);
+      if (!bucket) {
+        bucket = {
+          geometry: mesh.geometry,
+          material: mesh.material,
+          castShadow: mesh.castShadow,
+          receiveShadow: mesh.receiveShadow,
+          meshes: [],
+        };
+        instanceGroups.set(instanceKey, bucket);
+      }
+      bucket.meshes.push({ mesh, primitiveId });
+    }
+
+    this.editableGroup.updateMatrixWorld(true);
+    const parentInv = new THREE.Matrix4().copy(this._staticMergedGroup.matrixWorld).invert();
+    const localMatrix = new THREE.Matrix4();
+
+    // Pass A: instanced groups.
+    for (const bucket of instanceGroups.values()) {
+      if (bucket.meshes.length < 2) {
+        // Single mesh — let the merge pass try to pair it by material instead.
+        for (const entry of bucket.meshes) mergeCandidates.push(entry);
+        continue;
+      }
+
+      const instanced = new THREE.InstancedMesh(bucket.geometry, bucket.material, bucket.meshes.length);
+      instanced.castShadow = bucket.castShadow;
+      instanced.receiveShadow = bucket.receiveShadow;
+      instanced.userData.isStaticMerged = true;
+      instanced.userData.staticInstanceKind = 'instanced';
+      instanced.userData.skipOutline = true;
+      // Static bake — matrices never change after build, so hint Three.js to skip upload work.
+      instanced.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+
+      bucket.meshes.forEach((entry, i) => {
+        entry.mesh.updateMatrixWorld(true);
+        localMatrix.multiplyMatrices(parentInv, entry.mesh.matrixWorld);
+        instanced.setMatrixAt(i, localMatrix);
+      });
+      instanced.instanceMatrix.needsUpdate = true;
+      this._staticMergedGroup.add(instanced);
+
+      for (const entry of bucket.meshes) {
+        entry.mesh.visible = false;
+        entry.mesh.userData.mergedIntoStatic = true;
+      }
+      stats.instancedGroups += 1;
+      stats.instancedPrimitives += bucket.meshes.length;
+    }
+
+    // Pass B: merge remaining meshes by (material, shadow flags).
+    const mergeGroups = new Map();
+    for (const entry of mergeCandidates) {
+      const { mesh } = entry;
+      const key = `${mesh.material.uuid}|${mesh.castShadow ? 1 : 0}|${mesh.receiveShadow ? 1 : 0}`;
+      let bucket = mergeGroups.get(key);
+      if (!bucket) {
+        bucket = {
+          material: mesh.material,
+          castShadow: mesh.castShadow,
+          receiveShadow: mesh.receiveShadow,
+          meshes: [],
+        };
+        mergeGroups.set(key, bucket);
+      }
+      bucket.meshes.push(entry);
+    }
+
+    for (const bucket of mergeGroups.values()) {
+      if (bucket.meshes.length < 2) continue;
+
+      const geometries = [];
+      const merged = [];
+      for (const entry of bucket.meshes) {
+        const { mesh } = entry;
+        const source = mesh.geometry;
+        if (!source.attributes?.position) continue;
+        const baked = source.clone();
+        if (baked.groups?.length) baked.clearGroups();
+        mesh.updateMatrixWorld(true);
+        localMatrix.multiplyMatrices(parentInv, mesh.matrixWorld);
+        baked.applyMatrix4(localMatrix);
+        geometries.push(baked);
+        merged.push(entry);
+      }
+
+      if (geometries.length < 2) {
+        geometries.forEach((g) => g.dispose());
+        continue;
+      }
+
+      const mergedGeometry = mergeGeometries(geometries, false);
+      geometries.forEach((g) => g.dispose());
+      if (!mergedGeometry) continue;
+
+      const mergedMesh = new THREE.Mesh(mergedGeometry, bucket.material);
+      mergedMesh.castShadow = bucket.castShadow;
+      mergedMesh.receiveShadow = bucket.receiveShadow;
+      mergedMesh.userData.isStaticMerged = true;
+      mergedMesh.userData.staticInstanceKind = 'merged';
+      mergedMesh.userData.skipOutline = true;
+      this._staticMergedGroup.add(mergedMesh);
+
+      for (const entry of merged) {
+        entry.mesh.visible = false;
+        entry.mesh.userData.mergedIntoStatic = true;
+      }
+      stats.mergedGroups += 1;
+      stats.mergedPrimitives += merged.length;
+    }
+
+    stats.bakedDrawCalls = stats.instancedGroups + stats.mergedGroups;
+    stats.replacedDrawCalls = stats.instancedPrimitives + stats.mergedPrimitives;
+    this._staticBakeStats = stats;
   }
 
   _isPrimitiveVisible(primitive) {
@@ -1692,7 +2104,9 @@ export class Room {
     this.group.updateMatrixWorld(true);
     const active = [];
     this.colliders.forEach((collider) => {
-      if (!collider.mesh?.visible || collider.mesh?.userData?.colliderEnabled === false) {
+      const mesh = collider.mesh;
+      const mergedHidden = mesh?.userData?.mergedIntoStatic === true;
+      if ((!mesh?.visible && !mergedHidden) || mesh?.userData?.colliderEnabled === false) {
         return;
       }
       collider.aabb = AABB.fromMesh(collider.mesh);
@@ -1966,13 +2380,17 @@ export class Room {
   buildFloorAndWalls() {
     const floorMat = this._createSurfaceMaterial(this.floorColor, {
       textureCell: ROOM_TEXTURE_CELLS.floor,
-      textureRepeat: 6,
       roughness: 0.98,
       metalness: 0.02,
     });
 
     // Floor
     const floorGeo = new THREE.PlaneGeometry(this.width, this.depth);
+    const floorRepeat = { x: 6, y: 6, rotation: 0 };
+    // Snapshot the pristine 0-1 UVs before baking so _rebakeMeshUvs can replay any
+    // future repeat/rotation change against the original.
+    const floorBaseUvs = new Float32Array(floorGeo.getAttribute('uv').array);
+    this._bakeUvTransform(floorGeo, floorRepeat);
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI * 0.5;
     floor.position.y = 0;
@@ -1980,6 +2398,8 @@ export class Room {
     floor.receiveShadow = true;
     floor.userData.surfaceType = 'floor';
     floor.userData.cameraOccluder = false;
+    floor.userData.textureRepeat = floorRepeat;
+    floor.userData._baseUvs = floorBaseUvs;
     this.group.add(floor);
     const floorCollider = {
       mesh: floor,
@@ -1998,7 +2418,7 @@ export class Room {
       scale: { x: this.width, y: this.depth, z: 1 },
       texture: {
         cell: floorMat.userData.textureCell,
-        repeat: normalizeTextureSettings(floorMat.userData.textureRepeat),
+        repeat: normalizeTextureSettings(floor.userData.textureRepeat),
         rotation: 0,
       },
       material: materialToEditableSurface(floorMat, this.floorColor),
@@ -2024,14 +2444,14 @@ export class Room {
    * Get all climbable surfaces
    */
   getClimbables() {
-    return this.climbables.filter((mesh) => mesh.visible !== false && mesh.userData?.colliderEnabled !== false);
+    return this.climbables.filter((mesh) => (mesh.visible !== false || mesh.userData?.mergedIntoStatic === true) && mesh.userData?.colliderEnabled !== false);
   }
 
   /**
    * Get all runnable surfaces
    */
   getRunnables() {
-    return this.runnables.filter((mesh) => mesh.visible !== false && mesh.userData?.colliderEnabled !== false);
+    return this.runnables.filter((mesh) => (mesh.visible !== false || mesh.userData?.mergedIntoStatic === true) && mesh.userData?.colliderEnabled !== false);
   }
 
   /**
@@ -2076,6 +2496,8 @@ export class Room {
 
     this.textureCache.forEach((texture) => texture.dispose?.());
     this.textureCache.clear();
+    this._editableGeometryCache.forEach((geometry) => geometry.dispose?.());
+    this._editableGeometryCache.clear();
     this.surfaceMaterials.clear();
   }
 
