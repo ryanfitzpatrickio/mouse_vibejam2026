@@ -14,6 +14,7 @@ import { CatLocatorOverlay } from '../hud/CatLocatorOverlay.js';
 import { ScoreboardOverlay } from '../hud/ScoreboardOverlay.js';
 import { ChaseAlertOverlay } from '../hud/ChaseAlertOverlay.js';
 import { attachEdgeOutlines } from '../materials/index.js';
+import { createOutlinePipeline } from '../postprocessing/OutlinePipeline.js';
 import { NetworkClient } from '../net/NetworkClient.js';
 import { RemotePlayerManager } from '../net/RemotePlayerManager.js';
 import { EmoteManager } from '../emote/EmoteManager.js';
@@ -243,6 +244,19 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     thresholdAngle: 22,
     opacity: 0.9,
   });
+  // Default: the fullscreen depth-edge pass replaces the per-mesh outlines on
+  // mice AND the batched room outlines. The per-mesh toggles stay available
+  // so you can A/B-compare at runtime.
+  setOutlineListVisible(localMouseOutlineMeshes, false);
+  setOutlineListVisible(roomOutlineMeshes, false);
+  const outlinePipeline = createOutlinePipeline({
+    renderer,
+    color: '#0a0a0a',
+    thickness: 1.0,
+    threshold: 0.012,
+    strength: 0.9,
+  });
+  room.setStaticMergeEnabled?.(true);
 
   function setOutlineListVisible(list, visible) {
     if (!Array.isArray(list)) return;
@@ -252,7 +266,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     }
   }
   const render = () => {
-    renderer.render(scene, camera);
+    outlinePipeline.render(scene, camera);
     labelRenderer.render(scene, camera);
   };
 
@@ -444,6 +458,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     portalArrival: portalArrival.active ? portalArrival : null,
   });
   const remotePlayerManager = new RemotePlayerManager({ scene });
+  // Per-mesh outlines on remote mice are redundant once the fullscreen outline
+  // pass is active; leave the toggle available for comparison.
+  remotePlayerManager.setEdgeOutlinesVisible(false);
   net.connect();
 
   /** Track previous smackStunTimer / grabbedTarget per player for audio event detection. */
@@ -477,11 +494,39 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const _pushBallColor = new THREE.Color();
   let pushBallsRenderVisible = true;
 
+  const CHEESE_PICKUP_MAX_INSTANCES = 256;
   const cheesePickupGroup = new THREE.Group();
   cheesePickupGroup.name = 'WorldCheesePickups';
   scene.add(cheesePickupGroup);
-  /** @type {Map<string, { mesh: THREE.Mesh, geom: THREE.BufferGeometry, mat: THREE.MeshStandardMaterial, phase: number }>} */
-  const cheesePickupMeshes = new Map();
+  const cheesePickupGeometry = new THREE.ConeGeometry(0.24, 0.38, 6);
+  cheesePickupGeometry.rotateX(Math.PI);
+  const cheesePickupMaterial = new THREE.MeshStandardMaterial({
+    color: '#f2d046',
+    emissive: '#806018',
+    emissiveIntensity: 0.22,
+    roughness: 0.42,
+    metalness: 0.06,
+  });
+  const cheesePickupInstanced = new THREE.InstancedMesh(
+    cheesePickupGeometry,
+    cheesePickupMaterial,
+    CHEESE_PICKUP_MAX_INSTANCES,
+  );
+  cheesePickupInstanced.name = 'CheesePickupsInstanced';
+  cheesePickupInstanced.castShadow = true;
+  cheesePickupInstanced.receiveShadow = true;
+  cheesePickupInstanced.count = 0;
+  cheesePickupInstanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  cheesePickupInstanced.frustumCulled = false;
+  cheesePickupInstanced.visible = false;
+  cheesePickupGroup.add(cheesePickupInstanced);
+  /** @type {Map<string, { phase: number, spinY: number }>} */
+  const cheesePickupStates = new Map();
+  const _cheeseMatrix = new THREE.Matrix4();
+  const _cheesePos = new THREE.Vector3();
+  const _cheeseQuat = new THREE.Quaternion();
+  const _cheeseEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+  const _cheeseScale = new THREE.Vector3();
 
   function cheesePickupVisualScale(amount) {
     const n = Math.max(1, Math.floor(Number(amount) || 1));
@@ -491,9 +536,11 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   function resize(width, height, pixelRatio = window.devicePixelRatio || 1) {
     const safeWidth = Math.max(1, Math.floor(width));
     const safeHeight = Math.max(1, Math.floor(height));
-    renderer.setPixelRatio(Math.min(2, pixelRatio));
+    const clampedPixelRatio = Math.min(2, pixelRatio);
+    renderer.setPixelRatio(clampedPixelRatio);
     renderer.setSize(safeWidth, safeHeight, false);
     labelRenderer.setSize(safeWidth, safeHeight);
+    outlinePipeline.setSize(safeWidth, safeHeight, clampedPixelRatio);
     camera.aspect = safeWidth / safeHeight;
     camera.updateProjectionMatrix();
   }
@@ -1005,50 +1052,40 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     const cheeseList = net.connected ? net.cheesePickups : [];
     if (net.connected && Array.isArray(cheeseList) && cheeseList.length > 0) {
       const seenCheese = new Set();
+      let cheeseCount = 0;
       for (const c of cheeseList) {
         if (!c?.id) continue;
+        if (cheeseCount >= CHEESE_PICKUP_MAX_INSTANCES) break;
         seenCheese.add(c.id);
-        let ch = cheesePickupMeshes.get(c.id);
-        if (!ch) {
-          const geom = new THREE.ConeGeometry(0.24, 0.38, 6);
-          geom.rotateX(Math.PI);
-          const mat = new THREE.MeshStandardMaterial({
-            color: '#f2d046',
-            emissive: '#806018',
-            emissiveIntensity: 0.22,
-            roughness: 0.42,
-            metalness: 0.06,
-          });
-          const mesh = new THREE.Mesh(geom, mat);
-          mesh.name = `Cheese:${c.id}`;
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
-          cheesePickupGroup.add(mesh);
-          ch = { mesh, geom, mat, phase: Math.random() * Math.PI * 2 };
-          cheesePickupMeshes.set(c.id, ch);
+        let state = cheesePickupStates.get(c.id);
+        if (!state) {
+          state = { phase: Math.random() * Math.PI * 2, spinY: 0 };
+          cheesePickupStates.set(c.id, state);
         }
+        state.spinY += deltaSeconds * 0.65;
         const baseY = (typeof c.y === 'number' ? c.y : 0) + 0.14;
-        ch.mesh.position.x = typeof c.x === 'number' ? c.x : 0;
-        ch.mesh.position.z = typeof c.z === 'number' ? c.z : 0;
-        ch.mesh.position.y = baseY + Math.sin(timeMs * 0.002 * 2.1 + ch.phase) * 0.07;
-        ch.mesh.scale.setScalar(cheesePickupVisualScale(c.amount));
-        ch.mesh.rotation.y += deltaSeconds * 0.65;
+        _cheesePos.set(
+          typeof c.x === 'number' ? c.x : 0,
+          baseY + Math.sin(timeMs * 0.002 * 2.1 + state.phase) * 0.07,
+          typeof c.z === 'number' ? c.z : 0,
+        );
+        _cheeseEuler.set(0, state.spinY, 0);
+        _cheeseQuat.setFromEuler(_cheeseEuler);
+        _cheeseScale.setScalar(cheesePickupVisualScale(c.amount));
+        _cheeseMatrix.compose(_cheesePos, _cheeseQuat, _cheeseScale);
+        cheesePickupInstanced.setMatrixAt(cheeseCount, _cheeseMatrix);
+        cheeseCount += 1;
       }
-      for (const [id, ch] of cheesePickupMeshes) {
-        if (!seenCheese.has(id)) {
-          cheesePickupGroup.remove(ch.mesh);
-          ch.geom.dispose();
-          ch.mat.dispose();
-          cheesePickupMeshes.delete(id);
-        }
+      for (const id of Array.from(cheesePickupStates.keys())) {
+        if (!seenCheese.has(id)) cheesePickupStates.delete(id);
       }
-    } else if (cheesePickupMeshes.size > 0) {
-      for (const [, ch] of cheesePickupMeshes) {
-        cheesePickupGroup.remove(ch.mesh);
-        ch.geom.dispose();
-        ch.mat.dispose();
-      }
-      cheesePickupMeshes.clear();
+      cheesePickupInstanced.count = cheeseCount;
+      cheesePickupInstanced.instanceMatrix.needsUpdate = true;
+      cheesePickupInstanced.visible = cheeseCount > 0;
+    } else {
+      cheesePickupInstanced.count = 0;
+      cheesePickupInstanced.visible = false;
+      if (cheesePickupStates.size > 0) cheesePickupStates.clear();
     }
 
     occlusionFader.update(deltaSeconds);
@@ -1131,12 +1168,11 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     pushBallUnitGeometry.dispose();
     pushBallSharedMaterial.dispose();
     pushBallStates.clear();
-    for (const [, ch] of cheesePickupMeshes) {
-      cheesePickupGroup.remove(ch.mesh);
-      ch.geom.dispose();
-      ch.mat.dispose();
-    }
-    cheesePickupMeshes.clear();
+    cheesePickupGroup.remove(cheesePickupInstanced);
+    cheesePickupInstanced.dispose?.();
+    cheesePickupGeometry.dispose();
+    cheesePickupMaterial.dispose();
+    cheesePickupStates.clear();
     scene.remove(cheesePickupGroup);
     hud.dispose();
     catLocator.dispose();
@@ -1145,6 +1181,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     localNameplate.dispose();
     scene.remove(localNameplateAnchor);
     labelRenderer.domElement.remove();
+    outlinePipeline.dispose();
     renderer.dispose();
   }
 
@@ -1166,6 +1203,11 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         label: 'Static geometry merge (combine by material)',
         get: () => room.isStaticMergeEnabled?.() === true,
         set: (v) => room.setStaticMergeEnabled?.(!!v),
+      },
+      fullscreenOutline: {
+        label: 'Fullscreen outline (post-process)',
+        get: () => outlinePipeline.isEnabled(),
+        set: (v) => outlinePipeline.setEnabled(v),
       },
       roomOutlines: {
         label: 'Room edge outlines (batched)',
