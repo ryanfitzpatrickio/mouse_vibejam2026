@@ -55,9 +55,17 @@ try {
 
 app.bindPerformancePanel?.(modePanel);
 
+let dressingRoom = null;
 if (import.meta.env.DEV) {
   const { installBuildMode } = await import('./dev/installBuildMode.js');
   buildMode = await installBuildMode(app);
+
+  const [{ DressingRoomDialog }, { OrbitControls }, { TransformControls }] = await Promise.all([
+    import('./dev/DressingRoomDialog.js'),
+    import('three/addons/controls/OrbitControls.js'),
+    import('three/addons/controls/TransformControls.js'),
+  ]);
+  dressingRoom = new DressingRoomDialog({ OrbitControls, TransformControls });
 }
 
 if (shouldShowMobileControls) {
@@ -112,6 +120,14 @@ window.addEventListener('keydown', (event) => {
   }
 
   if (key === 'n' && !buildMode?.isActive?.()) {
+    if (dressingRoom) {
+      dressingRoom.toggle();
+    } else {
+      app.spawnExtraBall?.();
+    }
+  }
+
+  if (key === 'r' && !buildMode?.isActive?.()) {
     app.spawnExtraBall?.();
   }
 });
@@ -124,9 +140,12 @@ function resize() {
 
 resize();
 window.addEventListener('resize', resize);
-window.addEventListener('beforeunload', () => {
+function handleUnload() {
+  try { app?.net?.disconnect?.(); } catch {}
   mobileControls?.dispose();
-});
+}
+window.addEventListener('beforeunload', handleUnload);
+window.addEventListener('pagehide', handleUnload);
 
 let lastTime = 0;
 

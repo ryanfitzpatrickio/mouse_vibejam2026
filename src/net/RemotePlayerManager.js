@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { Mouse } from '../entities/Mouse.js';
 import { EmoteManager } from '../emote/EmoteManager.js';
-import { HeroBrain } from '../entities/HeroBrain.js';
+import { HeroAvatar } from '../entities/HeroAvatar.js';
 import { attachEdgeOutlines } from '../materials/index.js';
 import { getAudioManager } from '../audio/AudioManager.js';
 import { createPlayerNameplate, syncNameplateWorldPosition } from '../world/PlayerNameplate.js';
@@ -55,6 +55,7 @@ export class RemotePlayerManager {
         entry.serverAnimState = data.animState ?? 'idle';
         entry.serverGrabbedBy = data.grabbedBy ?? null;
         entry.serverIsHero = !!data.isHero;
+        entry.serverHeroAvatar = data.heroAvatar ?? null;
         entry.nameplate.setAlive(entry.serverAlive);
         if (typeof data.displayName === 'string' && data.displayName.trim()) {
           const next = data.displayName.trim();
@@ -138,9 +139,17 @@ export class RemotePlayerManager {
       entry.emoteManager.update(dt);
       entry.mouse.update(dt);
 
-      // Hero avatar overlay: swap the mouse body for the brain model.
+      // Hero avatar overlay: swap the mouse body for the chosen hero model.
+      // If the server changed which hero model the player is riding, dispose
+      // and re-spawn so visuals follow.
+      const desiredHeroKey = entry.serverHeroAvatar || 'brain';
+      if (entry.heroBrain && entry.heroBrain.modelKey !== desiredHeroKey) {
+        entry.mouse.remove(entry.heroBrain);
+        entry.heroBrain.dispose();
+        entry.heroBrain = null;
+      }
       if (entry.serverIsHero && !entry.heroBrain) {
-        entry.heroBrain = new HeroBrain();
+        entry.heroBrain = new HeroAvatar(desiredHeroKey);
         entry.mouse.add(entry.heroBrain);
         if (entry.mouse.bodyPivot) entry.mouse.bodyPivot.visible = false;
       } else if (!entry.serverIsHero && entry.heroBrain) {
@@ -237,6 +246,7 @@ export class RemotePlayerManager {
       serverAnimState: data.animState ?? 'idle',
       serverGrabbedBy: data.grabbedBy ?? null,
       serverIsHero: !!data.isHero,
+      serverHeroAvatar: data.heroAvatar ?? null,
       heroBrain: null,
     });
   }

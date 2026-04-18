@@ -35,6 +35,15 @@
       "publicPath": "models/brain.glb",
       "size": 0,
       "uploadedAt": "2026-04-18T00:00:00.000Z"
+    },
+    {
+      "id": "asset-jerry-hero-001",
+      "name": "jerry",
+      "filename": "jerry.glb",
+      "sourcePath": "assets/source/custom/jerry.glb",
+      "publicPath": "models/jerry.glb",
+      "size": 0,
+      "uploadedAt": "2026-04-18T00:00:00.000Z"
     }
   ]
 }

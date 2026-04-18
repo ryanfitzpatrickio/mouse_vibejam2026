@@ -253,6 +253,50 @@ export function HudView(props) {
         </div>
       </div>
 
+      <Show when={props.state.hint}>
+        <div
+          style={{
+            position: 'fixed',
+            top: '14%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            'pointer-events': 'none',
+            'z-index': '120',
+            'user-select': 'none',
+            display: 'flex',
+            'align-items': 'center',
+            gap: '8px',
+            padding: '6px 12px',
+            background: 'rgba(16, 20, 28, 0.72)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            'border-radius': '999px',
+            color: '#fff',
+            font: LABEL_FONT,
+            'letter-spacing': '0.04em',
+            'text-shadow': LABEL_SHADOW,
+            'backdrop-filter': 'blur(4px)',
+          }}
+        >
+          <Show when={props.state.hint?.key}>
+            <span
+              style={{
+                display: 'inline-block',
+                'min-width': '22px',
+                padding: '2px 6px',
+                'border-radius': '6px',
+                background: 'rgba(255,255,255,0.14)',
+                border: '1px solid rgba(255,255,255,0.28)',
+                'text-align': 'center',
+                'font-size': '11px',
+              }}
+            >
+              {props.state.hint.key}
+            </span>
+          </Show>
+          <span>{props.state.hint?.text}</span>
+        </div>
+      </Show>
+
       <Show when={!props.state.alive && props.state.respawnCountdown > 0}>
         <div
           style={{

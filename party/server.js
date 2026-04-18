@@ -90,6 +90,12 @@ function getPartyEnv(room, key) {
   return room.env?.[key] ?? room.context?.env?.[key] ?? undefined;
 }
 
+/** Hero avatar rotation. Add a key here when a new hero model ships. */
+const HERO_AVATAR_KEYS = ['brain', 'jerry'];
+function pickHeroAvatar() {
+  return HERO_AVATAR_KEYS[Math.floor(Math.random() * HERO_AVATAR_KEYS.length)];
+}
+
 function splitCsv(value) {
   return String(value ?? '')
     .split(',')
@@ -674,6 +680,7 @@ export default class GameServer {
       state.health = PHYSICS.maxHealth;
       state.heroAvailable = false;
       state.isHero = false;
+      state.heroAvatar = null;
       state.deaths = 0;
       state.alive = true;
       state.deathTime = 0;
@@ -692,6 +699,7 @@ export default class GameServer {
         resetMouseBotBrain(this.botBrains.get(id));
       }
     }
+    this.predators = [];
     this._initPredators();
   }
 
@@ -951,7 +959,7 @@ export default class GameServer {
           }
           if (lastGrab) grabHeld.add(id);
           if (didSmack) smackRequests.push(id);
-          // In dev (DEV_LAYOUT_SYNC_ENABLED), let H instantly toggle Brain mode
+          // In dev (DEV_LAYOUT_SYNC_ENABLED), let H instantly toggle hero mode
           // for fast iteration. Production still requires election eligibility.
           const devHeroBypass = isDevLayoutSyncEnabled(this.room);
           if (heroActivateReq && devHeroBypass) {
@@ -960,12 +968,16 @@ export default class GameServer {
             if (state.isHero) {
               state.health = PHYSICS.maxHealth;
               state.stamina = PHYSICS.maxStamina;
+              state.heroAvatar = pickHeroAvatar();
+            } else {
+              state.heroAvatar = null;
             }
           } else if (heroActivateReq && state.heroAvailable && !state.isHero) {
             state.isHero = true;
             state.heroAvailable = false;
             state.health = PHYSICS.maxHealth;
             state.stamina = PHYSICS.maxStamina;
+            state.heroAvatar = pickHeroAvatar();
           }
           if (!this._lastSeq) this._lastSeq = new Map();
           this._lastSeq.set(id, seqs[id]);
@@ -1032,6 +1044,19 @@ export default class GameServer {
     for (const attackerId of smackRequests) {
       const attacker = this.players.get(attackerId);
       if (!attacker?.alive || attacker.smackCooldown > 0 || attacker.extracted || attacker.spectator) continue;
+      // A smack also boots any ball in front of the attacker, regardless of whether it lands on a player.
+      const smackRot = attacker.rotation ?? 0;
+      const smackFx = Math.sin(smackRot);
+      const smackFz = Math.cos(smackRot);
+      const ballsHit = this.pushBallWorld.smackBallsInFront(
+        attacker.position,
+        smackFx,
+        smackFz,
+        { range: SMACK_RANGE, speed: 12, upSpeed: 3.8 },
+      );
+      if (ballsHit > 0) {
+        attacker.smackCooldown = SMACK_COOLDOWN;
+      }
       // Find nearest alive player in range
       let bestId = null;
       let bestDist = SMACK_RANGE;
@@ -1194,7 +1219,14 @@ export default class GameServer {
         );
         continue;
       }
-      const hit = simulatePredatorTick(pred, playersObj, dt, this.levelColliders, this.levelNavMesh);
+      const hit = simulatePredatorTick(
+        pred,
+        playersObj,
+        dt,
+        this.levelColliders,
+        this.levelNavMesh,
+        this.pushBallWorld.getBallsForAi(),
+      );
       if (hit) {
         const target = this.players.get(hit.playerId);
         if (target && target.alive) {

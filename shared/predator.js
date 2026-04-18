@@ -20,6 +20,7 @@ export const PREDATOR_AI = Object.freeze({
   PATROL: 'patrol',
   ALERT: 'alert',
   CHASE: 'chase',
+  CHASE_BALL: 'chase_ball',
   ATTACK: 'attack',
   COOLDOWN: 'cooldown',
   STUNNED: 'stunned',
@@ -146,6 +147,12 @@ export function createPredatorState(config) {
     chaseDropCooldownTimer: 0,
     /** True during `air` after `prep_drop` (cleared when landing or air ends). */
     chaseIsDescentJump: false,
+
+    /** Ball chase distraction: a moving ball briefly hijacks the cat's attention. */
+    chaseBallTargetId: null,
+    chaseBallPos: { x: 0, y: 0, z: 0 },
+    chaseBallTimer: 0,
+    chaseBallStillTimer: 0,
 
     /** null | 'look_hop' | 'look_hold' | 'drop_prep' | 'drop_air' */
     elevationSearchPhase: null,
@@ -1079,7 +1086,33 @@ function beginChaseDrop(state, prey, preyNav) {
   state.chaseDropCooldownTimer = CAT_BT.chaseDropCooldown;
 }
 
-export function simulatePredatorTick(state, players, dt, colliders, navMesh = null) {
+/** Speed at which a rolling/flying ball grabs the cat's attention (m/s). */
+const BALL_NOTICE_SPEED = 1.6;
+const BALL_NOTICE_RANGE = 14;
+const BALL_GIVEUP_DIST = 22;
+const BALL_CHASE_MAX_TIME = 14;
+const BALL_STILL_GIVEUP_TIME = 1.0;
+
+function findDistractingBall(state, balls) {
+  if (!Array.isArray(balls) || balls.length === 0) return null;
+  let best = null;
+  let bestScore = -Infinity;
+  for (const b of balls) {
+    const vx = b.vx || 0;
+    const vz = b.vz || 0;
+    const speed = Math.sqrt(vx * vx + vz * vz);
+    if (speed < BALL_NOTICE_SPEED) continue;
+    const dx = b.x - state.position.x;
+    const dz = b.z - state.position.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+    if (dist > BALL_NOTICE_RANGE) continue;
+    const score = speed * 1.5 - dist * 0.2;
+    if (score > bestScore) { bestScore = score; best = b; }
+  }
+  return best;
+}
+
+export function simulatePredatorTick(state, players, dt, colliders, navMesh = null, balls = null) {
   if (!state.alive) return null;
 
   state.aiTimer -= dt;
@@ -1117,6 +1150,36 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
   }
 
   const distToSpawn = distXZ(state.position, state.spawnPoint);
+
+  // Moving balls distract the cat: break any current player chase and pursue the ball instead.
+  const ballDistractionAllowed = state.aiState !== PREDATOR_AI.ATTACK
+    && state.aiState !== PREDATOR_AI.STUNNED
+    && state.aiState !== PREDATOR_AI.DEATH
+    && state.aiState !== PREDATOR_AI.COOLDOWN
+    && state.aiState !== PREDATOR_AI.ROAR
+    && state.chaseVerticalPhase !== 'prep_jump'
+    && state.chaseVerticalPhase !== 'prep_drop'
+    && state.chaseVerticalPhase !== 'air';
+  if (ballDistractionAllowed) {
+    const distractor = findDistractingBall(state, balls);
+    if (distractor) {
+      if (state.aiState === PREDATOR_AI.CHASE) {
+        clearPredatorAggroTarget(state);
+        resetChaseProgress(state);
+        state.chaseFrustration = 0;
+      }
+      if (state.aiState !== PREDATOR_AI.CHASE_BALL) {
+        clearPredatorNavPath(state);
+        state.aiState = PREDATOR_AI.CHASE_BALL;
+        state.chaseBallTimer = BALL_CHASE_MAX_TIME;
+        state.chaseBallStillTimer = 0;
+      }
+      state.chaseBallTargetId = distractor.id;
+      state.chaseBallPos.x = distractor.x;
+      state.chaseBallPos.y = distractor.y;
+      state.chaseBallPos.z = distractor.z;
+    }
+  }
 
   switch (state.aiState) {
     case PREDATOR_AI.IDLE:
@@ -1891,6 +1954,71 @@ export function simulatePredatorTick(state, players, dt, colliders, navMesh = nu
         }
       }
       break;
+
+    case PREDATOR_AI.CHASE_BALL: {
+      const target = Array.isArray(balls)
+        ? balls.find((b) => b.id === state.chaseBallTargetId)
+        : null;
+      const targetSpeed = target
+        ? Math.sqrt((target.vx || 0) * (target.vx || 0) + (target.vz || 0) * (target.vz || 0))
+        : 0;
+      if (target) {
+        state.chaseBallPos.x = target.x;
+        state.chaseBallPos.y = target.y;
+        state.chaseBallPos.z = target.z;
+      }
+      state.chaseBallTimer -= dt;
+      const dist = distXZ(state.position, state.chaseBallPos);
+
+      if (!target || state.chaseBallTimer <= 0 || dist > BALL_GIVEUP_DIST) {
+        state.chaseBallTargetId = null;
+        state.chaseBallStillTimer = 0;
+        clearPredatorNavPath(state);
+        state.aiState = PREDATOR_AI.PATROL;
+        state.patrolTarget.x = state.spawnPoint.x;
+        state.patrolTarget.z = state.spawnPoint.z;
+        state.patrolTarget.y = state.spawnPoint.y;
+        break;
+      }
+
+      if (targetSpeed < BALL_NOTICE_SPEED * 0.5 && dist < 2.4) {
+        state.chaseBallStillTimer += dt;
+        if (state.chaseBallStillTimer >= BALL_STILL_GIVEUP_TIME) {
+          state.chaseBallTargetId = null;
+          state.chaseBallStillTimer = 0;
+          clearPredatorNavPath(state);
+          state.aiState = PREDATOR_AI.IDLE;
+          state.aiTimer = initialIdleDelay();
+          break;
+        }
+      } else {
+        state.chaseBallStillTimer = 0;
+      }
+
+      if (applyPredatorUnstuckMove(state, dt)) break;
+      const ballDest = {
+        x: state.chaseBallPos.x,
+        y: state.chaseBallPos.y,
+        z: state.chaseBallPos.z,
+      };
+      const ballChaseSpeed = state.chaseSpeed * 0.9;
+      const movedBall = navSteerMove(state, ballDest, navMesh, ballChaseSpeed, dt);
+      if (!movedBall) {
+        const dir = normalizeXZ({
+          x: ballDest.x - state.position.x,
+          z: ballDest.z - state.position.z,
+        });
+        moveToward(state, dir, ballChaseSpeed * 0.7, dt);
+        faceDirection(state, dir, dt);
+      } else {
+        pendingStuckIntent = {
+          aiState: state.aiState,
+          expectedDistance: ballChaseSpeed * dt,
+          target: ballDest,
+        };
+      }
+      break;
+    }
 
     case PREDATOR_AI.DEATH:
       clearPredatorNavPath(state);

@@ -1,9 +1,32 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import {
+  createDefaultQueryFilter,
+  createFindNearestPolyResult,
+  findNearestPoly,
+  findPath,
+} from 'navcat';
 import { Predator, AI_STATE } from './Predator.js';
+import { MouseEyeAtlasAnimator } from '../animation/MouseEyeAtlasAnimator.js';
+import { attachEyesToModel } from '../data/attachEyes.js';
 import { assetUrl } from '../utils/assetUrl.js';
 import { getAudioManager } from '../audio/AudioManager.js';
+import kitchenRoombaNavMesh from '../../shared/kitchen-roomba-navmesh.generated.js';
+import { NAV_AGENT_CONFIGS } from '../../shared/navConfig.js';
+
+const ROOMBA_HALF_EXTENTS = NAV_AGENT_CONFIGS.roomba.queryHalfExtents;
+const ROOMBA_FILTER = createDefaultQueryFilter();
+const _navSampleScratch = createFindNearestPolyResult();
+const _tmpDir = new THREE.Vector3();
+
+const HUMAN_AI_TO_EXPRESSION = Object.freeze({
+  idle: 'idle',
+  patrol: 'idle',
+  alert: 'surprised',
+  roar: 'shocked',
+  cooldown: 'shifty',
+});
 
 /**
  * Human predator (cop). Wanders the kitchen and, upon spotting a rat,
@@ -32,6 +55,14 @@ export class Human extends Predator {
     });
 
     this._turnAnimName = null;
+    this._navPath = [];
+    this._navPathIndex = 0;
+    this._navRepathTimer = 0;
+    this._navStuckTimer = 0;
+    this._navLastPos = new THREE.Vector3();
+    this.eyeAnimator = new MouseEyeAtlasAnimator({
+      stateToExpression: HUMAN_AI_TO_EXPRESSION,
+    });
     this.ready = this._load();
   }
 
@@ -47,7 +78,29 @@ export class Human extends Predator {
       if (!this._hipBone && o.isBone && /hips?$/i.test(o.name)) this._hipBone = o;
     });
     this.playAnimation('idle', { fadeIn: 0, loop: true });
+
+    try {
+      await this.eyeAnimator.load();
+      this._eyeUnsub = attachEyesToModel('human', this.eyeAnimator, this.model);
+      this.eyeAnimator.setState('idle', { immediate: true });
+    } catch {
+      /* eyes unavailable, keep going */
+    }
+
     return this;
+  }
+
+  update(dt, ...rest) {
+    super.update?.(dt, ...rest);
+    this.eyeAnimator?.update(dt);
+    this.eyeAnimator?.setState(this.aiState);
+  }
+
+  dispose() {
+    this._eyeUnsub?.();
+    this._eyeUnsub = null;
+    this.eyeAnimator?.dispose?.();
+    super.dispose?.();
   }
 
   /** Rat spotted → play the meme reaction + spatial audio, unless already playing. */
@@ -94,6 +147,133 @@ export class Human extends Predator {
     }
     this.position.x = startX + dx * safeT;
     this.position.z = startZ + dz * safeT;
+  }
+
+  _sampleNavPoint(x, y, z) {
+    findNearestPoly(
+      _navSampleScratch,
+      kitchenRoombaNavMesh,
+      [x, y, z],
+      ROOMBA_HALF_EXTENTS,
+      ROOMBA_FILTER,
+    );
+    if (!_navSampleScratch.success) return null;
+    return {
+      x: _navSampleScratch.position[0],
+      y: _navSampleScratch.position[1],
+      z: _navSampleScratch.position[2],
+    };
+  }
+
+  _pickPatrolTarget() {
+    const r = this.patrolRadius;
+    for (let i = 0; i < 8; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 1.5 + Math.random() * (r - 1.5);
+      const tx = this.spawnPoint.x + Math.cos(angle) * dist;
+      const tz = this.spawnPoint.z + Math.sin(angle) * dist;
+      const p = this._sampleNavPoint(tx, this.spawnPoint.y, tz);
+      if (p) {
+        this.patrolTarget.set(p.x, p.y, p.z);
+        this._buildNavPath();
+        return;
+      }
+    }
+    this.patrolTarget.copy(this.spawnPoint);
+    this._navPath = [];
+    this._navPathIndex = 0;
+  }
+
+  _buildNavPath() {
+    const start = this._sampleNavPoint(this.position.x, this.position.y, this.position.z);
+    const end = this._sampleNavPoint(this.patrolTarget.x, this.patrolTarget.y, this.patrolTarget.z);
+    if (!start || !end) {
+      this._navPath = [];
+      this._navPathIndex = 0;
+      return;
+    }
+    const result = findPath(
+      kitchenRoombaNavMesh,
+      [start.x, start.y, start.z],
+      [end.x, end.y, end.z],
+      ROOMBA_HALF_EXTENTS,
+      ROOMBA_FILTER,
+    );
+    if (!result.success || !Array.isArray(result.path) || result.path.length === 0) {
+      this._navPath = [];
+      this._navPathIndex = 0;
+      return;
+    }
+    this._navPath = result.path.map((pt) => ({
+      x: pt.position[0],
+      y: pt.position[1],
+      z: pt.position[2],
+    }));
+    this._navPathIndex = this._navPath.length > 1 ? 1 : 0;
+    this._navRepathTimer = 2.5;
+    this._navStuckTimer = 0;
+    this._navLastPos.copy(this.position);
+  }
+
+  _updatePatrol(dt, distToPlayer) {
+    this._animateForState('patrol');
+
+    if (distToPlayer < this.aggroRange) {
+      this._enterAlert();
+      return;
+    }
+
+    this._navRepathTimer -= dt;
+
+    const haveWaypoint = this._navPath.length > 0
+      && this._navPathIndex < this._navPath.length;
+
+    if (!haveWaypoint) {
+      if (this._navRepathTimer <= 0) {
+        this._buildNavPath();
+      }
+      if (this._navPath.length === 0 || this._navPathIndex >= this._navPath.length) {
+        this.aiState = AI_STATE.IDLE;
+        this.aiTimer = this.patrolWaitMin + Math.random() * (this.patrolWaitMax - this.patrolWaitMin);
+        return;
+      }
+    }
+
+    const wp = this._navPath[this._navPathIndex];
+    const dir = _tmpDir.set(wp.x - this.position.x, 0, wp.z - this.position.z);
+    const dist = dir.length();
+
+    if (dist < 0.6) {
+      this._navPathIndex += 1;
+      if (this._navPathIndex >= this._navPath.length) {
+        const finalDx = this.patrolTarget.x - this.position.x;
+        const finalDz = this.patrolTarget.z - this.position.z;
+        if (finalDx * finalDx + finalDz * finalDz < 0.25) {
+          this.aiState = AI_STATE.IDLE;
+          this.aiTimer = this.patrolWaitMin + Math.random() * (this.patrolWaitMax - this.patrolWaitMin);
+          return;
+        }
+        this._buildNavPath();
+      }
+      return;
+    }
+
+    dir.normalize();
+    this._moveToward(dir, this.moveSpeed, dt);
+    this._faceDirection(dir, dt);
+
+    // Repath if stuck (not progressing toward next waypoint).
+    const moved = this._navLastPos.distanceToSquared(this.position);
+    this._navLastPos.copy(this.position);
+    if (moved < (this.moveSpeed * dt * 0.3) ** 2) {
+      this._navStuckTimer += dt;
+      if (this._navStuckTimer > 0.8) {
+        this._navStuckTimer = 0;
+        this._buildNavPath();
+      }
+    } else {
+      this._navStuckTimer = 0;
+    }
   }
 
   _positionBlocked(x, z) {

@@ -15,6 +15,7 @@ const PATCH_KEYS = [
   'maxLives',
   'alive',
   'respawnCountdown',
+  'hint',
 ];
 
 /**
@@ -38,6 +39,7 @@ export class HUD {
       maxLives: 2,
       alive: true,
       respawnCountdown: 0,
+      hint: null,
     });
     this._setState = setState;
     this._dispose = render(() => <HudView state={state} />, this._mount);

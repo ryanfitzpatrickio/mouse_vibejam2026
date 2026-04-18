@@ -15,6 +15,93 @@ function isFormTarget(target) {
     && (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName));
 }
 
+const CONTROLS = [
+  { keys: ['W', 'A', 'S', 'D'], label: 'Move' },
+  { keys: ['Space'], label: 'Jump' },
+  { keys: ['Shift'], label: 'Sprint' },
+  { keys: ['Ctrl'], label: 'Crouch' },
+  { keys: ['E'], label: 'Smack' },
+  { keys: ['Q'], label: 'Grab' },
+  { keys: ['R'], label: 'Spawn ball' },
+  { keys: ['F'], label: 'Emote' },
+  { keys: ['H'], label: 'Hero' },
+];
+
+function KeyCap(props) {
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        'min-width': '22px',
+        padding: '2px 6px',
+        'border-radius': '6px',
+        background: 'rgba(255,255,255,0.14)',
+        border: '1px solid rgba(255,255,255,0.28)',
+        'text-align': 'center',
+        'font-size': '11px',
+        'letter-spacing': '0.02em',
+      }}
+    >
+      {props.children}
+    </span>
+  );
+}
+
+function ControlsPanel() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        'flex-direction': 'column',
+        gap: '8px',
+        'border-top': '1px solid rgba(255,255,255,0.12)',
+        'padding-top': '10px',
+        'margin-top': '2px',
+      }}
+    >
+      <div
+        style={{
+          font: HUD_LABEL_FONT,
+          'letter-spacing': '0.08em',
+          'text-transform': 'uppercase',
+          'text-shadow': HUD_LABEL_SHADOW,
+          'text-align': 'center',
+        }}
+      >
+        Controls
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          'grid-template-columns': 'repeat(auto-fill, minmax(160px, 1fr))',
+          gap: '6px 12px',
+          padding: '0 6px',
+          color: '#fff',
+          font: HUD_LABEL_FONT,
+          'text-shadow': HUD_LABEL_SHADOW,
+        }}
+      >
+        <For each={CONTROLS}>
+          {(c) => (
+            <div
+              style={{
+                display: 'flex',
+                'align-items': 'center',
+                gap: '8px',
+              }}
+            >
+              <span style={{ display: 'inline-flex', gap: '3px' }}>
+                <For each={c.keys}>{(k) => <KeyCap>{k}</KeyCap>}</For>
+              </span>
+              <span style={{ color: 'rgba(255,255,255,0.85)' }}>{c.label}</span>
+            </div>
+          )}
+        </For>
+      </div>
+    </div>
+  );
+}
+
 function ColHeader(props) {
   return (
     <div
@@ -175,6 +262,10 @@ function ScoreboardView(props) {
           </div>
         </Show>
       </div>
+
+      <Show when={!props.state.coarsePointer}>
+        <ControlsPanel />
+      </Show>
     </div>
   );
 }
@@ -185,9 +276,12 @@ export class ScoreboardOverlay {
     this.container = container;
     this._mount = document.createElement('div');
     container.appendChild(this._mount);
+    const coarsePointer = typeof window !== 'undefined'
+      && window.matchMedia?.('(pointer: coarse)').matches;
     const [state, setState] = createStore({
       tabHeld: false,
       rows: [],
+      coarsePointer,
     });
     this._setState = setState;
     this._dispose = render(() => <ScoreboardView state={state} />, this._mount);

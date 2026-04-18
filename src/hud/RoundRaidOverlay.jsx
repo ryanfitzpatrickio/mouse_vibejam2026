@@ -207,7 +207,7 @@ function RoundRaidView(props) {
               'text-shadow': HUD_LABEL_SHADOW,
             }}
           >
-            Click anywhere to close
+            Press Space / Enter or click to close
           </div>
         </div>
       </div>
@@ -236,6 +236,23 @@ export class RoundRaidOverlay {
     this._dispose = render(() => (
       <RoundRaidView state={state} onRoundEndDismiss={this._dismiss} />
     ), this._mount);
+
+    // Allow keyboard dismissal of the round-end summary so players don't have
+    // to grab the mouse to clear it. Run in the capture phase so the gameplay
+    // controller (which listens for Space → jump) doesn't beat us to it.
+    this._onKeyDown = (e) => {
+      if (!state.roundEndVisible) return;
+      const isSpace = e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar';
+      const isEnter = e.code === 'Enter' || e.code === 'NumpadEnter' || e.key === 'Enter';
+      if (!isSpace && !isEnter) return;
+      const t = e.target;
+      if (t instanceof HTMLElement
+          && (t.isContentEditable || /^(input|textarea|select)$/i.test(t.tagName))) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      this._dismiss();
+    };
+    document.addEventListener('keydown', this._onKeyDown, true);
   }
 
   updatePhaseBanner(round, nowSeconds = Date.now() / 1000, hints = {}) {
@@ -285,6 +302,7 @@ export class RoundRaidOverlay {
   }
 
   dispose() {
+    document.removeEventListener('keydown', this._onKeyDown, true);
     this._dispose();
     this._mount.remove();
   }

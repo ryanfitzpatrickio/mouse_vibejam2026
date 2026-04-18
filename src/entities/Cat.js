@@ -3,19 +3,15 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { Predator } from './Predator.js';
 import { MouseEyeAtlasAnimator } from '../animation/MouseEyeAtlasAnimator.js';
+import { attachEyesToModel } from '../data/attachEyes.js';
 import { assetUrl } from '../utils/assetUrl.js';
-
-const EYE_PLACEMENT = Object.freeze({
-  position: { x: 0, y: 0.1263, z: -0.0178 },
-  rotation: { x: -2.3096, y: 0, z: 0 },
-  scale: { x: 1.121, y: 1.121, z: 1.121 },
-});
 
 const AI_STATE_TO_EXPRESSION = Object.freeze({
   idle: 'idle',
   patrol: 'shifty',
   alert: 'surprised',
   chase: 'angry',
+  chase_ball: 'shifty',
   attack: 'angry',
   cooldown: 'shifty',
   stunned: 'shocked',
@@ -98,15 +94,16 @@ export class Cat extends Predator {
 
   _attachEyes() {
     if (!this.eyeAnimator?.loaded || !this.model) return;
-
-    const head = this.model.getObjectByName('Head') ?? this.model;
-    this.eyeAnimator.attach(head, {
-      localOffset: new THREE.Vector3(EYE_PLACEMENT.position.x, EYE_PLACEMENT.position.y, EYE_PLACEMENT.position.z),
-      localRotation: new THREE.Euler(EYE_PLACEMENT.rotation.x, EYE_PLACEMENT.rotation.y, EYE_PLACEMENT.rotation.z),
-      localScale: new THREE.Vector3(EYE_PLACEMENT.scale.x, EYE_PLACEMENT.scale.y, EYE_PLACEMENT.scale.z),
-      hideTargets: [],
-    });
+    this._eyeUnsub?.();
+    this._eyeUnsub = attachEyesToModel('cat', this.eyeAnimator, this.model);
     this.eyeAnimator.setState('idle', { immediate: true });
+  }
+
+  dispose() {
+    this._eyeUnsub?.();
+    this._eyeUnsub = null;
+    this.eyeAnimator?.dispose?.();
+    super.dispose?.();
   }
 
   applyServerState(snapshot) {
@@ -161,6 +158,9 @@ export class Cat extends Predator {
         } else {
           this.playAnimation('Run');
         }
+        break;
+      case 'chase_ball':
+        this.playAnimation('Run');
         break;
       case 'attack':
         this.playAnimation('Bite', { loop: false, clampWhenFinished: true });

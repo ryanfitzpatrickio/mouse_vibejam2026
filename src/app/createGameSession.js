@@ -24,7 +24,7 @@ import { RemotePlayerManager } from '../net/RemotePlayerManager.js';
 import { EmoteManager } from '../emote/EmoteManager.js';
 import { EmoteWheel } from '../emote/EmoteWheel.jsx';
 import { HeroPrompt } from '../hud/HeroPrompt.jsx';
-import { HeroBrain } from '../entities/HeroBrain.js';
+import { HeroAvatar } from '../entities/HeroAvatar.js';
 import { getAudioManager } from '../audio/AudioManager.js';
 import { OcclusionFader } from '../utils/OcclusionFader.js';
 import { createPlayerNameplate, syncNameplateWorldPosition } from '../world/PlayerNameplate.js';
@@ -394,6 +394,16 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const roundRaid = new RoundRaidOverlay();
   const catLocator = new CatLocatorOverlay();
 
+  const isCoarsePointer = typeof window !== 'undefined'
+    && window.matchMedia?.('(pointer: coarse)').matches;
+  const HINT_DONE_KEY = 'vibejam:hint:smackBall:done';
+  let smackBallHintDone = false;
+  try { smackBallHintDone = localStorage.getItem(HINT_DONE_KEY) === '1'; } catch {}
+  let activeHintId = null;
+  let _smackFiredThisFrame = false;
+  let _wasHero = false;
+  let _prevRoundPhase = null;
+
   const extractionMarkerGroup = new THREE.Group();
   extractionMarkerGroup.name = 'ExtractionPortals';
   scene.add(extractionMarkerGroup);
@@ -490,15 +500,25 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const emoteManager = new EmoteManager({ mouse, audioManager, scene });
   const heroPrompt = new HeroPrompt();
   let localHeroBrain = null;
-  function ensureLocalHeroBrain(active) {
+  let localHeroModelKey = null;
+  function ensureLocalHeroBrain(active, modelKey) {
+    // Re-spawn if the server picked a different hero model than what we
+    // currently render (e.g. respawn picked a new random hero).
+    if (active && localHeroBrain && modelKey && modelKey !== localHeroModelKey) {
+      mouse.remove(localHeroBrain);
+      localHeroBrain.dispose();
+      localHeroBrain = null;
+    }
     if (active && !localHeroBrain) {
-      localHeroBrain = new HeroBrain();
+      localHeroModelKey = modelKey || 'brain';
+      localHeroBrain = new HeroAvatar(localHeroModelKey);
       mouse.add(localHeroBrain);
       if (mouse.bodyPivot) mouse.bodyPivot.visible = false;
     } else if (!active && localHeroBrain) {
       mouse.remove(localHeroBrain);
       localHeroBrain.dispose();
       localHeroBrain = null;
+      localHeroModelKey = null;
       if (mouse.bodyPivot) mouse.bodyPivot.visible = true;
     }
   }
@@ -977,15 +997,15 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
           inputWithEmote.emote = emoteManager.activeEmote.id;
         }
         // Grab is held continuously; smack is a one-shot press.
-        if (controller.grabHeld) {
+        // Q unifies grab: server picks whichever is in proximity (mouse or rope).
+        if (controller.grabHeld || controller.ropeGrabHeld) {
           inputWithEmote.grab = true;
-        }
-        if (controller.ropeGrabHeld) {
           inputWithEmote.ropeGrab = true;
         }
         if (controller.smackPressed) {
           inputWithEmote.smack = true;
           controller.smackPressed = false;
+          _smackFiredThisFrame = true;
         }
         if (controller.heroActivatePressed) {
           inputWithEmote.heroActivate = true;
@@ -1085,7 +1105,16 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     heroPrompt.setVisible(
       !!(net.serverState?.heroAvailable && !net.serverState?.isHero && isAlive),
     );
-    ensureLocalHeroBrain(!!net.serverState?.isHero && isAlive);
+    const isHeroNow = !!net.serverState?.isHero && isAlive;
+    ensureLocalHeroBrain(isHeroNow, net.serverState?.heroAvatar);
+    if (isHeroNow !== _wasHero) {
+      _wasHero = isHeroNow;
+      if (isHeroNow) {
+        audioManager.startHeroMusic?.();
+      } else {
+        audioManager.stopHeroMusic?.();
+      }
+    }
     if (localHeroBrain) {
       localHeroBrain.setState(controller._prevAnimState ?? 'idle');
       localHeroBrain.update(deltaSeconds);
@@ -1096,6 +1125,19 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         ? `Extract ${Math.round((net.serverState?.extractProgress ?? 0) * 100)}%`
         : '',
     });
+
+    const currentPhase = net.connected ? (net.round?.phase ?? null) : null;
+    if (currentPhase !== _prevRoundPhase) {
+      if (currentPhase === 'extract' && _prevRoundPhase !== null) {
+        audioManager.playExtractCountdown?.();
+      }
+      if (currentPhase === 'intermission') {
+        audioManager.startIntermissionMusic?.();
+      } else if (_prevRoundPhase === 'intermission') {
+        audioManager.stopIntermissionMusic?.();
+      }
+      _prevRoundPhase = currentPhase;
+    }
 
     if (net.connected && Array.isArray(net.extractionPortals) && net.extractionPortals.length > 0) {
       while (extractionMarkerGroup.children.length < net.extractionPortals.length) {
@@ -1181,6 +1223,37 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       pushBallInstanced.visible = false;
       if (pushBallStates.size > 0) pushBallStates.clear();
     }
+
+    // Context-aware hint: show a smack hint when the player is near a ball
+    // (until they've done it once — persisted locally).
+    let nextHint = null;
+    if (!smackBallHintDone && Array.isArray(balls) && balls.length > 0 && controller.alive) {
+      let nearestSq = Infinity;
+      for (const b of balls) {
+        const dx = b.x - mouse.position.x;
+        const dz = b.z - mouse.position.z;
+        const dSq = dx * dx + dz * dz;
+        if (dSq < nearestSq) nearestSq = dSq;
+      }
+      if (nearestSq < 2.5 * 2.5) {
+        nextHint = {
+          id: 'smackBall',
+          key: isCoarsePointer ? 'SMACK' : 'SPACE',
+          text: 'Smack the ball',
+        };
+        if (_smackFiredThisFrame) {
+          smackBallHintDone = true;
+          try { localStorage.setItem(HINT_DONE_KEY, '1'); } catch {}
+          nextHint = null;
+        }
+      }
+    }
+    const nextHintId = nextHint?.id ?? null;
+    if (nextHintId !== activeHintId) {
+      activeHintId = nextHintId;
+      hud.update({ hint: nextHint });
+    }
+    _smackFiredThisFrame = false;
 
     const ropeLayout = room.getEditableLayout?.()?.ropes ?? [];
     const ropeStyleById = new Map(

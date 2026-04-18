@@ -285,7 +285,6 @@ export class MobileControls {
       smack: createButton({ label: 'Smack', icon: 'smack' }),
       use: createButton({ label: 'Use', icon: 'use' }),
       grab: createButton({ label: 'Grab', icon: 'grab' }),
-      drop: createButton({ label: 'Drop', icon: 'drop' }),
       crouch: createButton({ label: 'Slide', icon: 'crouch' }),
       sprint: createButton({ label: 'Sprint', icon: 'sprint' }),
       rope: createButton({ label: 'Rope', icon: 'rope' }),
@@ -306,7 +305,7 @@ export class MobileControls {
 
     placeAt(this._buttons.jump, center, center, JUMP_SIZE);
 
-    const satellites = ['emote', 'hero', 'use', 'smack', 'grab', 'drop', 'crouch', 'sprint', 'rope'];
+    const satellites = ['emote', 'hero', 'use', 'smack', 'grab', 'crouch', 'sprint', 'rope'];
     const startAngle = -Math.PI / 2;
     for (let i = 0; i < satellites.length; i++) {
       const a = startAngle + (i / satellites.length) * Math.PI * 2;
@@ -322,7 +321,6 @@ export class MobileControls {
       this._buttons.use,
       this._buttons.smack,
       this._buttons.grab,
-      this._buttons.drop,
       this._buttons.crouch,
       this._buttons.sprint,
       this._buttons.rope,
@@ -468,11 +466,6 @@ export class MobileControls {
     this._bindTapButton(this._buttons.use, () => {
       if (!kb) return;
       this.controller.keys[kb.interact] = true;
-    });
-
-    this._bindTapButton(this._buttons.drop, () => {
-      if (!kb) return;
-      this.controller.keys[kb.drop] = true;
     });
 
     this._bindHoldButton(this._buttons.grab, () => {

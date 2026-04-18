@@ -13,7 +13,7 @@ const DEFAULT_KEY_BINDINGS = Object.freeze({
   interact: 'KeyE',
   grab: 'KeyQ',
   drop: 'KeyG',
-  ropeGrab: 'KeyR',
+  ropeGrab: 'KeyQ',
   emote: 'KeyF',
   heroActivate: 'KeyH',
 });

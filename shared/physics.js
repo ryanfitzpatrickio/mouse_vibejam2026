@@ -135,6 +135,8 @@ export function createPlayerState(id) {
     heroAvailable: false,
     /** Hero system: set by server after H press; unlocks super-charged moveset + swapped model. */
     isHero: false,
+    /** Hero system: which avatar model (key into client HERO_AVATARS) the server picked. */
+    heroAvatar: null,
   };
 }
 

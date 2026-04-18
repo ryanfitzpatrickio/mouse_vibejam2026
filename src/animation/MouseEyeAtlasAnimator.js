@@ -196,6 +196,7 @@ export class MouseEyeAtlasAnimator {
     this.baseOffset.copy(localOffset);
     this.baseRotation.copy(localRotation);
     this.baseScale.copy(localScale);
+    this.eyeSize = eyeSize;
 
     if (this.group) {
       this.group.removeFromParent();
@@ -318,19 +319,27 @@ export class MouseEyeAtlasAnimator {
     this.group.visible = EYE_WORLD_NORMAL.dot(EYE_TO_CAMERA) > 0.02;
   }
 
-  setPlacement({ position, rotation, scale, frameCrop } = {}) {
+  setPlacement({ position, rotation, scale, frameCrop, eyeSize } = {}) {
+    if (typeof eyeSize === 'number' && eyeSize > 0 && this.eye && Math.abs(eyeSize - (this.eyeSize ?? 0)) > 1e-4) {
+      this.eyeSize = eyeSize;
+      this.eye.geometry?.dispose();
+      this.eye.geometry = new THREE.PlaneGeometry(eyeSize * 1.65, eyeSize);
+    }
     if (position) {
-      this.baseOffset.copy(position);
+      if (typeof position.copy === 'function') this.baseOffset.copy(position);
+      else this.baseOffset.set(position.x ?? 0, position.y ?? 0, position.z ?? 0);
       if (this.group) this.group.position.copy(this.baseOffset);
     }
 
     if (rotation) {
-      this.baseRotation.copy(rotation);
+      if (typeof rotation.copy === 'function') this.baseRotation.copy(rotation);
+      else this.baseRotation.set(rotation.x ?? 0, rotation.y ?? 0, rotation.z ?? 0);
       if (this.group) this.group.rotation.copy(this.baseRotation);
     }
 
     if (scale) {
-      this.baseScale.copy(scale);
+      if (typeof scale.copy === 'function') this.baseScale.copy(scale);
+      else this.baseScale.set(scale.x ?? 1, scale.y ?? 1, scale.z ?? 1);
       if (this.group) this.group.scale.copy(this.baseScale);
     }
 

@@ -1206,8 +1206,23 @@ export class AudioManager {
   _applyAmbientGains() {
     if (!this._ambientCalmGain || !this._ambientChaseGain) return;
     const w = this._ambientBlend;
-    this._ambientCalmGain.gain.value = (1 - w) * AMBIENT_TRACK_GAIN;
-    this._ambientChaseGain.gain.value = w * AMBIENT_TRACK_GAIN;
+    const duck = (this._ambientDuckForIntermission || this._ambientDuckForHero) ? 0 : 1;
+    this._ambientCalmGain.gain.value = (1 - w) * AMBIENT_TRACK_GAIN * duck;
+    this._ambientChaseGain.gain.value = w * AMBIENT_TRACK_GAIN * duck;
+  }
+
+  _applyMusicOverrideDucking() {
+    const now = this.audioContext.currentTime;
+    const heroDuck = (this._musicOverrideExtract || this._musicOverrideIntermission) ? 0 : 1;
+    if (this._heroMusicGain) {
+      this._heroMusicGain.gain.cancelScheduledValues(now);
+      this._heroMusicGain.gain.setTargetAtTime(heroDuck, now, 0.2);
+    }
+    const interDuck = this._musicOverrideExtract ? 0 : 1;
+    if (this._intermissionMusicGain) {
+      this._intermissionMusicGain.gain.cancelScheduledValues(now);
+      this._intermissionMusicGain.gain.setTargetAtTime(interDuck, now, 0.2);
+    }
   }
 
   _tickAmbientCrossfade(deltaSeconds) {
@@ -1412,6 +1427,164 @@ export class AudioManager {
 
   isMusicMuted() {
     return this._musicMuted;
+  }
+
+  async _loadHeroMusicBuffer() {
+    if (this._heroMusicBuffer !== undefined) return this._heroMusicBuffer;
+    if (this._heroMusicLoading) return this._heroMusicLoading;
+    this._heroMusicLoading = (async () => {
+      const buf = await this._tryFetchDecodeAmbientStem('assets/Railroad Spitshine')
+        ?? await this._tryFetchDecodeAmbientStem('assets/railroad spitshine');
+      this._heroMusicBuffer = buf ?? null;
+      return this._heroMusicBuffer;
+    })();
+    try {
+      return await this._heroMusicLoading;
+    } finally {
+      this._heroMusicLoading = null;
+    }
+  }
+
+  async startHeroMusic() {
+    if (this._heroMusicSource) return;
+    try {
+      await this.audioContext.resume();
+    } catch {}
+    const buffer = await this._loadHeroMusicBuffer();
+    if (!buffer) return;
+    if (this._heroMusicSource) return; // another caller started it while we awaited
+    const gain = this.audioContext.createGain();
+    gain.gain.value = 0;
+    gain.connect(this.musicContext);
+    const src = this.audioContext.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    src.connect(gain);
+    const now = this.audioContext.currentTime;
+    src.start(now);
+    gain.gain.setTargetAtTime(1, now, 0.25);
+    this._heroMusicSource = src;
+    this._heroMusicGain = gain;
+    this._ambientDuckForHero = true;
+    this._applyAmbientGains?.();
+    this._applyMusicOverrideDucking?.();
+  }
+
+  async _loadIntermissionMusicBuffer() {
+    if (this._intermissionMusicBuffer !== undefined) return this._intermissionMusicBuffer;
+    if (this._intermissionMusicLoading) return this._intermissionMusicLoading;
+    this._intermissionMusicLoading = (async () => {
+      const buf = await this._tryFetchDecodeAmbientStem('assets/Pineapple Xylophone')
+        ?? await this._tryFetchDecodeAmbientStem('assets/pineapple xylophone');
+      this._intermissionMusicBuffer = buf ?? null;
+      return this._intermissionMusicBuffer;
+    })();
+    try {
+      return await this._intermissionMusicLoading;
+    } finally {
+      this._intermissionMusicLoading = null;
+    }
+  }
+
+  async startIntermissionMusic() {
+    if (this._intermissionMusicSource) return;
+    try { await this.audioContext.resume(); } catch {}
+    const buffer = await this._loadIntermissionMusicBuffer();
+    if (!buffer) return;
+    if (this._intermissionMusicSource) return;
+    const gain = this.audioContext.createGain();
+    gain.gain.value = 0;
+    gain.connect(this.musicContext);
+    const src = this.audioContext.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    src.connect(gain);
+    const now = this.audioContext.currentTime;
+    src.start(now);
+    gain.gain.setTargetAtTime(1, now, 0.3);
+    this._intermissionMusicSource = src;
+    this._intermissionMusicGain = gain;
+    // Duck the regular ambient bed while intermission music plays.
+    this._ambientDuckForIntermission = true;
+    this._musicOverrideIntermission = true;
+    this._applyAmbientGains?.();
+    this._applyMusicOverrideDucking?.();
+  }
+
+  stopIntermissionMusic() {
+    const src = this._intermissionMusicSource;
+    const gain = this._intermissionMusicGain;
+    if (!src || !gain) {
+      if (this._ambientDuckForIntermission) {
+        this._ambientDuckForIntermission = false;
+        this._applyAmbientGains?.();
+      }
+      return;
+    }
+    this._intermissionMusicSource = null;
+    this._intermissionMusicGain = null;
+    const now = this.audioContext.currentTime;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setTargetAtTime(0, now, 0.4);
+    const stopAt = now + 1.2;
+    try { src.stop(stopAt); } catch {}
+    setTimeout(() => {
+      try { src.disconnect(); } catch {}
+      try { gain.disconnect(); } catch {}
+    }, 1600);
+    this._ambientDuckForIntermission = false;
+    this._musicOverrideIntermission = false;
+    this._applyAmbientGains?.();
+    this._applyMusicOverrideDucking?.();
+  }
+
+  async playExtractCountdown() {
+    if (this._extractCountdownPlaying) return;
+    if (this._extractCountdownBuffer === undefined) {
+      this._extractCountdownBuffer = await this._tryFetchDecodeAmbientStem('assets/Cartoon Countdown')
+        ?? await this._tryFetchDecodeAmbientStem('assets/cartoon countdown');
+    }
+    const buffer = this._extractCountdownBuffer;
+    if (!buffer) return;
+    try { await this.audioContext.resume(); } catch {}
+    const src = this.audioContext.createBufferSource();
+    src.buffer = buffer;
+    src.connect(this.sfxContext);
+    this._extractCountdownPlaying = true;
+    this._musicOverrideExtract = true;
+    this._applyMusicOverrideDucking?.();
+    src.onended = () => {
+      this._extractCountdownPlaying = false;
+      this._musicOverrideExtract = false;
+      try { src.disconnect(); } catch {}
+      this._applyMusicOverrideDucking?.();
+    };
+    src.start(this.audioContext.currentTime);
+  }
+
+  stopHeroMusic() {
+    const src = this._heroMusicSource;
+    const gain = this._heroMusicGain;
+    if (!src || !gain) {
+      if (this._ambientDuckForHero) {
+        this._ambientDuckForHero = false;
+        this._applyAmbientGains?.();
+      }
+      return;
+    }
+    this._heroMusicSource = null;
+    this._heroMusicGain = null;
+    const now = this.audioContext.currentTime;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setTargetAtTime(0, now, 0.25);
+    const stopAt = now + 0.8;
+    try { src.stop(stopAt); } catch {}
+    setTimeout(() => {
+      try { src.disconnect(); } catch {}
+      try { gain.disconnect(); } catch {}
+    }, 1200);
+    this._ambientDuckForHero = false;
+    this._applyAmbientGains?.();
   }
 
   /**

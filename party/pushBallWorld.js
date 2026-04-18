@@ -265,10 +265,60 @@ export function createPushBallWorld({
     return list;
   }
 
+  function getBallsForAi() {
+    const list = [{
+      id: 'push-ball',
+      x: ball.position.x, y: ball.position.y, z: ball.position.z,
+      vx: ball.velocity.x, vy: ball.velocity.y, vz: ball.velocity.z,
+      radius: BALL_RADIUS,
+    }];
+    for (const [id, { body, radius }] of extraBalls) {
+      list.push({
+        id,
+        x: body.position.x, y: body.position.y, z: body.position.z,
+        vx: body.velocity.x, vy: body.velocity.y, vz: body.velocity.z,
+        radius,
+      });
+    }
+    return list;
+  }
+
+  /**
+   * Smack any balls in front of `origin` in the XZ forward direction.
+   * Returns the number of balls impulsed.
+   */
+  function smackBallsInFront(origin, forwardX, forwardZ, {
+    range = 1.9,
+    speed = 11,
+    upSpeed = 3.5,
+  } = {}) {
+    const entries = [[ball, BALL_RADIUS]];
+    for (const [, { body, radius }] of extraBalls) entries.push([body, radius]);
+    let hit = 0;
+    for (const [body, radius] of entries) {
+      const dx = body.position.x - origin.x;
+      const dz = body.position.z - origin.z;
+      const dy = body.position.y - (origin.y + PLAYER_PROXY_CENTER_Y);
+      const distXZ = Math.sqrt(dx * dx + dz * dz);
+      if (distXZ > range + radius) continue;
+      if (Math.abs(dy) > 1.3 + radius) continue;
+      const dot = distXZ > 0.001 ? (dx * forwardX + dz * forwardZ) / distXZ : 1;
+      if (dot < -0.1) continue;
+      body.wakeUp?.();
+      body.velocity.x = forwardX * speed;
+      body.velocity.z = forwardZ * speed;
+      body.velocity.y = Math.max(body.velocity.y, upSpeed);
+      hit++;
+    }
+    return hit;
+  }
+
   return {
     syncPlayers,
     step,
     getBallsState,
+    getBallsForAi,
+    smackBallsInFront,
     spawnExtraBallNear,
     setLevelColliders,
   };
