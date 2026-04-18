@@ -16,6 +16,7 @@ import { GameToolbar } from '../hud/GameToolbar.jsx';
 import { CatLocatorOverlay } from '../hud/CatLocatorOverlay.jsx';
 import { ScoreboardOverlay } from '../hud/ScoreboardOverlay.jsx';
 import { ChaseAlertOverlay } from '../hud/ChaseAlertOverlay.jsx';
+import { WindStreakField } from '../world/WindStreakField.js';
 import { attachEdgeOutlines } from '../materials/index.js';
 import { createOutlinePipeline } from '../postprocessing/OutlinePipeline.js';
 import { NetworkClient } from '../net/NetworkClient.js';
@@ -484,7 +485,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     displayName: getClientPreferredDisplayName(),
   });
 
-  const emoteManager = new EmoteManager({ mouse, audioManager });
+  const emoteManager = new EmoteManager({ mouse, audioManager, scene });
   const emoteWheel = new EmoteWheel({
     onSelect: (emoteId) => {
       emoteManager.play(emoteId);
@@ -616,6 +617,10 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
   const scoreboard = new ScoreboardOverlay();
   const chaseAlert = new ChaseAlertOverlay();
+  const windStreaks = new WindStreakField({ camera });
+  // The camera must be in the scene for its children (the wind streak LineSegments)
+  // to render. Three.js skips children of objects not attached to the active scene.
+  if (!camera.parent) scene.add(camera);
 
   function isLocalPlayerCatHuntTarget() {
     const lid = net.localId;
@@ -942,6 +947,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       controller.stamina = predictionState.stamina;
       controller.health = predictionState.health;
       controller.alive = predictionState.alive;
+      controller.grabLocked = net.serverState?.animState === 'grab';
+      mouse.rotation.x = net.serverState?.grabbedBy ? Math.PI : 0;
 
       controller._updateAnimation(PHYSICS_STEP);
       controller._updateCamera(PHYSICS_STEP);
@@ -1239,6 +1246,80 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     }
     audioManager.update(deltaSeconds);
 
+    // --- Parkour feel: speed-based FOV push, screen speed lines, animation rate sync.
+    {
+      const vx = predictionState.velocity.x;
+      const vy = predictionState.velocity.y;
+      const vz = predictionState.velocity.z;
+      const horizSpeed = Math.hypot(vx, vz);
+      // Normalize against sprint speed (~9 m/s); boost further for wall-run & fast airborne.
+      const sprintT = Math.min(1, Math.max(0, (horizSpeed - 4.0) / 5.0));
+      let fovBoost = sprintT * 8;
+      if (predictionState.wallHolding) fovBoost += 4;
+      if (!predictionState.grounded && horizSpeed > 6) fovBoost += 2;
+      thirdPersonCamera.setTargetFov(60 + fovBoost);
+      // Wind overlay only while actively sprinting (or wall-running at speed) — not during
+      // normal walk/jog. Scales smoothly within that range so it fades in/out with intent.
+      const windT = predictionState.sprinting
+        ? sprintT
+        : (predictionState.wallHolding && horizSpeed > 3 ? 0.55 : 0);
+      windStreaks.setIntensity(windT);
+      windStreaks.update(deltaSeconds);
+
+      // --- Wall-run / wall-climb body lean (visual only) ---
+      // Applied to mouse.avatar (inner transform) so the outer Mouse group's
+      // yaw-driven rotation.y stays clean. Smooth-lerped toward target each
+      // frame so transitions in and out feel organic.
+      // Apply lean to the body pivot (not the animated avatar root) so the
+      // AnimationMixer doesn't overwrite our pitch/roll every frame.
+      const avatar = mouse?.bodyPivot ?? mouse?.avatar;
+      if (avatar) {
+        let targetRoll = 0;
+        let targetPitch = 0;
+        const onRope = !!predictionState.ropeSwing || !!net?.serverState?.ropeSwing;
+        if (onRope) {
+          // Rope climb: same pose as wall-climb. Belly against the rope, nose
+          // pointing up, back facing outward.
+          targetPitch = -Math.PI / 2;
+          targetRoll = 0;
+        } else if (predictionState.wallHolding) {
+          const nx = predictionState.wallNormalX;
+          const nz = predictionState.wallNormalZ;
+          const yaw = mouse.rotation.y;
+          // Player local right in world (when facing +Z locally at yaw=0, right is +X).
+          const rx = Math.cos(yaw);
+          const rz = -Math.sin(yaw);
+          const rightDotNormal = rx * nx + rz * nz;
+          // Player local forward in world.
+          const fx = Math.sin(yaw);
+          const fz = Math.cos(yaw);
+          const intoWall = -(fx * nx + fz * nz); // 1 if facing directly at wall
+          if (intoWall > 0.35) {
+            // Climbing: mouse lies flat against the wall with belly toward the
+            // surface, back facing away, nose pointing up the wall. That means
+            // the avatar's local +Z (forward/nose) needs to map to world +Y.
+            // A negative pitch about local X achieves: +Z -> +Y (nose up) and
+            // -Y (belly) -> +Z (into wall).
+            targetPitch = -Math.PI / 2;
+            targetRoll = 0;
+          } else {
+            // Wall running: lean 45° away from wall, feet act as the pivot.
+            const side = rightDotNormal < 0 ? 1 : -1; // wall on right -> lean left (+z)
+            targetRoll = side * (Math.PI / 4);
+            targetPitch = 0;
+          }
+        }
+        const leanBlend = 1 - Math.exp(-9 * deltaSeconds);
+        avatar.rotation.z += (targetRoll - avatar.rotation.z) * leanBlend;
+        avatar.rotation.x += (targetPitch - avatar.rotation.x) * leanBlend;
+      }
+      // Match locomotion clip playback rate to actual horizontal speed so sprint
+      // doesn't look like shuffling feet. Walk base rate is already 3.5; use
+      // relative ratios so the authored base stays dominant.
+      const animRate = Math.max(0.6, Math.min(1.9, horizSpeed / 6.0 + 0.35));
+      mouse?.animationManager?.setPlaybackRate?.(animRate);
+    }
+
     render();
     const info = renderer.info;
     return {
@@ -1268,6 +1349,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     vibePortalManager.dispose();
     scoreboard.dispose();
     chaseAlert.dispose();
+    windStreaks.dispose();
     toolbar.dispose();
     scene.remove(ropeSystem);
     ropeSystem.dispose();

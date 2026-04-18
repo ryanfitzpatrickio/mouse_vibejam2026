@@ -77,6 +77,9 @@ export class Mouse extends THREE.Group {
     this.blendFactor = 0.0; // For smooth transitions
 
     this.avatar = null;
+    // Pivot that can be pitched/rolled for parkour lean without being clobbered
+    // by the AnimationMixer. Populated when the GLB avatar loads.
+    this.bodyPivot = null;
     this.animationManager = new MouseAnimationManager({
       fadeDuration: options.fadeDuration,
     });
@@ -160,7 +163,13 @@ export class Mouse extends THREE.Group {
 
     const box = new THREE.Box3().setFromObject(this.avatar);
     this.avatar.position.y = -box.min.y;
-    this.add(this.avatar);
+    // Wrap the animated avatar in a pivot group so external code can apply
+    // body lean / climb rotations without fighting the AnimationMixer writing
+    // back to the avatar root's quaternion each frame.
+    this.bodyPivot = new THREE.Group();
+    this.bodyPivot.name = 'MouseBodyPivot';
+    this.bodyPivot.add(this.avatar);
+    this.add(this.bodyPivot);
 
     this.animationManager.attach(this.avatar, gltf.animations);
     this._applyLitMaterialsToAvatar();
@@ -722,5 +731,52 @@ export class Mouse extends THREE.Group {
 
   dispose() {
     this.animationManager?.dispose();
+    this.eyeAnimator?.dispose?.();
+
+    // Walk every descendant and free GPU resources. Without this, each
+    // remote-player join/leave cycle leaks the cloned material set, the
+    // skinned mesh's geometry view, and the attached edge-outline meshes.
+    const seenMaterials = new Set();
+    const seenGeometries = new Set();
+    const disposeMaterial = (mat) => {
+      if (!mat || seenMaterials.has(mat)) return;
+      seenMaterials.add(mat);
+      // Dispose any textures the material owns. We only dispose textures that
+      // were cloned per-mouse (cloneMaterialSet keeps refs); shared atlas
+      // textures are wrapped via .source so disposing the .image-less wrapper
+      // is safe — only the GL handle is freed.
+      for (const key of Object.keys(mat)) {
+        const v = mat[key];
+        if (v && v.isTexture) v.dispose?.();
+      }
+      mat.dispose?.();
+    };
+    this.traverse((child) => {
+      const geo = child.geometry;
+      if (geo && !seenGeometries.has(geo)) {
+        seenGeometries.add(geo);
+        geo.dispose?.();
+      }
+      const mat = child.material;
+      if (Array.isArray(mat)) {
+        for (const m of mat) disposeMaterial(m);
+      } else {
+        disposeMaterial(mat);
+      }
+      // Cached source materials live on userData (cloneMaterialSet stores them
+      // for live re-tinting); dispose those too.
+      const src = child.userData?.avatarSourceMaterial;
+      if (src) {
+        if (Array.isArray(src)) for (const m of src) disposeMaterial(m);
+        else disposeMaterial(src);
+        child.userData.avatarSourceMaterial = null;
+      }
+    });
+
+    this._fadeMaterials.clear();
+    this._fadeMaterials = null;
+    this.parts = {};
+    this.avatar = null;
+    this.bodyPivot = null;
   }
 }

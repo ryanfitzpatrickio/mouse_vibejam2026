@@ -651,29 +651,6 @@ function ToolbarView(props) {
             on={!s.sfxMuted}
             onClick={() => props.onToggleSfx?.()}
           />
-          <button
-            type="button"
-            onPointerDown={stopUi}
-            onClick={(e) => {
-              stopUi(e);
-              props.onOpenGithub?.();
-            }}
-            style={{
-              width: '100%',
-              height: '40px',
-              'margin-top': '4px',
-              'border-radius': '10px',
-              border: '2px solid rgba(20,26,36,0.75)',
-              background: 'linear-gradient(180deg, #6b7382 0%, #4a525f 100%)',
-              color: '#fff',
-              font: HUD_LABEL_FONT,
-              'text-shadow': HUD_LABEL_SHADOW,
-              cursor: 'pointer',
-              'box-shadow': 'inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 3px rgba(0,0,0,0.4)',
-            }}
-          >
-            GitHub
-          </button>
           <div
             style={{
               'margin-top': '10px',

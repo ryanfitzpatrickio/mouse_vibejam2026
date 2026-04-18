@@ -29,6 +29,12 @@ const AI_STATE_TO_EXPRESSION = Object.freeze({
 });
 
 const LERP_SPEED = 12;
+/** Snap instantly when target jumps further than this in one update (teleports, reconnects). */
+const HARD_SNAP_DIST = 2.0;
+/** Stop interpolating if no fresh server snapshot has arrived in this long (sec). */
+const STALE_SNAPSHOT_SEC = 0.6;
+/** Floor for the dt fed into the lerp so background-throttled frames still pull aggressively. */
+const MIN_LERP_DT = 1 / 30;
 
 export class Cat extends Predator {
   constructor(options = {}) {
@@ -67,6 +73,8 @@ export class Cat extends Predator {
     this._serverAlive = true;
     this._serverHealth = 4;
     this._initialized = false;
+    /** Wall-clock time of the most recent applyServerState (ms). */
+    this._lastServerAt = 0;
 
     this.ready = this._load();
   }
@@ -110,9 +118,22 @@ export class Cat extends Predator {
     this._chaseVert = snapshot.cv ?? 0;
     this._serverAlive = snapshot.alive ?? true;
     this._serverHealth = snapshot.hp ?? 0;
+    this._lastServerAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
     if (!this._initialized) {
       this._initialized = true;
+      this.position.copy(this._targetPos);
+      this.rotation.y = this._targetRot;
+      return;
+    }
+
+    // If the authoritative position jumped a lot in one update (teleport, reconnect,
+    // long stall), snap rather than slow-easing. Without this the visual cat lags
+    // behind server truth indefinitely once it falls far enough behind.
+    const dx = this._targetPos.x - this.position.x;
+    const dy = this._targetPos.y - this.position.y;
+    const dz = this._targetPos.z - this.position.z;
+    if (dx * dx + dy * dy + dz * dz > HARD_SNAP_DIST * HARD_SNAP_DIST) {
       this.position.copy(this._targetPos);
       this.rotation.y = this._targetRot;
     }
@@ -193,15 +214,24 @@ export class Cat extends Predator {
     }
 
     if (this._initialized) {
-      const t = 1 - Math.exp(-LERP_SPEED * dt);
-      this.position.x += (this._targetPos.x - this.position.x) * t;
-      this.position.y += (this._targetPos.y - this.position.y) * t;
-      this.position.z += (this._targetPos.z - this.position.z) * t;
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      const stale = (now - this._lastServerAt) > STALE_SNAPSHOT_SEC * 1000;
+      // Freeze interpolation once the snapshot stream goes silent so we don't
+      // keep drifting toward an old target during a network hiccup.
+      if (!stale) {
+        // Floor the dt so background-throttled frames (tiny dt) still pull the
+        // visual aggressively toward server truth instead of crawling.
+        const lerpDt = Math.max(dt, MIN_LERP_DT);
+        const t = 1 - Math.exp(-LERP_SPEED * lerpDt);
+        this.position.x += (this._targetPos.x - this.position.x) * t;
+        this.position.y += (this._targetPos.y - this.position.y) * t;
+        this.position.z += (this._targetPos.z - this.position.z) * t;
 
-      let diff = this._targetRot - this.rotation.y;
-      if (diff > Math.PI) diff -= Math.PI * 2;
-      if (diff < -Math.PI) diff += Math.PI * 2;
-      this.rotation.y += diff * t;
+        let diff = this._targetRot - this.rotation.y;
+        if (diff > Math.PI) diff -= Math.PI * 2;
+        if (diff < -Math.PI) diff += Math.PI * 2;
+        this.rotation.y += diff * t;
+      }
     }
 
     this.mixer?.update(dt);

@@ -303,10 +303,21 @@ export class NetworkClient {
           }
         }
 
-        if (Array.isArray(data.predators)) {
-          this.remotePredators.clear();
+        // Only replace predator state when the snapshot actually carried a
+        // non-empty list. A transient empty array would otherwise blank the
+        // cat for a frame and the visual would freeze until the next
+        // snapshot landed. Use diff-based update instead of clear+refill so
+        // we never have a window where remotePredators is empty.
+        if (Array.isArray(data.predators) && data.predators.length > 0) {
+          const seenPred = new Set();
           for (const pred of data.predators) {
-            if (pred?.id != null) this.remotePredators.set(pred.id, pred);
+            if (pred?.id != null) {
+              this.remotePredators.set(pred.id, pred);
+              seenPred.add(pred.id);
+            }
+          }
+          for (const id of this.remotePredators.keys()) {
+            if (!seenPred.has(id)) this.remotePredators.delete(id);
           }
         }
         this._applyPushBallsPayload(data);

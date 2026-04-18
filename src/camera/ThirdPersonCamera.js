@@ -87,6 +87,9 @@ export class ThirdPersonCamera {
     this._onPointerLockChange = this._onPointerLockChange.bind(this);
     this._onWheel = this._onWheel.bind(this);
 
+    this._baseFov = typeof fov === 'number' ? fov : camera.fov;
+    this._targetFov = this._baseFov;
+    this._fovLerpRate = 6;
     if (typeof fov === 'number') {
       this.setFov(fov);
     }
@@ -133,7 +136,23 @@ export class ThirdPersonCamera {
 
   setFov(fov) {
     this.camera.fov = fov;
+    this._baseFov = fov;
+    this._targetFov = fov;
     this.camera.updateProjectionMatrix();
+  }
+
+  /**
+   * Set a transient target FOV that will be smoothly lerped each update (used for
+   * sprint / wall-run speed push). Clamped to ±20° around base.
+   */
+  setTargetFov(fov) {
+    const base = this._baseFov;
+    this._targetFov = Math.max(base - 20, Math.min(base + 20, fov));
+  }
+
+  /** Reset transient FOV back to base. */
+  clearTargetFov() {
+    this._targetFov = this._baseFov;
   }
 
   setArmLength(length) {
@@ -247,6 +266,13 @@ export class ThirdPersonCamera {
 
     this._tempVectorA.copy(this._smoothedPivot);
     this.camera.lookAt(this._tempVectorA);
+
+    // --- Smooth FOV toward transient target (sprint / wall-run push) ---
+    if (Math.abs(this.camera.fov - this._targetFov) > 0.01) {
+      const t = 1 - Math.exp(-this._fovLerpRate * dt);
+      this.camera.fov += (this._targetFov - this.camera.fov) * t;
+      this.camera.updateProjectionMatrix();
+    }
   }
 
   dispose() {

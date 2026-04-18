@@ -51,7 +51,7 @@ const TICK_MS = 1000 / TICK_RATE;
 const MAX_PLAYERS = 8;
 /** Max extra push-balls a human may spawn per connection (lifetime). */
 const MAX_EXTRA_BALL_SPAWNS_PER_PLAYER = 10;
-const GRAB_RANGE = 2.5;
+const GRAB_RANGE = 1.5;
 const GRAB_COOLDOWN = 1.0;
 const GRAB_PULL_STRENGTH = 6.0;
 const GRAB_INITIATOR_ADVANTAGE = 0.65; // initiator controls 65% of direction
@@ -1063,6 +1063,10 @@ export default class GameServer {
         }
         grabber.grabbedTarget = bestId;
         target.grabbedBy = grabberId;
+        // One-shot grab pose window: both players play the grab anim briefly
+        // at the moment of capture, then resume their normal anims.
+        grabber.grabAnimTimer = 0.6;
+        target.grabAnimTimer = 0.6;
         if (grabber.roundStats) {
           grabber.roundStats.grabsInitiated = (grabber.roundStats.grabsInitiated ?? 0) + 1;
         }
@@ -1083,10 +1087,6 @@ export default class GameServer {
       processedGrabs.add(id);
       processedGrabs.add(state.grabbedTarget);
 
-      const dx = target.position.x - state.position.x;
-      const dz = target.position.z - state.position.z;
-      const dist = Math.sqrt(dx * dx + dz * dz);
-
       // Blend velocities: initiator has advantage
       const gVx = state.velocity.x;
       const gVz = state.velocity.z;
@@ -1100,13 +1100,27 @@ export default class GameServer {
       target.velocity.x = blendVx;
       target.velocity.z = blendVz;
 
-      // Keep grabbed player locked beside the grabber
-      const maxGrabDist = 1.5;
-      if (dist > maxGrabDist) {
-        const nx = dx / dist;
-        const nz = dz / dist;
-        target.position.x = state.position.x + nx * maxGrabDist;
-        target.position.z = state.position.z + nz * maxGrabDist;
+      // Snap target above the grabber's head each tick so they look carried
+      // upside-down. Slight forward offset avoids clipping into the grabber.
+      const GRAB_HOLD_FORWARD = 0.15;
+      const GRAB_HOLD_UP = 1.0;
+      const rot = state.rotation ?? 0;
+      const fx = Math.sin(rot);
+      const fz = Math.cos(rot);
+      target.position.x = state.position.x + fx * GRAB_HOLD_FORWARD;
+      target.position.z = state.position.z + fz * GRAB_HOLD_FORWARD;
+      target.position.y = state.position.y + GRAB_HOLD_UP;
+      target.rotation = rot;
+
+      // Only play the grab animation briefly at the start of the grab so it
+      // reads as a gesture; afterwards the normal physics-driven anim resumes.
+      if ((state.grabAnimTimer ?? 0) > 0) {
+        state.grabAnimTimer = Math.max(0, state.grabAnimTimer - dt);
+        state.animState = 'grab';
+      }
+      if ((target.grabAnimTimer ?? 0) > 0) {
+        target.grabAnimTimer = Math.max(0, target.grabAnimTimer - dt);
+        target.animState = 'grab';
       }
     }
 

@@ -67,6 +67,13 @@ export class RendererModePanel {
     this.samples = [];
     this.sampleWindowMs = 5000;
     this.visible = visible;
+    /** Baseline counts captured ~10s after first sample so we can spot leaks (Δ from baseline). */
+    this._memBaseline = null;
+    this._memBaselineCaptureAtMs = 0;
+    /** Last time we logged the memory trend to console (ms). */
+    this._memLogLastMs = 0;
+    this._memLogIntervalMs = 30_000;
+    this._sessionStartMs = 0;
     /** @type {Record<string, { label: string, get: () => boolean, set: (v: boolean) => void }> | null} */
     this._perfToggleDefs = null;
     /** @type {Map<string, HTMLInputElement>} */
@@ -276,6 +283,34 @@ bindPerformanceToggles(definitions) {
     const fps = 1 / deltaSeconds;
     this.samples.push({ timeMs: now, fps, drawCalls, triangles });
 
+    // Capture a baseline ~10s in (after initial GLB streaming settles), then
+    // report deltas + log every 30s so leaks are visible without DevTools.
+    if (this._sessionStartMs === 0) {
+      this._sessionStartMs = now;
+      this._memBaselineCaptureAtMs = now + 10_000;
+    }
+    if (this._memBaseline === null && now >= this._memBaselineCaptureAtMs) {
+      this._memBaseline = { geometries, textures, programs };
+      this._memLogLastMs = now;
+      console.log('[mem] baseline', this._memBaseline);
+    }
+    if (this._memBaseline && (now - this._memLogLastMs) >= this._memLogIntervalMs) {
+      this._memLogLastMs = now;
+      const dG = geometries - this._memBaseline.geometries;
+      const dT = textures - this._memBaseline.textures;
+      const dP = programs - this._memBaseline.programs;
+      const ageMin = ((now - this._sessionStartMs) / 60000).toFixed(1);
+      // performance.memory is Chromium-only but invaluable when present.
+      const heap = performance?.memory?.usedJSHeapSize
+        ? ` heap=${(performance.memory.usedJSHeapSize / 1048576).toFixed(0)}MB`
+        : '';
+      console.log(
+        `[mem] +${ageMin}min geo=${geometries}(Δ${dG >= 0 ? '+' : ''}${dG}) `
+        + `tex=${textures}(Δ${dT >= 0 ? '+' : ''}${dT}) `
+        + `prog=${programs}(Δ${dP >= 0 ? '+' : ''}${dP})${heap}`,
+      );
+    }
+
     while (this.samples.length > 1 && now - this.samples[0].timeMs > this.sampleWindowMs) {
       this.samples.shift();
     }
@@ -351,7 +386,11 @@ bindPerformanceToggles(definitions) {
     const dcText = `Draw calls/frame: ${avgDrawCalls.toFixed(1)}`;
     const dcsText = `Draw calls/sec: ${drawCallsPerSecond.toFixed(1)}`;
     const triText = `Triangles: ${Math.round(avgTriangles).toLocaleString()}`;
-    const geoText = `Geometries: ${geometries} · Textures: ${textures} · Programs: ${programs}`;
+    const fmtDelta = (v) => (v > 0 ? `+${v}` : `${v}`);
+    const geoDelta = this._memBaseline ? ` (${fmtDelta(geometries - this._memBaseline.geometries)})` : '';
+    const texDelta = this._memBaseline ? ` (${fmtDelta(textures - this._memBaseline.textures)})` : '';
+    const progDelta = this._memBaseline ? ` (${fmtDelta(programs - this._memBaseline.programs)})` : '';
+    const geoText = `Geometries: ${geometries}${geoDelta} · Textures: ${textures}${texDelta} · Programs: ${programs}${progDelta}`;
 
     const fpsMeasured = measureText(fpsText, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
     const dcMeasured = measureText(dcText, METRICS_FONT, 288, METRICS_LINE_HEIGHT);
@@ -377,7 +416,7 @@ bindPerformanceToggles(definitions) {
       <div style="height:${dcMeasured.height}px">Draw calls/frame: <span style="color:#ffd97a">${avgDrawCalls.toFixed(1)}</span></div>
       <div style="height:${dcsMeasured.height}px">Draw calls/sec: <span style="color:#ffd97a">${drawCallsPerSecond.toFixed(1)}</span></div>
       <div style="height:${triMeasured.height}px">Triangles: <span style="color:#c9b8ff">${Math.round(avgTriangles).toLocaleString()}</span></div>
-      <div style="height:${geoMeasured.height}px">Geo: <span style="color:#b7c7d6">${geometries}</span> · Tex: <span style="color:#b7c7d6">${textures}</span> · Prog: <span style="color:#b7c7d6">${programs}</span></div>
+      <div style="height:${geoMeasured.height}px">Geo: <span style="color:#b7c7d6">${geometries}</span><span style="color:#9ee8b2">${geoDelta}</span> · Tex: <span style="color:#b7c7d6">${textures}</span><span style="color:#9ee8b2">${texDelta}</span> · Prog: <span style="color:#b7c7d6">${programs}</span><span style="color:#9ee8b2">${progDelta}</span></div>
       ${bakeHtml}
     `;
   }

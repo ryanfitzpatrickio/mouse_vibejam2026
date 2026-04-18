@@ -52,6 +52,7 @@ export class RemotePlayerManager {
         entry.targetRot = data.rotation ?? 0;
         entry.serverAlive = data.alive !== false;
         entry.serverAnimState = data.animState ?? 'idle';
+        entry.serverGrabbedBy = data.grabbedBy ?? null;
         entry.nameplate.setAlive(entry.serverAlive);
         if (typeof data.displayName === 'string' && data.displayName.trim()) {
           const next = data.displayName.trim();
@@ -102,6 +103,10 @@ export class RemotePlayerManager {
       if (diff < -Math.PI) diff += Math.PI * 2;
       entry.mouse.rotation.y += diff * t;
 
+      // Flip grabbed players upside-down so they look carried above the grabber.
+      const beingCarried = !!entry.serverGrabbedBy && entry.serverAlive;
+      entry.mouse.rotation.x = beingCarried ? Math.PI : 0;
+
       // Derive animation from actual interpolated movement speed
       const dx = entry.mouse.position.x - entry.prevPos.x;
       const dz = entry.mouse.position.z - entry.prevPos.z;
@@ -112,6 +117,8 @@ export class RemotePlayerManager {
         animState = 'death';
       } else if (entry.emoteManager.isPlaying) {
         animState = entry.animState;
+      } else if (entry.serverAnimState === 'grab') {
+        animState = 'grab';
       } else if (speed > 5) {
         animState = 'run';
       } else if (speed > 0.5) {
@@ -186,7 +193,7 @@ export class RemotePlayerManager {
     syncNameplateWorldPosition(nameplateAnchor, mouse);
 
     const audioManager = getAudioManager();
-    const emoteManager = new EmoteManager({ mouse, audioManager });
+    const emoteManager = new EmoteManager({ mouse, audioManager, scene: this.scene });
 
     this.players.set(id, {
       mouse,
@@ -209,6 +216,7 @@ export class RemotePlayerManager {
       animState: 'idle',
       serverAlive: data.alive !== false,
       serverAnimState: data.animState ?? 'idle',
+      serverGrabbedBy: data.grabbedBy ?? null,
     });
   }
 

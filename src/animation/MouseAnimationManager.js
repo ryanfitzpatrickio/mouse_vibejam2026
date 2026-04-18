@@ -7,6 +7,7 @@ const STATE_TO_CLIP = Object.freeze({
   jump: 'Jump',
   chew: 'Bite',
   carry: 'Idle Alert',
+  grab: 'Idle Alert',
   death: 'Death',
 });
 
@@ -52,6 +53,20 @@ export class MouseAnimationManager {
     if (this.mixer) {
       this.mixer.update(delta);
     }
+  }
+
+  /**
+   * Scale the current locomotion action's timeScale. Multiplier is applied on
+   * top of the clip's authored base rate (e.g. Walk base is 3.5). Pass 1 to
+   * reset to base. Only affects looping locomotion clips (Walk/Run/Idle) so we
+   * don't mess with one-shots like Jump/Death.
+   */
+  setPlaybackRate(multiplier = 1) {
+    if (!this.currentAction || this._emoteActive) return;
+    const clipName = this.currentAction.getClip?.()?.name;
+    if (clipName !== 'Walk' && clipName !== 'Run' && clipName !== 'Idle') return;
+    const base = CLIP_TIME_SCALE[clipName] ?? 1;
+    this.currentAction.timeScale = base * Math.max(0.25, Math.min(2.5, multiplier));
   }
 
   _play(clipName, immediate = false) {

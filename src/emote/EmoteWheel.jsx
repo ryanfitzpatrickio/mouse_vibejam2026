@@ -3,55 +3,64 @@ import { render } from 'solid-js/web';
 import { createStore } from 'solid-js/store';
 import { batch } from 'solid-js';
 import { EMOTES } from './EmoteManager.js';
-import { measureText } from '../utils/textLayout.js';
+import {
+  HUD_PANEL_STYLE,
+  HUD_TRACK_STYLE,
+  HUD_LABEL_SHADOW,
+  HUD_SMALL_LABEL_FONT,
+  HUD_LABEL_FONT,
+} from '../hud/hudStyle.js';
 
 const SLOT_COUNT = EMOTES.length;
 const SECTOR_ANGLE = (2 * Math.PI) / SLOT_COUNT;
-const DEAD_ZONE_PX = 30;
-const SLOT_FONT = '10px monospace';
-const SLOT_WIDTH = 52;
-const SLOT_LINE_HEIGHT = 12;
+const DEAD_ZONE_PX = 40;
+const WHEEL_SIZE = 340;
+const SLOT_SIZE = 76;
+const SLOT_RADIUS = 116;
 
 function buildSlotLayouts() {
-  const radius = 100;
+  const center = WHEEL_SIZE / 2;
+  const half = SLOT_SIZE / 2;
   const startAngle = -Math.PI / 2;
-  const step = SECTOR_ANGLE;
   return EMOTES.map((emote, i) => {
-    const angle = startAngle + i * step;
-    const cx = 140 + Math.cos(angle) * radius - 28;
-    const cy = 140 + Math.sin(angle) * radius - 28;
-    const measured = measureText(emote.label, SLOT_FONT, SLOT_WIDTH, SLOT_LINE_HEIGHT);
-    const h = Math.max(56, measured.height + 4);
-    return { left: cx, top: cy, height: h, label: emote.label };
+    const angle = startAngle + i * SECTOR_ANGLE;
+    const cx = center + Math.cos(angle) * SLOT_RADIUS - half;
+    const cy = center + Math.sin(angle) * SLOT_RADIUS - half;
+    return { left: cx, top: cy, label: emote.label, emoji: emote.emoji };
   });
 }
 
 function EmoteWheelView(props) {
   const slotStyle = (index) => {
-    const sel = props.state.selectedIndex;
-    const on = index === sel;
+    const on = index === props.state.selectedIndex;
     return {
       position: 'absolute',
       left: `${props.layouts[index].left}px`,
       top: `${props.layouts[index].top}px`,
-      width: '56px',
-      height: `${props.layouts[index].height}px`,
-      'border-radius': '12px',
+      width: `${SLOT_SIZE}px`,
+      height: `${SLOT_SIZE}px`,
+      'border-radius': '16px',
       display: 'flex',
+      'flex-direction': 'column',
       'align-items': 'center',
       'justify-content': 'center',
-      background: on ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-      border: on ? '1px solid rgba(255, 230, 180, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
-      color: '#f0e8dc',
-      'font-family': 'monospace',
-      'font-size': '10px',
-      'text-align': 'center',
-      'line-height': `${SLOT_LINE_HEIGHT}px`,
-      padding: '2px',
+      gap: '2px',
+      background: on
+        ? 'linear-gradient(180deg, rgba(255,220,140,0.95) 0%, rgba(220,170,80,0.95) 100%)'
+        : 'linear-gradient(180deg, rgba(126,136,152,0.95) 0%, rgba(84,93,108,0.95) 100%)',
+      border: on
+        ? '3px solid rgba(255, 240, 200, 0.95)'
+        : '3px solid rgba(180, 190, 210, 0.9)',
+      'box-shadow': [
+        'inset 0 2px 0 rgba(255,255,255,0.28)',
+        'inset 0 -2px 0 rgba(0,0,0,0.35)',
+        on ? '0 6px 16px rgba(255,180,80,0.45)' : '0 4px 10px rgba(0,0,0,0.4)',
+      ].join(', '),
+      color: '#fff',
       'user-select': 'none',
       'pointer-events': 'none',
-      transition: 'transform 0.08s, background 0.08s, border-color 0.08s',
-      transform: on ? 'scale(1.12)' : 'scale(1)',
+      transition: 'transform 0.08s, background 0.08s, border-color 0.08s, box-shadow 0.08s',
+      transform: on ? 'scale(1.14)' : 'scale(1)',
     };
   };
 
@@ -66,8 +75,8 @@ function EmoteWheelView(props) {
           display: props.state.visible ? 'flex' : 'none',
           'align-items': 'center',
           'justify-content': 'center',
-          background: 'rgba(0, 0, 0, 0.25)',
-          'backdrop-filter': 'blur(2px)',
+          background: 'rgba(0, 0, 0, 0.35)',
+          'backdrop-filter': 'blur(3px)',
           cursor: 'none',
           'touch-action': 'none',
           WebkitTapHighlightColor: 'transparent',
@@ -76,27 +85,30 @@ function EmoteWheelView(props) {
         <div
           ref={(el) => props.setWheelRef?.(el)}
           style={{
+            ...HUD_PANEL_STYLE,
             position: 'relative',
-            width: '280px',
-            height: '280px',
+            width: `${WHEEL_SIZE}px`,
+            height: `${WHEEL_SIZE}px`,
             'border-radius': '50%',
-            background: 'rgba(20, 16, 12, 0.55)',
-            'backdrop-filter': 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
             'pointer-events': 'none',
           }}
         >
           <div
             style={{
+              ...HUD_TRACK_STYLE,
               position: 'absolute',
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              color: props.state.centerColor,
-              'font-family': 'monospace',
-              'font-size': '10px',
-              'text-align': 'center',
+              width: '110px',
+              height: '52px',
+              display: 'flex',
+              'align-items': 'center',
+              'justify-content': 'center',
+              color: '#fff',
+              font: HUD_LABEL_FONT,
+              'letter-spacing': '0.04em',
+              'text-shadow': HUD_LABEL_SHADOW,
               'pointer-events': 'none',
               'white-space': 'nowrap',
               transition: 'opacity 0.15s',
@@ -107,7 +119,19 @@ function EmoteWheelView(props) {
           </div>
           <For each={props.layouts}>
             {(layout, i) => (
-              <div style={slotStyle(i())}>{layout.label}</div>
+              <div style={slotStyle(i())}>
+                <div style={{ 'font-size': '28px', 'line-height': '1' }}>{layout.emoji}</div>
+                <div
+                  style={{
+                    font: HUD_SMALL_LABEL_FONT,
+                    'letter-spacing': '0.03em',
+                    'text-shadow': HUD_LABEL_SHADOW,
+                    'line-height': '1',
+                  }}
+                >
+                  {layout.label}
+                </div>
+              </div>
             )}
           </For>
         </div>
@@ -115,16 +139,16 @@ function EmoteWheelView(props) {
       <div
         style={{
           position: 'fixed',
-          width: '12px',
-          height: '12px',
+          width: '16px',
+          height: '16px',
           'border-radius': '50%',
-          background: 'rgba(255, 230, 180, 0.85)',
-          border: '1px solid rgba(255, 255, 255, 0.4)',
+          background: 'radial-gradient(circle at 30% 30%, #fff7dc 0%, #ffcc66 70%, #b8832a 100%)',
+          border: '2px solid rgba(20, 26, 36, 0.85)',
           'pointer-events': 'none',
           display: props.state.cursorVisible ? 'block' : 'none',
           'z-index': '201',
           transform: 'translate(-50%, -50%)',
-          'box-shadow': '0 0 6px rgba(255, 220, 160, 0.4)',
+          'box-shadow': '0 0 8px rgba(255, 210, 120, 0.7), inset 0 1px 0 rgba(255,255,255,0.5)',
           left: `${props.state.cursorLeft}px`,
           top: `${props.state.cursorTop}px`,
         }}

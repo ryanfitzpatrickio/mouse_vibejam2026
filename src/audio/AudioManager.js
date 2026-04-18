@@ -652,7 +652,18 @@ export class AudioManager {
 
     sound.connect(panner);
 
-    this.spatialSounds.push({ sound, panner, position, type });
+    // Track for one debug frame, then auto-prune. Without this prune the
+    // array grew unbounded for the life of the tab — every squeak/footstep/
+    // crash kept its source + gain + panner alive forever.
+    const entry = { sound, panner, position, type, startedAt: this.audioContext.currentTime };
+    this.spatialSounds.push(entry);
+    const lifetime = 2.0; // seconds; longest synthed SFX is ~0.8s, padding for safety
+    setTimeout(() => {
+      const idx = this.spatialSounds.indexOf(entry);
+      if (idx !== -1) this.spatialSounds.splice(idx, 1);
+      try { sound.disconnect(); } catch { /* already gone */ }
+      try { panner.disconnect(); } catch { /* already gone */ }
+    }, Math.ceil(lifetime * 1000));
   }
 
   playEmote(soundName, position) {
@@ -734,6 +745,11 @@ export class AudioManager {
     src.buffer = buf;
     src.connect(g);
     g.connect(panner);
+    src.onended = () => {
+      try { src.disconnect(); } catch { /* already gone */ }
+      try { g.disconnect(); } catch { /* already gone */ }
+      try { panner.disconnect(); } catch { /* already gone */ }
+    };
     src.start();
     return true;
   }
@@ -772,6 +788,11 @@ export class AudioManager {
       src.buffer = buf;
       src.connect(gain);
       gain.connect(panner);
+      src.onended = () => {
+        try { src.disconnect(); } catch { /* already gone */ }
+        try { gain.disconnect(); } catch { /* already gone */ }
+        try { panner.disconnect(); } catch { /* already gone */ }
+      };
       src.start();
       return;
     }
@@ -822,6 +843,10 @@ export class AudioManager {
       const src = this.audioContext.createBufferSource();
       src.buffer = buf;
       src.connect(panner);
+      src.onended = () => {
+        try { src.disconnect(); } catch { /* already gone */ }
+        try { panner.disconnect(); } catch { /* already gone */ }
+      };
       src.start();
       return;
     }

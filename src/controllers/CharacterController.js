@@ -390,6 +390,8 @@ export class CharacterController {
     let state = 'idle';
     if (!this.alive) {
       state = 'death';
+    } else if (this.grabLocked) {
+      state = 'grab';
     } else if (wallRunAnim) {
       const tangentialSpeed = Math.sqrt(
         this.velocity.x ** 2 + this.velocity.z ** 2 + this.velocity.y ** 2,

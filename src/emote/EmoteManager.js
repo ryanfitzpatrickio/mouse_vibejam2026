@@ -1,23 +1,27 @@
+import { spawnEmoteBubble } from './EmoteBubble.js';
+
 const EMOTE_DEFS = [
-  { id: 'wave',     label: 'Wave',      eyeRow: 'surprised', sound: 'wave',     clip: 'Bite',       duration: 1.4 },
-  { id: 'dance',    label: 'Dance',     eyeRow: 'idle',      sound: 'dance',    clip: 'Run',        duration: 2.4 },
-  { id: 'laugh',    label: 'Laugh',     eyeRow: 'surprised', sound: 'laugh',    clip: 'Bite',       duration: 1.2 },
-  { id: 'cry',      label: 'Cry',       eyeRow: 'shocked',   sound: 'cry',      clip: 'Walk',       duration: 2.0 },
-  { id: 'angry',    label: 'Angry',     eyeRow: 'angry',     sound: 'angry',    clip: 'Bite',       duration: 1.0 },
-  { id: 'love',     label: 'Love',      eyeRow: 'surprised', sound: 'love',     clip: 'Idle Alert', duration: 1.8 },
-  { id: 'thumbsup', label: 'Thumbs Up', eyeRow: 'idle',      sound: 'thumbsup', clip: 'Idle Alert', duration: 1.2 },
-  { id: 'scream',   label: 'Scream',    eyeRow: 'shocked',   sound: 'scream',   clip: 'Death',      duration: 1.4 },
+  { id: 'wave',     label: 'Wave',      emoji: '👋', eyeRow: 'surprised', sound: 'wave',     clip: 'Bite',       duration: 1.4 },
+  { id: 'dance',    label: 'Dance',     emoji: '💃', eyeRow: 'idle',      sound: 'dance',    clip: 'Run',        duration: 2.4 },
+  { id: 'laugh',    label: 'Laugh',     emoji: '😂', eyeRow: 'surprised', sound: 'laugh',    clip: 'Bite',       duration: 1.2 },
+  { id: 'cry',      label: 'Cry',       emoji: '😭', eyeRow: 'shocked',   sound: 'cry',      clip: 'Walk',       duration: 2.0 },
+  { id: 'angry',    label: 'Angry',     emoji: '😠', eyeRow: 'angry',     sound: 'angry',    clip: 'Bite',       duration: 1.0 },
+  { id: 'love',     label: 'Love',      emoji: '😍', eyeRow: 'surprised', sound: 'love',     clip: 'Idle Alert', duration: 1.8 },
+  { id: 'thumbsup', label: 'Thumbs Up', emoji: '👍', eyeRow: 'idle',      sound: 'thumbsup', clip: 'Idle Alert', duration: 1.2 },
+  { id: 'scream',   label: 'Scream',    emoji: '😱', eyeRow: 'shocked',   sound: 'scream',   clip: 'Death',      duration: 1.4 },
 ];
 
 export const EMOTES = Object.freeze(EMOTE_DEFS);
 export const EMOTE_MAP = Object.freeze(Object.fromEntries(EMOTE_DEFS.map((e) => [e.id, e])));
 
 export class EmoteManager {
-  constructor({ mouse, audioManager }) {
+  constructor({ mouse, audioManager, scene = null }) {
     this.mouse = mouse;
     this.audioManager = audioManager;
+    this.scene = scene;
     this.activeEmote = null;
     this.emoteTimer = 0;
+    this._bubble = null;
   }
 
   play(emoteId) {
@@ -33,6 +37,11 @@ export class EmoteManager {
 
     if (this.audioManager && this.mouse?.position) {
       this.audioManager.playEmote(def.sound, this.mouse.position);
+    }
+
+    if (this.scene && this.mouse && def.emoji) {
+      this._bubble?.dispose();
+      this._bubble = spawnEmoteBubble(this.scene, this.mouse, def.emoji);
     }
     return true;
   }

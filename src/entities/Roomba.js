@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import { ROOMBA_BODY_HEIGHT, ROOMBA_MESH_SCALE, ROOMBA_RADIUS_XZ } from '../../shared/roombaDimensions.js';
 
 const LERP_SPEED = 14;
+const HARD_SNAP_DIST = 2.0;
+const STALE_SNAPSHOT_SEC = 0.6;
+const MIN_LERP_DT = 1 / 30;
 
 /**
  * Inward wind wisps (local XZ). Roomba group is scaled ×ROOMBA_MESH_SCALE — keep radii small
@@ -200,8 +203,17 @@ export class Roomba extends THREE.Group {
     if (typeof snapshot.dx === 'number' && typeof snapshot.dz === 'number') {
       this._dockPos.set(snapshot.dx, snapshot.dy ?? 0, snapshot.dz);
     }
+    this._lastServerAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
     if (!this._initialized) {
       this._initialized = true;
+      this.position.copy(this._targetPos);
+      this.rotation.y = this._targetRot;
+      return;
+    }
+    const dx = this._targetPos.x - this.position.x;
+    const dy = this._targetPos.y - this.position.y;
+    const dz = this._targetPos.z - this.position.z;
+    if (dx * dx + dy * dy + dz * dz > HARD_SNAP_DIST * HARD_SNAP_DIST) {
       this.position.copy(this._targetPos);
       this.rotation.y = this._targetRot;
     }
@@ -210,15 +222,20 @@ export class Roomba extends THREE.Group {
   update(dt) {
     this._phasePulse += dt;
     if (this._initialized) {
-      const t = 1 - Math.exp(-LERP_SPEED * dt);
-      this.position.x += (this._targetPos.x - this.position.x) * t;
-      this.position.y += (this._targetPos.y - this.position.y) * t;
-      this.position.z += (this._targetPos.z - this.position.z) * t;
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      const stale = (now - (this._lastServerAt ?? 0)) > STALE_SNAPSHOT_SEC * 1000;
+      if (!stale) {
+        const lerpDt = Math.max(dt, MIN_LERP_DT);
+        const t = 1 - Math.exp(-LERP_SPEED * lerpDt);
+        this.position.x += (this._targetPos.x - this.position.x) * t;
+        this.position.y += (this._targetPos.y - this.position.y) * t;
+        this.position.z += (this._targetPos.z - this.position.z) * t;
 
-      let diff = this._targetRot - this.rotation.y;
-      if (diff > Math.PI) diff -= Math.PI * 2;
-      if (diff < -Math.PI) diff += Math.PI * 2;
-      this.rotation.y += diff * t;
+        let diff = this._targetRot - this.rotation.y;
+        if (diff > Math.PI) diff -= Math.PI * 2;
+        if (diff < -Math.PI) diff += Math.PI * 2;
+        this.rotation.y += diff * t;
+      }
     }
 
     this.dockGroup.position.copy(this._dockPos);

@@ -8,15 +8,15 @@ import { LIVES_PER_ROUND, createRoundStats } from './roundState.js';
 
 export const PHYSICS = Object.freeze({
   walkSpeed: 4.0,
-  sprintSpeed: 7.5,
+  sprintSpeed: 9.0,
   crouchSpeed: 2.0,
-  slideSpeed: 9.0,
+  slideSpeed: 10.5,
   slideDuration: 0.6,
   slideCooldown: 1.0,
-  jumpForce: 6.0,
-  doubleJumpForce: 5.1,
-  wallJumpForce: 6.4,
-  wallJumpAwayForce: 4.6,
+  jumpForce: 6.2,
+  doubleJumpForce: 5.3,
+  wallJumpForce: 7.6,
+  wallJumpAwayForce: 5.6,
   gravity: -20.0,
   groundOffset: 0.35,
   playerHeightOffset: -0.035,
@@ -29,6 +29,24 @@ export const PHYSICS = Object.freeze({
   wallJumpWindow: 0.22,
   wallAttachCooldown: 0.16,
   turnSmooth: 12,
+
+  // --- Movement feel tuning ---
+  /** Exponential-approach rate toward target horizontal velocity when actively inputting, on ground. */
+  groundAccel: 55,
+  /** Exponential-approach rate toward 0 on ground when no input — snappy stop. */
+  groundDecel: 42,
+  /** Weaker air control — can still steer but not as snappy. */
+  airAccel: 14,
+  /** Very slow air drag so momentum is preserved mid-jump (parkour floaty feel). */
+  airDecel: 1.2,
+  /** While wall-holding, horizontal input has almost no effect (wall clamps one axis). */
+  wallAccel: 6,
+
+  // --- Wall climb ---
+  /** Upward crawl speed while wall-holding and pressing into the wall (consumes stamina). */
+  wallClimbSpeed: 2.8,
+  /** Stamina per second consumed while wall-climbing. */
+  wallClimbStaminaDrain: 40,
 
   maxStamina: 100,
   staminaDrainRate: 30,
@@ -593,9 +611,22 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
   }
 
   // --- Horizontal velocity (unless sliding) ---
+  // Use an exponential-approach accel/decel model so ground movement feels snappy
+  // but air / wall-run preserves momentum for a parkour feel.
   if (!state.sliding) {
-    vel.x = input.moveX * speed;
-    vel.z = input.moveZ * speed;
+    const targetVX = input.moveX * speed;
+    const targetVZ = input.moveZ * speed;
+    let accel;
+    if (state.wallHolding) {
+      accel = PHYSICS.wallAccel;
+    } else if (state.grounded) {
+      accel = hasInput ? PHYSICS.groundAccel : PHYSICS.groundDecel;
+    } else {
+      accel = hasInput ? PHYSICS.airAccel : PHYSICS.airDecel;
+    }
+    const blend = 1 - Math.exp(-accel * dt);
+    vel.x += (targetVX - vel.x) * blend;
+    vel.z += (targetVZ - vel.z) * blend;
   }
 
   if (!state.sliding && vacuumPull && typeof vacuumPull.ax === 'number' && typeof vacuumPull.az === 'number') {
@@ -713,6 +744,14 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
     );
     if (wallContact) {
       applyWallHold(state, wallContact);
+      // --- Wall climb: pressing into the wall with movement input while holding jump lifts the
+      // player up the surface, consuming stamina. Enables jumping UP walls, not just along them.
+      const into = -(input.moveX * state.wallNormalX + input.moveZ * state.wallNormalZ);
+      if (hasInput && into > 0.2 && state.stamina > 0) {
+        vel.y = PHYSICS.wallClimbSpeed;
+        state.stamina = Math.max(0, state.stamina - PHYSICS.wallClimbStaminaDrain * dt);
+        state.staminaRegenTimer = PHYSICS.staminaRegenDelay;
+      }
     } else {
       state.wallHolding = false;
     }
