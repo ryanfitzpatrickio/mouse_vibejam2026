@@ -8,8 +8,11 @@ const PATCH_KEYS = [
   'health',
   'ping',
   'playerCount',
+  'playerCountMax',
   'cheese',
+  'cheeseMax',
   'lives',
+  'maxLives',
   'alive',
   'respawnCountdown',
 ];
@@ -28,8 +31,11 @@ export class HUD {
       health: 1,
       ping: undefined,
       playerCount: 1,
+      playerCountMax: 10,
       cheese: 0,
+      cheeseMax: 50,
       lives: 2,
+      maxLives: 2,
       alive: true,
       respawnCountdown: 0,
     });

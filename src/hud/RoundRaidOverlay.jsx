@@ -1,6 +1,15 @@
+import { For, Show } from 'solid-js';
 import { render } from 'solid-js/web';
 import { createStore } from 'solid-js/store';
 import { batch } from 'solid-js';
+import {
+  HUD_PANEL_STYLE,
+  HUD_LABEL_FONT,
+  HUD_VALUE_FONT,
+  HUD_SMALL_LABEL_FONT,
+  HUD_LABEL_SHADOW,
+} from './hudStyle.js';
+import { MouseHeadTarget, CheeseItem, StaminaBolt } from './hudSprites.jsx';
 
 function formatClock(seconds) {
   const s = Math.max(0, Math.floor(seconds));
@@ -14,36 +23,40 @@ function RoundRaidView(props) {
     <>
       <div
         style={{
+          ...HUD_PANEL_STYLE,
           position: 'fixed',
           top: '14px',
           left: '50%',
           transform: 'translateX(-50%)',
           'z-index': '120',
           'pointer-events': 'none',
-          'font-family': 'monospace',
-          'font-size': '13px',
-          'font-weight': '700',
-          color: props.state.phaseColor,
-          'text-shadow': '0 1px 3px rgba(0,0,0,0.9)',
+          padding: '8px 18px',
+          'border-radius': '14px',
+          'max-width': 'min(92vw, 560px)',
           'text-align': 'center',
-          'max-width': 'min(92vw, 520px)',
-          'line-height': '1.35',
-          display: props.state.phaseVisible ? 'block' : 'none',
           'white-space': 'pre-line',
+          font: HUD_LABEL_FONT,
+          color: props.state.phaseColor,
+          'text-shadow': HUD_LABEL_SHADOW,
+          'letter-spacing': '0.04em',
+          'line-height': '1.25',
+          display: props.state.phaseVisible ? 'block' : 'none',
         }}
       >
         {props.state.phaseText}
       </div>
+
       <div
         style={{
           position: 'fixed',
           inset: '0',
           'z-index': '200',
-          background: 'rgba(0,0,0,0.72)',
+          background: 'rgba(0,0,0,0.6)',
+          'backdrop-filter': 'blur(3px)',
           display: props.state.roundEndVisible ? 'flex' : 'none',
           'align-items': 'center',
           'justify-content': 'center',
-          padding: '16px',
+          padding: '20px',
           'box-sizing': 'border-box',
           'pointer-events': 'auto',
         }}
@@ -51,35 +64,141 @@ function RoundRaidView(props) {
       >
         <div
           style={{
-            background: 'linear-gradient(165deg, #1e1a28 0%, #121018 100%)',
-            border: '1px solid rgba(255,220,160,0.35)',
-            'border-radius': '10px',
-            padding: '16px 18px',
-            'max-width': 'min(96vw, 440px)',
-            'max-height': 'min(80vh, 560px)',
-            overflow: 'auto',
-            color: '#f5f0e6',
-            'font-family': 'monospace',
-            'font-size': '11px',
-            'box-shadow': '0 12px 40px rgba(0,0,0,0.55)',
+            ...HUD_PANEL_STYLE,
+            width: 'min(96vw, 560px)',
+            'max-height': 'min(86vh, 720px)',
+            padding: '18px 20px',
+            display: 'flex',
+            'flex-direction': 'column',
+            gap: '12px',
+            'box-sizing': 'border-box',
+            overflow: 'hidden',
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <div
             style={{
-              'margin-bottom': '10px',
-              'font-weight': '800',
-              'font-size': '14px',
+              font: HUD_LABEL_FONT,
+              'font-size': '22px',
+              'letter-spacing': '0.06em',
+              'text-transform': 'uppercase',
+              'text-shadow': HUD_LABEL_SHADOW,
+              'text-align': 'center',
             }}
           >
             {props.state.roundEndTitle}
           </div>
-          <div style={{ 'white-space': 'pre-wrap' }}>{props.state.roundEndBody}</div>
+
+          <Show when={props.state.roundEndRows.length > 0}>
+            <div
+              style={{
+                display: 'grid',
+                'grid-template-columns': '28px 1fr 64px 64px 64px',
+                'align-items': 'end',
+                gap: '10px',
+                padding: '0 6px',
+                color: 'rgba(255,255,255,0.7)',
+                font: HUD_SMALL_LABEL_FONT,
+                'letter-spacing': '0.06em',
+                'text-transform': 'uppercase',
+                'text-shadow': HUD_LABEL_SHADOW,
+              }}
+            >
+              <span>#</span>
+              <span>Player</span>
+              <span style={{ 'text-align': 'right' }}>Extract</span>
+              <span style={{ 'text-align': 'right' }}>Score</span>
+              <span style={{ 'text-align': 'right' }}>XP</span>
+            </div>
+          </Show>
+
           <div
             style={{
-              'margin-top': '12px',
-              opacity: '0.65',
-              'font-size': '10px',
+              display: 'flex',
+              'flex-direction': 'column',
+              gap: '4px',
+              overflow: 'auto',
+            }}
+          >
+            <For each={props.state.roundEndRows}>
+              {(row, i) => (
+                <div
+                  style={{
+                    display: 'grid',
+                    'grid-template-columns': '28px 1fr 64px 64px 64px',
+                    'align-items': 'center',
+                    gap: '10px',
+                    padding: '6px',
+                    'border-radius': '8px',
+                    background: i() % 2 === 0 ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.05)',
+                    color: '#fff',
+                    font: HUD_LABEL_FONT,
+                    'text-shadow': HUD_LABEL_SHADOW,
+                  }}
+                >
+                  <span style={{ 'text-align': 'center', color: '#fde68a' }}>
+                    {i() + 1}
+                  </span>
+                  <span
+                    style={{
+                      display: 'flex',
+                      'align-items': 'center',
+                      gap: '8px',
+                      overflow: 'hidden',
+                      'text-overflow': 'ellipsis',
+                      'white-space': 'nowrap',
+                    }}
+                  >
+                    <MouseHeadTarget size={22} />
+                    <span
+                      style={{
+                        overflow: 'hidden',
+                        'text-overflow': 'ellipsis',
+                        'white-space': 'nowrap',
+                      }}
+                    >
+                      {row.name}
+                    </span>
+                  </span>
+                  <span
+                    style={{
+                      'text-align': 'right',
+                      color: row.extracted ? '#a7f3d0' : '#fda4af',
+                      font: HUD_VALUE_FONT,
+                    }}
+                  >
+                    {row.extracted ? '✓' : '✗'}
+                  </span>
+                  <span
+                    style={{
+                      'text-align': 'right',
+                      color: '#fff7c2',
+                      font: HUD_VALUE_FONT,
+                    }}
+                  >
+                    {row.score}
+                  </span>
+                  <span
+                    style={{
+                      'text-align': 'right',
+                      color: '#a5d7ff',
+                      font: HUD_VALUE_FONT,
+                    }}
+                  >
+                    +{row.xp}
+                  </span>
+                </div>
+              )}
+            </For>
+          </div>
+
+          <div
+            style={{
+              'margin-top': '4px',
+              opacity: '0.7',
+              font: HUD_SMALL_LABEL_FONT,
+              'text-align': 'center',
+              'text-shadow': HUD_LABEL_SHADOW,
             }}
           >
             Click anywhere to close
@@ -102,7 +221,7 @@ export class RoundRaidOverlay {
       phaseColor: '#fff',
       roundEndVisible: false,
       roundEndTitle: '',
-      roundEndBody: '',
+      roundEndRows: [],
     });
     this._setState = setState;
     this._dismiss = () => {
@@ -142,18 +261,19 @@ export class RoundRaidOverlay {
     if (!data?.results?.length) return;
     const rn = data.roundNumber ?? '?';
     const title = `Round ${rn} results`;
-    const lines = data.results.map((r, i) => {
-      const ext = r.extracted ? '✓ EXT' : '✗';
-      const name = typeof r.displayName === 'string' && r.displayName.trim()
+    const rows = data.results.map((r, i) => ({
+      name: typeof r.displayName === 'string' && r.displayName.trim()
         ? r.displayName.trim()
-        : String(r.id ?? i).slice(0, 10);
-      return `${i + 1}. ${name}  ${ext}  score ${r.finalScore ?? 0}  (+${r.xpAwarded ?? 0} XP)`;
-    });
+        : String(r.id ?? i).slice(0, 10),
+      extracted: !!r.extracted,
+      score: Math.max(0, Math.floor(Number(r.finalScore) || 0)),
+      xp: Math.max(0, Math.floor(Number(r.xpAwarded) || 0)),
+    }));
     batch(() => {
       this._setState({
         roundEndVisible: true,
         roundEndTitle: title,
-        roundEndBody: lines.join('\n'),
+        roundEndRows: rows,
       });
     });
   }

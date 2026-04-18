@@ -2,10 +2,43 @@ import { For, Show } from 'solid-js';
 import { render } from 'solid-js/web';
 import { createStore } from 'solid-js/store';
 import { batch } from 'solid-js';
+import {
+  HUD_PANEL_STYLE,
+  HUD_LABEL_FONT,
+  HUD_SMALL_LABEL_FONT,
+  HUD_LABEL_SHADOW,
+} from './hudStyle.js';
+import { HeartHealthHappy, MouseHeadTarget, CheeseItem, StaminaBolt } from './hudSprites.jsx';
 
 function isFormTarget(target) {
   return target instanceof HTMLElement
     && (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName));
+}
+
+function ColHeader(props) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        'flex-direction': 'column',
+        'align-items': props.align ?? 'flex-end',
+        gap: '2px',
+      }}
+    >
+      {props.children}
+      <span
+        style={{
+          color: 'rgba(255,255,255,0.7)',
+          font: HUD_SMALL_LABEL_FONT,
+          'letter-spacing': '0.06em',
+          'text-transform': 'uppercase',
+          'text-shadow': HUD_LABEL_SHADOW,
+        }}
+      >
+        {props.label}
+      </span>
+    </div>
+  );
 }
 
 function ScoreboardView(props) {
@@ -14,115 +47,110 @@ function ScoreboardView(props) {
       role="dialog"
       aria-label="Scoreboard"
       style={{
-        display: props.state.tabHeld ? 'block' : 'none',
+        ...HUD_PANEL_STYLE,
+        display: props.state.tabHeld ? 'flex' : 'none',
+        'flex-direction': 'column',
         position: 'fixed',
         top: '24px',
         left: '50%',
         transform: 'translateX(-50%)',
-        'min-width': '240px',
-        'max-width': 'min(92vw, 560px)',
+        'min-width': '420px',
+        'max-width': 'min(96vw, 720px)',
         'z-index': '101',
         'pointer-events': 'none',
-        'font-family': 'monospace',
-        'font-size': '12px',
-        color: '#fff',
-        'text-shadow': '1px 1px 2px #000',
-        'user-select': 'none',
-        background: 'rgba(0,0,0,0.72)',
-        border: '1px solid rgba(255,255,255,0.25)',
-        'border-radius': '6px',
-        padding: '10px 14px',
+        padding: '14px 16px',
+        gap: '10px',
         'box-sizing': 'border-box',
+        'user-select': 'none',
       }}
     >
       <div
         style={{
-          'font-weight': '700',
-          'font-size': '11px',
-          'letter-spacing': '0.06em',
+          font: HUD_LABEL_FONT,
+          'letter-spacing': '0.08em',
           'text-transform': 'uppercase',
-          color: 'rgba(255,255,255,0.85)',
-          'margin-bottom': '8px',
-          'border-bottom': '1px solid rgba(255,255,255,0.15)',
-          'padding-bottom': '6px',
+          'text-shadow': HUD_LABEL_SHADOW,
+          'text-align': 'center',
         }}
       >
         Players
       </div>
+
+      <Show when={props.state.rows.length > 0}>
+        <div
+          style={{
+            display: 'grid',
+            'grid-template-columns': '1fr 72px 72px 56px',
+            'align-items': 'end',
+            gap: '12px',
+            padding: '0 6px',
+          }}
+        >
+          <ColHeader label="Player" align="flex-start">
+            <div style={{ height: '22px' }} />
+          </ColHeader>
+          <ColHeader label="Chase">
+            <StaminaBolt size={22} />
+          </ColHeader>
+          <ColHeader label="Cheese">
+            <CheeseItem size={22} />
+          </ColHeader>
+          <ColHeader label="KOs">
+            <HeartHealthHappy size={22} />
+          </ColHeader>
+        </div>
+      </Show>
+
       <div style={{ display: 'flex', 'flex-direction': 'column', gap: '4px' }}>
-        <Show when={props.state.rows.length > 0}>
-          <div
-            style={{
-              display: 'grid',
-              'grid-template-columns': '1fr auto auto auto',
-              'align-items': 'baseline',
-              gap: '10px',
-              'margin-bottom': '6px',
-              'font-size': '9px',
-              'font-weight': '700',
-              'letter-spacing': '0.08em',
-              'text-transform': 'uppercase',
-              color: 'rgba(255,255,255,0.45)',
-            }}
-          >
-            <span>Player</span>
-            <span style={{ 'text-align': 'right' }}>Chase</span>
-            <span style={{ 'text-align': 'right' }}>Cheese</span>
-            <span style={{ 'text-align': 'right' }}>KOs</span>
-          </div>
-        </Show>
         <For each={props.state.rows}>
-          {(row) => {
+          {(row, i) => {
             const cs = () => Math.max(0, Number(row.chaseSec) || 0);
+            const bg = () => (i() % 2 === 0
+              ? 'rgba(0,0,0,0.18)'
+              : 'rgba(255,255,255,0.05)');
             return (
               <div
                 style={{
                   display: 'grid',
-                  'grid-template-columns': '1fr auto auto auto',
-                  'align-items': 'baseline',
-                  gap: '10px',
+                  'grid-template-columns': '1fr 72px 72px 56px',
+                  'align-items': 'center',
+                  gap: '12px',
+                  padding: '4px 6px',
+                  'border-radius': '6px',
+                  background: bg(),
+                  color: '#fff',
+                  font: HUD_LABEL_FONT,
+                  'text-shadow': HUD_LABEL_SHADOW,
                 }}
               >
                 <span
                   style={{
+                    display: 'flex',
+                    'align-items': 'center',
+                    gap: '8px',
                     overflow: 'hidden',
                     'text-overflow': 'ellipsis',
                     'white-space': 'nowrap',
                   }}
                 >
-                  {row.label}
+                  <MouseHeadTarget size={22} />
+                  <span
+                    style={{
+                      overflow: 'hidden',
+                      'text-overflow': 'ellipsis',
+                      'white-space': 'nowrap',
+                    }}
+                  >
+                    {row.label}
+                  </span>
                 </span>
-                <span
-                  style={{
-                    'flex-shrink': '0',
-                    'text-align': 'right',
-                    color: 'rgba(255,220,140,0.95)',
-                    'font-weight': '700',
-                    'min-width': '52px',
-                  }}
-                >
+                <span style={{ 'text-align': 'right', color: '#fde68a' }}>
                   {cs().toFixed(1)}s
                 </span>
-                <span
-                  style={{
-                    'flex-shrink': '0',
-                    'text-align': 'right',
-                    color: 'rgba(255,236,120,0.98)',
-                    'font-weight': '700',
-                    'min-width': '40px',
-                  }}
-                >
+                <span style={{ 'text-align': 'right', color: '#fff7c2' }}>
                   {String(Math.max(0, Math.floor(Number(row.cheese) || 0)))}
                 </span>
-                <span
-                  style={{
-                    'flex-shrink': '0',
-                    'text-align': 'right',
-                    color: 'rgba(255,180,120,0.95)',
-                    'font-weight': '700',
-                    'min-width': '28px',
-                  }}
-                >
+                <span style={{ 'text-align': 'right', color: '#fda4af' }}>
                   {String(Math.max(0, Math.floor(Number(row.deaths) || 0)))}
                 </span>
               </div>
@@ -130,7 +158,15 @@ function ScoreboardView(props) {
           }}
         </For>
         <Show when={props.state.rows.length === 0}>
-          <div style={{ color: 'rgba(255,255,255,0.5)', 'font-size': '11px' }}>
+          <div
+            style={{
+              color: 'rgba(255,255,255,0.6)',
+              font: HUD_LABEL_FONT,
+              'text-align': 'center',
+              padding: '8px',
+              'text-shadow': HUD_LABEL_SHADOW,
+            }}
+          >
             No players yet
           </div>
         </Show>

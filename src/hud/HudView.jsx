@@ -1,229 +1,255 @@
-import { Show, createMemo } from 'solid-js';
-import { measureText } from '../utils/textLayout.js';
+import { Show, createMemo, For } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import { HUD_ICONS } from './hudSprites.jsx';
+import {
+  HUD_PANEL_STYLE,
+  HUD_LABEL_FONT as LABEL_FONT,
+  HUD_VALUE_FONT as VALUE_FONT,
+  HUD_LABEL_SHADOW as LABEL_SHADOW,
+} from './hudStyle.js';
 
-const FONT = '10px monospace';
-const BAR_WIDTH = 160;
-const LINE_HEIGHT = 14;
+/**
+ * Cartoon HUD: metallic rounded panel with icon + fill bar rows for health/stamina,
+ * and a combined lives/cheese/live-mice row below.
+ */
 
-function MouseIcon(props) {
-  const size = () => props.size ?? 20;
+// --- Layout constants (panel-local px). Tweak here; the panel auto-sizes. ---
+const PANEL_PADDING = 12;
+const PANEL_WIDTH = 460;
+const BAR_HEIGHT = 28;
+const ICON_SIZE = 36;
+const ROW_GAP = 8;
+
+function Sprite(props) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 64 64"
-      width={size()}
-      height={size()}
-      aria-hidden="true"
-    >
-      <circle cx="18" cy="16" r="14" fill="#ccc" stroke="#333" stroke-width="2" />
-      <circle cx="18" cy="16" r="8" fill="#f8a0a0" />
-      <circle cx="46" cy="16" r="14" fill="#ccc" stroke="#333" stroke-width="2" />
-      <circle cx="46" cy="16" r="8" fill="#f8a0a0" />
-      <ellipse cx="32" cy="36" rx="22" ry="20" fill="#ccc" stroke="#333" stroke-width="2" />
-      <g stroke="#000" stroke-width="3" stroke-linecap="round">
-        <line x1="21" y1="29" x2="27" y2="35" />
-        <line x1="27" y1="29" x2="21" y2="35" />
-      </g>
-      <g stroke="#000" stroke-width="3" stroke-linecap="round">
-        <line x1="37" y1="29" x2="43" y2="35" />
-        <line x1="43" y1="29" x2="37" y2="35" />
-      </g>
-      <ellipse cx="32" cy="42" rx="3" ry="2.5" fill="#f8a0a0" />
-      <g stroke="#333" stroke-width="1.2" stroke-linecap="round">
-        <line x1="12" y1="40" x2="24" y2="42" />
-        <line x1="12" y1="44" x2="24" y2="44" />
-        <line x1="40" y1="42" x2="52" y2="40" />
-        <line x1="40" y1="44" x2="52" y2="44" />
-      </g>
-    </svg>
+    <Dynamic
+      component={HUD_ICONS[props.name]}
+      size={props.size ?? ICON_SIZE}
+    />
   );
 }
 
 function StatBar(props) {
-  const labelH = createMemo(() => measureText(props.label, FONT, BAR_WIDTH, LINE_HEIGHT).height);
-  const fillPct = () => `${Math.max(0, Math.min(1, props.value())) * 100}%`;
-
+  const pct = () => `${Math.max(0, Math.min(1, props.value())) * 100}%`;
   return (
-    <div style={{ 'margin-bottom': '6px', width: '160px' }}>
+    <div
+      style={{
+        display: 'flex',
+        'align-items': 'center',
+        gap: '10px',
+      }}
+    >
+      <Sprite name={props.iconName} size={ICON_SIZE} />
       <div
         style={{
-          color: '#fff',
-          'font-size': '10px',
-          'margin-bottom': '2px',
-          'text-shadow': '1px 1px 2px #000',
-          height: `${labelH()}px`,
-        }}
-      >
-        {props.label}
-      </div>
-      <div
-        style={{
-          width: '100%',
-          height: '8px',
-          background: props.bgColor,
-          border: '1px solid rgba(255,255,255,0.3)',
+          position: 'relative',
+          flex: '1',
+          height: `${BAR_HEIGHT}px`,
+          'border-radius': `${BAR_HEIGHT / 2}px`,
+          background: 'linear-gradient(180deg, #5a6270 0%, #3f4753 100%)',
+          'box-shadow': 'inset 0 2px 3px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.14)',
+          border: '2px solid rgba(20, 26, 36, 0.85)',
+          overflow: 'hidden',
         }}
       >
         <div
           style={{
-            width: fillPct(),
-            height: '100%',
-            background: props.fgColor,
-            transition: 'width 0.1s',
+            position: 'absolute',
+            top: '2px',
+            bottom: '2px',
+            left: '2px',
+            width: `calc(${pct()} - 4px)`,
+            'min-width': '0',
+            'border-radius': `${(BAR_HEIGHT - 4) / 2}px`,
+            background: props.fillColor,
+            'box-shadow': `inset 0 1.5px 0 ${props.fillHighlight}, inset 0 -1.5px 0 rgba(0,0,0,0.25)`,
+            transition: 'width 0.12s ease-out',
           }}
         />
+        <div
+          style={{
+            position: 'absolute',
+            inset: '0',
+            display: 'flex',
+            'align-items': 'center',
+            'padding-left': '14px',
+            color: '#fff',
+            font: LABEL_FONT,
+            'letter-spacing': '0.04em',
+            'text-shadow': LABEL_SHADOW,
+            'pointer-events': 'none',
+          }}
+        >
+          {props.label}
+        </div>
+      </div>
+      <div
+        style={{
+          'min-width': '72px',
+          'text-align': 'right',
+          color: '#fff',
+          font: VALUE_FONT,
+          'text-shadow': LABEL_SHADOW,
+        }}
+      >
+        {props.valueText()}
+      </div>
+    </div>
+  );
+}
+
+function LivesCell(props) {
+  const slots = createMemo(() => {
+    const max = Math.max(1, Math.min(3, Math.floor(Number(props.maxLives?.() ?? 2))));
+    const cur = Math.max(0, Math.min(max, Math.floor(Number(props.lives?.() ?? 0))));
+    return Array.from({ length: max }, (_, i) => (i < cur ? 'HEART_LIFE_FULL' : 'HEART_LIFE_LOST'));
+  });
+
+  return (
+    <div style={{ display: 'flex', 'align-items': 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', gap: '4px' }}>
+        <For each={slots()}>{(name) => <Sprite name={name} size={34} />}</For>
+      </div>
+      <div
+        style={{
+          color: '#fff',
+          font: LABEL_FONT,
+          'letter-spacing': '0.04em',
+          'text-shadow': LABEL_SHADOW,
+          'line-height': '1.05',
+        }}
+      >
+        LIVES
+      </div>
+    </div>
+  );
+}
+
+function Counter(props) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        'align-items': 'center',
+        gap: '8px',
+      }}
+    >
+      <Sprite name={props.iconName} size={48} />
+      <div
+        style={{
+          display: 'flex',
+          'flex-direction': 'column',
+          'line-height': '1.05',
+        }}
+      >
+        <div
+          style={{
+            color: props.labelColor,
+            font: LABEL_FONT,
+            'letter-spacing': '0.04em',
+            'text-shadow': LABEL_SHADOW,
+          }}
+        >
+          {props.label}
+        </div>
+        <div
+          style={{
+            color: '#fff',
+            font: VALUE_FONT,
+            'text-shadow': LABEL_SHADOW,
+          }}
+        >
+          {props.valueText()}
+        </div>
       </div>
     </div>
   );
 }
 
 export function HudView(props) {
-  const pingText = createMemo(() => {
-    const p = props.state.ping;
-    if (p === undefined || p === null || Number.isNaN(p)) return '-- ms';
-    return `${Math.round(p)} ms`;
+  const healthPct = () => props.state.health;
+  const staminaPct = () => props.state.stamina;
+
+  const healthText = createMemo(() => {
+    const v = Math.round((props.state.health ?? 0) * 100);
+    return `${v}/100`;
   });
-  const pingH = createMemo(() => measureText(pingText(), FONT, BAR_WIDTH, LINE_HEIGHT).height);
-
-  const playerCount = () => Math.max(0, Math.floor(props.state.playerCount ?? 0));
-  const playerBadgeH = createMemo(() => measureText(String(playerCount()), FONT, BAR_WIDTH, LINE_HEIGHT).height);
-
-  const cheeseCount = () => Math.max(0, Math.floor(Number(props.state.cheese) || 0));
-  const cheeseBadgeH = createMemo(() => measureText(String(cheeseCount()), FONT, BAR_WIDTH, LINE_HEIGHT).height);
-
-  const livesLine = createMemo(() => {
-    const n = Math.max(0, Math.min(3, Math.floor(Number(props.state.lives) || 0)));
-    return `${'♥'.repeat(n) || '—'} lives`;
+  const staminaText = createMemo(() => {
+    const v = Math.round((props.state.stamina ?? 0) * 100);
+    return `${v}/100`;
   });
 
-  // #hud first so respawn layer (later sibling) paints above corner bars.
-  // Respawn z-index 150 > RoundRaid phase banner (120) so countdown stays visible on top.
+  const cheeseMax = createMemo(() => Math.max(1, Math.floor(Number(props.state.cheeseMax ?? 50))));
+  const cheeseText = createMemo(() => {
+    const n = Math.max(0, Math.floor(Number(props.state.cheese) || 0));
+    return `${n} / ${cheeseMax()}`;
+  });
+  const playerMax = createMemo(() => Math.max(1, Math.floor(Number(props.state.playerCountMax ?? 10))));
+  const playerText = createMemo(() => {
+    const n = Math.max(0, Math.floor(Number(props.state.playerCount) || 0));
+    return `${n} / ${playerMax()}`;
+  });
+
   return (
     <>
       <div
         id="hud"
         style={{
+          ...HUD_PANEL_STYLE,
           position: 'fixed',
           bottom: '20px',
           left: '20px',
           'pointer-events': 'none',
           'z-index': '100',
-          'font-family': 'monospace',
           'user-select': 'none',
+          width: `${PANEL_WIDTH}px`,
+          padding: `${PANEL_PADDING}px`,
+          display: 'flex',
+          'flex-direction': 'column',
+          gap: `${ROW_GAP}px`,
         }}
       >
-        <StatBar label="HEALTH" fgColor="#ff4444" bgColor="#661111" value={() => props.state.health} />
-        <StatBar label="STAMINA" fgColor="#44ff88" bgColor="#116633" value={() => props.state.stamina} />
+        <StatBar
+          iconName="HEART_HEALTH_HAPPY"
+          label="HEALTH"
+          valueText={healthText}
+          value={healthPct}
+          fillColor="linear-gradient(180deg, #ff6a6a 0%, #c9302c 100%)"
+          fillHighlight="rgba(255,190,190,0.6)"
+        />
+        <StatBar
+          iconName="STAMINA_BOLT"
+          label="STAMINA"
+          valueText={staminaText}
+          value={staminaPct}
+          fillColor="linear-gradient(180deg, #7ee084 0%, #3a8a46 100%)"
+          fillHighlight="rgba(200,245,205,0.6)"
+        />
 
         <div
           style={{
             display: 'flex',
-            'flex-direction': 'row',
-            'align-items': 'center',
             'justify-content': 'space-between',
-            width: `${Math.max(BAR_WIDTH, 232)}px`,
-            'max-width': 'min(260px, 92vw)',
-            'margin-top': '4px',
-            gap: '8px',
-            'flex-wrap': 'wrap',
+            'align-items': 'center',
+            gap: '10px',
           }}
         >
-          <div
-            style={{
-              color: '#fff',
-              'font-size': '10px',
-              'text-shadow': '1px 1px 2px #000',
-              'flex-shrink': '0',
-              height: `${pingH()}px`,
-            }}
-          >
-            {pingText()}
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              'flex-direction': 'row',
-              'align-items': 'center',
-              gap: '6px',
-              'flex-shrink': '0',
-            }}
-          >
-            <MouseIcon size={20} />
-            <div
-              style={{
-                'min-width': '20px',
-                height: `${playerBadgeH()}px`,
-                padding: '0 4px',
-                'box-sizing': 'border-box',
-                'border-radius': '50%',
-                background: '#22c55e',
-                border: '1px solid rgba(255,255,255,0.35)',
-                color: '#fff',
-                'font-size': '10px',
-                'font-weight': '700',
-                'line-height': '18px',
-                'text-align': 'center',
-                'text-shadow': '0 0 2px rgba(0,0,0,0.8)',
-                display: 'flex',
-                'align-items': 'center',
-                'justify-content': 'center',
-              }}
-            >
-              {playerCount()}
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              'flex-direction': 'row',
-              'align-items': 'center',
-              gap: '6px',
-              'flex-shrink': '0',
-            }}
-          >
-            <div
-              style={{
-                'font-size': '14px',
-                'line-height': '1',
-                filter: 'drop-shadow(0 0 1px rgba(0,0,0,0.8))',
-              }}
-            >
-              🧀
-            </div>
-            <div
-              style={{
-                'min-width': '22px',
-                height: `${cheeseBadgeH()}px`,
-                padding: '0 4px',
-                'box-sizing': 'border-box',
-                'border-radius': '4px',
-                background: 'rgba(234,179,8,0.35)',
-                border: '1px solid rgba(255,236,160,0.45)',
-                color: '#fff7c2',
-                'font-size': '10px',
-                'font-weight': '700',
-                'line-height': '18px',
-                'text-align': 'center',
-                'text-shadow': '0 0 2px rgba(0,0,0,0.85)',
-              }}
-            >
-              {cheeseCount()}
-            </div>
-          </div>
-
-          <div
-            style={{
-              color: '#fda4af',
-              'font-size': '10px',
-              'font-weight': '700',
-              'text-shadow': '1px 1px 2px #000',
-              'flex-shrink': '0',
-            }}
-          >
-            {livesLine()}
-          </div>
+          <LivesCell
+            lives={() => props.state.lives}
+            maxLives={() => props.state.maxLives ?? 2}
+          />
+          <Counter
+            iconName="CHEESE_ITEM"
+            label="CHEESE:"
+            labelColor="#f6d98a"
+            valueText={cheeseText}
+          />
+          <Counter
+            iconName="MOUSE_HEAD_TARGET"
+            label="LIVE:"
+            labelColor="#d8e2ff"
+            valueText={playerText}
+          />
         </div>
       </div>
 

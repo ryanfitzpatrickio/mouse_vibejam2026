@@ -12,7 +12,7 @@ import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
 import { HUD } from '../hud/HUD.jsx';
 import { RoundRaidOverlay } from '../hud/RoundRaidOverlay.jsx';
-import { GameToolbar } from '../hud/GameToolbar.js';
+import { GameToolbar } from '../hud/GameToolbar.jsx';
 import { CatLocatorOverlay } from '../hud/CatLocatorOverlay.jsx';
 import { ScoreboardOverlay } from '../hud/ScoreboardOverlay.jsx';
 import { ChaseAlertOverlay } from '../hud/ChaseAlertOverlay.jsx';
