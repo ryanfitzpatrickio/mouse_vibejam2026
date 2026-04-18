@@ -141,7 +141,7 @@ async function main() {
 
   // 2. Load animation FBX files
   const animFiles = fs.readdirSync(SOURCE_DIR)
-    .filter((f) => f.endsWith('.fbx') && f !== 'bunny.fbx')
+    .filter((f) => f.endsWith('.fbx') && f !== 'bunny.fbx' && f !== 'cop.fbx')
     .sort();
 
   const seenNames = new Set(scene.animations.map((a) => a.name));

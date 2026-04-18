@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Mouse } from '../entities/Mouse.js';
 import { Bunny } from '../entities/Bunny.js';
 import { Cat } from '../entities/Cat.js';
+import { Human } from '../entities/Human.js';
 import { Roomba } from '../entities/Roomba.js';
 import { PredatorManager } from '../entities/PredatorManager.js';
 import { Room } from '../world/Room.js';
@@ -57,6 +58,7 @@ function createWebGLRenderer(canvas) {
 const ENABLE_BUNNY_PREDATOR = false;
 const ENABLE_CAT_PREDATOR = true;
 const ENABLE_ROOMBA_PREDATOR = true;
+const ENABLE_HUMAN_PREDATOR = true;
 
 function pickRemoteRoombaSnapshot(remotePredators) {
   for (const p of remotePredators.values()) {
@@ -310,7 +312,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
   // --- Predators ---
   const bunny = ENABLE_BUNNY_PREDATOR ? new Bunny() : null;
-  const predatorManager = ENABLE_BUNNY_PREDATOR
+  const human = ENABLE_HUMAN_PREDATOR ? new Human() : null;
+  const predatorManager = (ENABLE_BUNNY_PREDATOR || ENABLE_HUMAN_PREDATOR)
     ? new PredatorManager({
       scene,
       controller,
@@ -319,16 +322,21 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     : null;
 
   if (bunny && predatorManager) {
-    // Stream the bunny in — register it with the predator manager once its
-    // GLB lands so we don't block the initial render.
     bunny.ready.then(() => {
       predatorManager.add(bunny, new THREE.Vector3(5, 0, 5));
+    }).catch(() => {});
+  }
+
+  if (human && predatorManager) {
+    human.ready.then(() => {
+      predatorManager.add(human, new THREE.Vector3(-4, 0, 4));
     }).catch(() => {});
   }
 
   const cat = ENABLE_CAT_PREDATOR ? new Cat() : null;
   if (cat) {
     cat.ready.then(() => {
+      cat.position.set(3, 0, -3);
       scene.add(cat);
     }).catch(() => {});
   }

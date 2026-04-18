@@ -49,6 +49,7 @@ const SMACK_SFX_STEMS = ['assets/smack', 'assets/Smack'];
 const CAT_SFX_STEMS = [['assets/cat1', 'assets/Cat1'], ['assets/cat2', 'assets/Cat2']];
 const VACUUM_SFX_STEMS = ['assets/vacuum', 'assets/Vacuum'];
 const VACUUM2_SFX_STEMS = ['assets/vacuum2', 'assets/Vacuum2'];
+const MEME_SFX_STEMS = ['assets/meme', 'assets/Meme', 'assets/MEME'];
 const MOVE_LOOP_FADE_RATE = 5.5;
 const MOVE_LOOP_GAIN = 0.55;
 const WALL_RUN_GAIN = 0.5;
@@ -475,6 +476,12 @@ export class AudioManager {
     this._sfxMuted = false;
     this.sfxContext.gain.value = this._sfxVolume;
 
+    // Default THREE.AudioListener wiring is listener.gain -> destination, which skips this graph.
+    // PositionalAudio (roomba vacuum) feeds listener.gain, so route it through the SFX bus so it
+    // respects SFX volume, mute, and master — same as one-shot spatial SFX via _createSpatialPanner.
+    this.listener.gain.disconnect();
+    this.listener.gain.connect(this.sfxContext);
+
     /** Footstep / movement loop (not spatial SFX); own level into master. */
     this.movementLoopBus = this.audioContext.createGain();
     this.movementLoopBus.connect(this.masterGain);
@@ -606,6 +613,10 @@ export class AudioManager {
       });
       return;
     }
+    if (type === 'meme') {
+      void this._playSfxBufferAtPanner('meme', MEME_SFX_STEMS, panner);
+      return;
+    }
     if (type === 'cat') {
       const idx = Math.random() < 0.5 ? 0 : 1;
       const name = `cat${idx + 1}`;
@@ -702,6 +713,7 @@ export class AudioManager {
     }
     void this._loadSfxBuffer('vacuum', VACUUM_SFX_STEMS);
     void this._loadSfxBuffer('vacuum2', VACUUM2_SFX_STEMS);
+    void this._loadSfxBuffer('meme', MEME_SFX_STEMS);
   }
 
   /**
@@ -712,7 +724,7 @@ export class AudioManager {
    * @param {number} [gain=1]
    */
   async _playSfxBufferAtPanner(name, stems, panner, gain = 1) {
-    let buf = this._sfxBuffers.get(name) ?? null;
+    let buf = this._sfxBuffers.get(name);
     if (buf === undefined) buf = await this._loadSfxBuffer(name, stems);
     if (!buf) return false;
     await this.audioContext.resume();

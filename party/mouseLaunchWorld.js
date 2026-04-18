@@ -9,8 +9,8 @@ import { aabbToStaticBody, shouldSkipLayoutColliderForBall } from './pushBallWor
 
 const MOUSE_SPHERE_RADIUS = Math.max(0.2, PHYSICS.playerRadius * 1.1);
 const MOUSE_MASS = 2.35;
-const LAUNCH_HORIZ_SPEED = 15.5;
-const LAUNCH_UP_SPEED = 5.8;
+const LAUNCH_HORIZ_SPEED = 7.2;
+const LAUNCH_UP_SPEED = 9.4;
 const LAUNCH_COOLDOWN_S = 1.75;
 const GROUNDED_EXIT_TIME = 0.16;
 const MAX_FLIGHT_S = 5.2;

@@ -36,7 +36,8 @@ const CAT_BUMP_DIST = 0.82;
 const CAT_BUMP_IMPULSE = 6;
 
 /** 360° horizontal capture within radius → pull under → cannon launch (see `party/mouseLaunchWorld.js`). */
-const MOUSE_CAPTURE_MAX_DIST = 0.92;
+/** 360° suck-up proximity: roomba edge + ~1 foot (0.3048m) of reach. */
+const MOUSE_CAPTURE_MAX_DIST = ROOMBA_RADIUS_XZ + 0.3048;
 /** Outer edge of vacuum influence (world XZ); pull scales up as the mouse moves inward. */
 const VACUUM_PULL_MAX_DIST = 3.95;
 const VACUUM_PULL_MIN_DIST = 0.07;
@@ -1514,46 +1515,22 @@ function applyRoombaMouseVacuum(roomba, players, dt, mouseLaunchWorld) {
   for (const p of iterPlayerStates(players)) {
     if (!p?.alive || !p.position || !p.id) continue;
 
-    if (p.roombaLaunch?.phase === 'suck') {
-      const lerp = 1 - Math.exp(-MOUSE_SUCK_LERP * dt);
-      const tx = rbx;
-      const ty = roomba.position.y + 0.045;
-      const tz = rbz;
-      p.position.x += (tx - p.position.x) * lerp;
-      p.position.y += (ty - p.position.y) * lerp;
-      p.position.z += (tz - p.position.z) * lerp;
-      p.velocity.x *= 0.78;
-      p.velocity.z *= 0.78;
-      p.velocity.y *= 0.68;
-      p.grounded = false;
-      p.roombaLaunch.t -= dt;
-      if (p.roombaLaunch.t <= 0) {
-        mouseLaunchWorld.startFlight(p.id, p, p.roombaLaunch.outNx, p.roombaLaunch.outNz);
-        p.roombaLaunch = { phase: 'flight' };
-      }
-      continue;
-    }
-
     if (p.roombaLaunch?.phase === 'flight') continue;
     if ((p.roombaLaunchCooldown ?? 0) > 0) continue;
 
     const px = p.position.x;
     const pz = p.position.z;
     const py = p.position.y;
-    const dx = px - rbx;
-    const dz = pz - rbz;
-    const flat = Math.sqrt(dx * dx + dz * dz);
+    const flat = Math.sqrt((px - rbx) * (px - rbx) + (pz - rbz) * (pz - rbz));
     if (flat < 0.04 || flat > MOUSE_CAPTURE_MAX_DIST) continue;
     if (Math.abs(py - roomba.position.y) > playerH + 0.32) continue;
 
-    const inNx = dx / flat;
-    const inNz = dz / flat;
-    p.roombaLaunch = {
-      phase: 'suck',
-      t: MOUSE_SUCK_DURATION,
-      outNx: -inNx,
-      outNz: -inNz,
-    };
+    // Eject straight out the rear of the roomba via the cannon-es launch
+    // world — no teleport, no lerp. The impulse magnitude + gravity handle
+    // the full arc, and wall collisions bounce naturally.
+    const f = forwardXZ(roomba.rotation);
+    mouseLaunchWorld.startFlight(p.id, p, -f.x, -f.z);
+    p.roombaLaunch = { phase: 'flight' };
     p.grounded = false;
   }
 }

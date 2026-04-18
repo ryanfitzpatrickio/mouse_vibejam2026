@@ -7,7 +7,7 @@ const LERP_SPEED = 14;
  * Inward wind wisps (local XZ). Roomba group is scaled ×ROOMBA_MESH_SCALE — keep radii small
  * (~0.2–0.5 local ≈ 0.9–2.25m world) or the ring fills the whole room.
  */
-const WIND_PARTICLE_COUNT = 96;
+const WIND_PARTICLE_COUNT = 48;
 const WIND_R_MIN = 0.2;
 const WIND_R_MAX = 0.52;
 const WIND_INWARD_SPEED = 0.36;

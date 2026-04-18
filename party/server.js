@@ -780,7 +780,21 @@ export default class GameServer {
       }
 
       if (this.mouseLaunchWorld.isFlying(id)) {
-        seqs[id] = isHuman ? (this._lastSeq?.get(id) ?? 0) : 0;
+        // Ack + discard inputs captured during flight so we don't replay a
+        // burst of queued walk inputs the instant the launch ends.
+        if (isHuman) {
+          const queue = this.inputQueues.get(id);
+          if (queue && queue.length) {
+            const latest = queue[queue.length - 1];
+            seqs[id] = latest.seq;
+            if (this._lastSeq) this._lastSeq.set(id, latest.seq);
+            queue.length = 0;
+          } else {
+            seqs[id] = this._lastSeq?.get(id) ?? 0;
+          }
+        } else {
+          seqs[id] = 0;
+        }
         continue;
       }
       if (state.roombaLaunch?.phase === 'suck') {
