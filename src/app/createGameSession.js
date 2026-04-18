@@ -935,6 +935,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         predictionState.velocity.z,
       );
       controller.grounded = predictionState.grounded;
+      controller.wallHolding = !!predictionState.wallHolding;
       controller.sprinting = predictionState.sprinting;
       controller.crouching = predictionState.crouching;
       controller.sliding = predictionState.sliding;
@@ -1307,7 +1308,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         label: 'Shadow maps (extra passes per light)',
         get: () => renderer.shadowMap.enabled,
         set: (v) => {
-          renderer.shadowMap.enabled = !v;
+          renderer.shadowMap.enabled = !!v;
         },
       },
       staticMerge: {

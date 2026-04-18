@@ -72,6 +72,8 @@ export function createPlayerState(id) {
     wallNormalZ: 0,
     wallJumpWindowTimer: 0,
     wallAttachCooldownTimer: 0,
+    /** Anim-only grace: extends wall-run walk/idle anim across brief wallHolding drop-outs. */
+    wallAnimGraceTimer: 0,
     animState: 'idle',
     deathTime: 0,
     /** Cumulative deaths (server-authoritative; included in snapshots). */
@@ -186,10 +188,19 @@ export function sortCollidersForPlaneZIndex(colliders) {
 }
 
 function isWallCollider(collider) {
-  return !!getColliderBox(collider)
-    && collider.type !== 'surface'
-    && collider.type !== 'loot'
-    && !collider.metadata?.runnable;
+  const box = getColliderBox(collider);
+  if (!box) return false;
+  if (collider.type === 'loot') return false;
+  if (collider.metadata?.runnable) return false;
+  if (collider.type === 'surface') {
+    // Plane primitives are tagged 'surface' regardless of orientation. Treat a vertical plane
+    // (tall, thin on one horizontal axis) as a wall so wall-run detection picks it up.
+    const dx = box.max.x - box.min.x;
+    const dy = box.max.y - box.min.y;
+    const dz = box.max.z - box.min.z;
+    return dy > 0.3 && (dx < 0.1 || dz < 0.1);
+  }
+  return true;
 }
 
 function getSupportHeight(state, colliders, radius, groundSnapDistance, baseGroundY = 0) {
@@ -738,9 +749,22 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
     }
   }
 
+  // --- Wall-hold anim grace timer ---
+  if (state.wallHolding) {
+    state.wallAnimGraceTimer = 0.18;
+  } else {
+    state.wallAnimGraceTimer = Math.max(0, (state.wallAnimGraceTimer ?? 0) - dt);
+  }
+
   // --- Animation state ---
   if (!state.alive) {
     state.animState = 'death';
+  } else if (state.wallHolding || (state.wallAnimGraceTimer > 0 && jumpHeld && !state.grounded)) {
+    // Wall-run: play walk whenever the player has movement input (including pressing into the wall,
+    // which applyWallHold zeroes out). Falls back to tangential speed for non-input drift.
+    // Grace window smooths over brief wall-contact drops (edges, gaps) so anim doesn't flicker to jump.
+    const tangentialSpeed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
+    state.animState = (hasInput || tangentialSpeed > 0.5) ? 'walk' : 'idle';
   } else if (!state.grounded) {
     state.animState = 'jump';
   } else if (state.sprinting || state.sliding) {

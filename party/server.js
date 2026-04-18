@@ -346,6 +346,8 @@ export default class GameServer {
     while (botIds.length > desiredBots) {
       const id = botIds.pop();
       if (!id) break;
+      const botState = this.players.get(id);
+      if (botState) this.cheeseWorld.onDeathDropCarried(botState);
       this.mouseLaunchWorld?.removePlayer?.(id);
       this.ropeWorld?.removePlayer?.(id);
       this._lastRopeGrab?.delete(id);
@@ -546,6 +548,8 @@ export default class GameServer {
     this._playerExtraBallSpawnCount.delete(conn.id);
     this._messageBuckets.delete(conn.id);
     this.portalArrivals.delete(conn.id);
+    const leaving = this.players.get(conn.id);
+    if (leaving) this.cheeseWorld.onDeathDropCarried(leaving);
     this.mouseLaunchWorld?.removePlayer?.(conn.id);
     this.ropeWorld?.removePlayer?.(conn.id);
     this._lastRopeGrab?.delete(conn.id);
@@ -1001,6 +1005,7 @@ export default class GameServer {
         target.alive = false;
         target.animState = 'death';
         target.deathTime = 0; // prevent respawn timer — smackStunTimer handles recovery
+        this.cheeseWorld.onDeathDropCarried(target);
         // Knockback away from attacker
         const dx = target.position.x - attacker.position.x;
         const dz = target.position.z - attacker.position.z;

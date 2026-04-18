@@ -105,6 +105,7 @@ export class CharacterController {
     this._prevInteractDown = false;
 
     this._prevAnimState = 'idle';
+    this._wallAnimGrace = 0;
 
     this.onInteract = null;
     this.onSqueak = null;
@@ -371,9 +372,29 @@ export class CharacterController {
       return;
     }
 
+    const kb = this.keyBindings;
+    const hasMoveInput = !!this.keys[kb.forward] || !!this.keys[kb.backward]
+      || !!this.keys[kb.left] || !!this.keys[kb.right];
+    const jumpHeld = !!this.keys[kb.jump];
+
+    // Sticky wall-run anim: wallHolding flickers false on brief contact gaps; keep walking anim
+    // for a short grace window while still airborne and holding jump.
+    if (this.wallHolding) {
+      this._wallAnimGrace = 0.18;
+    } else {
+      this._wallAnimGrace = Math.max(0, this._wallAnimGrace - dt);
+    }
+    const wallRunAnim = this.wallHolding
+      || (this._wallAnimGrace > 0 && jumpHeld && !this.grounded);
+
     let state = 'idle';
     if (!this.alive) {
       state = 'death';
+    } else if (wallRunAnim) {
+      const tangentialSpeed = Math.sqrt(
+        this.velocity.x ** 2 + this.velocity.z ** 2 + this.velocity.y ** 2,
+      );
+      state = (hasMoveInput || tangentialSpeed > 0.5) ? 'walk' : 'idle';
     } else if (!this.grounded) {
       state = 'jump';
     } else if (this.sprinting || this.sliding) {
