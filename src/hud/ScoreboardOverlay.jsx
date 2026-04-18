@@ -44,6 +44,7 @@ function ColHeader(props) {
 function ScoreboardView(props) {
   return (
     <div
+      id="scoreboard"
       role="dialog"
       aria-label="Scoreboard"
       style={{
@@ -54,14 +55,17 @@ function ScoreboardView(props) {
         top: '24px',
         left: '50%',
         transform: 'translateX(-50%)',
-        'min-width': '420px',
+        'min-width': 'min(420px, 92vw)',
         'max-width': 'min(96vw, 720px)',
+        'max-height': 'calc(100vh - 48px)',
         'z-index': '101',
         'pointer-events': 'none',
         padding: '14px 16px',
         gap: '10px',
         'box-sizing': 'border-box',
         'user-select': 'none',
+        overflow: 'auto',
+        '-webkit-overflow-scrolling': 'touch',
       }}
     >
       <div

@@ -26,6 +26,15 @@
       "publicPath": "models/cop.glb",
       "size": 0,
       "uploadedAt": "2026-04-18T00:00:00.000Z"
+    },
+    {
+      "id": "asset-brain-hero-001",
+      "name": "brain",
+      "filename": "brain.glb",
+      "sourcePath": "assets/source/custom/brain.glb",
+      "publicPath": "models/brain.glb",
+      "size": 0,
+      "uploadedAt": "2026-04-18T00:00:00.000Z"
     }
   ]
 }

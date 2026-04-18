@@ -131,6 +131,10 @@ export function createPlayerState(id) {
     extractProgress: 0,
     /** Per-round scoring / task progress (server). */
     roundStats: createRoundStats(),
+    /** Hero system: set by server when this player may press H to become hero. */
+    heroAvailable: false,
+    /** Hero system: set by server after H press; unlocks super-charged moveset + swapped model. */
+    isHero: false,
   };
 }
 
@@ -609,6 +613,8 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
     state.sprinting = true;
     speed = PHYSICS.sprintSpeed;
   }
+  // Hero movement boost: super-charged locomotion for the round leader.
+  if (state.isHero) speed *= 1.45;
 
   // --- Horizontal velocity (unless sliding) ---
   // Use an exponential-approach accel/decel model so ground movement feels snappy
@@ -640,8 +646,9 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
 
   // --- Jump ---
   if (jumpPressed) {
+    const heroJumpMult = state.isHero ? 1.2 : 1;
     if (state.grounded) {
-      vel.y = PHYSICS.jumpForce;
+      vel.y = PHYSICS.jumpForce * heroJumpMult;
       state.grounded = false;
       state.canDoubleJump = true;
       state.hasDoubleJumped = false;
@@ -650,7 +657,7 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
     } else if (state.wallJumpWindowTimer > 0 && (state.wallNormalX !== 0 || state.wallNormalZ !== 0)) {
       vel.x = state.wallNormalX * PHYSICS.wallJumpAwayForce;
       vel.z = state.wallNormalZ * PHYSICS.wallJumpAwayForce;
-      vel.y = PHYSICS.wallJumpForce;
+      vel.y = PHYSICS.wallJumpForce * heroJumpMult;
       state.grounded = false;
       state.wallHolding = false;
       state.wallJumpWindowTimer = 0;

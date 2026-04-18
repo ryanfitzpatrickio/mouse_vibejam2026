@@ -596,8 +596,38 @@ export default class GameServer {
         number: this.round.number + 1,
         phase: 'forage',
         phaseEndsAt: wallNow + ROUND_DURATIONS.forage,
+        heroCandidateId: null,
       };
     }
+  }
+
+  /**
+   * Two minutes into the forage phase, pick the current round leader (most
+   * cheese + smacks) and offer them the hero respawn. Runs once per round.
+   */
+  _maybeElectHero(wallNow) {
+    if (this.round.phase !== 'forage') return;
+    if (this.round.heroCandidateId) return;
+    const forageElapsed = ROUND_DURATIONS.forage - (this.round.phaseEndsAt - wallNow);
+    if (forageElapsed < 120) return;
+
+    let bestId = null;
+    let bestScore = -1;
+    for (const [id, state] of this.players) {
+      if (!state.alive || state.spectator || state.extracted) continue;
+      const rs = state.roundStats ?? {};
+      const liveScore = (state.cheeseCarried ?? 0)
+        + (rs.smacksLanded ?? 0) * 3
+        + (rs.grabsInitiated ?? 0) * 1;
+      if (liveScore > bestScore) {
+        bestScore = liveScore;
+        bestId = id;
+      }
+    }
+    if (!bestId) return;
+    this.round = { ...this.round, heroCandidateId: bestId };
+    const leader = this.players.get(bestId);
+    if (leader) leader.heroAvailable = true;
   }
 
   _finishRound() {
@@ -642,6 +672,8 @@ export default class GameServer {
       state.extractProgress = 0;
       state.cheeseCarried = 0;
       state.health = PHYSICS.maxHealth;
+      state.heroAvailable = false;
+      state.isHero = false;
       state.deaths = 0;
       state.alive = true;
       state.deathTime = 0;
@@ -671,6 +703,7 @@ export default class GameServer {
     const dt = TICK_MS / 1000;
     const wallNow = Date.now() / 1000;
     this._advanceRoundPhase(wallNow);
+    this._maybeElectHero(wallNow);
 
     const seqs = {};
     const now = Date.now() / 1000;
@@ -876,6 +909,7 @@ export default class GameServer {
         } else {
           let didSmack = false;
           let lastGrab = false;
+          let heroActivateReq = false;
           let ropeGrabPress = false;
           const prevRopeGrab = this._lastRopeGrab.get(id) ?? false;
           let lastRopeGrab = prevRopeGrab;
@@ -897,6 +931,7 @@ export default class GameServer {
             seqs[id] = input.seq;
             lastGrab = !!input.grab;
             if (input.smack) didSmack = true;
+            if (input.heroActivate) heroActivateReq = true;
             if (!lastRopeGrab && input.ropeGrab) ropeGrabPress = true;
             lastRopeGrab = !!input.ropeGrab;
             const jumpNow = !!(input.jumpPressed ?? input.jump);
@@ -916,6 +951,22 @@ export default class GameServer {
           }
           if (lastGrab) grabHeld.add(id);
           if (didSmack) smackRequests.push(id);
+          // In dev (DEV_LAYOUT_SYNC_ENABLED), let H instantly toggle Brain mode
+          // for fast iteration. Production still requires election eligibility.
+          const devHeroBypass = isDevLayoutSyncEnabled(this.room);
+          if (heroActivateReq && devHeroBypass) {
+            state.isHero = !state.isHero;
+            state.heroAvailable = false;
+            if (state.isHero) {
+              state.health = PHYSICS.maxHealth;
+              state.stamina = PHYSICS.maxStamina;
+            }
+          } else if (heroActivateReq && state.heroAvailable && !state.isHero) {
+            state.isHero = true;
+            state.heroAvailable = false;
+            state.health = PHYSICS.maxHealth;
+            state.stamina = PHYSICS.maxStamina;
+          }
           if (!this._lastSeq) this._lastSeq = new Map();
           this._lastSeq.set(id, seqs[id]);
           queue.length = 0;

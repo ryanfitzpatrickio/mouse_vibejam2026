@@ -71,9 +71,26 @@ const SOURCE_DIR = path.resolve('assets/source');
 const BASE_FBX = path.join(SOURCE_DIR, 'cop.fbx');
 const OUTPUT = path.resolve('assets/source/custom/cop.glb');
 
-// Base meshes to exclude from the animation FBX glob (both this cop and the
-// bunny base mesh live in the same folder).
-const EXCLUDE_FBX = new Set(['cop.fbx', 'bunny.fbx']);
+// Base meshes to exclude from the animation FBX glob. The brain hero has its
+// own converter (convert-brain-fbx.mjs) — skip its base + locomotion clips so
+// they don't get silently appended to the cop's animation list.
+const EXCLUDE_FBX = new Set([
+  'cop.fbx',
+  'bunny.fbx',
+  'brain.fbx',
+  'idle.fbx',
+  'jump.fbx',
+  'walking.fbx',
+  'running.fbx',
+  'left strafe.fbx',
+  'right strafe.fbx',
+  'left strafe walking.fbx',
+  'right strafe walking.fbx',
+  'left turn.fbx',
+  'right turn.fbx',
+  'left turn 90.fbx',
+  'right turn 90.fbx',
+]);
 
 const ANIMATION_NAME_MAP = {
   'mutant idle': 'idle',

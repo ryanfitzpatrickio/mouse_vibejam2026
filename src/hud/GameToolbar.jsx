@@ -560,8 +560,11 @@ function ToolbarView(props) {
     'z-index': '12000',
     padding: '14px',
     'box-sizing': 'border-box',
-    'max-height': `calc(100vh - env(safe-area-inset-top, 0px) - ${BUTTON_SIZE + 20}px)`,
+    'max-height': `calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - ${BUTTON_SIZE + 20}px)`,
     overflow: 'auto',
+    '-webkit-overflow-scrolling': 'touch',
+    'overscroll-behavior': 'contain',
+    'touch-action': 'pan-y',
     'pointer-events': 'auto',
     'user-select': 'none',
   };

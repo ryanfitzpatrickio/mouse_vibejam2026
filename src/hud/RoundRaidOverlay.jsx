@@ -22,6 +22,7 @@ function RoundRaidView(props) {
   return (
     <>
       <div
+        id="round-phase"
         style={{
           ...HUD_PANEL_STYLE,
           position: 'fixed',
@@ -66,13 +67,14 @@ function RoundRaidView(props) {
           style={{
             ...HUD_PANEL_STYLE,
             width: 'min(96vw, 560px)',
-            'max-height': 'min(86vh, 720px)',
+            'max-height': 'min(86dvh, 720px)',
             padding: '18px 20px',
             display: 'flex',
             'flex-direction': 'column',
             gap: '12px',
             'box-sizing': 'border-box',
             overflow: 'hidden',
+            'touch-action': 'pan-y',
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -118,6 +120,10 @@ function RoundRaidView(props) {
               'flex-direction': 'column',
               gap: '4px',
               overflow: 'auto',
+              '-webkit-overflow-scrolling': 'touch',
+              'overscroll-behavior': 'contain',
+              'touch-action': 'pan-y',
+              'min-height': '0',
             }}
           >
             <For each={props.state.roundEndRows}>

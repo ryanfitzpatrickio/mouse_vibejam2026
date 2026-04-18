@@ -5,6 +5,7 @@ import { batch } from 'solid-js';
 function ChaseAlertView(props) {
   return (
     <div
+      id="chase-alert"
       role="status"
       aria-live="polite"
       style={{

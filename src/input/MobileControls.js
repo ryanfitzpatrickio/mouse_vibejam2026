@@ -96,6 +96,20 @@ function createIcon(name) {
     addSvgPath(svg, { d: 'M12 4v10' });
     addSvgPath(svg, { d: 'M7.5 10.5 12 15l4.5-4.5' });
     addSvgPath(svg, { d: 'M6 19h12' });
+  } else if (name === 'grab') {
+    addSvgPath(svg, { d: 'M8 11V6a1.4 1.4 0 0 1 2.8 0v5' });
+    addSvgPath(svg, { d: 'M10.8 10V5.2a1.4 1.4 0 0 1 2.8 0V11' });
+    addSvgPath(svg, { d: 'M13.6 11V7a1.4 1.4 0 0 1 2.8 0v5.2' });
+    addSvgPath(svg, { d: 'M16.4 12.4v-1.6a1.3 1.3 0 0 1 2.6 0V15c0 3.4-2.4 5.5-5.5 5.5h-1C9.6 20.5 7.5 18.4 7.5 15.5V13' });
+  } else if (name === 'rope') {
+    addSvgPath(svg, { d: 'M6 4c3 2 3 4 0 6s-3 4 0 6 3 4 0 6' });
+    addSvgPath(svg, { d: 'M13 4c3 2 3 4 0 6s-3 4 0 6 3 4 0 6' });
+  } else if (name === 'hero') {
+    addSvgPath(svg, { d: 'M12 3 14.2 8l5.3.5-4 3.8 1.2 5.3L12 14.9 7.3 17.6l1.2-5.3-4-3.8L9.8 8z' });
+  } else if (name === 'smack') {
+    addSvgPath(svg, { d: 'M4 13 10 7l3 3-6 6z' });
+    addSvgPath(svg, { d: 'M11 8l2-2 5 5-2 2' });
+    addSvgPath(svg, { d: 'M15 3v2M18 5l-1.4 1.4M19 9h2' });
   }
 
   return svg;
@@ -234,10 +248,7 @@ export class MobileControls {
     this.cameraZone = document.createElement('div');
     Object.assign(this.cameraZone.style, {
       position: 'absolute',
-      top: '0',
-      left: '0',
-      right: '0',
-      bottom: '200px',
+      inset: '0',
       zIndex: '1',
       pointerEvents: 'auto',
       touchAction: 'none',
@@ -246,43 +257,75 @@ export class MobileControls {
       WebkitTapHighlightColor: 'transparent',
     });
 
+    const CLUSTER_SIZE = 260;
+    const SATELLITE_SIZE = 54;
+    const JUMP_SIZE = 82;
+    const RADIUS = 96;
+
     this.buttonStack = document.createElement('div');
     Object.assign(this.buttonStack.style, {
       position: 'absolute',
       right: 'calc(12px + env(safe-area-inset-right))',
-      bottom: 'calc(12px + env(safe-area-inset-bottom))',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: `${CLUSTER_SIZE}px`,
+      height: `${CLUSTER_SIZE}px`,
       zIndex: '3',
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, max-content)',
-      gridTemplateRows: 'repeat(3, max-content)',
-      gridTemplateAreas: '"emote ball jump" "sprint crouch jump" "use drop jump"',
-      gap: '8px',
-      pointerEvents: 'auto',
+      pointerEvents: 'none',
       touchAction: 'none',
       WebkitUserSelect: 'none',
       WebkitTouchCallout: 'none',
       WebkitTapHighlightColor: 'transparent',
-      alignItems: 'end',
     });
 
     this._buttons = {
-      emote: createButton({ label: 'Emote', icon: 'emote', area: 'emote' }),
-      ball: createButton({ label: 'Ball', icon: 'ball', area: 'ball' }),
-      jump: createButton({ label: 'Jump', icon: 'jump', primary: true, area: 'jump' }),
-      sprint: createButton({ label: 'Sprint', icon: 'sprint', area: 'sprint' }),
-      crouch: createButton({ label: 'Slide', icon: 'crouch', area: 'crouch' }),
-      use: createButton({ label: 'Use', icon: 'use', area: 'use' }),
-      drop: createButton({ label: 'Drop', icon: 'drop', area: 'drop' }),
+      jump: createButton({ label: 'Jump', icon: 'jump', primary: true }),
+      emote: createButton({ label: 'Emote', icon: 'emote' }),
+      hero: createButton({ label: 'Hero', icon: 'hero' }),
+      smack: createButton({ label: 'Smack', icon: 'smack' }),
+      use: createButton({ label: 'Use', icon: 'use' }),
+      grab: createButton({ label: 'Grab', icon: 'grab' }),
+      drop: createButton({ label: 'Drop', icon: 'drop' }),
+      crouch: createButton({ label: 'Slide', icon: 'crouch' }),
+      sprint: createButton({ label: 'Sprint', icon: 'sprint' }),
+      rope: createButton({ label: 'Rope', icon: 'rope' }),
     };
 
+    const center = CLUSTER_SIZE / 2;
+    const placeAt = (el, x, y, size) => {
+      Object.assign(el.style, {
+        position: 'absolute',
+        left: `${x - size / 2}px`,
+        top: `${y - size / 2}px`,
+        width: `${size}px`,
+        height: `${size}px`,
+        padding: '4px',
+      });
+      el.style.pointerEvents = 'auto';
+    };
+
+    placeAt(this._buttons.jump, center, center, JUMP_SIZE);
+
+    const satellites = ['emote', 'hero', 'use', 'smack', 'grab', 'drop', 'crouch', 'sprint', 'rope'];
+    const startAngle = -Math.PI / 2;
+    for (let i = 0; i < satellites.length; i++) {
+      const a = startAngle + (i / satellites.length) * Math.PI * 2;
+      const x = center + Math.cos(a) * RADIUS;
+      const y = center + Math.sin(a) * RADIUS;
+      placeAt(this._buttons[satellites[i]], x, y, SATELLITE_SIZE);
+    }
+
     this.buttonStack.append(
-      this._buttons.emote,
-      this._buttons.ball,
-      this._buttons.sprint,
-      this._buttons.crouch,
-      this._buttons.use,
-      this._buttons.drop,
       this._buttons.jump,
+      this._buttons.emote,
+      this._buttons.hero,
+      this._buttons.use,
+      this._buttons.smack,
+      this._buttons.grab,
+      this._buttons.drop,
+      this._buttons.crouch,
+      this._buttons.sprint,
+      this._buttons.rope,
     );
 
     this.root.append(this.cameraZone, this.joystickZone, this.buttonStack);
@@ -432,8 +475,25 @@ export class MobileControls {
       this.controller.keys[kb.drop] = true;
     });
 
-    this._bindTapButton(this._buttons.ball, () => {
-      this.onSpawnExtraBall?.();
+    this._bindHoldButton(this._buttons.grab, () => {
+      if (kb) this.controller.keys[kb.grab] = true;
+    }, () => {
+      if (kb) this.controller.keys[kb.grab] = false;
+    });
+
+    this._bindHoldButton(this._buttons.rope, () => {
+      if (kb) this.controller.keys[kb.ropeGrab] = true;
+    }, () => {
+      if (kb) this.controller.keys[kb.ropeGrab] = false;
+    });
+
+    this._bindTapButton(this._buttons.smack, () => {
+      if (this.controller) this.controller.smackPressed = true;
+    });
+
+    this._bindTapButton(this._buttons.hero, () => {
+      if (!kb) return;
+      this.controller.keys[kb.heroActivate] = true;
     });
 
     this._bindTapButton(this._buttons.emote, () => {
@@ -601,6 +661,8 @@ export class MobileControls {
       this.controller.keys[kb.sprint] = false;
       this.controller.keys[kb.crouch] = false;
       this.controller.keys[kb.jump] = false;
+      this.controller.keys[kb.grab] = false;
+      this.controller.keys[kb.ropeGrab] = false;
     }
     this._held.jump = false;
     this._held.sprint = false;

@@ -23,6 +23,8 @@ import { NetworkClient } from '../net/NetworkClient.js';
 import { RemotePlayerManager } from '../net/RemotePlayerManager.js';
 import { EmoteManager } from '../emote/EmoteManager.js';
 import { EmoteWheel } from '../emote/EmoteWheel.jsx';
+import { HeroPrompt } from '../hud/HeroPrompt.jsx';
+import { HeroBrain } from '../entities/HeroBrain.js';
 import { getAudioManager } from '../audio/AudioManager.js';
 import { OcclusionFader } from '../utils/OcclusionFader.js';
 import { createPlayerNameplate, syncNameplateWorldPosition } from '../world/PlayerNameplate.js';
@@ -486,6 +488,20 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   });
 
   const emoteManager = new EmoteManager({ mouse, audioManager, scene });
+  const heroPrompt = new HeroPrompt();
+  let localHeroBrain = null;
+  function ensureLocalHeroBrain(active) {
+    if (active && !localHeroBrain) {
+      localHeroBrain = new HeroBrain();
+      mouse.add(localHeroBrain);
+      if (mouse.bodyPivot) mouse.bodyPivot.visible = false;
+    } else if (!active && localHeroBrain) {
+      mouse.remove(localHeroBrain);
+      localHeroBrain.dispose();
+      localHeroBrain = null;
+      if (mouse.bodyPivot) mouse.bodyPivot.visible = true;
+    }
+  }
   const emoteWheel = new EmoteWheel({
     onSelect: (emoteId) => {
       emoteManager.play(emoteId);
@@ -971,6 +987,10 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
           inputWithEmote.smack = true;
           controller.smackPressed = false;
         }
+        if (controller.heroActivatePressed) {
+          inputWithEmote.heroActivate = true;
+          controller.heroActivatePressed = false;
+        }
         inputWithEmote.interactHeld = !!controller.interactHeld;
         net.sendInput(inputWithEmote);
         reconcileWithServer();
@@ -1061,6 +1081,15 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       alive: isAlive,
       respawnCountdown,
     });
+
+    heroPrompt.setVisible(
+      !!(net.serverState?.heroAvailable && !net.serverState?.isHero && isAlive),
+    );
+    ensureLocalHeroBrain(!!net.serverState?.isHero && isAlive);
+    if (localHeroBrain) {
+      localHeroBrain.setState(controller._prevAnimState ?? 'idle');
+      localHeroBrain.update(deltaSeconds);
+    }
 
     roundRaid.updatePhaseBanner(net.connected ? net.round : null, Date.now() / 1000, {
       subtitle: (net.round?.phase === 'extract' && (net.serverState?.extractProgress ?? 0) > 0.02)
@@ -1346,6 +1375,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     remotePlayerManager.dispose();
     predatorManager?.dispose();
     emoteWheel.dispose();
+    heroPrompt.dispose();
     vibePortalManager.dispose();
     scoreboard.dispose();
     chaseAlert.dispose();

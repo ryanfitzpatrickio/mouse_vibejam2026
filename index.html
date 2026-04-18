@@ -55,6 +55,14 @@
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
+    @media (max-width: 900px), (pointer: coarse) {
+      #hud { transform: scale(0.55) !important; transform-origin: bottom left !important; }
+      #game-toolbar { transform: scale(0.75) !important; transform-origin: top left !important; }
+      #round-phase { transform: translateX(-50%) scale(0.75) !important; transform-origin: top center !important; }
+      #chase-alert { transform: translateX(-50%) scale(0.75) !important; transform-origin: top center !important; }
+      #scoreboard { transform: translateX(-50%) scale(0.8) !important; transform-origin: top center !important; }
+      #hero-prompt { transform: translateX(-50%) scale(0.8) !important; transform-origin: center bottom !important; }
+    }
   </style>
 </head>
 <body>

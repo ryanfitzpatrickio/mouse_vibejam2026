@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { Mouse } from '../entities/Mouse.js';
 import { EmoteManager } from '../emote/EmoteManager.js';
+import { HeroBrain } from '../entities/HeroBrain.js';
 import { attachEdgeOutlines } from '../materials/index.js';
 import { getAudioManager } from '../audio/AudioManager.js';
 import { createPlayerNameplate, syncNameplateWorldPosition } from '../world/PlayerNameplate.js';
@@ -53,6 +54,7 @@ export class RemotePlayerManager {
         entry.serverAlive = data.alive !== false;
         entry.serverAnimState = data.animState ?? 'idle';
         entry.serverGrabbedBy = data.grabbedBy ?? null;
+        entry.serverIsHero = !!data.isHero;
         entry.nameplate.setAlive(entry.serverAlive);
         if (typeof data.displayName === 'string' && data.displayName.trim()) {
           const next = data.displayName.trim();
@@ -73,6 +75,7 @@ export class RemotePlayerManager {
     for (const [id, entry] of this.players) {
       if (!remotePlayers.has(id)) {
         entry.nameplate.dispose();
+        entry.heroBrain?.dispose?.();
         this.scene.remove(entry.nameplateAnchor);
         this.scene.remove(entry.mouse);
         entry.mouse.dispose();
@@ -134,6 +137,22 @@ export class RemotePlayerManager {
 
       entry.emoteManager.update(dt);
       entry.mouse.update(dt);
+
+      // Hero avatar overlay: swap the mouse body for the brain model.
+      if (entry.serverIsHero && !entry.heroBrain) {
+        entry.heroBrain = new HeroBrain();
+        entry.mouse.add(entry.heroBrain);
+        if (entry.mouse.bodyPivot) entry.mouse.bodyPivot.visible = false;
+      } else if (!entry.serverIsHero && entry.heroBrain) {
+        entry.mouse.remove(entry.heroBrain);
+        entry.heroBrain.dispose();
+        entry.heroBrain = null;
+        if (entry.mouse.bodyPivot) entry.mouse.bodyPivot.visible = true;
+      }
+      if (entry.heroBrain) {
+        entry.heroBrain.setState(animState);
+        entry.heroBrain.update(dt);
+      }
       syncNameplateWorldPosition(entry.nameplateAnchor, entry.mouse);
       entry.nameplateAnchor.getWorldPosition(_nameplateWorldPos);
       entry.nameplate.setOccluded(
@@ -217,6 +236,8 @@ export class RemotePlayerManager {
       serverAlive: data.alive !== false,
       serverAnimState: data.animState ?? 'idle',
       serverGrabbedBy: data.grabbedBy ?? null,
+      serverIsHero: !!data.isHero,
+      heroBrain: null,
     });
   }
 
@@ -235,6 +256,7 @@ export class RemotePlayerManager {
   dispose() {
     for (const entry of this.players.values()) {
       entry.nameplate.dispose();
+      entry.heroBrain?.dispose?.();
       this.scene.remove(entry.nameplateAnchor);
       this.scene.remove(entry.mouse);
       entry.mouse.dispose();
