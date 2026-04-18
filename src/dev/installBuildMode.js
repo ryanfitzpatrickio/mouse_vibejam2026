@@ -822,6 +822,7 @@ class BuildModeEditor {
       this.colliderToggle,
       this.receiveShadowToggle,
       this.clearanceInput,
+      this.planeZIndexInput,
       this.navAreaSelect,
       this.prefabSelect,
     ].forEach((field) => {
@@ -882,6 +883,9 @@ class BuildModeEditor {
     this.castShadowToggle._wrap.style.display = primitive || light ? 'flex' : 'none';
     this.receiveShadowToggle._wrap.style.display = primitive ? 'flex' : 'none';
     this.clearanceInput._wrap.style.display = primitive ? 'grid' : 'none';
+    if (this.planeZIndexInput?._wrap) {
+      this.planeZIndexInput._wrap.style.display = primitive?.type === 'plane' ? 'grid' : 'none';
+    }
     this.navAreaSelect._wrap.style.display = primitive ? 'grid' : 'none';
     this.prefabSelect.disabled = primitiveDisabled;
 
@@ -920,6 +924,8 @@ class BuildModeEditor {
       this.receiveShadowToggle.checked = primitive.receiveShadow;
       this.clearanceInput.value = primitive.colliderClearance ?? 0;
       this.clearanceInput._output.textContent = (primitive.colliderClearance ?? 0).toFixed(2);
+      this.planeZIndexInput.value = primitive.type === 'plane' ? String(primitive.zIndex ?? 0) : '0';
+      this.planeZIndexInput.disabled = primitiveDisabled || primitive.type !== 'plane';
       this.navAreaSelect.value = normalizeNavArea(primitive.navArea);
       this.prefabSelect.value = primitive.prefabId ?? '';
     }

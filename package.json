@@ -24,7 +24,8 @@
     "nipplejs": "^1.0.1",
     "obscenity": "^0.4.6",
     "partysocket": "^1.1.16",
-    "three": "^0.183.2"
+    "solid-js": "^1.9.12",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "@gltf-transform/cli": "^4.3.0",
@@ -33,6 +34,7 @@
     "partykit": "^0.0.115",
     "sharp": "^0.34.5",
     "vite": "8.0.5",
+    "vite-plugin-solid": "^2.11.12",
     "wrangler": "^4.80.0"
   }
 }

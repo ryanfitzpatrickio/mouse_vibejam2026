@@ -3,6 +3,7 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { defineConfig } from 'vite';
+import solid from 'vite-plugin-solid';
 
 const execFileAsync = promisify(execFile);
 
@@ -146,7 +147,7 @@ function devLevelSavePlugin() {
 }
 
 export default defineConfig({
-  plugins: [devLevelSavePlugin()],
+  plugins: [solid(), devLevelSavePlugin()],
   base: './',
   root: '.',
   publicDir: 'public',

@@ -97,6 +97,9 @@ export function normalizePrefabPrimitive(entry = {}) {
     collider: entry.collider !== false,
     castShadow: entry.castShadow !== false,
     receiveShadow: entry.receiveShadow !== false,
+    ...(type === 'plane' ? {
+      zIndex: Number.isFinite(entry.zIndex) ? Math.trunc(entry.zIndex) : 0,
+    } : {}),
   };
 }
 

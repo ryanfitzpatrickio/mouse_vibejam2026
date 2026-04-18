@@ -1,3 +1,5 @@
+import { sortCollidersForPlaneZIndex } from './physics.js';
+
 export const ROOM_COLLISION_CONFIG = Object.freeze({
   scaleFactor: 1,
 });
@@ -232,6 +234,10 @@ export function buildRoomCollidersFromLayout(layout, {
       colliderClearance: primitive.colliderClearance ?? 0,
       runnable: colliderType === 'surface',
     };
+    if (primitive.type === 'plane' && colliderType === 'surface') {
+      metadata.plane = true;
+      metadata.zIndex = Number.isFinite(primitive.zIndex) ? Math.trunc(primitive.zIndex) : 0;
+    }
 
     colliders.push({
       type: colliderType,
@@ -240,5 +246,5 @@ export function buildRoomCollidersFromLayout(layout, {
     });
   }
 
-  return colliders;
+  return sortCollidersForPlaneZIndex(colliders);
 }

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { PHYSICS } from '../../shared/physics.js';
 
 const FACE_CONTACT_EPSILON = 0.001;
 
@@ -52,7 +53,7 @@ export class UprightCapsuleCollider {
     return supportY;
   }
 
-  resolveAgainstBox(box, velocity = null, previousPosition = null) {
+  resolveAgainstBox(box, velocity = null, previousPosition = null, options = {}) {
     const capsuleMinY = this.position.y;
     const capsuleMaxY = this.position.y + this.height;
     const previousCapsuleMinY = previousPosition?.y ?? capsuleMinY;
@@ -72,6 +73,19 @@ export class UprightCapsuleCollider {
 
     if (!insideX || !insideZ) {
       return false;
+    }
+
+    // Match shared/physics resolvePlayerCollisions: walk onto short ledges instead of sliding along walls.
+    if (options.grounded === true) {
+      const maxStep = Number.isFinite(options.maxStepHeight) ? options.maxStepHeight : PHYSICS.maxStepHeight;
+      const ledgeHeight = box.max.y - capsuleMinY;
+      const isShortLedge = ledgeHeight > 0 && ledgeHeight <= maxStep;
+      const inYRange = capsuleMaxY >= box.min.y && capsuleMinY <= box.max.y;
+      if (isShortLedge && inYRange) {
+        this.position.y = box.max.y;
+        if (velocity) velocity.y = Math.max(velocity.y, 0);
+        return true;
+      }
     }
 
     const landedFromAbove = previousCapsuleMinY >= box.max.y - FACE_CONTACT_EPSILON

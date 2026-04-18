@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { UprightCapsuleCollider } from '../physics/UprightCapsuleCollider.js';
+import { tryAutoStepUp, shouldSkipSurfaceCollider } from '../../shared/physics.js';
 
 const DEFAULT_KEY_BINDINGS = Object.freeze({
   forward: 'KeyW',
@@ -294,16 +295,26 @@ export class CharacterController {
     this.collider.setPosition(this.mouse.position);
 
     for (const collider of colliders) {
-      const box = collider?.aabb;
+      const box = collider?.aabb ?? collider?.box;
       if (!box) continue;
 
-      const isGroundSurface = (collider.type === 'surface' || collider.metadata?.runnable)
-        && Math.abs(box.max.y - groundY) <= 0.05;
-      if (isGroundSurface) {
+      const shimState = { position: this.mouse.position, velocity: this.velocity };
+      if (tryAutoStepUp(shimState, collider, {
+        radius: this.collider.radius,
+        height: this.collider.height,
+        grounded: this.grounded,
+      })) {
+        this.collider.setPosition(this.mouse.position);
         continue;
       }
 
-      this.collider.resolveAgainstBox(box, this.velocity, previousPosition);
+      if (shouldSkipSurfaceCollider(collider, groundY)) {
+        continue;
+      }
+
+      this.collider.resolveAgainstBox(box, this.velocity, previousPosition, {
+        grounded: this.grounded,
+      });
       this.mouse.position.copy(this.collider.position);
     }
   }

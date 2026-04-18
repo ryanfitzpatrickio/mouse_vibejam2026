@@ -103,6 +103,7 @@ export function createDefaultPrimitive(type, app) {
   if (type === 'plane') {
     primitive.rotation.x = -Math.PI * 0.5;
     primitive.scale = { x: 1, y: 1, z: 1 };
+    primitive.zIndex = 0;
   }
 
   if (type === 'cylinder') {

@@ -1,5 +1,5 @@
 import { NAV_AREA_TYPES, normalizeNavArea } from '../../../shared/navConfig.js';
-import { createSection, createCheckbox, createRangeField, styleField } from '../ui/fields.js';
+import { createSection, createCheckbox, createRangeField, createNumberField, styleField } from '../ui/fields.js';
 
 export function installSelectionSection(editor) {
   const section = createSection(editor.panel, 'Selection');
@@ -57,6 +57,17 @@ export function installSelectionSection(editor) {
       primitive.colliderClearance = value;
     });
   });
+
+  editor.planeZIndexInput = createNumberField(
+    section,
+    'Plane z-index (draw + collision; higher on top)',
+    { step: 1, value: '0' },
+    (value) => {
+      editor._updateSelected((primitive) => {
+        primitive.zIndex = value == null || Number.isNaN(value) ? 0 : Math.trunc(value);
+      });
+    },
+  );
 
   const navAreaWrap = document.createElement('label');
   navAreaWrap.textContent = 'Nav Area';

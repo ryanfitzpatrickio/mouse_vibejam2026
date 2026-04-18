@@ -95,7 +95,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmaskjf-wf6aq",
@@ -143,7 +144,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmat0aw-yqpfe",
@@ -191,7 +193,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmatsxk-auud0",
@@ -239,7 +242,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmb4vx2-yq50g",
@@ -287,7 +291,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmb8519-qa4oe",
@@ -335,7 +340,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmb9frw-l71dm",
@@ -383,7 +389,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmbbfd2-28xpg",
@@ -431,7 +438,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmbd90p-j4s6c",
@@ -479,7 +487,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmbdjt5-ikwgv",
@@ -527,7 +536,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmc2ywn-pye1q",
@@ -575,7 +585,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmcjr7e-uhuds",
@@ -623,7 +634,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmclrgb-jkpb1",
@@ -671,7 +683,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmcn9lu-99aoe",
@@ -719,7 +732,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmcolh7-18okj",
@@ -767,7 +781,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmcragv-jyhti",
@@ -815,7 +830,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmcugi6-75fdb",
@@ -863,7 +879,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "prefab-instance-mnme4b2q-k7ts5-part-1",
@@ -1168,7 +1185,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmf42ni-fbi90",
@@ -1216,7 +1234,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "prefab-instance-mnn842j8-vz10x-part-1",
@@ -1952,7 +1971,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "prefab-instance-mnniuzxe-kymf6-part-6",
@@ -2012,7 +2032,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnnjlrpu-6ycu7",
@@ -2060,7 +2081,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnnjsxyz-kdd7m",
@@ -2108,7 +2130,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnnk4jh8-u6fpp",
@@ -2156,7 +2179,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "prefab-instance-mnnkj1o1-et1xz-part-1",
@@ -2960,9 +2984,9 @@ export default {
       "type": "cylinder",
       "spawnType": "player",
       "position": {
-        "x": 8,
+        "x": 13.25,
         "y": 0.25,
-        "z": 2
+        "z": -18.25
       },
       "rotation": {
         "x": 0,
@@ -3008,9 +3032,9 @@ export default {
       "type": "cylinder",
       "spawnType": "player",
       "position": {
-        "x": 8,
+        "x": 12,
         "y": 0.25,
-        "z": 4
+        "z": 20.5
       },
       "rotation": {
         "x": 0,
@@ -3988,7 +4012,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": -1
     },
     {
       "id": "primitive-mnw3ydpx-i39dn",
@@ -4036,7 +4061,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnw41vu3-ysjlb",
@@ -4084,7 +4110,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnw43vvy-sszt3",
@@ -4132,7 +4159,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnw45czh-gsqfx",
@@ -4180,16 +4208,17 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnx4ro6z-pnp6n",
-      "name": "plane-mp0",
+      "name": "driveway",
       "type": "plane",
       "spawnType": null,
       "position": {
         "x": -30,
-        "y": 0.1,
+        "y": 0,
         "z": -14
       },
       "rotation": {
@@ -4228,7 +4257,8 @@ export default {
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 1111
     }
   ],
   "lights": [
@@ -4354,9 +4384,9 @@ export default {
       "name": "Vibe Jam",
       "portalType": "exit",
       "position": {
-        "x": 8,
+        "x": 3.5,
         "y": 0,
-        "z": -4
+        "z": -5
       },
       "rotation": {
         "x": -3.1416,
@@ -4433,6 +4463,22 @@ export default {
         "x": -3.1416,
         "y": -0.0517,
         "z": -3.1416
+      },
+      "radius": 1.15,
+      "deleted": false
+    },
+    {
+      "id": "extract-mo3if3rc-7gpvb",
+      "name": "extraction-bew",
+      "position": {
+        "x": 10.5,
+        "y": 0,
+        "z": -5.25
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0.0042,
+        "z": 0
       },
       "radius": 1.15,
       "deleted": false

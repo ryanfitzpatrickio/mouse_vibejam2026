@@ -94,7 +94,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmaskjf-wf6aq",
@@ -142,7 +143,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmat0aw-yqpfe",
@@ -190,7 +192,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmatsxk-auud0",
@@ -238,7 +241,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmb4vx2-yq50g",
@@ -286,7 +290,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmb8519-qa4oe",
@@ -334,7 +339,8 @@
       "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmb9frw-l71dm",
@@ -382,7 +388,8 @@
       "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmbbfd2-28xpg",
@@ -430,7 +437,8 @@
       "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmbd90p-j4s6c",
@@ -478,7 +486,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmbdjt5-ikwgv",
@@ -526,7 +535,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmc2ywn-pye1q",
@@ -574,7 +584,8 @@
       "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmcjr7e-uhuds",
@@ -622,7 +633,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmclrgb-jkpb1",
@@ -670,7 +682,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmcn9lu-99aoe",
@@ -718,7 +731,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmcolh7-18okj",
@@ -766,7 +780,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmcragv-jyhti",
@@ -814,7 +829,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmcugi6-75fdb",
@@ -862,7 +878,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "prefab-instance-mnme4b2q-k7ts5-part-1",
@@ -1167,7 +1184,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnmf42ni-fbi90",
@@ -1215,7 +1233,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "prefab-instance-mnn842j8-vz10x-part-1",
@@ -1951,7 +1970,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "prefab-instance-mnniuzxe-kymf6-part-6",
@@ -2011,7 +2031,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnnjlrpu-6ycu7",
@@ -2059,7 +2080,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnnjsxyz-kdd7m",
@@ -2107,7 +2129,8 @@
       "colliderClearance": 0,
       "castShadow": false,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnnk4jh8-u6fpp",
@@ -2155,7 +2178,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "prefab-instance-mnnkj1o1-et1xz-part-1",
@@ -2959,9 +2983,9 @@
       "type": "cylinder",
       "spawnType": "player",
       "position": {
-        "x": 8,
+        "x": 13.25,
         "y": 0.25,
-        "z": 2
+        "z": -18.25
       },
       "rotation": {
         "x": 0,
@@ -3007,9 +3031,9 @@
       "type": "cylinder",
       "spawnType": "player",
       "position": {
-        "x": 8,
+        "x": 12,
         "y": 0.25,
-        "z": 4
+        "z": 20.5
       },
       "rotation": {
         "x": 0,
@@ -3987,7 +4011,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": -1
     },
     {
       "id": "primitive-mnw3ydpx-i39dn",
@@ -4035,7 +4060,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnw41vu3-ysjlb",
@@ -4083,7 +4109,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnw43vvy-sszt3",
@@ -4131,7 +4158,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnw45czh-gsqfx",
@@ -4179,16 +4207,17 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 0
     },
     {
       "id": "primitive-mnx4ro6z-pnp6n",
-      "name": "plane-mp0",
+      "name": "driveway",
       "type": "plane",
       "spawnType": null,
       "position": {
         "x": -30,
-        "y": 0.1,
+        "y": 0,
         "z": -14
       },
       "rotation": {
@@ -4227,7 +4256,8 @@
       "colliderClearance": 0,
       "castShadow": true,
       "receiveShadow": true,
-      "deleted": false
+      "deleted": false,
+      "zIndex": 1111
     }
   ],
   "lights": [
@@ -4353,9 +4383,9 @@
       "name": "Vibe Jam",
       "portalType": "exit",
       "position": {
-        "x": 8,
+        "x": 3.5,
         "y": 0,
-        "z": -4
+        "z": -5
       },
       "rotation": {
         "x": -3.1416,
@@ -4432,6 +4462,22 @@
         "x": -3.1416,
         "y": -0.0517,
         "z": -3.1416
+      },
+      "radius": 1.15,
+      "deleted": false
+    },
+    {
+      "id": "extract-mo3if3rc-7gpvb",
+      "name": "extraction-bew",
+      "position": {
+        "x": 10.5,
+        "y": 0,
+        "z": -5.25
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0.0042,
+        "z": 0
       },
       "radius": 1.15,
       "deleted": false

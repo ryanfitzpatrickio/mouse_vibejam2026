@@ -23,6 +23,8 @@ export const PHYSICS = Object.freeze({
   playerRadius: 0.22,
   playerHeight: 0.78,
   groundSnapDistance: 0.18,
+  /** Max vertical rise (m) when walking onto a short ledge while grounded. */
+  maxStepHeight: 0.35,
   wallProbeDistance: 0.14,
   wallJumpWindow: 0.22,
   wallAttachCooldown: 0.16,
@@ -112,22 +114,75 @@ export function createPlayerState(id) {
   };
 }
 
-/**
- * Maximum height difference that can be automatically stepped up.
- * When walking into a short ledge, the player steps up instead of being blocked.
- */
-const MAX_STEP_HEIGHT = 0.35;
 const FACE_CONTACT_EPSILON = 0.001;
 
 function getColliderBox(collider) {
   return collider?.aabb ?? collider?.box ?? null;
 }
 
-function shouldSkipSurfaceCollider(collider, groundY = 0) {
+/**
+ * Skip axis-aligned box resolve for co-planar datum floors only.
+ * (Previously used ±5 cm from groundY, which skipped low risers entirely—no step-up, no resolve.)
+ */
+export function shouldSkipSurfaceCollider(collider, groundY = 0) {
   const box = getColliderBox(collider);
   if (!box) return false;
   return (collider.type === 'surface' || collider.metadata?.runnable)
-    && Math.abs(box.max.y - groundY) <= 0.05;
+    && box.max.y <= groundY + 0.025;
+}
+
+/**
+ * Snap feet onto a short ledge while grounded (shared by server sim and client controller).
+ * Mutates state.position.y and state.velocity.y when it returns true.
+ */
+export function tryAutoStepUp(state, collider, { radius, height, grounded }) {
+  if (!grounded) return false;
+  const box = getColliderBox(collider);
+  if (!box) return false;
+
+  const capsuleMinY = state.position.y;
+  const capsuleMaxY = state.position.y + height;
+  const ledgeHeight = box.max.y - capsuleMinY;
+  if (!(ledgeHeight > 0 && ledgeHeight <= PHYSICS.maxStepHeight)) return false;
+
+  const expandedMinX = box.min.x - radius;
+  const expandedMaxX = box.max.x + radius;
+  const expandedMinZ = box.min.z - radius;
+  const expandedMaxZ = box.max.z + radius;
+  const insideX = state.position.x >= expandedMinX && state.position.x <= expandedMaxX;
+  const insideZ = state.position.z >= expandedMinZ && state.position.z <= expandedMaxZ;
+  const inYRange = capsuleMaxY >= box.min.y && capsuleMinY <= box.max.y;
+
+  if (!(insideX && insideZ && inYRange)) return false;
+
+  state.position.y = box.max.y;
+  if (state.velocity) state.velocity.y = 0;
+  return true;
+}
+
+/** Horizontal plane surfaces (`metadata.plane`) only; used for collision resolution order. */
+function isPlaneSurfaceCollider(collider) {
+  return collider?.type === 'surface' && collider?.metadata?.plane === true;
+}
+
+/**
+ * Sort horizontal plane surfaces by `metadata.zIndex` descending (higher first), then
+ * append all other colliders in their original order. Raised planes should resolve before
+ * the datum floor so step-up and pushes behave predictably.
+ */
+export function sortCollidersForPlaneZIndex(colliders) {
+  if (!colliders?.length) return colliders ?? [];
+  const tagged = colliders.map((c, i) => ({ c, i }));
+  const planeTagged = tagged.filter(({ c }) => isPlaneSurfaceCollider(c));
+  const restTagged = tagged.filter(({ c }) => !isPlaneSurfaceCollider(c));
+  planeTagged.sort((a, b) => {
+    const za = a.c.metadata?.zIndex ?? 0;
+    const zb = b.c.metadata?.zIndex ?? 0;
+    if (zb !== za) return zb - za;
+    return a.i - b.i;
+  });
+  restTagged.sort((a, b) => a.i - b.i);
+  return [...planeTagged.map((t) => t.c), ...restTagged.map((t) => t.c)];
 }
 
 function isWallCollider(collider) {
@@ -187,6 +242,19 @@ function resolveAgainstBox(state, box, radius, height, previousPosition = null) 
   const expandedMaxX = box.max.x + radius;
   const expandedMinZ = box.min.z - radius;
   const expandedMaxZ = box.max.z + radius;
+
+  const insideXEarly = pos.x >= expandedMinX && pos.x <= expandedMaxX;
+  const insideZEarly = pos.z >= expandedMinZ && pos.z <= expandedMaxZ;
+  // Before swept AABB face clamps, prefer stepping onto a short lip (swept often wins with tiny distX).
+  if (insideXEarly && insideZEarly && state.grounded) {
+    const ledgeUp = box.max.y - capsuleMinY;
+    if (ledgeUp > 0.0001 && ledgeUp <= PHYSICS.maxStepHeight
+      && capsuleMaxY >= box.min.y && capsuleMinY <= box.max.y) {
+      pos.y = box.max.y;
+      if (vel) vel.y = Math.max(vel.y, 0);
+      return true;
+    }
+  }
 
   const ySweepOverlaps = Math.max(previousCapsuleMinY, capsuleMinY) <= box.max.y + FACE_CONTACT_EPSILON
     && Math.min(previousCapsuleMaxY, capsuleMaxY) >= box.min.y - FACE_CONTACT_EPSILON;
@@ -378,35 +446,22 @@ function applyWallHold(state, wallContact) {
 
 function resolvePlayerCollisions(state, colliders, options) {
   const { radius, height, groundSnapDistance, baseGroundY = 0, previousPosition = null } = options;
+  const ordered = sortCollidersForPlaneZIndex(colliders);
 
   // Auto step-up: if the player is walking into a short ledge, step up onto it
   // instead of being blocked horizontally. Only applies when grounded and
   // the obstacle is short enough relative to current foot position.
-  for (const collider of colliders ?? []) {
+  for (const collider of ordered) {
     const box = getColliderBox(collider);
     if (!box) continue;
-    if (shouldSkipSurfaceCollider(collider, baseGroundY)) continue;
 
-    // Check for step-up opportunity before resolving collision
-    const capsuleMinY = state.position.y;
-    const ledgeHeight = box.max.y - capsuleMinY;
-    const isShortLedge = ledgeHeight > 0 && ledgeHeight <= MAX_STEP_HEIGHT;
-
-    const expandedMinX = box.min.x - radius;
-    const expandedMaxX = box.max.x + radius;
-    const expandedMinZ = box.min.z - radius;
-    const expandedMaxZ = box.max.z + radius;
-    const insideX = state.position.x >= expandedMinX && state.position.x <= expandedMaxX;
-    const insideZ = state.position.z >= expandedMinZ && state.position.z <= expandedMaxZ;
-    const capsuleMaxY = state.position.y + height;
-    const inYRange = capsuleMaxY >= box.min.y && capsuleMinY <= box.max.y;
-
-    if (isShortLedge && insideX && insideZ && inYRange && state.grounded) {
-      // Step up onto the ledge instead of being pushed sideways
-      state.position.y = box.max.y;
-      state.velocity.y = 0;
+    // Step-up must run before datum-floor skip; otherwise surfaces within the old ±5 cm band
+    // never got step-up or resolve (mats / low platforms).
+    if (tryAutoStepUp(state, collider, { radius, height, grounded: state.grounded })) {
       continue;
     }
+
+    if (shouldSkipSurfaceCollider(collider, baseGroundY)) continue;
 
     resolveAgainstBox(state, box, radius, height, previousPosition);
   }

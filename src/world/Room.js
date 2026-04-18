@@ -14,6 +14,7 @@ import {
   LEVEL_ROOM_WIDTH,
 } from '../../shared/levelWorldBounds.js';
 import { normalizeExtractionPortalEntry, normalizeRaidTaskEntry } from '../../shared/raidLayout.js';
+import { sortCollidersForPlaneZIndex } from '../../shared/physics.js';
 
 const ATLAS_GRID = 10;
 const ATLAS_CELL_MARGIN_PX = 3;
@@ -628,8 +629,13 @@ export class Room {
     roughness = 0.92,
     metalness = 0.04,
     side = THREE.FrontSide,
+    /** When set (plane primitives only), breaks GPU z-fighting vs other coplanar planes. */
+    planeZIndex = null,
     } = {}) {
-    const cacheKey = `${baseColor}|${textureCell}|${textureAtlas}|${roughness}|${metalness}|${side}`;
+    const zKey = planeZIndex != null && Number.isFinite(planeZIndex)
+      ? `|pz=${Math.trunc(planeZIndex)}`
+      : '';
+    const cacheKey = `${baseColor}|${textureCell}|${textureAtlas}|${roughness}|${metalness}|${side}${zKey}`;
 
     if (!this._materialCache) this._materialCache = new Map();
     const cached = this._materialCache.get(cacheKey);
@@ -645,6 +651,13 @@ export class Room {
     material.dithering = true;
     material.userData.textureAtlas = textureAtlas;
     material.userData.textureCell = textureCell;
+    if (planeZIndex != null && Number.isFinite(planeZIndex)) {
+      const zi = Math.trunc(planeZIndex);
+      material.userData.planeZIndex = zi;
+      material.polygonOffset = true;
+      material.polygonOffsetFactor = -1;
+      material.polygonOffsetUnits = -(1 + zi);
+    }
     this.surfaceMaterials.add(material);
     this._materialCache.set(cacheKey, material);
     return material;
@@ -1078,6 +1091,9 @@ export class Room {
       castShadow: entry.castShadow !== false,
       receiveShadow: entry.receiveShadow !== false,
       deleted: entry.deleted === true,
+      ...(type === 'plane' ? {
+        zIndex: Number.isFinite(entry.zIndex) ? Math.trunc(entry.zIndex) : 0,
+      } : {}),
       ...(typeof entry.cameraOccluder === 'boolean' ? { cameraOccluder: entry.cameraOccluder } : {}),
     };
   }
@@ -1303,6 +1319,13 @@ export class Room {
     this._rebakeMeshUvs(mesh, nextRepeat);
     mesh.userData.textureRepeat = nextRepeat;
 
+    if (primitive.type === 'plane') {
+      mesh.material = this._createEditablePrimitiveMaterial(primitive);
+      const zi = Number.isFinite(primitive.zIndex) ? Math.trunc(primitive.zIndex) : 0;
+      mesh.renderOrder = zi;
+      return;
+    }
+
     const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     const faceSlots = FACE_TEXTURE_SLOTS[primitive.type] ?? [];
     materials.forEach((material, index) => {
@@ -1403,10 +1426,12 @@ export class Room {
     const faceSlots = FACE_TEXTURE_SLOTS[definition.type] ?? [];
 
     if (faceSlots.length > 0) {
+      const planeZ = definition.type === 'plane' ? (definition.zIndex ?? 0) : null;
       const materials = faceSlots.map((slot) => this._createSurfaceMaterial(definition.material.color, {
         ...materialOptions,
         textureCell: getFaceTextureCell(definition, slot),
         textureAtlas: getFaceTextureAtlas(definition, slot),
+        ...(planeZ != null ? { planeZIndex: planeZ } : {}),
       }));
       // _createSurfaceMaterial dedupes by cache key, so identical face refs share one instance.
       // When every face resolves to the same material, return it as a single non-array material so
@@ -1418,11 +1443,13 @@ export class Room {
       return materials;
     }
 
+    const planeZ = definition.type === 'plane' ? (definition.zIndex ?? 0) : null;
     const material = this._createSurfaceMaterial(definition.material.color, {
       ...materialOptions,
       textureCell: definition.texture.cell,
       textureAtlas: definition.texture.atlas ?? DEFAULT_TEXTURE_ATLAS,
       side: definition.type === 'plane' ? THREE.DoubleSide : THREE.FrontSide,
+      ...(planeZ != null ? { planeZIndex: planeZ } : {}),
     });
 
     return material;
@@ -1756,18 +1783,23 @@ export class Room {
       mesh.userData.colliderEnabled = primitive.collider;
       mesh.userData.spawnType = primitive.spawnType;
       mesh.userData.skipOutline = primitive.spawnType != null;
+      if (primitive.type === 'plane') {
+        mesh.renderOrder = Number.isFinite(primitive.zIndex) ? Math.trunc(primitive.zIndex) : 0;
+      }
       this._syncCameraOccluderUserData(mesh, primitive);
       this.editableGroup.add(mesh);
       this.editableMeshes.set(primitive.id, mesh);
 
       if (primitive.collider) {
+        const isPlane = primitive.type === 'plane';
         this.colliders.push({
           mesh,
           aabb: AABB.fromMesh(mesh),
-          type: primitive.type === 'plane' ? 'surface' : 'furniture',
+          type: isPlane ? 'surface' : 'furniture',
           metadata: {
             source: 'editable',
             primitiveId: primitive.id,
+            ...(isPlane ? { plane: true, zIndex: primitive.zIndex ?? 0 } : {}),
           },
         });
       }
@@ -1816,20 +1848,25 @@ export class Room {
         mesh.userData.prefabInstanceId = instanceId;
         mesh.userData.spawnType = primitive.spawnType;
         mesh.userData.skipOutline = primitive.spawnType != null;
+        if (primitive.type === 'plane') {
+          mesh.renderOrder = Number.isFinite(primitive.zIndex) ? Math.trunc(primitive.zIndex) : 0;
+        }
         this._syncCameraOccluderUserData(mesh, primitive);
         group.add(mesh);
         this.editableMeshes.set(primitive.id, mesh);
         this.prefabInstanceIdByPrimitiveId.set(primitive.id, instanceId);
 
         if (primitive.collider) {
+          const isPlane = primitive.type === 'plane';
           this.colliders.push({
             mesh,
             aabb: AABB.fromMesh(mesh),
-            type: primitive.type === 'plane' ? 'surface' : 'furniture',
+            type: isPlane ? 'surface' : 'furniture',
             metadata: {
               source: 'editable',
               primitiveId: primitive.id,
               prefabInstanceId: instanceId,
+              ...(isPlane ? { plane: true, zIndex: primitive.zIndex ?? 0 } : {}),
             },
           });
         }
@@ -3045,6 +3082,7 @@ export class Room {
       textureCell: ROOM_TEXTURE_CELLS.floor,
       roughness: 0.98,
       metalness: 0.02,
+      planeZIndex: 0,
     });
 
     // Floor
@@ -3058,6 +3096,7 @@ export class Room {
     floor.rotation.x = -Math.PI * 0.5;
     floor.position.y = 0;
     floor.name = 'Floor';
+    floor.renderOrder = 0;
     floor.receiveShadow = true;
     floor.userData.surfaceType = 'floor';
     floor.userData.cameraOccluder = false;
@@ -3068,7 +3107,7 @@ export class Room {
       mesh: floor,
       aabb: AABB.fromMesh(floor),
       type: 'surface',
-      metadata: { runnable: true }, // Can run on floor
+      metadata: { runnable: true, plane: true, zIndex: 0 },
     };
     this.colliders.push(floorCollider);
     this.runnables.push(floor);
@@ -3100,7 +3139,7 @@ export class Room {
   }
 
   getCollisionColliders() {
-    return this.refreshColliders();
+    return sortCollidersForPlaneZIndex(this.refreshColliders());
   }
 
   /**
