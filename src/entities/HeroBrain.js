@@ -50,20 +50,32 @@ export class HeroBrain extends THREE.Group {
         child.frustumCulled = false;
       }
     });
-    // Box3.setFromObject on a skinned mesh often returns its bind-pose AABB
-    // which can be wildly off (e.g. 0.05 units when the source is in cm).
-    // We measure it but clamp to a sane source range, then size to a target
-    // WORLD height. The brain is parented under the mouse Group (scale 0.6),
-    // so we compensate so the brain reads as a full-sized character.
-    const box = new THREE.Box3().setFromObject(avatar);
-    const measured = Math.max(0.001, box.max.y - box.min.y);
+    // Measure only Mesh geometry — skinned models often include bones/empties
+    // at extreme positions (e.g. y=11782) which poison Box3.setFromObject and
+    // make the auto-fit divide by something thousands of times too large.
+    const box = new THREE.Box3();
+    const meshBox = new THREE.Box3();
+    avatar.updateMatrixWorld(true);
+    avatar.traverse((child) => {
+      if (!child.isMesh || !child.geometry) return;
+      const geo = child.geometry;
+      if (!geo.boundingBox) geo.computeBoundingBox();
+      meshBox.copy(geo.boundingBox).applyMatrix4(child.matrixWorld);
+      box.union(meshBox);
+    });
+    if (box.isEmpty()) box.setFromObject(avatar);
+    const measuredH = Math.max(0.001, box.max.y - box.min.y);
     /** Desired world-space height of the brain mesh, in meters. */
-    const TARGET_WORLD_HEIGHT = 1.6;
+    const TARGET_WORLD_HEIGHT = 0.6;
     /** Mouse Group's uniform scale; brain is its child so we cancel it out. */
-    const PARENT_SCALE_COMPENSATION = 1 / 0.6;
-    const s = (TARGET_WORLD_HEIGHT / measured) * PARENT_SCALE_COMPENSATION;
+    const PARENT_SCALE = 0.6;
+    const s = TARGET_WORLD_HEIGHT / (measuredH * PARENT_SCALE);
     avatar.scale.setScalar(s);
     avatar.position.y = -box.min.y * s;
+    console.log(
+      `[HeroBrain] measured bbox height: ${measuredH.toFixed(2)}, `
+      + `target world height: ${TARGET_WORLD_HEIGHT}m, applied scale: ${s.toExponential(3)}`,
+    );
     this.add(avatar);
     this._avatar = avatar;
 
