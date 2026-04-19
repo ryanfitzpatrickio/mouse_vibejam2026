@@ -50,6 +50,7 @@ import kitchenNavMesh from '../../shared/kitchen-navmesh.generated.js';
 import { playerChaseRecordSeconds } from '../../shared/chaseScore.js';
 import { LEVEL_WORLD_BOUNDS_XZ } from '../../shared/levelWorldBounds.js';
 import { normalizeRope } from '../../shared/ropes.js';
+import { collectSpawnPointsFromLayout } from '../../shared/spawnPoints.js';
 
 function applyAtmosphere(scene) {
   scene.background = new THREE.Color('#8e7a63');
@@ -365,8 +366,13 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   }
 
   if (human && predatorManager) {
-    human.ready.then(() => {
-      predatorManager.add(human, new THREE.Vector3(-4, 0, 4));
+    Promise.all([human.ready, room.ready]).then(() => {
+      const spawn = collectSpawnPointsFromLayout(room.getEditableLayout()).human?.[0];
+      predatorManager.add(human, new THREE.Vector3(
+        spawn?.x ?? -4,
+        spawn?.y ?? 0,
+        spawn?.z ?? 4,
+      ));
     }).catch(() => {});
   }
 
@@ -971,10 +977,16 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     predictionState.spectator = !!ss.spectator;
     predictionState.extracted = !!ss.extracted;
     predictionState.extractProgress = ss.extractProgress ?? 0;
+    predictionState.animState = ss.animState ?? predictionState.animState;
     predictionState.isAdversary = !!ss.isAdversary;
     predictionState.adversaryRole = ss.adversaryRole ?? null;
     predictionState.adversarySafeSeconds = ss.adversarySafeSeconds ?? 0;
     predictionState.adversarySafeStreakSeconds = ss.adversarySafeStreakSeconds ?? 0;
+    predictionState.isHero = !!ss.isHero;
+    predictionState.heroAvatar = ss.heroAvatar ?? null;
+    predictionState.heroAvailable = !!ss.heroAvailable;
+    predictionState.heroAvatarAvailable = ss.heroAvatarAvailable ?? null;
+    predictionState.heroTimeRemaining = ss.heroTimeRemaining ?? 0;
     if (ss.roundStats && typeof ss.roundStats === 'object') {
       predictionState.roundStats = { ...predictionState.roundStats, ...ss.roundStats };
     }
@@ -1049,7 +1061,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       roundRaid.showRoundEnd(data);
       const results = Array.isArray(data.results) ? data.results : [];
       for (const row of results) {
-        const expression = row?.extracted ? 'victorySquint' : 'dizzy';
+        const expression = row?.extracted ? 'sparklingHappy' : 'dizzy';
         if (row?.id === net.localId) {
           mouse.playEyeOneShot?.(expression, { duration: 4.0 });
         } else if (row?.id) {
@@ -1357,6 +1369,10 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       controller.stamina = predictionState.stamina;
       controller.health = predictionState.health;
       controller.alive = predictionState.alive;
+      controller.forcedAnimationState = predictionState.extracted ? 'win' : null;
+      if (controller.forcedAnimationState) {
+        emoteManager.cancel();
+      }
       controller.grabLocked = net.serverState?.animState === 'grab';
       mouse.rotation.x = net.serverState?.grabbedBy ? Math.PI : 0;
       const cameraHumanMode = !!predictionState.isAdversary;
@@ -1494,6 +1510,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       lives: net.connected
         ? (net.serverState?.livesRemaining ?? 2)
         : (predictionState.livesRemaining ?? 2),
+      heroTimeRemaining: net.connected
+        ? (net.serverState?.heroTimeRemaining ?? 0)
+        : (predictionState.heroTimeRemaining ?? 0),
       alive: isAlive,
       respawnCountdown,
     });

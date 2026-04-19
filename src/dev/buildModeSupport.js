@@ -130,7 +130,19 @@ export function createDefaultPrimitive(type, app) {
 }
 
 export function createSpawnMarkerPrimitive(spawnType, app) {
-  const type = spawnType === SPAWN_TYPES.ENEMY ? SPAWN_TYPES.ENEMY : SPAWN_TYPES.PLAYER;
+  const type = spawnType === SPAWN_TYPES.ENEMY
+    || spawnType === SPAWN_TYPES.HUMAN
+    || spawnType === SPAWN_TYPES.ROOMBA
+    ? spawnType
+    : SPAWN_TYPES.PLAYER;
+  const markerColor = type === SPAWN_TYPES.PLAYER
+    ? '#4fd1ff'
+    : type === SPAWN_TYPES.HUMAN
+      ? '#f4d35e'
+      : type === SPAWN_TYPES.ROOMBA
+        ? '#b9c2c9'
+        : '#ff7a59';
+  const namePrefix = type === SPAWN_TYPES.ROOMBA ? 'roomba-base' : `${type}-spawn`;
   const forward = new THREE.Vector3();
   app.camera.getWorldDirection(forward);
   forward.y = 0;
@@ -144,7 +156,7 @@ export function createSpawnMarkerPrimitive(spawnType, app) {
   const baseY = Math.max(app.mouse.position.y, 0);
   const marker = {
     id: createPrimitiveId(),
-    name: `${type}-spawn-${Math.random().toString(36).slice(2, 5)}`,
+    name: `${namePrefix}-${Math.random().toString(36).slice(2, 5)}`,
     type: 'cylinder',
     spawnType: type,
     position: {
@@ -161,7 +173,7 @@ export function createSpawnMarkerPrimitive(spawnType, app) {
       rotation: 0,
     },
     material: {
-      color: type === SPAWN_TYPES.PLAYER ? '#4fd1ff' : '#ff7a59',
+      color: markerColor,
       roughness: 0.36,
       metalness: 0.06,
     },

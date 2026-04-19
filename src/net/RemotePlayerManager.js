@@ -122,6 +122,9 @@ export class RemotePlayerManager {
       let animState;
       if (!entry.serverAlive || entry.serverAnimState === 'death') {
         animState = 'death';
+      } else if (entry.serverAnimState === 'win') {
+        entry.emoteManager.cancel();
+        animState = 'win';
       } else if (entry.emoteManager.isPlaying) {
         animState = entry.animState;
       } else if (entry.serverAnimState === 'grab') {

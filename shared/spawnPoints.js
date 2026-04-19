@@ -1,10 +1,17 @@
 export const SPAWN_TYPES = Object.freeze({
   PLAYER: 'player',
   ENEMY: 'enemy',
+  HUMAN: 'human',
+  ROOMBA: 'roomba',
 });
 
 export function normalizeSpawnType(value) {
-  return value === SPAWN_TYPES.PLAYER || value === SPAWN_TYPES.ENEMY ? value : null;
+  return value === SPAWN_TYPES.PLAYER
+    || value === SPAWN_TYPES.ENEMY
+    || value === SPAWN_TYPES.HUMAN
+    || value === SPAWN_TYPES.ROOMBA
+    ? value
+    : null;
 }
 
 export function isSpawnMarkerPrimitive(primitive) {
@@ -31,6 +38,8 @@ export function getSpawnMarkerPosition(primitive) {
 export function collectSpawnPointsFromLayout(layout) {
   const player = [];
   const enemy = [];
+  const human = [];
+  const roomba = [];
 
   for (const primitive of layout?.primitives ?? []) {
     if (primitive?.deleted === true) continue;
@@ -48,8 +57,18 @@ export function collectSpawnPointsFromLayout(layout) {
       continue;
     }
 
-    enemy.push(point);
+    if (spawnType === SPAWN_TYPES.ENEMY) {
+      enemy.push(point);
+      continue;
+    }
+
+    if (spawnType === SPAWN_TYPES.ROOMBA) {
+      roomba.push(point);
+      continue;
+    }
+
+    human.push(point);
   }
 
-  return { player, enemy };
+  return { player, enemy, human, roomba };
 }

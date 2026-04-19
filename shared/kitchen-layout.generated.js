@@ -55,7 +55,7 @@ export default {
       "type": "plane",
       "spawnType": null,
       "position": {
-        "x": 0,
+        "x": -1,
         "y": 6,
         "z": -24
       },
@@ -66,7 +66,7 @@ export default {
       },
       "scale": {
         "x": 12,
-        "y": 48,
+        "y": 46,
         "z": 24
       },
       "texture": {
@@ -400,7 +400,7 @@ export default {
       "position": {
         "x": 18,
         "y": 0,
-        "z": -10
+        "z": -12
       },
       "rotation": {
         "x": -1.5707963267948966,
@@ -408,7 +408,7 @@ export default {
         "z": 1.5707963267948966
       },
       "scale": {
-        "x": 36,
+        "x": 38,
         "y": 12,
         "z": 0.1
       },
@@ -439,7 +439,7 @@ export default {
       "castShadow": false,
       "receiveShadow": true,
       "deleted": false,
-      "zIndex": 0
+      "zIndex": -1
     },
     {
       "id": "primitive-mnmbd90p-j4s6c",
@@ -555,7 +555,7 @@ export default {
         "z": 1.5707963267948966
       },
       "scale": {
-        "x": 16,
+        "x": 18,
         "y": 12,
         "z": 0.1
       },
@@ -563,8 +563,8 @@ export default {
         "atlas": "textures2",
         "cell": 1,
         "repeat": {
-          "x": 4,
-          "y": 4
+          "x": 6,
+          "y": 5
         },
         "rotation": 0
       },
@@ -841,7 +841,7 @@ export default {
       "position": {
         "x": 22,
         "y": 6,
-        "z": -10
+        "z": -8
       },
       "rotation": {
         "x": 0,
@@ -850,7 +850,7 @@ export default {
       },
       "scale": {
         "x": 12,
-        "y": 32,
+        "y": 28,
         "z": 24
       },
       "texture": {
@@ -3080,9 +3080,9 @@ export default {
       "type": "cylinder",
       "spawnType": "enemy",
       "position": {
-        "x": -18,
+        "x": -10,
         "y": 0.25,
-        "z": 2
+        "z": 8
       },
       "rotation": {
         "x": 0,
@@ -4366,11 +4366,11 @@ export default {
     },
     {
       "id": "primitive-mo63iwe3-obcjr",
-      "name": "plane-n1c",
+      "name": "grass left side",
       "type": "plane",
       "spawnType": null,
       "position": {
-        "x": -7,
+        "x": -10,
         "y": 0,
         "z": -39
       },
@@ -4380,7 +4380,7 @@ export default {
         "z": 0
       },
       "scale": {
-        "x": 98,
+        "x": 92,
         "y": 18,
         "z": 1
       },
@@ -4412,6 +4412,347 @@ export default {
       "receiveShadow": true,
       "deleted": false,
       "zIndex": 0
+    },
+    {
+      "id": "primitive-mo64johb-z9w98",
+      "name": "plane-unw",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": 40,
+        "y": 0,
+        "z": -2
+      },
+      "rotation": {
+        "x": -1.5707963267948966,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 32,
+        "y": 92,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures4",
+        "cell": 58,
+        "repeat": {
+          "x": 4,
+          "y": 12
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false,
+      "zIndex": 100
+    },
+    {
+      "id": "primitive-mo64o9hn-041v0",
+      "name": "fence",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": 48,
+        "y": 2,
+        "z": -46
+      },
+      "rotation": {
+        "x": 0,
+        "y": -1.5707963267948966,
+        "z": 0
+      },
+      "scale": {
+        "x": 4,
+        "y": 4,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures4",
+        "cell": 74,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false,
+      "zIndex": 0
+    },
+    {
+      "id": "primitive-mo65kwuf-hccmc",
+      "name": "backwall",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": 17,
+        "y": 6,
+        "z": -22
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 1.5707963267948966
+      },
+      "scale": {
+        "x": 12,
+        "y": 10,
+        "z": 24
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 17,
+        "repeat": {
+          "x": 1,
+          "y": 0.5
+        },
+        "rotation": 4.71238898038469
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false,
+      "zIndex": 1112
+    },
+    {
+      "id": "primitive-mo65owyv-enj7u",
+      "name": "left-copy",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": 23,
+        "y": 6,
+        "z": -24
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 1.5707963267948966
+      },
+      "scale": {
+        "x": 10,
+        "y": 2,
+        "z": 24
+      },
+      "texture": {
+        "atlas": "textures2",
+        "cell": 17,
+        "repeat": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "rotation": 4.71238898038469
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false,
+      "zIndex": 1113
+    },
+    {
+      "id": "primitive-mo65rwkj-kldyq",
+      "name": "plane-unw-copy",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 34
+      },
+      "rotation": {
+        "x": 1.5707963267948966,
+        "y": 5.551115123125783e-17,
+        "z": -1.5664901968120122
+      },
+      "scale": {
+        "x": 20,
+        "y": 112,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures4",
+        "cell": 58,
+        "repeat": {
+          "x": 4,
+          "y": 12
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false,
+      "zIndex": 10
+    },
+    {
+      "id": "primitive-mo663tcq-opuc2",
+      "name": "human-spawn-7sg",
+      "type": "cylinder",
+      "spawnType": "human",
+      "position": {
+        "x": -22,
+        "y": 0.25,
+        "z": -12
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.65,
+        "y": 0.3,
+        "z": 0.65
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": null,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#f4d35e",
+        "roughness": 0.36,
+        "metalness": 0.06
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": false,
+      "colliderClearance": 0,
+      "castShadow": false,
+      "receiveShadow": false,
+      "deleted": false
+    },
+    {
+      "id": "primitive-roomba-base-default",
+      "name": "roomba-base-default",
+      "type": "cylinder",
+      "spawnType": "roomba",
+      "position": {
+        "x": 18,
+        "y": 0.25,
+        "z": -18
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 0.65,
+        "y": 0.3,
+        "z": 0.65
+      },
+      "texture": {
+        "atlas": "textures",
+        "cell": null,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#b9c2c9",
+        "roughness": 0.36,
+        "metalness": 0.06
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": false,
+      "colliderClearance": 0,
+      "castShadow": false,
+      "receiveShadow": false,
+      "deleted": false
     }
   ],
   "lights": [

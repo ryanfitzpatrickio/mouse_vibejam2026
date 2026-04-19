@@ -283,6 +283,11 @@ export function HudView(props) {
     const n = Math.max(0, Math.floor(Number(props.state.playerCount) || 0));
     return `${n} / ${playerMax()}`;
   });
+  const heroTimeActive = () => Math.max(0, Number(props.state.heroTimeRemaining) || 0) > 0;
+  const heroTimeText = createMemo(() => {
+    const seconds = Math.ceil(Math.max(0, Number(props.state.heroTimeRemaining) || 0));
+    return `HERO ${seconds}s`;
+  });
 
   return (
     <>
@@ -338,12 +343,36 @@ export function HudView(props) {
             labelColor="#f6d98a"
             valueText={cheeseText}
           />
-          <Counter
-            iconName="MOUSE_HEAD_TARGET"
-            label="LIVE:"
-            labelColor="#d8e2ff"
-            valueText={playerText}
-          />
+          <div
+            style={{
+              display: 'flex',
+              'flex-direction': 'column',
+              'align-items': 'flex-start',
+              gap: '2px',
+              'min-width': '112px',
+            }}
+          >
+            <Counter
+              iconName="MOUSE_HEAD_TARGET"
+              label="LIVE:"
+              labelColor="#d8e2ff"
+              valueText={playerText}
+            />
+            <Show when={heroTimeActive()}>
+              <div
+                style={{
+                  'margin-left': '56px',
+                  color: '#ffe08a',
+                  font: LABEL_FONT,
+                  'letter-spacing': '0.05em',
+                  'text-shadow': LABEL_SHADOW,
+                  'white-space': 'nowrap',
+                }}
+              >
+                {heroTimeText()}
+              </div>
+            </Show>
+          </div>
         </div>
 
         <Show when={humanRoleActive()}>

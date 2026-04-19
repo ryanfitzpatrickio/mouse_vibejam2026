@@ -68,6 +68,34 @@ function isBuiltInEditable(editor, object) {
   return !!id && editor.app.room.builtInEditableMeshes?.has(id) === true;
 }
 
+function planeZIndexForEditable(editor, object) {
+  const primitiveId = object?.userData?.primitiveId;
+  if (!primitiveId) return null;
+
+  const builtIn = editor.app.room.builtInEditableMeshes?.get(primitiveId)?.primitive;
+  const primitive = builtIn
+    ?? editor.layout?.primitives?.find((entry) => entry.id === primitiveId)
+    ?? null;
+  if (primitive?.type !== 'plane') return null;
+
+  return Number.isFinite(primitive.zIndex) ? Math.trunc(primitive.zIndex) : 0;
+}
+
+function layoutOrderForEditable(editor, object) {
+  const primitiveId = object?.userData?.primitiveId;
+  if (!primitiveId) return -1;
+  return editor.layout?.primitives?.findIndex((entry) => entry.id === primitiveId) ?? -1;
+}
+
+function compareEditableCandidates(a, b) {
+  const zA = a.planeZIndex ?? Number.NEGATIVE_INFINITY;
+  const zB = b.planeZIndex ?? Number.NEGATIVE_INFINITY;
+  if (zA !== zB) return zB - zA;
+  if (a.builtIn !== b.builtIn) return a.builtIn ? 1 : -1;
+  if (a.layoutOrder !== b.layoutOrder) return b.layoutOrder - a.layoutOrder;
+  return a.hit.distance - b.hit.distance;
+}
+
 /**
  * Raycast against the scene and return both the closest hit overall (for the
  * pointer line / tooltip) and the closest hit that resolves to an editable
@@ -88,32 +116,28 @@ export function pickEditableHit(editor) {
       return true;
     });
 
-  let editableHit = null;
-  for (const candidate of hits) {
-    const editableObject = resolveEditableHitObject(candidate.object);
-    if (editableObject && editableIdFromObject(editableObject)) {
-      editableHit = candidate;
-      break;
-    }
+  const editableCandidates = [];
+  for (const hit of hits) {
+    const editableObject = resolveEditableHitObject(hit.object);
+    const editableId = editableIdFromObject(editableObject);
+    if (!editableObject || !editableId) continue;
+    editableCandidates.push({
+      hit,
+      object: editableObject,
+      builtIn: isBuiltInEditable(editor, editableObject),
+      planeZIndex: planeZIndexForEditable(editor, editableObject),
+      layoutOrder: layoutOrderForEditable(editor, editableObject),
+    });
   }
 
-  if (editableHit) {
-    const editableObject = resolveEditableHitObject(editableHit.object);
-    if (isBuiltInEditable(editor, editableObject)) {
-      const customCoplanarHit = hits.find((candidate) => {
-        if (Math.abs(candidate.distance - editableHit.distance) > COPLANAR_EDITABLE_EPSILON) {
-          return false;
-        }
-        const candidateObject = resolveEditableHitObject(candidate.object);
-        return candidateObject
-          && editableIdFromObject(candidateObject)
-          && !isBuiltInEditable(editor, candidateObject);
-      });
-      if (customCoplanarHit) {
-        editableHit = customCoplanarHit;
-      }
-    }
-  }
+  const firstEditable = editableCandidates[0] ?? null;
+  const coplanarCandidates = firstEditable
+    ? editableCandidates.filter((candidate) => (
+      Math.abs(candidate.hit.distance - firstEditable.hit.distance) <= COPLANAR_EDITABLE_EPSILON
+    ))
+    : [];
+  coplanarCandidates.sort(compareEditableCandidates);
+  const editableHit = coplanarCandidates[0]?.hit ?? null;
 
   return { closestHit: hits[0] ?? null, editableHit };
 }

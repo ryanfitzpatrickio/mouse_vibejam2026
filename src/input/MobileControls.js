@@ -305,6 +305,7 @@ export class MobileControls {
       smack: createButton({ label: 'Smack', icon: 'smack' }),
       use: createButton({ label: 'Use', icon: 'use' }),
       grab: createButton({ label: 'Grab', icon: 'grab' }),
+      throw: createButton({ label: 'Throw', icon: 'drop' }),
       crouch: createButton({ label: 'Slide', icon: 'crouch' }),
       sprint: createButton({ label: 'Sprint', icon: 'sprint' }),
       rope: createButton({ label: 'Rope', icon: 'rope' }),
@@ -325,7 +326,7 @@ export class MobileControls {
 
     placeAt(this._buttons.jump, center, center, JUMP_SIZE);
 
-    const satellites = ['emote', 'hero', 'use', 'smack', 'grab', 'crouch', 'sprint', 'rope'];
+    const satellites = ['emote', 'hero', 'use', 'smack', 'grab', 'throw', 'crouch', 'sprint', 'rope'];
     const startAngle = -Math.PI / 2;
     for (let i = 0; i < satellites.length; i++) {
       const a = startAngle + (i / satellites.length) * Math.PI * 2;
@@ -341,6 +342,7 @@ export class MobileControls {
       this._buttons.use,
       this._buttons.smack,
       this._buttons.grab,
+      this._buttons.throw,
       this._buttons.crouch,
       this._buttons.sprint,
       this._buttons.rope,
@@ -520,6 +522,12 @@ export class MobileControls {
       if (kb) this.controller.keys[kb.grab] = true;
     }, () => {
       if (kb) this.controller.keys[kb.grab] = false;
+    });
+
+    this._bindHoldButton(this._buttons.throw, () => {
+      if (kb) this.controller.keys[kb.drop] = true;
+    }, () => {
+      if (kb) this.controller.keys[kb.drop] = false;
     });
 
     this._bindHoldButton(this._buttons.rope, () => {
@@ -704,6 +712,7 @@ export class MobileControls {
       this.controller.keys[kb.crouch] = false;
       this.controller.keys[kb.jump] = false;
       this.controller.keys[kb.grab] = false;
+      this.controller.keys[kb.drop] = false;
       this.controller.keys[kb.ropeGrab] = false;
     }
     this._held.jump = false;

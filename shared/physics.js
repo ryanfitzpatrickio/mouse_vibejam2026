@@ -156,6 +156,8 @@ export function createPlayerState(id) {
     isHero: false,
     /** Hero system: which avatar model (key into client HERO_AVATARS) the server picked. */
     heroAvatar: null,
+    /** Seconds remaining before hero mode returns to normal mouse form. */
+    heroTimeRemaining: 0,
     /** Hero system: which avatar this player is eligible to respawn as (set at election). */
     heroAvatarAvailable: null,
     /** Session-persistent counts for collection-based hero unlocks. Do NOT reset per round. */

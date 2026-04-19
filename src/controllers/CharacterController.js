@@ -114,6 +114,7 @@ export class CharacterController {
     this._prevInteractDown = false;
 
     this._prevAnimState = 'idle';
+    this.forcedAnimationState = null;
     this._wallAnimGrace = 0;
 
     this.onInteract = null;
@@ -375,6 +376,16 @@ export class CharacterController {
 
   _updateAnimation(dt) {
     if (!this.mouse?.update) return;
+
+    if (this.forcedAnimationState) {
+      this.mouse.animationManager?.stopEmote?.();
+      if (this.forcedAnimationState !== this._prevAnimState) {
+        this.mouse.setAnimationState(this.forcedAnimationState);
+        this._prevAnimState = this.forcedAnimationState;
+      }
+      this.mouse.update(dt);
+      return;
+    }
 
     if (this.mouse.animationManager?.emoteActive) {
       this.mouse.update(dt);

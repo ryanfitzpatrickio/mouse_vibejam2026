@@ -182,7 +182,7 @@ export class Human extends Predator {
     const gltf = await loader.loadAsync(assetUrl('models/cop.glb'));
     this._attachModel(gltf, { height: 9.0, groundOffset: -0.8 });
     this._groundedYOffset = this.model.position.y;
-    this._memeYOffset = this.model.position.y + 1.2; // cancel the -1.2 ground offset
+    this._memeYOffset = this.model.position.y;
     this._hipBone = null;
     this._legBones = { left: null, right: null };
     this._footRestY = null;

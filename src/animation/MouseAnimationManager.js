@@ -9,6 +9,7 @@ const STATE_TO_CLIP = Object.freeze({
   carry: 'Idle Alert',
   grab: 'Idle Alert',
   death: 'Death',
+  win: 'Sit',
 });
 
 /** Per-clip playback rate (1 = authored speed). Walk is sped up to match ~4 m/s in-world stride. */

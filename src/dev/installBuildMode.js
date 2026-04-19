@@ -234,6 +234,8 @@ class BuildModeEditor {
     this._addActionButton('Add Prop', () => this._addPrimitive('prop'), '#284423');
     this._addActionButton('Player Spawn', () => this._addSpawnMarker(SPAWN_TYPES.PLAYER), '#1b4450');
     this._addActionButton('Enemy Spawn', () => this._addSpawnMarker(SPAWN_TYPES.ENEMY), '#5a2b1f');
+    this._addActionButton('Human Spawn', () => this._addSpawnMarker(SPAWN_TYPES.HUMAN), '#5a4c20');
+    this._addActionButton('Roomba Base', () => this._addSpawnMarker(SPAWN_TYPES.ROOMBA), '#303b43');
     this._addActionButton('Point Light', () => this._addLight('point'), '#5a4120');
     this._addActionButton('Spot Light', () => this._addLight('spot'), '#5a3a20');
     this._addActionButton('Sun Light', () => this._addLight('directional'), '#5a4c20');
@@ -704,6 +706,8 @@ class BuildModeEditor {
   _spawnLabel(spawnType) {
     if (spawnType === SPAWN_TYPES.PLAYER) return 'player spawn';
     if (spawnType === SPAWN_TYPES.ENEMY) return 'enemy spawn';
+    if (spawnType === SPAWN_TYPES.HUMAN) return 'human spawn';
+    if (spawnType === SPAWN_TYPES.ROOMBA) return 'roomba base';
     return null;
   }
 
@@ -1317,18 +1321,67 @@ class BuildModeEditor {
     this._setStatus(`Added ${task.name}.`);
   }
 
+  _planeWorldBox(primitive) {
+    const halfWidth = Math.max(0.0001, Number(primitive?.scale?.x ?? 1)) * 0.5;
+    const halfHeight = Math.max(0.0001, Number(primitive?.scale?.y ?? 1)) * 0.5;
+    const position = new THREE.Vector3(
+      primitive?.position?.x ?? 0,
+      primitive?.position?.y ?? 0,
+      primitive?.position?.z ?? 0,
+    );
+    const rotation = new THREE.Euler(
+      primitive?.rotation?.x ?? 0,
+      primitive?.rotation?.y ?? 0,
+      primitive?.rotation?.z ?? 0,
+    );
+    const corners = [
+      new THREE.Vector3(-halfWidth, -halfHeight, 0),
+      new THREE.Vector3(halfWidth, -halfHeight, 0),
+      new THREE.Vector3(halfWidth, halfHeight, 0),
+      new THREE.Vector3(-halfWidth, halfHeight, 0),
+    ].map((point) => point.applyEuler(rotation).add(position));
+    return new THREE.Box3().setFromPoints(corners).expandByScalar(0.03);
+  }
+
+  _nextDuplicatePlaneZIndex(plane) {
+    const box = this._planeWorldBox(plane);
+    let maxZIndex = Number.isFinite(plane.zIndex) ? Math.trunc(plane.zIndex) : 0;
+
+    for (const candidate of this._editorPrimitives()) {
+      if (candidate.id === plane.id || candidate.type !== 'plane') continue;
+      if (!box.intersectsBox(this._planeWorldBox(candidate))) continue;
+      maxZIndex = Math.max(
+        maxZIndex,
+        Number.isFinite(candidate.zIndex) ? Math.trunc(candidate.zIndex) : 0,
+      );
+    }
+
+    return maxZIndex + 1;
+  }
+
+  _detachPrimitiveCopyFromPrefab(copy) {
+    copy.prefabInstanceId = null;
+    copy.prefabInstanceOrigin = null;
+    copy.prefabInstanceRotation = null;
+    copy.prefabInstanceScale = null;
+    return copy;
+  }
+
   _duplicateSelected() {
     const primitive = this._selectedPrimitive();
     const light = this._selectedLight();
     const portal = this._selectedPortal();
     const grid = this.app.room.getBuildGridConfig();
     if (primitive) {
-      const copy = deepClone(primitive);
+      const copy = this._detachPrimitiveCopyFromPrefab(deepClone(primitive));
       copy.id = createPrimitiveId();
       copy.name = `${primitive.name}-copy`;
       copy.position.x += grid.cellWidth;
       copy.position.z += grid.cellDepth;
       const snapped = this.app.room.snapPrimitiveToGrid(copy, { snapY: true, allowEdgeOverflow: true });
+      if (snapped.type === 'plane') {
+        snapped.zIndex = this._nextDuplicatePlaneZIndex(snapped);
+      }
       this.app.room.upsertEditablePrimitive(snapped);
       this.layout = this.app.room.getEditableLayout();
       this.selectedId = snapped.id;

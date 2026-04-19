@@ -107,6 +107,7 @@ function getPartyEnv(room, key) {
 
 /** Hero avatar rotation. Add a key here when a new hero model ships. */
 const HERO_AVATAR_KEYS = ['brain', 'jerry'];
+const HERO_MODE_DURATION_SECONDS = 50;
 function pickHeroAvatar() {
   return HERO_AVATAR_KEYS[Math.floor(Math.random() * HERO_AVATAR_KEYS.length)];
 }
@@ -330,20 +331,14 @@ export default class GameServer {
   }
 
   _pickRoombaDock() {
-    const enemySpawns = this.spawnPoints.enemy.length ? this.spawnPoints.enemy : DEFAULT_ENEMY_SPAWNS;
-    const e = enemySpawns[0];
-    const ex = e?.x ?? -12;
-    const ez = e?.z ?? 0;
-    const floorY = e?.y ?? 0;
-    // Opposite the cat in XZ, but only ~20m from center so the dock is easy to spot (not a far map corner).
-    const dist = 20;
-    const len = Math.hypot(ex, ez);
-    const ux = len > 0.75 ? ex / len : 1;
-    const uz = len > 0.75 ? ez / len : 0;
+    const roombaDocks = this.spawnPoints.roomba ?? [];
+    if (!roombaDocks.length) return null;
+
+    const dock = roombaDocks[0];
     return {
-      x: -ux * dist,
-      y: floorY,
-      z: -uz * dist,
+      x: dock.x ?? 0,
+      y: dock.y ?? 0,
+      z: dock.z ?? 0,
     };
   }
 
@@ -359,12 +354,14 @@ export default class GameServer {
       }));
     });
     const dock = this._pickRoombaDock();
-    this.predators.push(createRoombaState({
-      id: 'roomba-0',
-      dockX: dock.x,
-      dockY: dock.y,
-      dockZ: dock.z,
-    }));
+    if (dock) {
+      this.predators.push(createRoombaState({
+        id: 'roomba-0',
+        dockX: dock.x,
+        dockY: dock.y,
+        dockZ: dock.z,
+      }));
+    }
     this.roombaCannonWorld?.resetBody?.();
   }
 
@@ -395,6 +392,15 @@ export default class GameServer {
       y: 0,
       z: Math.sin(angle) * dist,
     };
+  }
+
+  _pickHumanSpawn() {
+    const spawns = this.spawnPoints.human;
+    if (spawns?.length) {
+      return spawns[Math.floor(Math.random() * spawns.length)];
+    }
+
+    return this._pickRespawnPoint();
   }
 
   _listBotIdsSorted() {
@@ -480,8 +486,17 @@ export default class GameServer {
     state.heroAvailable = false;
     state.isHero = false;
     state.heroAvatar = null;
+    state.heroTimeRemaining = 0;
     state.heroAvatarAvailable = null;
     if (!active) state.adversarySafeStreakSeconds = 0;
+    if (active) {
+      const spawn = this._pickHumanSpawn();
+      respawnPlayer(state, spawn.x, spawn.z, spawn.y);
+      this.mouseLaunchWorld?.removePlayer?.(state.id);
+      this.ropeWorld?.removePlayer?.(state.id);
+      this._lastRopeGrab.delete(state.id);
+      this._lastRopeJump?.delete(state.id);
+    }
   }
 
   _tickAdversaryScores(dt) {
@@ -920,9 +935,7 @@ export default class GameServer {
 
     player[counterField] = Math.max(0, have - def.requiredCount);
     this.heroClaims[heroKey] = senderId;
-    player.isHero = true;
-    player.heroAvailable = false;
-    player.heroAvatar = heroKey;
+    this._startHeroMode(player, heroKey);
 
     this.broadcast(JSON.stringify({
       type: 'hero-claimed',
@@ -930,6 +943,36 @@ export default class GameServer {
       heroKey,
       taskId: taskId ?? null,
     }));
+  }
+
+  _endHeroMode(state) {
+    state.isHero = false;
+    state.heroAvatar = null;
+    state.heroTimeRemaining = 0;
+  }
+
+  _startHeroMode(state, heroAvatar = pickHeroAvatar()) {
+    state.isHero = true;
+    state.heroAvailable = false;
+    state.health = PHYSICS.maxHealth;
+    state.stamina = PHYSICS.maxStamina;
+    state.heroAvatar = heroAvatar;
+    state.heroAvatarAvailable = null;
+    state.heroTimeRemaining = HERO_MODE_DURATION_SECONDS;
+  }
+
+  _tickHeroTimers(dt) {
+    for (const state of this.players.values()) {
+      if (!state.isHero) {
+        state.heroTimeRemaining = 0;
+        continue;
+      }
+
+      state.heroTimeRemaining = Math.max(0, (state.heroTimeRemaining ?? HERO_MODE_DURATION_SECONDS) - dt);
+      if (state.heroTimeRemaining <= 0) {
+        this._endHeroMode(state);
+      }
+    }
   }
 
   _finishRound() {
@@ -1012,6 +1055,7 @@ export default class GameServer {
       state.heroAvailable = false;
       state.isHero = false;
       state.heroAvatar = null;
+      state.heroTimeRemaining = 0;
       state.heroAvatarAvailable = null;
       state.deaths = 0;
       state.alive = true;
@@ -1106,6 +1150,7 @@ export default class GameServer {
     const wallNow = Date.now() / 1000;
     this._advanceRoundPhase(wallNow);
     this._maybeElectHero(wallNow);
+    this._tickHeroTimers(dt);
 
     const seqs = {};
     const now = Date.now() / 1000;
@@ -1120,6 +1165,10 @@ export default class GameServer {
       state._interactHeld = false;
 
       if (this.round.phase === 'intermission') {
+        state.emote = null;
+        if (state.extracted && state.alive && !state.isAdversary) {
+          state.animState = 'win';
+        }
         state.velocity.x = 0;
         state.velocity.z = 0;
         if (isHuman) {
@@ -1139,6 +1188,8 @@ export default class GameServer {
       }
 
       if (state.extracted && state.alive) {
+        state.emote = null;
+        state.animState = 'win';
         state.velocity.x = 0;
         state.velocity.z = 0;
         if (isHuman) {
@@ -1371,22 +1422,13 @@ export default class GameServer {
           // for fast iteration. Production still requires election eligibility.
           const devHeroBypass = isDevLayoutSyncEnabled(this.room);
           if (heroActivateReq && devHeroBypass) {
-            state.isHero = !state.isHero;
-            state.heroAvailable = false;
             if (state.isHero) {
-              state.health = PHYSICS.maxHealth;
-              state.stamina = PHYSICS.maxStamina;
-              state.heroAvatar = pickHeroAvatar();
+              this._endHeroMode(state);
             } else {
-              state.heroAvatar = null;
+              this._startHeroMode(state);
             }
           } else if (heroActivateReq && state.heroAvailable && !state.isHero) {
-            state.isHero = true;
-            state.heroAvailable = false;
-            state.health = PHYSICS.maxHealth;
-            state.stamina = PHYSICS.maxStamina;
-            state.heroAvatar = state.heroAvatarAvailable ?? pickHeroAvatar();
-            state.heroAvatarAvailable = null;
+            this._startHeroMode(state, state.heroAvatarAvailable ?? pickHeroAvatar());
           }
           if (!this._lastSeq) this._lastSeq = new Map();
           this._lastSeq.set(id, seqs[id]);
@@ -1811,6 +1853,8 @@ export default class GameServer {
           if (state.extractProgress >= 1) {
             state.extracted = true;
             state.extractProgress = 1;
+            state.animState = 'win';
+            state.emote = null;
             state.velocity.x = 0;
             state.velocity.z = 0;
           }

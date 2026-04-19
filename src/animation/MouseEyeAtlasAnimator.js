@@ -28,6 +28,7 @@ const DEFAULT_STATE_TO_EXPRESSION = Object.freeze({
   jump: 'shocked',
   death: 'shocked',
   chew: 'angry',
+  win: 'sparklingHappy',
 });
 
 export const MOUSE_EYE_ONE_SHOTS = Object.freeze({
