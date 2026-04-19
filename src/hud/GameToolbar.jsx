@@ -630,6 +630,7 @@ function ToolbarView(props) {
       <Show when={s.settingsOpen}>
         <div
           id="settings-panel"
+          data-scroll-container
           onPointerDown={stopPanel}
           onClick={(e) => e.stopPropagation()}
           style={{
@@ -676,6 +677,7 @@ function ToolbarView(props) {
       <Show when={s.leaderboardOpen}>
         <div
           id="leaderboard-panel"
+          data-scroll-container
           role="dialog"
           aria-label="Leaderboard"
           onPointerDown={stopPanel}

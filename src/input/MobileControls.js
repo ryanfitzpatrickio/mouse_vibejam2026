@@ -342,6 +342,8 @@ export class MobileControls {
     this._viewportLocked = false;
     this._preventDocumentTouch = (event) => {
       if (this.root.style.display === 'none') return;
+      const target = event.target;
+      if (target && typeof target.closest === 'function' && target.closest('[data-scroll-container]')) return;
       preventGesture(event);
     };
     this._preventRootTouch = (event) => {

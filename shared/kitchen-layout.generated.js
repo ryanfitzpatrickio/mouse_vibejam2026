@@ -4500,6 +4500,22 @@ export default {
         "z": 0
       },
       "deleted": false
+    },
+    {
+      "id": "raid-task-mo5h5lyv-rlpmx",
+      "name": "task-e78",
+      "taskType": "chew_wires",
+      "position": {
+        "x": -19.8,
+        "y": 3.5,
+        "z": 8.8
+      },
+      "rotation": {
+        "x": 0,
+        "y": 3.0229,
+        "z": 0
+      },
+      "deleted": false
     }
   ]
 };

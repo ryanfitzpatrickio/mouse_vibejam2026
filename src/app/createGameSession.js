@@ -530,6 +530,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     scene,
     getTargetObject: () => (predictionState?.isAdversary && human?.playerControlled ? human : mouse),
     getBubbleOffsetY: () => (predictionState?.isAdversary ? HUMAN_NAMEPLATE_OFFSET_Y : undefined),
+    isHumanEmoter: () => !!(predictionState?.isAdversary && human?.playerControlled),
     onSpecialEmote: (def) => {
       if (def.id !== HUMAN_ADVERSARY_RAT_EMOTE_ID) return;
       if (!predictionState?.isAdversary || !human?.playerControlled) return;
@@ -743,7 +744,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
   const scoreboard = new ScoreboardOverlay();
   const chaseAlert = new ChaseAlertOverlay();
-  const adversaryStatus = new AdversaryStatusOverlay();
+  const adversaryStatus = new AdversaryStatusOverlay({
+    onToggle: () => { controller.adversaryTogglePressed = true; },
+  });
   const windStreaks = new WindStreakField({ camera });
   // The camera must be in the scene for its children (the wind streak LineSegments)
   // to render. Three.js skips children of objects not attached to the active scene.

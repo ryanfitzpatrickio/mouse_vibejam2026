@@ -120,11 +120,21 @@ function WireView(props) {
           fill="none"
           stroke-linecap="round"
           style={{
-            cursor: 'crosshair',
-            'pointer-events': 'stroke',
+            'pointer-events': 'none',
             filter: wire().isTarget
               ? `drop-shadow(0 0 4px ${color().glow})`
               : 'none',
+          }}
+        />
+        <path
+          d={wire().path.d}
+          stroke="transparent"
+          stroke-width={wire().isTarget ? 48 : 20}
+          fill="none"
+          stroke-linecap="round"
+          style={{
+            cursor: 'crosshair',
+            'pointer-events': 'stroke',
           }}
           onClick={handleClick}
           onPointerDown={handleClick}
@@ -284,10 +294,13 @@ function ChewWiresView(props) {
       <div
         style={{
           ...HUD_PANEL_STYLE,
-          padding: '18px 18px 14px 18px',
+          padding: '14px',
           display: 'grid',
           gap: '10px',
-          'min-width': `${BOARD_W + 36}px`,
+          width: 'min(676px, calc(100vw - 20px))',
+          'max-height': 'calc(100dvh - 20px)',
+          'box-sizing': 'border-box',
+          overflow: 'hidden',
         }}
       >
         <div style={{ display: 'flex', 'justify-content': 'space-between', 'align-items': 'center' }}>
@@ -321,11 +334,13 @@ function ChewWiresView(props) {
           }}
         >
           <svg
-            width={BOARD_W}
-            height={BOARD_H}
             viewBox={`0 0 ${BOARD_W} ${BOARD_H}`}
+            preserveAspectRatio="xMidYMid meet"
             style={{
               display: 'block',
+              width: '100%',
+              height: 'auto',
+              'max-height': 'calc(100dvh - 160px)',
               'border-radius': '8px',
               background: 'radial-gradient(ellipse at center, #1f2a3a 0%, #090d14 90%)',
             }}

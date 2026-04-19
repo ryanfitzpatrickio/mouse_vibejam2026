@@ -63,6 +63,24 @@ function emoteAssetStems(soundName) {
   return base === cap ? [`assets/${base}`] : [`assets/${base}`, `assets/${cap}`];
 }
 
+/** Human-adversary emote SFX variants. Files live in `public/assets/*.mp3`. */
+const HUMAN_EMOTE_VARIANTS = {
+  wave: ['wave2'],
+  dance: ['dance2'],
+  laugh: ['laugh2', 'laugh3'],
+  cry: ['cry2'],
+  angry: ['angry2'],
+  love: ['love2'],
+  thumbsup: ['thumbsup2'],
+  scream: ['scream2'],
+};
+
+function pickHumanEmoteSound(soundName) {
+  const variants = HUMAN_EMOTE_VARIANTS[soundName];
+  if (!variants || variants.length === 0) return soundName;
+  return variants[Math.floor(Math.random() * variants.length)];
+}
+
 function bufferLooksLikeMarkup(arrayBuffer) {
   const n = Math.min(96, arrayBuffer.byteLength);
   if (n < 1) return true;
@@ -666,11 +684,12 @@ export class AudioManager {
     }, Math.ceil(lifetime * 1000));
   }
 
-  playEmote(soundName, position) {
+  playEmote(soundName, position, opts = {}) {
     if (this._sfxMuted) return;
 
     const panner = this._createSpatialPanner(position);
-    void this._playEmoteClipOrSynth(soundName, panner);
+    const resolved = opts.human ? pickHumanEmoteSound(soundName) : soundName;
+    void this._playEmoteClipOrSynth(resolved, panner);
   }
 
   /**
@@ -682,6 +701,11 @@ export class AudioManager {
       if (seen.has(e.sound)) continue;
       seen.add(e.sound);
       void this._getEmoteBuffer(e.sound);
+      for (const variant of HUMAN_EMOTE_VARIANTS[e.sound] ?? []) {
+        if (seen.has(variant)) continue;
+        seen.add(variant);
+        void this._getEmoteBuffer(variant);
+      }
     }
   }
 
@@ -1206,7 +1230,7 @@ export class AudioManager {
   _applyAmbientGains() {
     if (!this._ambientCalmGain || !this._ambientChaseGain) return;
     const w = this._ambientBlend;
-    const duck = (this._ambientDuckForIntermission || this._ambientDuckForHero) ? 0 : 1;
+    const duck = (this._ambientDuckForIntermission || this._ambientDuckForHero || this._musicOverrideExtract) ? 0 : 1;
     this._ambientCalmGain.gain.value = (1 - w) * AMBIENT_TRACK_GAIN * duck;
     this._ambientChaseGain.gain.value = w * AMBIENT_TRACK_GAIN * duck;
   }
@@ -1468,6 +1492,7 @@ export class AudioManager {
     this._ambientDuckForHero = true;
     this._applyAmbientGains?.();
     this._applyMusicOverrideDucking?.();
+    this._applyAmbientGains?.();
   }
 
   async _loadIntermissionMusicBuffer() {
@@ -1509,6 +1534,7 @@ export class AudioManager {
     this._musicOverrideIntermission = true;
     this._applyAmbientGains?.();
     this._applyMusicOverrideDucking?.();
+    this._applyAmbientGains?.();
   }
 
   stopIntermissionMusic() {
@@ -1536,6 +1562,7 @@ export class AudioManager {
     this._musicOverrideIntermission = false;
     this._applyAmbientGains?.();
     this._applyMusicOverrideDucking?.();
+    this._applyAmbientGains?.();
   }
 
   async playExtractCountdown() {
@@ -1553,11 +1580,13 @@ export class AudioManager {
     this._extractCountdownPlaying = true;
     this._musicOverrideExtract = true;
     this._applyMusicOverrideDucking?.();
+    this._applyAmbientGains?.();
     src.onended = () => {
       this._extractCountdownPlaying = false;
       this._musicOverrideExtract = false;
       try { src.disconnect(); } catch {}
       this._applyMusicOverrideDucking?.();
+    this._applyAmbientGains?.();
     };
     src.start(this.audioContext.currentTime);
   }

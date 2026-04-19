@@ -227,7 +227,13 @@ export class RemotePlayerManager {
     syncNameplateWorldPosition(nameplateAnchor, mouse);
 
     const audioManager = getAudioManager();
-    const emoteManager = new EmoteManager({ mouse, audioManager, scene: this.scene });
+    const players = this.players;
+    const emoteManager = new EmoteManager({
+      mouse,
+      audioManager,
+      scene: this.scene,
+      isHumanEmoter: () => !!players.get(id)?.serverIsAdversary,
+    });
 
     this.players.set(id, {
       mouse,

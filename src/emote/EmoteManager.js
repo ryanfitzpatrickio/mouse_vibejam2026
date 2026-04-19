@@ -34,6 +34,7 @@ export class EmoteManager {
     getBubbleOffsetY = null,
     onSpecialEmote = null,
     onSpecialEmoteCancel = null,
+    isHumanEmoter = null,
   }) {
     this.mouse = mouse;
     this.audioManager = audioManager;
@@ -42,6 +43,7 @@ export class EmoteManager {
     this.getBubbleOffsetY = typeof getBubbleOffsetY === 'function' ? getBubbleOffsetY : null;
     this.onSpecialEmote = typeof onSpecialEmote === 'function' ? onSpecialEmote : null;
     this.onSpecialEmoteCancel = typeof onSpecialEmoteCancel === 'function' ? onSpecialEmoteCancel : null;
+    this.isHumanEmoter = typeof isHumanEmoter === 'function' ? isHumanEmoter : null;
     this.activeEmote = null;
     this.emoteTimer = 0;
     this._bubble = null;
@@ -65,7 +67,9 @@ export class EmoteManager {
     }
 
     if (def.id !== HUMAN_ADVERSARY_RAT_EMOTE_ID && this.audioManager && target?.position) {
-      this.audioManager.playEmote(def.sound, target.position);
+      this.audioManager.playEmote(def.sound, target.position, {
+        human: !!this.isHumanEmoter?.(),
+      });
     }
 
     if (this.scene && target && def.emoji) {
