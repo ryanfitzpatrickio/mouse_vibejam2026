@@ -1,0 +1,7 @@
+{
+  "_comment": "After a clean run of npm run bench:net, copy tickMsP95 and tickMsMean from bench-results.json server into this file.",
+  "server": {
+    "tickMsP95": 12,
+    "tickMsMean": 4
+  }
+}

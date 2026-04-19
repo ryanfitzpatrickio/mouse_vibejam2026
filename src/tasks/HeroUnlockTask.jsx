@@ -6,7 +6,7 @@ import {
   HUD_SMALL_LABEL_FONT,
 } from '../hud/hudStyle.js';
 import { getUnlockHeroDef } from '../../shared/heroUnlocks.js';
-import { actionLabel, setInputSource } from '../input/inputSource.js';
+import { setInputSource } from '../input/inputSource.js';
 
 const SLOT_COUNT = 3;
 
@@ -68,13 +68,15 @@ function UnlockView({ heroKey, getCollected, onSubmit, onCancel }) {
         e.preventDefault();
         setInputSource('keyboard');
         moveSelection(1);
-      } else if (e.key === 'Enter' || e.key === ' ') {
+      } else if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
         setInputSource('keyboard');
         confirmSelected();
-      } else if (e.key === 'Escape') {
+      } else if (e.key === ' ' || e.key === 'Escape') {
         e.preventDefault();
+        e.stopPropagation();
+        setInputSource('keyboard');
         onCancel?.();
       }
     };
@@ -189,7 +191,7 @@ function UnlockView({ heroKey, getCollected, onSubmit, onCancel }) {
               cursor: flashing() ? 'default' : 'pointer', font: HUD_SMALL_LABEL_FONT,
             }}
           >
-            Cancel ({actionLabel('cancel')})
+            Cancel (Space)
           </button>
         </div>
       </div>
@@ -225,7 +227,9 @@ export function openHeroUnlockTask(heroKey) {
     ), host);
 
     const keyHandler = (e) => {
-      if (e.key === 'Escape') finish(onCancel);
+      if (e.key !== 'Escape' && e.key !== ' ') return;
+      e.preventDefault();
+      finish(onCancel);
     };
     window.addEventListener('keydown', keyHandler);
 

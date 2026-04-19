@@ -6,7 +6,7 @@ import {
   HUD_LABEL_SHADOW,
   HUD_SMALL_LABEL_FONT,
 } from '../hud/hudStyle.js';
-import { actionLabel, setInputSource } from '../input/inputSource.js';
+import { setInputSource } from '../input/inputSource.js';
 
 const BOARD_W = 640;
 const BOARD_H = 420;
@@ -348,13 +348,15 @@ function ChewWiresView(props) {
         e.preventDefault();
         setInputSource('keyboard');
         moveSelection(1);
-      } else if (e.key === 'Enter' || e.key === ' ') {
+      } else if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
         setInputSource('keyboard');
         confirmSelection();
-      } else if (e.key === 'Escape') {
+      } else if (e.key === ' ' || e.key === 'Escape') {
         e.preventDefault();
+        e.stopPropagation();
+        setInputSource('keyboard');
         handleCancel();
       }
     };
@@ -543,7 +545,7 @@ function ChewWiresView(props) {
               border: '2px solid rgba(180, 190, 210, 0.9)',
             }}
           >
-            Leave ({actionLabel('cancel')})
+            Leave (Space)
           </button>
         </div>
       </div>

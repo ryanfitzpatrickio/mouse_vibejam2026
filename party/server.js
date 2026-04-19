@@ -48,6 +48,8 @@ import { RAID_TASK_TYPES } from '../shared/raidLayout.js';
  * - ALLOWED_ORIGINS — comma-separated browser origins allowed to open WebSockets
  * - DEV_LAYOUT_SYNC_ENABLED — set "true" only in dev to accept dev-sync-layout
  * - DEV_LAYOUT_SYNC_TOKEN — must match Vite VITE_DEV_LAYOUT_SYNC_TOKEN when syncing layout from build mode
+ * - BENCH_METRICS_TOKEN — optional; when set, exposes GET …/bench-metrics and POST …/bench-metrics/reset
+ *   (Bearer same token) for load / bandwidth regression scripts (see scripts/bench-network.mjs).
  */
 
 const TICK_RATE = 30;
@@ -156,6 +158,13 @@ function corsHeadersForRequest(request, env) {
   };
 }
 
+/** UTF-8 wire size for WebSocket text frames. Uses TextEncoder only — PartyKit/Workers may expose a non-Node `Buffer` without `byteLength`. */
+const _utf8Encoder = new TextEncoder();
+
+function utf8ByteLength(str) {
+  return _utf8Encoder.encode(String(str)).length;
+}
+
 function jsonResponse(request, env, body, status = 200) {
   return new Response(JSON.stringify(body, null, 2), {
     status,
@@ -242,6 +251,17 @@ export default class GameServer {
   _messageBuckets = new Map();
   /** @type {Map<string, number>} last task-complete ms by connection id */
   _taskCompleteCooldown = new Map();
+
+  /** Cumulative WebSocket + tick metrics for scripts/bench-network.mjs (reset via HTTP). */
+  _benchBytesIn = 0;
+  _benchBytesOut = 0;
+  _benchMsgsIn = 0;
+  _benchMsgsOut = 0;
+  _benchTickCount = 0;
+  _benchTickMsSum = 0;
+  _benchTickMsMax = 0;
+  /** @type {number[]} capped ring for percentile export */
+  _benchTickSamples = [];
 
   constructor(room) {
     this.room = room;
@@ -494,7 +514,10 @@ export default class GameServer {
 
   onConnect(conn) {
     if (this.inputQueues.size >= MAX_PLAYERS) {
-      conn.send(JSON.stringify({ type: 'error', message: 'Room full' }));
+      const errPayload = JSON.stringify({ type: 'error', message: 'Room full' });
+      this._benchBytesOut += utf8ByteLength(errPayload);
+      this._benchMsgsOut += 1;
+      conn.send(errPayload);
       conn.close();
       return;
     }
@@ -516,7 +539,7 @@ export default class GameServer {
     this._syncBots();
     this.stats?.recordConnect(conn.id, this.inputQueues.size);
 
-    conn.send(JSON.stringify({
+    const initPayload = JSON.stringify({
       type: 'init',
       id: conn.id,
       players: Object.fromEntries(this.players),
@@ -533,7 +556,10 @@ export default class GameServer {
       extractionPortals: this.round.phase === 'extract' ? this.extractionPortalDefs : [],
       heroClaims: { ...this.heroClaims },
       unlockItems: this.unlockItems.filter((it) => !it.consumed),
-    }));
+    });
+    this._benchBytesOut += utf8ByteLength(initPayload);
+    this._benchMsgsOut += 1;
+    conn.send(initPayload);
 
     this.broadcast(JSON.stringify({
       type: 'player-joined',
@@ -570,6 +596,17 @@ export default class GameServer {
   }
 
   async onMessage(message, sender) {
+    if (typeof message === 'string') {
+      this._benchBytesIn += utf8ByteLength(message);
+      this._benchMsgsIn += 1;
+    } else if (message instanceof ArrayBuffer) {
+      this._benchBytesIn += message.byteLength;
+      this._benchMsgsIn += 1;
+    } else if (ArrayBuffer.isView(message)) {
+      this._benchBytesIn += message.byteLength;
+      this._benchMsgsIn += 1;
+    }
+
     if (!this._consumeMessageToken(sender.id)) {
       const bucket = this._messageBuckets.get(sender.id);
       if (bucket?.dropped >= MAX_DROPPED_MESSAGES_BEFORE_CLOSE) {
@@ -601,10 +638,13 @@ export default class GameServer {
         const player = this.players.get(sender.id);
         if (applyPortalArrivalToPlayerState(player, portalArrival, this.portalPlacements)) {
           this.portalArrivals.add(sender.id);
-          sender.send(JSON.stringify({
+          const portalPayload = JSON.stringify({
             type: 'portal-spawn',
             player,
-          }));
+          });
+          this._benchBytesOut += utf8ByteLength(portalPayload);
+          this._benchMsgsOut += 1;
+          sender.send(portalPayload);
           this.broadcast(JSON.stringify({
             type: 'player-joined',
             player,
@@ -994,10 +1034,72 @@ export default class GameServer {
     this._initPredators();
   }
 
-  tick() {
-    this._syncBots();
+  _resetBenchMetrics() {
+    this._benchBytesIn = 0;
+    this._benchBytesOut = 0;
+    this._benchMsgsIn = 0;
+    this._benchMsgsOut = 0;
+    this._benchTickCount = 0;
+    this._benchTickMsSum = 0;
+    this._benchTickMsMax = 0;
+    this._benchTickSamples.length = 0;
+  }
 
-    if (this.players.size === 0 && this.predators.length === 0) return;
+  _recordBenchTickMs(ms) {
+    this._benchTickCount += 1;
+    this._benchTickMsSum += ms;
+    this._benchTickMsMax = Math.max(this._benchTickMsMax, ms);
+    const cap = 3600;
+    const arr = this._benchTickSamples;
+    if (arr.length < cap) {
+      arr.push(ms);
+    } else {
+      arr[this._benchTickCount % cap] = ms;
+    }
+  }
+
+  _benchTickPercentiles() {
+    const arr = [...this._benchTickSamples].filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
+    if (!arr.length) {
+      return { p50: 0, p95: 0, samples: 0 };
+    }
+    const pick = (q) => arr[Math.min(arr.length - 1, Math.max(0, Math.floor(q * (arr.length - 1))))];
+    return { p50: pick(0.5), p95: pick(0.95), samples: arr.length };
+  }
+
+  getBenchMetricsPayload() {
+    const pct = this._benchTickPercentiles();
+    const ticks = this._benchTickCount || 1;
+    const durationSec = ticks / TICK_RATE;
+    return {
+      tickRate: TICK_RATE,
+      ticks: this._benchTickCount,
+      durationSecApprox: Math.round(durationSec * 1000) / 1000,
+      tickMsMean: Math.round((this._benchTickMsSum / ticks) * 10000) / 10000,
+      tickMsMax: Math.round(this._benchTickMsMax * 10000) / 10000,
+      tickMsP50: Math.round(pct.p50 * 10000) / 10000,
+      tickMsP95: Math.round(pct.p95 * 10000) / 10000,
+      tickSampleCount: pct.samples,
+      bytesIn: this._benchBytesIn,
+      bytesOut: this._benchBytesOut,
+      msgsIn: this._benchMsgsIn,
+      msgsOut: this._benchMsgsOut,
+      bytesInPerSecApprox: Math.round(this._benchBytesIn / durationSec),
+      bytesOutPerSecApprox: Math.round(this._benchBytesOut / durationSec),
+      connections: Array.isArray(this.room.getConnections?.())
+        ? this.room.getConnections().length
+        : 0,
+    };
+  }
+
+  tick() {
+    const t0 = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now()
+      : Date.now();
+    try {
+      this._syncBots();
+
+      if (this.players.size === 0 && this.predators.length === 0) return;
 
     const dt = TICK_MS / 1000;
     const wallNow = Date.now() / 1000;
@@ -1636,11 +1738,20 @@ export default class GameServer {
       extractionPortals: this.round.phase === 'extract' ? this.extractionPortalDefs : [],
     };
     this.broadcast(JSON.stringify(snapshot));
+    } finally {
+      const t1 = (typeof performance !== 'undefined' && performance.now)
+        ? performance.now()
+        : Date.now();
+      this._recordBenchTickMs(t1 - t0);
+    }
   }
 
   broadcast(message, exclude = []) {
+    const byteLen = utf8ByteLength(message);
     for (const conn of this.room.getConnections()) {
       if (!exclude.includes(conn.id)) {
+        this._benchBytesOut += byteLen;
+        this._benchMsgsOut += 1;
         conn.send(message);
       }
     }
@@ -1651,8 +1762,10 @@ export default class GameServer {
     const env = this.room.env ?? this.room.context?.env ?? {};
     const isLeaderboardRequest = url.pathname.endsWith('/leaderboard');
     const isStatsRequest = url.pathname.endsWith('/stats');
+    const isBenchReset = url.pathname.endsWith('/bench-metrics/reset');
+    const isBenchMetrics = url.pathname.endsWith('/bench-metrics') && !isBenchReset;
 
-    if (request.method === 'OPTIONS' && (isLeaderboardRequest || isStatsRequest)) {
+    if (request.method === 'OPTIONS' && (isLeaderboardRequest || isStatsRequest || isBenchMetrics || isBenchReset)) {
       return new Response(null, {
         status: 204,
         headers: corsHeadersForRequest(request, env),
@@ -1661,6 +1774,29 @@ export default class GameServer {
 
     if (isLeaderboardRequest) {
       return jsonResponse(request, env, await this.stats.getLeaderboards());
+    }
+
+    if (isBenchMetrics || isBenchReset) {
+      const benchTok = getPartyEnv(this.room, 'BENCH_METRICS_TOKEN');
+      const expected = typeof benchTok === 'string' ? benchTok.trim() : '';
+      if (!expected) {
+        return jsonResponse(request, env, {
+          error: 'Set BENCH_METRICS_TOKEN in PartyKit env to enable bench-metrics',
+        }, 503);
+      }
+      const authHeader = request.headers.get('Authorization') ?? '';
+      const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      if (bearerToken !== expected) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+      if (request.method === 'POST' && isBenchReset) {
+        this._resetBenchMetrics();
+        return jsonResponse(request, env, { ok: true, reset: true });
+      }
+      if (request.method === 'GET' && isBenchMetrics) {
+        return jsonResponse(request, env, this.getBenchMetricsPayload());
+      }
+      return new Response('Method not allowed', { status: 405 });
     }
 
     if (!isStatsRequest) {

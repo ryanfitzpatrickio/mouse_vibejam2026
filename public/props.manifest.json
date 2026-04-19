@@ -1,0 +1,4713 @@
+{
+  "source": "props.jpg",
+  "grid": {
+    "columns": 10,
+    "rows": 10,
+    "width": 2048,
+    "height": 2048,
+    "nominalCellWidth": 204.8,
+    "nominalCellHeight": 204.8
+  },
+  "cells": [
+    {
+      "index": 0,
+      "row": 0,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 0,
+        "x1": 205,
+        "y1": 205,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0,
+        "u1": 0.1001,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 93,
+          "g": 145,
+          "b": 87
+        },
+        "hue": 113.2,
+        "saturation": 0.251,
+        "lightness": 0.453,
+        "brightness": 0.508,
+        "contrast": 0.206,
+        "edgeDensity": 0.074
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 0: fabric with green bias, 51% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 1,
+      "row": 0,
+      "col": 1,
+      "bounds": {
+        "x0": 205,
+        "y0": 0,
+        "x1": 410,
+        "y1": 205,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0,
+        "u1": 0.2002,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 102,
+          "g": 130,
+          "b": 94
+        },
+        "hue": 106.6,
+        "saturation": 0.16,
+        "lightness": 0.44,
+        "brightness": 0.477,
+        "contrast": 0.209,
+        "edgeDensity": 0.105
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 1: fabric with green bias, 48% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 2,
+      "row": 0,
+      "col": 2,
+      "bounds": {
+        "x0": 410,
+        "y0": 0,
+        "x1": 614,
+        "y1": 205,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2002,
+        "v0": 0,
+        "u1": 0.2998,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 80,
+          "g": 153,
+          "b": 85
+        },
+        "hue": 124.7,
+        "saturation": 0.316,
+        "lightness": 0.457,
+        "brightness": 0.521,
+        "contrast": 0.218,
+        "edgeDensity": 0.091
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 2: fabric with green bias, 52% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 3,
+      "row": 0,
+      "col": 3,
+      "bounds": {
+        "x0": 614,
+        "y0": 0,
+        "x1": 819,
+        "y1": 205,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2998,
+        "v0": 0,
+        "u1": 0.3999,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 78,
+          "g": 164,
+          "b": 84
+        },
+        "hue": 123.8,
+        "saturation": 0.354,
+        "lightness": 0.476,
+        "brightness": 0.55,
+        "contrast": 0.198,
+        "edgeDensity": 0.094
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 3: fabric with green bias, 55% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 4,
+      "row": 0,
+      "col": 4,
+      "bounds": {
+        "x0": 819,
+        "y0": 0,
+        "x1": 1024,
+        "y1": 205,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0,
+        "u1": 0.5,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 85,
+          "g": 160,
+          "b": 91
+        },
+        "hue": 124.6,
+        "saturation": 0.306,
+        "lightness": 0.482,
+        "brightness": 0.547,
+        "contrast": 0.178,
+        "edgeDensity": 0.062
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 4: fabric with green bias, 55% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 5,
+      "row": 0,
+      "col": 5,
+      "bounds": {
+        "x0": 1024,
+        "y0": 0,
+        "x1": 1229,
+        "y1": 205,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0,
+        "u1": 0.6001,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 76,
+          "g": 170,
+          "b": 96
+        },
+        "hue": 132.7,
+        "saturation": 0.379,
+        "lightness": 0.482,
+        "brightness": 0.566,
+        "contrast": 0.176,
+        "edgeDensity": 0.06
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 5: fabric with green bias, 57% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 6,
+      "row": 0,
+      "col": 6,
+      "bounds": {
+        "x0": 1229,
+        "y0": 0,
+        "x1": 1434,
+        "y1": 205,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0,
+        "u1": 0.7002,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 89,
+          "g": 164,
+          "b": 78
+        },
+        "hue": 112.2,
+        "saturation": 0.353,
+        "lightness": 0.474,
+        "brightness": 0.555,
+        "contrast": 0.16,
+        "edgeDensity": 0.064
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 6: fabric with green bias, 56% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 7,
+      "row": 0,
+      "col": 7,
+      "bounds": {
+        "x0": 1434,
+        "y0": 0,
+        "x1": 1638,
+        "y1": 205,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7002,
+        "v0": 0,
+        "u1": 0.7998,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 72,
+          "g": 164,
+          "b": 67
+        },
+        "hue": 116.9,
+        "saturation": 0.418,
+        "lightness": 0.453,
+        "brightness": 0.539,
+        "contrast": 0.159,
+        "edgeDensity": 0.076
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 7: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 8,
+      "row": 0,
+      "col": 8,
+      "bounds": {
+        "x0": 1638,
+        "y0": 0,
+        "x1": 1843,
+        "y1": 205,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7998,
+        "v0": 0,
+        "u1": 0.8999,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 85,
+          "g": 153,
+          "b": 76
+        },
+        "hue": 113.1,
+        "saturation": 0.337,
+        "lightness": 0.45,
+        "brightness": 0.522,
+        "contrast": 0.14,
+        "edgeDensity": 0.054
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 8: fabric with green bias, 52% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 9,
+      "row": 0,
+      "col": 9,
+      "bounds": {
+        "x0": 1843,
+        "y0": 0,
+        "x1": 2048,
+        "y1": 205,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0,
+        "u1": 1,
+        "v1": 0.1001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 98,
+          "g": 142,
+          "b": 79
+        },
+        "hue": 101.9,
+        "saturation": 0.285,
+        "lightness": 0.432,
+        "brightness": 0.501,
+        "contrast": 0.152,
+        "edgeDensity": 0.053
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 9: fabric with green bias, 50% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 10,
+      "row": 1,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 205,
+        "x1": 205,
+        "y1": 410,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0.1001,
+        "u1": 0.1001,
+        "v1": 0.2002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 69,
+          "g": 139,
+          "b": 65
+        },
+        "hue": 116.6,
+        "saturation": 0.362,
+        "lightness": 0.401,
+        "brightness": 0.467,
+        "contrast": 0.195,
+        "edgeDensity": 0.101
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 10: fabric with green bias, 47% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 11,
+      "row": 1,
+      "col": 1,
+      "bounds": {
+        "x0": 205,
+        "y0": 205,
+        "x1": 410,
+        "y1": 410,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.1001,
+        "u1": 0.2002,
+        "v1": 0.2002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 59,
+          "g": 167,
+          "b": 57
+        },
+        "hue": 119,
+        "saturation": 0.488,
+        "lightness": 0.44,
+        "brightness": 0.534,
+        "contrast": 0.149,
+        "edgeDensity": 0.066
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 11: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 12,
+      "row": 1,
+      "col": 2,
+      "bounds": {
+        "x0": 410,
+        "y0": 205,
+        "x1": 614,
+        "y1": 410,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2002,
+        "v0": 0.1001,
+        "u1": 0.2998,
+        "v1": 0.2002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 68,
+          "g": 161,
+          "b": 68
+        },
+        "hue": 120,
+        "saturation": 0.408,
+        "lightness": 0.45,
+        "brightness": 0.529,
+        "contrast": 0.208,
+        "edgeDensity": 0.105
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 12: fabric with green bias, 53% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 13,
+      "row": 1,
+      "col": 3,
+      "bounds": {
+        "x0": 614,
+        "y0": 205,
+        "x1": 819,
+        "y1": 410,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2998,
+        "v0": 0.1001,
+        "u1": 0.3999,
+        "v1": 0.2002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 56,
+          "g": 175,
+          "b": 62
+        },
+        "hue": 122.8,
+        "saturation": 0.514,
+        "lightness": 0.454,
+        "brightness": 0.556,
+        "contrast": 0.149,
+        "edgeDensity": 0.075
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 13: fabric with green bias, 56% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 14,
+      "row": 1,
+      "col": 4,
+      "bounds": {
+        "x0": 819,
+        "y0": 205,
+        "x1": 1024,
+        "y1": 410,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0.1001,
+        "u1": 0.5,
+        "v1": 0.2002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 55,
+          "g": 175,
+          "b": 61
+        },
+        "hue": 123,
+        "saturation": 0.521,
+        "lightness": 0.45,
+        "brightness": 0.553,
+        "contrast": 0.151,
+        "edgeDensity": 0.067
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 14: fabric with green bias, 55% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 15,
+      "row": 1,
+      "col": 5,
+      "bounds": {
+        "x0": 1024,
+        "y0": 205,
+        "x1": 1229,
+        "y1": 410,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.1001,
+        "u1": 0.6001,
+        "v1": 0.2002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 89,
+          "g": 176,
+          "b": 94
+        },
+        "hue": 123.1,
+        "saturation": 0.355,
+        "lightness": 0.52,
+        "brightness": 0.594,
+        "contrast": 0.209,
+        "edgeDensity": 0.088
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 15: fabric with green bias, 59% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 16,
+      "row": 1,
+      "col": 6,
+      "bounds": {
+        "x0": 1229,
+        "y0": 205,
+        "x1": 1434,
+        "y1": 410,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.1001,
+        "u1": 0.7002,
+        "v1": 0.2002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 57,
+          "g": 170,
+          "b": 60
+        },
+        "hue": 121.6,
+        "saturation": 0.497,
+        "lightness": 0.446,
+        "brightness": 0.542,
+        "contrast": 0.161,
+        "edgeDensity": 0.097
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 16: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 17,
+      "row": 1,
+      "col": 7,
+      "bounds": {
+        "x0": 1434,
+        "y0": 205,
+        "x1": 1638,
+        "y1": 410,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7002,
+        "v0": 0.1001,
+        "u1": 0.7998,
+        "v1": 0.2002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 56,
+          "g": 170,
+          "b": 55
+        },
+        "hue": 119.6,
+        "saturation": 0.51,
+        "lightness": 0.441,
+        "brightness": 0.538,
+        "contrast": 0.171,
+        "edgeDensity": 0.101
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 17: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 18,
+      "row": 1,
+      "col": 8,
+      "bounds": {
+        "x0": 1638,
+        "y0": 205,
+        "x1": 1843,
+        "y1": 410,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7998,
+        "v0": 0.1001,
+        "u1": 0.8999,
+        "v1": 0.2002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 56,
+          "g": 159,
+          "b": 59
+        },
+        "hue": 121.5,
+        "saturation": 0.476,
+        "lightness": 0.423,
+        "brightness": 0.51,
+        "contrast": 0.169,
+        "edgeDensity": 0.108
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 18: fabric with green bias, 51% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 19,
+      "row": 1,
+      "col": 9,
+      "bounds": {
+        "x0": 1843,
+        "y0": 205,
+        "x1": 2048,
+        "y1": 410,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.1001,
+        "u1": 1,
+        "v1": 0.2002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 89,
+          "g": 160,
+          "b": 95
+        },
+        "hue": 125.2,
+        "saturation": 0.286,
+        "lightness": 0.488,
+        "brightness": 0.549,
+        "contrast": 0.219,
+        "edgeDensity": 0.087
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 19: fabric with green bias, 55% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 20,
+      "row": 2,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 410,
+        "x1": 205,
+        "y1": 614,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0.2002,
+        "u1": 0.1001,
+        "v1": 0.2998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 81,
+          "g": 163,
+          "b": 84
+        },
+        "hue": 121.9,
+        "saturation": 0.337,
+        "lightness": 0.479,
+        "brightness": 0.549,
+        "contrast": 0.208,
+        "edgeDensity": 0.064
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 20: fabric with green bias, 55% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 21,
+      "row": 2,
+      "col": 1,
+      "bounds": {
+        "x0": 205,
+        "y0": 410,
+        "x1": 410,
+        "y1": 614,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.2002,
+        "u1": 0.2002,
+        "v1": 0.2998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 68,
+          "g": 164,
+          "b": 73
+        },
+        "hue": 123,
+        "saturation": 0.412,
+        "lightness": 0.455,
+        "brightness": 0.537,
+        "contrast": 0.175,
+        "edgeDensity": 0.091
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 21: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 22,
+      "row": 2,
+      "col": 2,
+      "bounds": {
+        "x0": 410,
+        "y0": 410,
+        "x1": 614,
+        "y1": 614,
+        "width": 204,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.2002,
+        "v0": 0.2002,
+        "u1": 0.2998,
+        "v1": 0.2998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 69,
+          "g": 165,
+          "b": 70
+        },
+        "hue": 121.1,
+        "saturation": 0.412,
+        "lightness": 0.458,
+        "brightness": 0.539,
+        "contrast": 0.187,
+        "edgeDensity": 0.084
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 22: fabric with green bias, 54% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 23,
+      "row": 2,
+      "col": 3,
+      "bounds": {
+        "x0": 614,
+        "y0": 410,
+        "x1": 819,
+        "y1": 614,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.2998,
+        "v0": 0.2002,
+        "u1": 0.3999,
+        "v1": 0.2998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 76,
+          "g": 168,
+          "b": 68
+        },
+        "hue": 115.3,
+        "saturation": 0.421,
+        "lightness": 0.463,
+        "brightness": 0.553,
+        "contrast": 0.175,
+        "edgeDensity": 0.086
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 23: fabric with green bias, 55% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 24,
+      "row": 2,
+      "col": 4,
+      "bounds": {
+        "x0": 819,
+        "y0": 410,
+        "x1": 1024,
+        "y1": 614,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0.2002,
+        "u1": 0.5,
+        "v1": 0.2998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 81,
+          "g": 165,
+          "b": 67
+        },
+        "hue": 111.6,
+        "saturation": 0.424,
+        "lightness": 0.455,
+        "brightness": 0.55,
+        "contrast": 0.19,
+        "edgeDensity": 0.082
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 24: fabric with green bias, 55% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 25,
+      "row": 2,
+      "col": 5,
+      "bounds": {
+        "x0": 1024,
+        "y0": 410,
+        "x1": 1229,
+        "y1": 614,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.2002,
+        "u1": 0.6001,
+        "v1": 0.2998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 97,
+          "g": 168,
+          "b": 59
+        },
+        "hue": 99.4,
+        "saturation": 0.48,
+        "lightness": 0.446,
+        "brightness": 0.569,
+        "contrast": 0.192,
+        "edgeDensity": 0.085
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 25: fabric with green bias, 57% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 26,
+      "row": 2,
+      "col": 6,
+      "bounds": {
+        "x0": 1229,
+        "y0": 410,
+        "x1": 1434,
+        "y1": 614,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.2002,
+        "u1": 0.7002,
+        "v1": 0.2998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 107,
+          "g": 170,
+          "b": 57
+        },
+        "hue": 93.5,
+        "saturation": 0.498,
+        "lightness": 0.446,
+        "brightness": 0.583,
+        "contrast": 0.189,
+        "edgeDensity": 0.085
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 26: fabric with green bias, 58% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 27,
+      "row": 2,
+      "col": 7,
+      "bounds": {
+        "x0": 1434,
+        "y0": 410,
+        "x1": 1638,
+        "y1": 614,
+        "width": 204,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.7002,
+        "v0": 0.2002,
+        "u1": 0.7998,
+        "v1": 0.2998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 99,
+          "g": 175,
+          "b": 95
+        },
+        "hue": 116.9,
+        "saturation": 0.337,
+        "lightness": 0.53,
+        "brightness": 0.601,
+        "contrast": 0.21,
+        "edgeDensity": 0.07
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 27: fabric with green bias, 60% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 28,
+      "row": 2,
+      "col": 8,
+      "bounds": {
+        "x0": 1638,
+        "y0": 410,
+        "x1": 1843,
+        "y1": 614,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.7998,
+        "v0": 0.2002,
+        "u1": 0.8999,
+        "v1": 0.2998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 81,
+          "g": 172,
+          "b": 102
+        },
+        "hue": 133.6,
+        "saturation": 0.359,
+        "lightness": 0.497,
+        "brightness": 0.58,
+        "contrast": 0.198,
+        "edgeDensity": 0.081
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 28: fabric with green bias, 58% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 29,
+      "row": 2,
+      "col": 9,
+      "bounds": {
+        "x0": 1843,
+        "y0": 410,
+        "x1": 2048,
+        "y1": 614,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.2002,
+        "u1": 1,
+        "v1": 0.2998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 81,
+          "g": 158,
+          "b": 87
+        },
+        "hue": 124.3,
+        "saturation": 0.321,
+        "lightness": 0.469,
+        "brightness": 0.536,
+        "contrast": 0.17,
+        "edgeDensity": 0.062
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 29: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 30,
+      "row": 3,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 614,
+        "x1": 205,
+        "y1": 819,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0.2998,
+        "u1": 0.1001,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 86,
+          "g": 149,
+          "b": 79
+        },
+        "hue": 113.7,
+        "saturation": 0.309,
+        "lightness": 0.446,
+        "brightness": 0.511,
+        "contrast": 0.164,
+        "edgeDensity": 0.092
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 30: fabric with green bias, 51% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 31,
+      "row": 3,
+      "col": 1,
+      "bounds": {
+        "x0": 205,
+        "y0": 614,
+        "x1": 410,
+        "y1": 819,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.2998,
+        "u1": 0.2002,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 89,
+          "g": 158,
+          "b": 96
+        },
+        "hue": 125.4,
+        "saturation": 0.277,
+        "lightness": 0.485,
+        "brightness": 0.544,
+        "contrast": 0.18,
+        "edgeDensity": 0.086
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 31: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 32,
+      "row": 3,
+      "col": 2,
+      "bounds": {
+        "x0": 410,
+        "y0": 614,
+        "x1": 614,
+        "y1": 819,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2002,
+        "v0": 0.2998,
+        "u1": 0.2998,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 99,
+          "g": 141,
+          "b": 59
+        },
+        "hue": 91.2,
+        "saturation": 0.409,
+        "lightness": 0.393,
+        "brightness": 0.495,
+        "contrast": 0.164,
+        "edgeDensity": 0.07
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 32: fabric with green bias, 50% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 33,
+      "row": 3,
+      "col": 3,
+      "bounds": {
+        "x0": 614,
+        "y0": 614,
+        "x1": 819,
+        "y1": 819,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2998,
+        "v0": 0.2998,
+        "u1": 0.3999,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 60,
+          "g": 156,
+          "b": 58
+        },
+        "hue": 118.8,
+        "saturation": 0.459,
+        "lightness": 0.42,
+        "brightness": 0.505,
+        "contrast": 0.154,
+        "edgeDensity": 0.073
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 33: fabric with green bias, 51% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 34,
+      "row": 3,
+      "col": 4,
+      "bounds": {
+        "x0": 819,
+        "y0": 614,
+        "x1": 1024,
+        "y1": 819,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0.2998,
+        "u1": 0.5,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 71,
+          "g": 172,
+          "b": 95
+        },
+        "hue": 134.1,
+        "saturation": 0.416,
+        "lightness": 0.476,
+        "brightness": 0.568,
+        "contrast": 0.187,
+        "edgeDensity": 0.074
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 34: fabric with green bias, 57% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 35,
+      "row": 3,
+      "col": 5,
+      "bounds": {
+        "x0": 1024,
+        "y0": 614,
+        "x1": 1229,
+        "y1": 819,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.2998,
+        "u1": 0.6001,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 75,
+          "g": 176,
+          "b": 87
+        },
+        "hue": 126.9,
+        "saturation": 0.401,
+        "lightness": 0.492,
+        "brightness": 0.58,
+        "contrast": 0.199,
+        "edgeDensity": 0.076
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 35: fabric with green bias, 58% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 36,
+      "row": 3,
+      "col": 6,
+      "bounds": {
+        "x0": 1229,
+        "y0": 614,
+        "x1": 1434,
+        "y1": 819,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.2998,
+        "u1": 0.7002,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 62,
+          "g": 166,
+          "b": 67
+        },
+        "hue": 122.7,
+        "saturation": 0.453,
+        "lightness": 0.447,
+        "brightness": 0.536,
+        "contrast": 0.186,
+        "edgeDensity": 0.101
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 36: fabric with green bias, 54% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 37,
+      "row": 3,
+      "col": 7,
+      "bounds": {
+        "x0": 1434,
+        "y0": 614,
+        "x1": 1638,
+        "y1": 819,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7002,
+        "v0": 0.2998,
+        "u1": 0.7998,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 101,
+          "g": 166,
+          "b": 73
+        },
+        "hue": 102,
+        "saturation": 0.388,
+        "lightness": 0.469,
+        "brightness": 0.57,
+        "contrast": 0.202,
+        "edgeDensity": 0.089
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 37: fabric with green bias, 57% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 38,
+      "row": 3,
+      "col": 8,
+      "bounds": {
+        "x0": 1638,
+        "y0": 614,
+        "x1": 1843,
+        "y1": 819,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7998,
+        "v0": 0.2998,
+        "u1": 0.8999,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 93,
+          "g": 164,
+          "b": 67
+        },
+        "hue": 104.1,
+        "saturation": 0.418,
+        "lightness": 0.454,
+        "brightness": 0.557,
+        "contrast": 0.186,
+        "edgeDensity": 0.09
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 38: fabric with green bias, 56% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 39,
+      "row": 3,
+      "col": 9,
+      "bounds": {
+        "x0": 1843,
+        "y0": 614,
+        "x1": 2048,
+        "y1": 819,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.2998,
+        "u1": 1,
+        "v1": 0.3999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 98,
+          "g": 155,
+          "b": 92
+        },
+        "hue": 114.2,
+        "saturation": 0.256,
+        "lightness": 0.483,
+        "brightness": 0.542,
+        "contrast": 0.168,
+        "edgeDensity": 0.066
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 39: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 40,
+      "row": 4,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 819,
+        "x1": 205,
+        "y1": 1024,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0.3999,
+        "u1": 0.1001,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 78,
+          "g": 159,
+          "b": 58
+        },
+        "hue": 107.9,
+        "saturation": 0.467,
+        "lightness": 0.426,
+        "brightness": 0.529,
+        "contrast": 0.181,
+        "edgeDensity": 0.063
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 40: fabric with green bias, 53% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 41,
+      "row": 4,
+      "col": 1,
+      "bounds": {
+        "x0": 205,
+        "y0": 819,
+        "x1": 410,
+        "y1": 1024,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.3999,
+        "u1": 0.2002,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 100,
+          "g": 154,
+          "b": 62
+        },
+        "hue": 95.7,
+        "saturation": 0.425,
+        "lightness": 0.425,
+        "brightness": 0.534,
+        "contrast": 0.178,
+        "edgeDensity": 0.064
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 41: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 42,
+      "row": 4,
+      "col": 2,
+      "bounds": {
+        "x0": 410,
+        "y0": 819,
+        "x1": 614,
+        "y1": 1024,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2002,
+        "v0": 0.3999,
+        "u1": 0.2998,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 91,
+          "g": 160,
+          "b": 55
+        },
+        "hue": 99.4,
+        "saturation": 0.486,
+        "lightness": 0.423,
+        "brightness": 0.541,
+        "contrast": 0.151,
+        "edgeDensity": 0.065
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 42: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 43,
+      "row": 4,
+      "col": 3,
+      "bounds": {
+        "x0": 614,
+        "y0": 819,
+        "x1": 819,
+        "y1": 1024,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2998,
+        "v0": 0.3999,
+        "u1": 0.3999,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 75,
+          "g": 163,
+          "b": 56
+        },
+        "hue": 109,
+        "saturation": 0.491,
+        "lightness": 0.428,
+        "brightness": 0.535,
+        "contrast": 0.18,
+        "edgeDensity": 0.075
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 43: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 44,
+      "row": 4,
+      "col": 4,
+      "bounds": {
+        "x0": 819,
+        "y0": 819,
+        "x1": 1024,
+        "y1": 1024,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0.3999,
+        "u1": 0.5,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 58,
+          "g": 151,
+          "b": 52
+        },
+        "hue": 116.2,
+        "saturation": 0.488,
+        "lightness": 0.398,
+        "brightness": 0.487,
+        "contrast": 0.207,
+        "edgeDensity": 0.058
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 44: fabric with green bias, 49% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 45,
+      "row": 4,
+      "col": 5,
+      "bounds": {
+        "x0": 1024,
+        "y0": 819,
+        "x1": 1229,
+        "y1": 1024,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.3999,
+        "u1": 0.6001,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 58,
+          "g": 151,
+          "b": 51
+        },
+        "hue": 116.3,
+        "saturation": 0.492,
+        "lightness": 0.396,
+        "brightness": 0.485,
+        "contrast": 0.206,
+        "edgeDensity": 0.066
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 45: fabric with green bias, 49% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 46,
+      "row": 4,
+      "col": 6,
+      "bounds": {
+        "x0": 1229,
+        "y0": 819,
+        "x1": 1434,
+        "y1": 1024,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.3999,
+        "u1": 0.7002,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 83,
+          "g": 164,
+          "b": 67
+        },
+        "hue": 109.8,
+        "saturation": 0.422,
+        "lightness": 0.453,
+        "brightness": 0.549,
+        "contrast": 0.176,
+        "edgeDensity": 0.118
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 46: fabric with green bias, 55% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 47,
+      "row": 4,
+      "col": 7,
+      "bounds": {
+        "x0": 1434,
+        "y0": 819,
+        "x1": 1638,
+        "y1": 1024,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7002,
+        "v0": 0.3999,
+        "u1": 0.7998,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 83,
+          "g": 158,
+          "b": 68
+        },
+        "hue": 109.9,
+        "saturation": 0.399,
+        "lightness": 0.442,
+        "brightness": 0.531,
+        "contrast": 0.188,
+        "edgeDensity": 0.131
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 47: fabric with green bias, 53% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 48,
+      "row": 4,
+      "col": 8,
+      "bounds": {
+        "x0": 1638,
+        "y0": 819,
+        "x1": 1843,
+        "y1": 1024,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7998,
+        "v0": 0.3999,
+        "u1": 0.8999,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 83,
+          "g": 157,
+          "b": 62
+        },
+        "hue": 106.6,
+        "saturation": 0.431,
+        "lightness": 0.43,
+        "brightness": 0.527,
+        "contrast": 0.176,
+        "edgeDensity": 0.118
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 48: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 49,
+      "row": 4,
+      "col": 9,
+      "bounds": {
+        "x0": 1843,
+        "y0": 819,
+        "x1": 2048,
+        "y1": 1024,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.3999,
+        "u1": 1,
+        "v1": 0.5
+      },
+      "stats": {
+        "averageColor": {
+          "r": 88,
+          "g": 155,
+          "b": 67
+        },
+        "hue": 105.8,
+        "saturation": 0.396,
+        "lightness": 0.435,
+        "brightness": 0.527,
+        "contrast": 0.182,
+        "edgeDensity": 0.117
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 49: fabric with green bias, 53% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 50,
+      "row": 5,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 1024,
+        "x1": 205,
+        "y1": 1229,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0.5,
+        "u1": 0.1001,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 72,
+          "g": 155,
+          "b": 75
+        },
+        "hue": 122.2,
+        "saturation": 0.366,
+        "lightness": 0.445,
+        "brightness": 0.517,
+        "contrast": 0.132,
+        "edgeDensity": 0.053
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 50: fabric with green bias, 52% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 51,
+      "row": 5,
+      "col": 1,
+      "bounds": {
+        "x0": 205,
+        "y0": 1024,
+        "x1": 410,
+        "y1": 1229,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.5,
+        "u1": 0.2002,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 66,
+          "g": 165,
+          "b": 69
+        },
+        "hue": 121.6,
+        "saturation": 0.428,
+        "lightness": 0.454,
+        "brightness": 0.538,
+        "contrast": 0.161,
+        "edgeDensity": 0.07
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 51: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 52,
+      "row": 5,
+      "col": 2,
+      "bounds": {
+        "x0": 410,
+        "y0": 1024,
+        "x1": 614,
+        "y1": 1229,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2002,
+        "v0": 0.5,
+        "u1": 0.2998,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 81,
+          "g": 156,
+          "b": 63
+        },
+        "hue": 108.4,
+        "saturation": 0.426,
+        "lightness": 0.43,
+        "brightness": 0.524,
+        "contrast": 0.167,
+        "edgeDensity": 0.071
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 52: fabric with green bias, 52% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 53,
+      "row": 5,
+      "col": 3,
+      "bounds": {
+        "x0": 614,
+        "y0": 1024,
+        "x1": 819,
+        "y1": 1229,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2998,
+        "v0": 0.5,
+        "u1": 0.3999,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 66,
+          "g": 172,
+          "b": 74
+        },
+        "hue": 124.3,
+        "saturation": 0.443,
+        "lightness": 0.468,
+        "brightness": 0.56,
+        "contrast": 0.162,
+        "edgeDensity": 0.074
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 53: fabric with green bias, 56% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 54,
+      "row": 5,
+      "col": 4,
+      "bounds": {
+        "x0": 819,
+        "y0": 1024,
+        "x1": 1024,
+        "y1": 1229,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0.5,
+        "u1": 0.5,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 74,
+          "g": 152,
+          "b": 49
+        },
+        "hue": 105.7,
+        "saturation": 0.51,
+        "lightness": 0.395,
+        "brightness": 0.502,
+        "contrast": 0.152,
+        "edgeDensity": 0.05
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 54: fabric with green bias, 50% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 55,
+      "row": 5,
+      "col": 5,
+      "bounds": {
+        "x0": 1024,
+        "y0": 1024,
+        "x1": 1229,
+        "y1": 1229,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.5,
+        "u1": 0.6001,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 58,
+          "g": 170,
+          "b": 61
+        },
+        "hue": 121.8,
+        "saturation": 0.492,
+        "lightness": 0.447,
+        "brightness": 0.542,
+        "contrast": 0.166,
+        "edgeDensity": 0.075
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 55: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 56,
+      "row": 5,
+      "col": 6,
+      "bounds": {
+        "x0": 1229,
+        "y0": 1024,
+        "x1": 1434,
+        "y1": 1229,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.5,
+        "u1": 0.7002,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 53,
+          "g": 168,
+          "b": 80
+        },
+        "hue": 133.8,
+        "saturation": 0.52,
+        "lightness": 0.435,
+        "brightness": 0.539,
+        "contrast": 0.143,
+        "edgeDensity": 0.063
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 56: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 57,
+      "row": 5,
+      "col": 7,
+      "bounds": {
+        "x0": 1434,
+        "y0": 1024,
+        "x1": 1638,
+        "y1": 1229,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7002,
+        "v0": 0.5,
+        "u1": 0.7998,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 79,
+          "g": 161,
+          "b": 72
+        },
+        "hue": 115.4,
+        "saturation": 0.381,
+        "lightness": 0.457,
+        "brightness": 0.538,
+        "contrast": 0.184,
+        "edgeDensity": 0.09
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 57: fabric with green bias, 54% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 58,
+      "row": 5,
+      "col": 8,
+      "bounds": {
+        "x0": 1638,
+        "y0": 1024,
+        "x1": 1843,
+        "y1": 1229,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7998,
+        "v0": 0.5,
+        "u1": 0.8999,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 48,
+          "g": 165,
+          "b": 46
+        },
+        "hue": 118.9,
+        "saturation": 0.562,
+        "lightness": 0.414,
+        "brightness": 0.516,
+        "contrast": 0.173,
+        "edgeDensity": 0.101
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 58: fabric with green bias, 52% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 59,
+      "row": 5,
+      "col": 9,
+      "bounds": {
+        "x0": 1843,
+        "y0": 1024,
+        "x1": 2048,
+        "y1": 1229,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.5,
+        "u1": 1,
+        "v1": 0.6001
+      },
+      "stats": {
+        "averageColor": {
+          "r": 58,
+          "g": 165,
+          "b": 59
+        },
+        "hue": 120.5,
+        "saturation": 0.479,
+        "lightness": 0.437,
+        "brightness": 0.527,
+        "contrast": 0.164,
+        "edgeDensity": 0.082
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 59: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 60,
+      "row": 6,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 1229,
+        "x1": 205,
+        "y1": 1434,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0.6001,
+        "u1": 0.1001,
+        "v1": 0.7002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 70,
+          "g": 163,
+          "b": 50
+        },
+        "hue": 109.4,
+        "saturation": 0.528,
+        "lightness": 0.418,
+        "brightness": 0.529,
+        "contrast": 0.15,
+        "edgeDensity": 0.063
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 60: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 61,
+      "row": 6,
+      "col": 1,
+      "bounds": {
+        "x0": 205,
+        "y0": 1229,
+        "x1": 410,
+        "y1": 1434,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.6001,
+        "u1": 0.2002,
+        "v1": 0.7002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 58,
+          "g": 173,
+          "b": 68
+        },
+        "hue": 125.4,
+        "saturation": 0.498,
+        "lightness": 0.454,
+        "brightness": 0.554,
+        "contrast": 0.156,
+        "edgeDensity": 0.082
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 61: fabric with green bias, 55% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 62,
+      "row": 6,
+      "col": 2,
+      "bounds": {
+        "x0": 410,
+        "y0": 1229,
+        "x1": 614,
+        "y1": 1434,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2002,
+        "v0": 0.6001,
+        "u1": 0.2998,
+        "v1": 0.7002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 53,
+          "g": 174,
+          "b": 51
+        },
+        "hue": 118.8,
+        "saturation": 0.549,
+        "lightness": 0.44,
+        "brightness": 0.546,
+        "contrast": 0.146,
+        "edgeDensity": 0.066
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 62: fabric with green bias, 55% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 63,
+      "row": 6,
+      "col": 3,
+      "bounds": {
+        "x0": 614,
+        "y0": 1229,
+        "x1": 819,
+        "y1": 1434,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2998,
+        "v0": 0.6001,
+        "u1": 0.3999,
+        "v1": 0.7002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 55,
+          "g": 170,
+          "b": 57
+        },
+        "hue": 121,
+        "saturation": 0.51,
+        "lightness": 0.442,
+        "brightness": 0.539,
+        "contrast": 0.146,
+        "edgeDensity": 0.074
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 63: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 64,
+      "row": 6,
+      "col": 4,
+      "bounds": {
+        "x0": 819,
+        "y0": 1229,
+        "x1": 1024,
+        "y1": 1434,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0.6001,
+        "u1": 0.5,
+        "v1": 0.7002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 47,
+          "g": 176,
+          "b": 47
+        },
+        "hue": 119.9,
+        "saturation": 0.578,
+        "lightness": 0.439,
+        "brightness": 0.548,
+        "contrast": 0.129,
+        "edgeDensity": 0.064
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 64: fabric with green bias, 55% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 65,
+      "row": 6,
+      "col": 5,
+      "bounds": {
+        "x0": 1024,
+        "y0": 1229,
+        "x1": 1229,
+        "y1": 1434,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.6001,
+        "u1": 0.6001,
+        "v1": 0.7002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 50,
+          "g": 170,
+          "b": 72
+        },
+        "hue": 131,
+        "saturation": 0.544,
+        "lightness": 0.432,
+        "brightness": 0.539,
+        "contrast": 0.145,
+        "edgeDensity": 0.064
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 65: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 66,
+      "row": 6,
+      "col": 6,
+      "bounds": {
+        "x0": 1229,
+        "y0": 1229,
+        "x1": 1434,
+        "y1": 1434,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.6001,
+        "u1": 0.7002,
+        "v1": 0.7002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 80,
+          "g": 175,
+          "b": 53
+        },
+        "hue": 106.8,
+        "saturation": 0.536,
+        "lightness": 0.447,
+        "brightness": 0.572,
+        "contrast": 0.148,
+        "edgeDensity": 0.064
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 66: fabric with green bias, 57% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 67,
+      "row": 6,
+      "col": 7,
+      "bounds": {
+        "x0": 1434,
+        "y0": 1229,
+        "x1": 1638,
+        "y1": 1434,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7002,
+        "v0": 0.6001,
+        "u1": 0.7998,
+        "v1": 0.7002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 56,
+          "g": 169,
+          "b": 55
+        },
+        "hue": 119.6,
+        "saturation": 0.51,
+        "lightness": 0.44,
+        "brightness": 0.537,
+        "contrast": 0.155,
+        "edgeDensity": 0.078
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 67: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 68,
+      "row": 6,
+      "col": 8,
+      "bounds": {
+        "x0": 1638,
+        "y0": 1229,
+        "x1": 1843,
+        "y1": 1434,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7998,
+        "v0": 0.6001,
+        "u1": 0.8999,
+        "v1": 0.7002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 55,
+          "g": 169,
+          "b": 50
+        },
+        "hue": 117.2,
+        "saturation": 0.544,
+        "lightness": 0.428,
+        "brightness": 0.533,
+        "contrast": 0.145,
+        "edgeDensity": 0.062
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 68: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 69,
+      "row": 6,
+      "col": 9,
+      "bounds": {
+        "x0": 1843,
+        "y0": 1229,
+        "x1": 2048,
+        "y1": 1434,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.6001,
+        "u1": 1,
+        "v1": 0.7002
+      },
+      "stats": {
+        "averageColor": {
+          "r": 62,
+          "g": 165,
+          "b": 63
+        },
+        "hue": 120.7,
+        "saturation": 0.452,
+        "lightness": 0.445,
+        "brightness": 0.532,
+        "contrast": 0.154,
+        "edgeDensity": 0.069
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 69: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 70,
+      "row": 7,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 1434,
+        "x1": 205,
+        "y1": 1638,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0.7002,
+        "u1": 0.1001,
+        "v1": 0.7998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 97,
+          "g": 155,
+          "b": 81
+        },
+        "hue": 107.5,
+        "saturation": 0.313,
+        "lightness": 0.463,
+        "brightness": 0.538,
+        "contrast": 0.218,
+        "edgeDensity": 0.074
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 70: fabric with green bias, 54% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 71,
+      "row": 7,
+      "col": 1,
+      "bounds": {
+        "x0": 205,
+        "y0": 1434,
+        "x1": 410,
+        "y1": 1638,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.7002,
+        "u1": 0.2002,
+        "v1": 0.7998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 83,
+          "g": 153,
+          "b": 77
+        },
+        "hue": 115.9,
+        "saturation": 0.33,
+        "lightness": 0.453,
+        "brightness": 0.521,
+        "contrast": 0.188,
+        "edgeDensity": 0.069
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 71: fabric with green bias, 52% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 72,
+      "row": 7,
+      "col": 2,
+      "bounds": {
+        "x0": 410,
+        "y0": 1434,
+        "x1": 614,
+        "y1": 1638,
+        "width": 204,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.2002,
+        "v0": 0.7002,
+        "u1": 0.2998,
+        "v1": 0.7998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 108,
+          "g": 153,
+          "b": 114
+        },
+        "hue": 128.1,
+        "saturation": 0.181,
+        "lightness": 0.513,
+        "brightness": 0.553,
+        "contrast": 0.202,
+        "edgeDensity": 0.097
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 72: fabric with green bias, 55% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 73,
+      "row": 7,
+      "col": 3,
+      "bounds": {
+        "x0": 614,
+        "y0": 1434,
+        "x1": 819,
+        "y1": 1638,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.2998,
+        "v0": 0.7002,
+        "u1": 0.3999,
+        "v1": 0.7998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 67,
+          "g": 173,
+          "b": 53
+        },
+        "hue": 113.2,
+        "saturation": 0.528,
+        "lightness": 0.444,
+        "brightness": 0.556,
+        "contrast": 0.154,
+        "edgeDensity": 0.064
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 73: fabric with green bias, 56% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 74,
+      "row": 7,
+      "col": 4,
+      "bounds": {
+        "x0": 819,
+        "y0": 1434,
+        "x1": 1024,
+        "y1": 1638,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0.7002,
+        "u1": 0.5,
+        "v1": 0.7998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 74,
+          "g": 171,
+          "b": 69
+        },
+        "hue": 116.6,
+        "saturation": 0.427,
+        "lightness": 0.469,
+        "brightness": 0.56,
+        "contrast": 0.165,
+        "edgeDensity": 0.059
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 74: fabric with green bias, 56% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 75,
+      "row": 7,
+      "col": 5,
+      "bounds": {
+        "x0": 1024,
+        "y0": 1434,
+        "x1": 1229,
+        "y1": 1638,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.7002,
+        "u1": 0.6001,
+        "v1": 0.7998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 91,
+          "g": 189,
+          "b": 73
+        },
+        "hue": 110.7,
+        "saturation": 0.471,
+        "lightness": 0.514,
+        "brightness": 0.628,
+        "contrast": 0.187,
+        "edgeDensity": 0.039
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 75: fabric with green bias, 63% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 76,
+      "row": 7,
+      "col": 6,
+      "bounds": {
+        "x0": 1229,
+        "y0": 1434,
+        "x1": 1434,
+        "y1": 1638,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.7002,
+        "u1": 0.7002,
+        "v1": 0.7998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 74,
+          "g": 179,
+          "b": 79
+        },
+        "hue": 122.7,
+        "saturation": 0.415,
+        "lightness": 0.497,
+        "brightness": 0.587,
+        "contrast": 0.178,
+        "edgeDensity": 0.066
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 76: fabric with green bias, 59% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 77,
+      "row": 7,
+      "col": 7,
+      "bounds": {
+        "x0": 1434,
+        "y0": 1434,
+        "x1": 1638,
+        "y1": 1638,
+        "width": 204,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.7002,
+        "v0": 0.7002,
+        "u1": 0.7998,
+        "v1": 0.7998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 80,
+          "g": 151,
+          "b": 70
+        },
+        "hue": 112.4,
+        "saturation": 0.368,
+        "lightness": 0.432,
+        "brightness": 0.509,
+        "contrast": 0.176,
+        "edgeDensity": 0.085
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 77: fabric with green bias, 51% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 78,
+      "row": 7,
+      "col": 8,
+      "bounds": {
+        "x0": 1638,
+        "y0": 1434,
+        "x1": 1843,
+        "y1": 1638,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.7998,
+        "v0": 0.7002,
+        "u1": 0.8999,
+        "v1": 0.7998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 71,
+          "g": 176,
+          "b": 52
+        },
+        "hue": 110.9,
+        "saturation": 0.54,
+        "lightness": 0.447,
+        "brightness": 0.567,
+        "contrast": 0.159,
+        "edgeDensity": 0.072
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 78: fabric with green bias, 57% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 79,
+      "row": 7,
+      "col": 9,
+      "bounds": {
+        "x0": 1843,
+        "y0": 1434,
+        "x1": 2048,
+        "y1": 1638,
+        "width": 205,
+        "height": 204
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.7002,
+        "u1": 1,
+        "v1": 0.7998
+      },
+      "stats": {
+        "averageColor": {
+          "r": 93,
+          "g": 154,
+          "b": 62
+        },
+        "hue": 99.9,
+        "saturation": 0.423,
+        "lightness": 0.424,
+        "brightness": 0.527,
+        "contrast": 0.185,
+        "edgeDensity": 0.064
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 79: fabric with green bias, 53% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 80,
+      "row": 8,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 1638,
+        "x1": 205,
+        "y1": 1843,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0.7998,
+        "u1": 0.1001,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 75,
+          "g": 141,
+          "b": 81
+        },
+        "hue": 125.5,
+        "saturation": 0.309,
+        "lightness": 0.423,
+        "brightness": 0.481,
+        "contrast": 0.163,
+        "edgeDensity": 0.078
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 80: fabric with green bias, 48% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 81,
+      "row": 8,
+      "col": 1,
+      "bounds": {
+        "x0": 205,
+        "y0": 1638,
+        "x1": 410,
+        "y1": 1843,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.7998,
+        "u1": 0.2002,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 70,
+          "g": 158,
+          "b": 84
+        },
+        "hue": 129.5,
+        "saturation": 0.388,
+        "lightness": 0.447,
+        "brightness": 0.525,
+        "contrast": 0.149,
+        "edgeDensity": 0.066
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 81: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 82,
+      "row": 8,
+      "col": 2,
+      "bounds": {
+        "x0": 410,
+        "y0": 1638,
+        "x1": 614,
+        "y1": 1843,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2002,
+        "v0": 0.7998,
+        "u1": 0.2998,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 69,
+          "g": 164,
+          "b": 55
+        },
+        "hue": 112.5,
+        "saturation": 0.495,
+        "lightness": 0.43,
+        "brightness": 0.533,
+        "contrast": 0.169,
+        "edgeDensity": 0.077
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 82: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 83,
+      "row": 8,
+      "col": 3,
+      "bounds": {
+        "x0": 614,
+        "y0": 1638,
+        "x1": 819,
+        "y1": 1843,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2998,
+        "v0": 0.7998,
+        "u1": 0.3999,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 86,
+          "g": 179,
+          "b": 55
+        },
+        "hue": 105.2,
+        "saturation": 0.529,
+        "lightness": 0.458,
+        "brightness": 0.588,
+        "contrast": 0.168,
+        "edgeDensity": 0.057
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 83: fabric with green bias, 59% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 84,
+      "row": 8,
+      "col": 4,
+      "bounds": {
+        "x0": 819,
+        "y0": 1638,
+        "x1": 1024,
+        "y1": 1843,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0.7998,
+        "u1": 0.5,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 72,
+          "g": 172,
+          "b": 83
+        },
+        "hue": 127,
+        "saturation": 0.412,
+        "lightness": 0.478,
+        "brightness": 0.566,
+        "contrast": 0.189,
+        "edgeDensity": 0.069
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 84: fabric with green bias, 57% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 85,
+      "row": 8,
+      "col": 5,
+      "bounds": {
+        "x0": 1024,
+        "y0": 1638,
+        "x1": 1229,
+        "y1": 1843,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.7998,
+        "u1": 0.6001,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 76,
+          "g": 170,
+          "b": 78
+        },
+        "hue": 121.3,
+        "saturation": 0.385,
+        "lightness": 0.482,
+        "brightness": 0.563,
+        "contrast": 0.194,
+        "edgeDensity": 0.075
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 85: fabric with green bias, 56% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 86,
+      "row": 8,
+      "col": 6,
+      "bounds": {
+        "x0": 1229,
+        "y0": 1638,
+        "x1": 1434,
+        "y1": 1843,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.7998,
+        "u1": 0.7002,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 88,
+          "g": 172,
+          "b": 77
+        },
+        "hue": 112.7,
+        "saturation": 0.384,
+        "lightness": 0.488,
+        "brightness": 0.579,
+        "contrast": 0.154,
+        "edgeDensity": 0.056
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 86: fabric with green bias, 58% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 87,
+      "row": 8,
+      "col": 7,
+      "bounds": {
+        "x0": 1434,
+        "y0": 1638,
+        "x1": 1638,
+        "y1": 1843,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7002,
+        "v0": 0.7998,
+        "u1": 0.7998,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 76,
+          "g": 172,
+          "b": 84
+        },
+        "hue": 124.8,
+        "saturation": 0.386,
+        "lightness": 0.488,
+        "brightness": 0.571,
+        "contrast": 0.193,
+        "edgeDensity": 0.091
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 87: fabric with green bias, 57% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 88,
+      "row": 8,
+      "col": 8,
+      "bounds": {
+        "x0": 1638,
+        "y0": 1638,
+        "x1": 1843,
+        "y1": 1843,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7998,
+        "v0": 0.7998,
+        "u1": 0.8999,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 81,
+          "g": 157,
+          "b": 80
+        },
+        "hue": 118.9,
+        "saturation": 0.328,
+        "lightness": 0.465,
+        "brightness": 0.532,
+        "contrast": 0.185,
+        "edgeDensity": 0.088
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 88: fabric with green bias, 53% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 89,
+      "row": 8,
+      "col": 9,
+      "bounds": {
+        "x0": 1843,
+        "y0": 1638,
+        "x1": 2048,
+        "y1": 1843,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.7998,
+        "u1": 1,
+        "v1": 0.8999
+      },
+      "stats": {
+        "averageColor": {
+          "r": 89,
+          "g": 141,
+          "b": 56
+        },
+        "hue": 96.9,
+        "saturation": 0.427,
+        "lightness": 0.386,
+        "brightness": 0.484,
+        "contrast": 0.186,
+        "edgeDensity": 0.081
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 89: fabric with green bias, 48% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 90,
+      "row": 9,
+      "col": 0,
+      "bounds": {
+        "x0": 0,
+        "y0": 1843,
+        "x1": 205,
+        "y1": 2048,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0,
+        "v0": 0.8999,
+        "u1": 0.1001,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 86,
+          "g": 126,
+          "b": 71
+        },
+        "hue": 104.1,
+        "saturation": 0.278,
+        "lightness": 0.387,
+        "brightness": 0.445,
+        "contrast": 0.166,
+        "edgeDensity": 0.068
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 90: fabric with green bias, 45% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 91,
+      "row": 9,
+      "col": 1,
+      "bounds": {
+        "x0": 205,
+        "y0": 1843,
+        "x1": 410,
+        "y1": 2048,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.1001,
+        "v0": 0.8999,
+        "u1": 0.2002,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 68,
+          "g": 150,
+          "b": 63
+        },
+        "hue": 116.8,
+        "saturation": 0.407,
+        "lightness": 0.418,
+        "brightness": 0.495,
+        "contrast": 0.152,
+        "edgeDensity": 0.055
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 91: fabric with green bias, 50% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 92,
+      "row": 9,
+      "col": 2,
+      "bounds": {
+        "x0": 410,
+        "y0": 1843,
+        "x1": 614,
+        "y1": 2048,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2002,
+        "v0": 0.8999,
+        "u1": 0.2998,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 76,
+          "g": 160,
+          "b": 52
+        },
+        "hue": 106.5,
+        "saturation": 0.509,
+        "lightness": 0.416,
+        "brightness": 0.528,
+        "contrast": 0.158,
+        "edgeDensity": 0.07
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 92: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 93,
+      "row": 9,
+      "col": 3,
+      "bounds": {
+        "x0": 614,
+        "y0": 1843,
+        "x1": 819,
+        "y1": 2048,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.2998,
+        "v0": 0.8999,
+        "u1": 0.3999,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 75,
+          "g": 164,
+          "b": 72
+        },
+        "hue": 118.2,
+        "saturation": 0.39,
+        "lightness": 0.463,
+        "brightness": 0.543,
+        "contrast": 0.173,
+        "edgeDensity": 0.063
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 93: fabric with green bias, 54% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 94,
+      "row": 9,
+      "col": 4,
+      "bounds": {
+        "x0": 819,
+        "y0": 1843,
+        "x1": 1024,
+        "y1": 2048,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.3999,
+        "v0": 0.8999,
+        "u1": 0.5,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 82,
+          "g": 164,
+          "b": 85
+        },
+        "hue": 122.2,
+        "saturation": 0.331,
+        "lightness": 0.483,
+        "brightness": 0.553,
+        "contrast": 0.178,
+        "edgeDensity": 0.065
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 94: fabric with green bias, 55% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 95,
+      "row": 9,
+      "col": 5,
+      "bounds": {
+        "x0": 1024,
+        "y0": 1843,
+        "x1": 1229,
+        "y1": 2048,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.5,
+        "v0": 0.8999,
+        "u1": 0.6001,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 80,
+          "g": 164,
+          "b": 79
+        },
+        "hue": 119.1,
+        "saturation": 0.352,
+        "lightness": 0.476,
+        "brightness": 0.549,
+        "contrast": 0.185,
+        "edgeDensity": 0.076
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.65,
+      "description": "Cell 95: fabric with green bias, 55% brightness, kitchen fit 65%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 96,
+      "row": 9,
+      "col": 6,
+      "bounds": {
+        "x0": 1229,
+        "y0": 1843,
+        "x1": 1434,
+        "y1": 2048,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.6001,
+        "v0": 0.8999,
+        "u1": 0.7002,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 72,
+          "g": 168,
+          "b": 70
+        },
+        "hue": 118.8,
+        "saturation": 0.409,
+        "lightness": 0.466,
+        "brightness": 0.55,
+        "contrast": 0.155,
+        "edgeDensity": 0.061
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 96: fabric with green bias, 55% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 97,
+      "row": 9,
+      "col": 7,
+      "bounds": {
+        "x0": 1434,
+        "y0": 1843,
+        "x1": 1638,
+        "y1": 2048,
+        "width": 204,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7002,
+        "v0": 0.8999,
+        "u1": 0.7998,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 72,
+          "g": 158,
+          "b": 76
+        },
+        "hue": 122.5,
+        "saturation": 0.374,
+        "lightness": 0.452,
+        "brightness": 0.526,
+        "contrast": 0.16,
+        "edgeDensity": 0.059
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 97: fabric with green bias, 53% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 98,
+      "row": 9,
+      "col": 8,
+      "bounds": {
+        "x0": 1638,
+        "y0": 1843,
+        "x1": 1843,
+        "y1": 2048,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.7998,
+        "v0": 0.8999,
+        "u1": 0.8999,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 77,
+          "g": 151,
+          "b": 80
+        },
+        "hue": 122.5,
+        "saturation": 0.324,
+        "lightness": 0.447,
+        "brightness": 0.51,
+        "contrast": 0.177,
+        "edgeDensity": 0.072
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 98: fabric with green bias, 51% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    },
+    {
+      "index": 99,
+      "row": 9,
+      "col": 9,
+      "bounds": {
+        "x0": 1843,
+        "y0": 1843,
+        "x1": 2048,
+        "y1": 2048,
+        "width": 205,
+        "height": 205
+      },
+      "uv": {
+        "u0": 0.8999,
+        "v0": 0.8999,
+        "u1": 1,
+        "v1": 1
+      },
+      "stats": {
+        "averageColor": {
+          "r": 70,
+          "g": 135,
+          "b": 61
+        },
+        "hue": 113.3,
+        "saturation": 0.374,
+        "lightness": 0.384,
+        "brightness": 0.453,
+        "contrast": 0.154,
+        "edgeDensity": 0.079
+      },
+      "classification": {
+        "category": "fabric",
+        "tags": [
+          "fabric",
+          "cloth",
+          "soft-surface"
+        ]
+      },
+      "kitchenFit": 0.6,
+      "description": "Cell 99: fabric with green bias, 45% brightness, kitchen fit 60%.",
+      "tags": [
+        "fabric",
+        "cloth",
+        "soft-surface"
+      ]
+    }
+  ]
+}

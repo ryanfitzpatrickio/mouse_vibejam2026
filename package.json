@@ -14,7 +14,9 @@
     "mouse:skin": "node scripts/apply-mouse-skin.mjs",
     "textures:analyze": "node scripts/analyze-texture-atlases.mjs",
     "preview": "vite preview",
-    "dev:trim-audio": "node scripts/trim-audio-silence.mjs"
+    "dev:trim-audio": "node scripts/trim-audio-silence.mjs",
+    "bench:net": "node scripts/bench-network.mjs",
+    "bench:compare": "node scripts/bench-compare.mjs bench/baseline.json bench-results.json"
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.4",
@@ -35,6 +37,7 @@
     "sharp": "^0.34.5",
     "vite": "8.0.5",
     "vite-plugin-solid": "^2.11.12",
-    "wrangler": "^4.80.0"
+    "wrangler": "^4.80.0",
+    "ws": "^8.20.0"
   }
 }

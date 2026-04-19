@@ -336,8 +336,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     collisionQuery: getCollisionCollidersWithRoomba,
   });
 
+  let mobileControls = null;
+
   installInputSourceTracking();
-  const gamepadManager = new GamepadManager({ controller, thirdPersonCamera });
 
   controller.onEmote = () => {
     emoteWheel.show();
@@ -840,6 +841,17 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   });
 
   const scoreboard = new ScoreboardOverlay();
+  const gamepadManager = new GamepadManager({
+    controller,
+    thirdPersonCamera,
+    scoreboardOverlay: scoreboard,
+    onToggleControlSides: () => {
+      mobileControls?.toggleSides?.();
+    },
+    onSpawnExtraBall: () => {
+      spawnExtraBall();
+    },
+  });
   const chaseAlert = new ChaseAlertOverlay();
   const adversaryStatus = new AdversaryStatusOverlay({
     onToggle: () => { controller.adversaryTogglePressed = true; },
@@ -917,7 +929,6 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const MAX_PHYSICS_STEPS = 4;
   let physicsAccum = 0;
   let previousJumpHeld = false;
-  let mobileControls = null;
 
   function copyServerToPrediction(ss) {
     predictionState.position.x = ss.position.x;

@@ -130,6 +130,9 @@ Thumbs.db
 secrets.json
 auth.json
 
+# Load / network bench output (see npm run bench:net)
+bench-results.json
+
 # General local overrides and temp
 *.local
 .temp/

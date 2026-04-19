@@ -17,15 +17,27 @@ const MOVE_RESPONSE_EXPO = 1.6;
  * Buttons (standard mapping indices):
  *   0 A  -> jump            1 B  -> grab
  *   2 X  -> interact        3 Y  -> emote
- *   4 LB -> drop            5 RB -> squeak (right-click equivalent)
+ *   4 LB -> hero (one-shot) 5 RB -> throw/drop when carrying; else squeak (right-click)
  *   6 LT -> crouch          7 RT -> sprint
- *   8 View -> adversary     9 Menu -> hero
+ *   8 View/Select/Share (hold) -> scoreboard
+ *   9 Menu/Start (edge) -> adversary toggle (works even if stick/camera last used keyboard)
+ *  10 L3 (edge) -> swap touch control sides
+ *  11 R3 (edge) -> spawn ball
  *  12/13/14/15 D-Pad -> movement
  */
 export class GamepadManager {
-  constructor({ controller, thirdPersonCamera = null } = {}) {
+  constructor({
+    controller,
+    thirdPersonCamera = null,
+    scoreboardOverlay = null,
+    onToggleControlSides = null,
+    onSpawnExtraBall = null,
+  } = {}) {
     this.controller = controller;
     this.thirdPersonCamera = thirdPersonCamera;
+    this.scoreboardOverlay = scoreboardOverlay;
+    this.onToggleControlSides = onToggleControlSides;
+    this.onSpawnExtraBall = onSpawnExtraBall;
     this._prevPressed = [];
     this._activeIndex = null;
     /** Post-deadzone left stick, `{ x, y }` in [-1, 1]. Zero when no pad / idle. */
@@ -67,6 +79,7 @@ export class GamepadManager {
       controller.analogMove = null;
       this.leftStick.x = 0;
       this.leftStick.y = 0;
+      this.scoreboardOverlay?.setGamepadScoreboardHeld?.(false);
       return;
     }
 
@@ -75,6 +88,16 @@ export class GamepadManager {
     const axes = pad.axes;
     const buttons = pad.buttons;
     const pressed = buttons.map((b) => !!b?.pressed);
+    const prev = this._prevPressed;
+    const edge = (i) => pressed[i] && !prev[i];
+
+    // These controls should still work after input source flips to keyboard
+    // (e.g. human adversary using mouse for camera), so read them directly.
+    this.scoreboardOverlay?.setGamepadScoreboardHeld?.(!!pressed[8]);
+    if (edge(9)) keys[kb.adversaryToggle] = true;
+    if (edge(10)) this.onToggleControlSides?.();
+    if (edge(11)) this.onSpawnExtraBall?.();
+
     const anyActivity = pressed.some(Boolean)
       || axes.some((v) => Math.abs(v ?? 0) > STICK_DEADZONE);
     if (anyActivity) setInputSource('gamepad');
@@ -87,9 +110,6 @@ export class GamepadManager {
       this.leftStick.y = 0;
       return;
     }
-    const prev = this._prevPressed;
-    const edge = (i) => pressed[i] && !prev[i];
-    const released = (i) => !pressed[i] && prev[i];
 
     const [lx, ly] = applyRadialDeadzone(axes[0] ?? 0, axes[1] ?? 0, STICK_DEADZONE);
     this.leftStick.x = lx;
@@ -132,12 +152,13 @@ export class GamepadManager {
     keys[kb.jump] = pressed[0];
     keys[kb.interact] = pressed[2];
     keys[kb.emote] = pressed[3];
-    keys[kb.adversaryToggle] = pressed[8];
-    keys[kb.heroActivate] = pressed[9];
 
-    // Edge-triggered (consumed by controller each fire)
-    if (edge(4)) keys[kb.drop] = true;
-    if (edge(5)) controller.mouseButtons.right = true;
+    if (edge(4)) keys[kb.heroActivate] = true;
+
+    if (edge(5)) {
+      if (controller.carriedItem) keys[kb.drop] = true;
+      else controller.mouseButtons.right = true;
+    }
 
     if (this.thirdPersonCamera) {
       const [rx, ry] = applyRadialDeadzone(axes[2] ?? 0, axes[3] ?? 0, STICK_DEADZONE);

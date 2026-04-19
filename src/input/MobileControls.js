@@ -191,6 +191,8 @@ export class MobileControls {
     this.onOpenEmote = onOpenEmote;
     this.moveX = 0;
     this.moveZ = 0;
+    /** When true, move stick cluster to the right and action buttons to the left (gamepad Menu/Start). */
+    this._sidesMirrored = false;
 
     this.root = document.createElement('div');
     this.root.dataset.mobileControls = 'true';
@@ -222,9 +224,12 @@ export class MobileControls {
       WebkitTouchCallout: 'none',
       WebkitTapHighlightColor: 'transparent',
       borderRadius: '50%',
-      background: 'radial-gradient(circle at 35% 28%, rgba(255,255,255,0.2), rgba(255,255,255,0.06) 46%, rgba(0,0,0,0.18))',
-      border: '1px solid rgba(255,255,255,0.28)',
-      boxShadow: '0 16px 34px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.16)',
+      background: [
+        'radial-gradient(circle at 50% 50%, rgba(251,191,36,0.18) 0 32%, transparent 33%)',
+        'radial-gradient(circle at 35% 28%, rgba(255,255,255,0.22), rgba(255,255,255,0.07) 46%, rgba(0,0,0,0.22))',
+      ].join(', '),
+      border: '2px solid rgba(255,247,194,0.42)',
+      boxShadow: '0 16px 34px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 0 24px rgba(251,191,36,0.12)',
       backdropFilter: 'blur(12px)',
       WebkitBackdropFilter: 'blur(12px)',
     });
@@ -235,14 +240,29 @@ export class MobileControls {
       width: '60px',
       height: '60px',
       borderRadius: '50%',
-      background: 'radial-gradient(circle at 35% 30%, rgba(255,255,255,0.42), rgba(255,255,255,0.1))',
-      border: '1px solid rgba(255,255,255,0.38)',
-      boxShadow: '0 8px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.24)',
+      background: 'radial-gradient(circle at 35% 28%, #fff7c2, #fbbf24 45%, #d97706 100%)',
+      border: '2px solid rgba(255,247,194,0.92)',
+      boxShadow: '0 10px 22px rgba(0,0,0,0.34), inset 0 2px 0 rgba(255,255,255,0.42), inset 0 -8px 16px rgba(17,24,39,0.18)',
       left: '50%',
       top: '50%',
       transform: 'translate(-50%, -50%)',
       pointerEvents: 'none',
     });
+
+    this.joystickCap = document.createElement('div');
+    Object.assign(this.joystickCap.style, {
+      position: 'absolute',
+      width: '18px',
+      height: '18px',
+      borderRadius: '50%',
+      left: '50%',
+      top: '50%',
+      transform: 'translate(-50%, -50%)',
+      background: 'rgba(17,24,39,0.68)',
+      boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.42), 0 1px 0 rgba(255,255,255,0.22)',
+      pointerEvents: 'none',
+    });
+    this.joystickKnob.appendChild(this.joystickCap);
     this.joystickZone.appendChild(this.joystickKnob);
 
     this.cameraZone = document.createElement('div');
@@ -328,6 +348,7 @@ export class MobileControls {
 
     this.root.append(this.cameraZone, this.joystickZone, this.buttonStack);
     this.parent.appendChild(this.root);
+    this._applySideLayout();
 
     this._held = { jump: false, sprint: false, crouch: false };
     this._cameraTouchId = null;
@@ -356,7 +377,32 @@ export class MobileControls {
     this._installJoystick();
     this._installCameraTouch();
     this._installButtons();
+    this._applySideLayout();
     return this;
+  }
+
+  /** Swap joystick side vs action-button cluster (for left-handed layout). */
+  toggleSides() {
+    this._sidesMirrored = !this._sidesMirrored;
+    this._applySideLayout();
+  }
+
+  _applySideLayout() {
+    const m = this._sidesMirrored;
+    Object.assign(this.joystickZone.style, m ? {
+      left: 'auto',
+      right: 'calc(16px + env(safe-area-inset-right))',
+    } : {
+      left: 'calc(16px + env(safe-area-inset-left))',
+      right: 'auto',
+    });
+    Object.assign(this.buttonStack.style, m ? {
+      left: 'calc(12px + env(safe-area-inset-left))',
+      right: 'auto',
+    } : {
+      left: 'auto',
+      right: 'calc(12px + env(safe-area-inset-right))',
+    });
   }
 
   _installJoystick() {
@@ -648,6 +694,7 @@ export class MobileControls {
   show() {
     this.root.style.display = 'block';
     this._applyViewportLock();
+    this._applySideLayout();
   }
 
   _releaseHeldInputs() {
