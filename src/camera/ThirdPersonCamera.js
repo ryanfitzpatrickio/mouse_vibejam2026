@@ -195,19 +195,26 @@ export class ThirdPersonCamera {
   /**
    * Returns a normalized, camera-relative movement direction from WASD-like input.
    */
+  /**
+   * Returns a normalized camera-relative move direction (XZ plane).
+   * Reuses internal scratch vectors — do not retain the reference across
+   * awaits or other calls that may re-enter this method.
+   */
   getCameraRelativeMovement(inputState) {
     const x = (inputState.right ? 1 : 0) - (inputState.left ? 1 : 0);
     const back = inputState.back ?? inputState.backward ?? false;
     const z = (back ? 1 : 0) - (inputState.forward ? 1 : 0);
 
+    const move = this._tempVectorC;
     if (x === 0 && z === 0) {
-      return new THREE.Vector3();
+      move.set(0, 0, 0);
+      return move;
     }
 
-    const move = new THREE.Vector3();
-    const forward = new THREE.Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw));
-    const right = new THREE.Vector3().crossVectors(forward, UP).normalize().negate();
+    const forward = this._tempVectorA.set(Math.sin(this.yaw), 0, Math.cos(this.yaw));
+    const right = this._tempVectorB.crossVectors(forward, UP).normalize().negate();
 
+    move.set(0, 0, 0);
     move.addScaledVector(forward, z);
     move.addScaledVector(right, x);
 

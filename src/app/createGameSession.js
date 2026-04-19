@@ -551,6 +551,13 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   let _prevCatAiState = 'idle';
 
   const _localNameplateWorld = new THREE.Vector3();
+  const _physicsInputDir = new THREE.Vector3();
+  const _physicsForward = new THREE.Vector3();
+  const _physicsRight = new THREE.Vector3();
+  const _physicsWorldUp = new THREE.Vector3(0, 1, 0);
+  const _physicsJumpSoundPos = new THREE.Vector3();
+  const _spatialEventPos = new THREE.Vector3();
+  let occlusionFrameIndex = 0;
 
   const DEFAULT_PUSH_BALL_RADIUS = 0.38;
   const PUSH_BALL_MAX_INSTANCES = 128;
@@ -851,6 +858,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   }
 
   function update(timeMs = 0, deltaSeconds = 1 / 60) {
+    occlusionFrameIndex += 1;
+
     if (roomba) {
       if (net.connected) {
         const serverRoomba = pickRemoteRoombaSnapshot(net.remotePredators);
@@ -886,11 +895,10 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       let inputDir;
       const mc = mobileControls;
       if (mc && (mc.moveX !== 0 || mc.moveZ !== 0)) {
-        const forward = new THREE.Vector3(Math.sin(thirdPersonCamera.yaw), 0, Math.cos(thirdPersonCamera.yaw));
-        const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize().negate();
-        inputDir = new THREE.Vector3()
-          .addScaledVector(forward, mc.moveZ)
-          .addScaledVector(right, mc.moveX);
+        inputDir = _physicsInputDir;
+        _physicsForward.set(Math.sin(thirdPersonCamera.yaw), 0, Math.cos(thirdPersonCamera.yaw));
+        _physicsRight.crossVectors(_physicsForward, _physicsWorldUp).normalize().negate();
+        inputDir.set(0, 0, 0).addScaledVector(_physicsForward, mc.moveZ).addScaledVector(_physicsRight, mc.moveX);
         if (inputDir.lengthSq() > 0.0001) inputDir.normalize();
       } else {
         inputDir = thirdPersonCamera.getCameraRelativeMovement({
@@ -930,14 +938,12 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         && predictionState.alive
         && predictionState.velocity.y > vyBeforeJump + 1.2
       ) {
-        audioManager.playSoundAtPosition(
-          'jump',
-          new THREE.Vector3(
-            predictionState.position.x,
-            predictionState.position.y + mouse.groundOffset,
-            predictionState.position.z,
-          ),
+        _physicsJumpSoundPos.set(
+          predictionState.position.x,
+          predictionState.position.y + mouse.groundOffset,
+          predictionState.position.z,
         );
+        audioManager.playSoundAtPosition('jump', _physicsJumpSoundPos);
       }
 
       // Update render position with smoothing to hide reconciliation corrections
@@ -1045,7 +1051,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
     if (net.connected) {
       remotePlayerManager.sync(net.remotePlayers);
-      remotePlayerManager.update(deltaSeconds, camera);
+      remotePlayerManager.update(deltaSeconds, camera, occlusionFrameIndex);
 
       // Detect smack / grab transitions and play spatial audio
       const allPlayers = new Map(net.remotePlayers);
@@ -1055,9 +1061,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         const curStun = pState.smackStunTimer ?? 0;
         if (curStun > 0 && prevStun <= 0) {
           // Just got smacked — play slap sound at their position
-          audioManager.playSoundAtPosition('smack', new THREE.Vector3(
-            pState.position.x, pState.position.y + 0.5, pState.position.z,
-          ));
+          _spatialEventPos.set(pState.position.x, pState.position.y + 0.5, pState.position.z);
+          audioManager.playSoundAtPosition('smack', _spatialEventPos);
         }
         _prevSmackStun.set(pid, curStun);
 
@@ -1065,9 +1070,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         const curGrab = pState.grabbedTarget ?? null;
         if (curGrab && !prevGrab) {
           // Just initiated a grab — play grab sound at their position
-          audioManager.playSoundAtPosition('grab', new THREE.Vector3(
-            pState.position.x, pState.position.y + 0.5, pState.position.z,
-          ));
+          _spatialEventPos.set(pState.position.x, pState.position.y + 0.5, pState.position.z);
+          audioManager.playSoundAtPosition('grab', _spatialEventPos);
         }
         _prevGrabbedTarget.set(pid, curGrab);
       }
@@ -1310,7 +1314,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     syncNameplateWorldPosition(localNameplateAnchor, mouse);
     localNameplateAnchor.getWorldPosition(_localNameplateWorld);
     localNameplate.setOccluded(
-      isNameplateOccluded(scene, camera, _localNameplateWorld, mouse),
+      isNameplateOccluded(scene, camera, _localNameplateWorld, mouse, occlusionFrameIndex),
     );
 
     audioManager.setAmbientChaseTarget(isLocalPlayerCatHuntTarget());

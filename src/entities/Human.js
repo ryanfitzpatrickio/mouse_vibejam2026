@@ -19,6 +19,7 @@ const ROOMBA_HALF_EXTENTS = NAV_AGENT_CONFIGS.roomba.queryHalfExtents;
 const ROOMBA_FILTER = createDefaultQueryFilter();
 const _navSampleScratch = createFindNearestPolyResult();
 const _tmpDir = new THREE.Vector3();
+const _humanSpatialSoundPos = new THREE.Vector3();
 
 const HUMAN_AI_TO_EXPRESSION = Object.freeze({
   idle: 'idle',
@@ -55,6 +56,9 @@ export class Human extends Predator {
     });
 
     this._turnAnimName = null;
+    this._memeStartHipWorld = new THREE.Vector3();
+    this._memeEndHipWorld = new THREE.Vector3();
+    this._memeHipCaptureActive = false;
     this._navPath = [];
     this._navPathIndex = 0;
     this._navRepathTimer = 0;
@@ -111,14 +115,14 @@ export class Human extends Predator {
     this._animateForState('roar');
     this._faceTarget(100);
     this._captureMemeStartHip();
-    getAudioManager().playSoundAtPosition('meme', this.position.clone());
+    getAudioManager().playSoundAtPosition('meme', _humanSpatialSoundPos.copy(this.position));
   }
 
   _captureMemeStartHip() {
     if (!this._hipBone) return;
-    this._memeStartHipWorld = new THREE.Vector3();
     this._hipBone.updateWorldMatrix(true, false);
     this._memeStartHipWorld.setFromMatrixPosition(this._hipBone.matrixWorld);
+    this._memeHipCaptureActive = true;
   }
 
   /**
@@ -126,13 +130,12 @@ export class Human extends Predator {
    * the character stays wherever the animation ended.
    */
   _commitMemeDrift() {
-    if (!this._hipBone || !this._memeStartHipWorld) return;
-    const end = new THREE.Vector3();
+    if (!this._hipBone || !this._memeHipCaptureActive) return;
     this._hipBone.updateWorldMatrix(true, false);
-    end.setFromMatrixPosition(this._hipBone.matrixWorld);
-    const dx = end.x - this._memeStartHipWorld.x;
-    const dz = end.z - this._memeStartHipWorld.z;
-    this._memeStartHipWorld = null;
+    this._memeEndHipWorld.setFromMatrixPosition(this._hipBone.matrixWorld);
+    const dx = this._memeEndHipWorld.x - this._memeStartHipWorld.x;
+    const dz = this._memeEndHipWorld.z - this._memeStartHipWorld.z;
+    this._memeHipCaptureActive = false;
 
     // Sweep the drift vector and bail out at the first step that would land
     // inside a wall, so the human never commits into an unrecoverable spot.

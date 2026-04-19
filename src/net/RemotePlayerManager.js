@@ -95,7 +95,7 @@ export class RemotePlayerManager {
    * @param {number} dt
    * @param {import('three').PerspectiveCamera} camera
    */
-  update(dt, camera) {
+  update(dt, camera, occlusionFrameIndex = 0) {
     const t = Math.min(1, dt * LERP_SPEED);
     for (const entry of this.players.values()) {
       entry.prevPos.copy(entry.mouse.position);
@@ -166,7 +166,7 @@ export class RemotePlayerManager {
       entry.nameplateAnchor.getWorldPosition(_nameplateWorldPos);
       entry.nameplate.setOccluded(
         camera
-          ? isNameplateOccluded(this.scene, camera, _nameplateWorldPos, entry.mouse)
+          ? isNameplateOccluded(this.scene, camera, _nameplateWorldPos, entry.mouse, occlusionFrameIndex)
           : false,
       );
     }
