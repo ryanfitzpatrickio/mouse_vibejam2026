@@ -11,19 +11,18 @@ import {
   HUD_LABEL_FONT,
 } from '../hud/hudStyle.js';
 
-const SLOT_COUNT = EMOTES.length;
-const SECTOR_ANGLE = (2 * Math.PI) / SLOT_COUNT;
 const DEAD_ZONE_PX = 40;
 const WHEEL_SIZE = 340;
 const SLOT_SIZE = 76;
 const SLOT_RADIUS = 116;
 
-function buildSlotLayouts() {
+function buildSlotLayouts(emotes = EMOTES) {
   const center = WHEEL_SIZE / 2;
   const half = SLOT_SIZE / 2;
   const startAngle = -Math.PI / 2;
-  return EMOTES.map((emote, i) => {
-    const angle = startAngle + i * SECTOR_ANGLE;
+  const sectorAngle = (2 * Math.PI) / Math.max(1, emotes.length);
+  return emotes.map((emote, i) => {
+    const angle = startAngle + i * sectorAngle;
     const cx = center + Math.cos(angle) * SLOT_RADIUS - half;
     const cy = center + Math.sin(angle) * SLOT_RADIUS - half;
     return { left: cx, top: cy, label: emote.label, emoji: emote.emoji };
@@ -33,10 +32,11 @@ function buildSlotLayouts() {
 function EmoteWheelView(props) {
   const slotStyle = (index) => {
     const on = index === props.state.selectedIndex;
+    const layout = props.state.layouts[index];
     return {
       position: 'absolute',
-      left: `${props.layouts[index].left}px`,
-      top: `${props.layouts[index].top}px`,
+      left: `${layout.left}px`,
+      top: `${layout.top}px`,
       width: `${SLOT_SIZE}px`,
       height: `${SLOT_SIZE}px`,
       'border-radius': '16px',
@@ -117,7 +117,7 @@ function EmoteWheelView(props) {
           >
             {props.state.centerLabel}
           </div>
-          <For each={props.layouts}>
+          <For each={props.state.layouts}>
             {(layout, i) => (
               <div style={slotStyle(i())}>
                 <div style={{ 'font-size': '28px', 'line-height': '1' }}>{layout.emoji}</div>
@@ -158,14 +158,16 @@ function EmoteWheelView(props) {
 }
 
 export class EmoteWheel {
-  constructor({ onSelect }) {
+  constructor({ onSelect, getEmotes = null }) {
     this.onSelect = onSelect;
+    this.getEmotes = typeof getEmotes === 'function' ? getEmotes : null;
     this._pointerId = null;
     this._centerX = 0;
     this._centerY = 0;
     this._cursorX = 0;
     this._cursorY = 0;
-    this._layouts = buildSlotLayouts();
+    this._emotes = EMOTES;
+    this._layouts = buildSlotLayouts(this._emotes);
     this._containerRef = null;
     this._wheelRef = null;
 
@@ -178,6 +180,7 @@ export class EmoteWheel {
       cursorLeft: 0,
       cursorTop: 0,
       cursorVisible: false,
+      layouts: this._layouts,
     });
     this._state = state;
     this._setState = setState;
@@ -191,7 +194,6 @@ export class EmoteWheel {
     this._dispose = render(() => (
       <EmoteWheelView
         state={state}
-        layouts={this._layouts}
         setContainerRef={(el) => { this._containerRef = el; }}
         setWheelRef={(el) => { this._wheelRef = el; }}
       />
@@ -218,7 +220,7 @@ export class EmoteWheel {
       batch(() => {
         this._setState({
           selectedIndex: index,
-          centerLabel: EMOTES[index].label,
+          centerLabel: this._emotes[index]?.label ?? 'EMOTE',
           centerOpacity: 1,
           centerColor: 'rgba(255, 230, 180, 0.9)',
         });
@@ -243,8 +245,9 @@ export class EmoteWheel {
     }
     let angle = Math.atan2(this._cursorY, this._cursorX) + Math.PI / 2;
     if (angle < 0) angle += 2 * Math.PI;
-    let index = Math.floor(angle / SECTOR_ANGLE);
-    if (index >= SLOT_COUNT) index = 0;
+    const sectorAngle = (2 * Math.PI) / Math.max(1, this._emotes.length);
+    let index = Math.floor(angle / sectorAngle);
+    if (index >= this._emotes.length) index = 0;
     this._highlight(index);
   }
 
@@ -315,7 +318,7 @@ export class EmoteWheel {
     if (!this._state.visible) return;
     const idx = this._state.selectedIndex;
     if (idx >= 0) {
-      const emote = EMOTES[idx];
+      const emote = this._emotes[idx];
       if (emote) {
         this.hide();
         this.onSelect?.(emote.id);
@@ -326,18 +329,21 @@ export class EmoteWheel {
   }
 
   _select(index) {
-    const emote = EMOTES[index];
+    const emote = this._emotes[index];
     if (!emote) return;
     this.hide();
     this.onSelect?.(emote.id);
   }
 
   show() {
+    this._emotes = this.getEmotes?.() ?? EMOTES;
+    this._layouts = buildSlotLayouts(this._emotes);
     batch(() => {
       this._setState({
         visible: true,
         selectedIndex: -1,
         cursorVisible: true,
+        layouts: this._layouts,
       });
     });
     this._cursorX = 0;

@@ -77,6 +77,8 @@ export class Human extends Predator {
     this._playableMoveDirection = 'straight';
     this._playableTurnDirection = null;
     this._playableClipAge = 0;
+    this._playableMemeEmoteActive = false;
+    this._playableMemeEmoteTimer = 0;
     this.eyeAnimator = new MouseEyeAtlasAnimator({
       stateToExpression: HUMAN_AI_TO_EXPRESSION,
     });
@@ -110,6 +112,12 @@ export class Human extends Predator {
   update(dt, ...rest) {
     if (this.playerControlled) {
       this._playableClipAge += dt;
+      if (this._playableMemeEmoteActive) {
+        this._playableMemeEmoteTimer -= dt;
+        if (this._playableMemeEmoteTimer <= 0) {
+          this.cancelPlayableMemeEmote();
+        }
+      }
       this.mixer?.update(dt);
       this.eyeAnimator?.update(dt);
       this.eyeAnimator?.setState('alert');
@@ -134,6 +142,8 @@ export class Human extends Predator {
       this._playableMoveDirection = 'straight';
       this._playableTurnDirection = null;
       this._playableClipAge = PLAYABLE_MIN_CLIP_HOLD;
+      this._playableMemeEmoteActive = false;
+      this._playableMemeEmoteTimer = 0;
       if (this.model) {
         this.model.position.y = this._groundedYOffset ?? this.model.position.y;
       }
@@ -144,6 +154,7 @@ export class Human extends Predator {
       this._playableMoveDirection = 'straight';
       this._playableTurnDirection = null;
       this._playableClipAge = PLAYABLE_MIN_CLIP_HOLD;
+      this.cancelPlayableMemeEmote();
       this._resetPlayableActionSpeeds();
       this.aiState = AI_STATE.IDLE;
       this.aiTimer = 0.5;
@@ -162,6 +173,8 @@ export class Human extends Predator {
       turnDirection = null,
     } = {},
   ) {
+    if (this._playableMemeEmoteActive) return;
+
     const baseState = state === 'jump'
       ? 'jump'
       : state === 'run'
@@ -278,6 +291,37 @@ export class Human extends Predator {
   _resetPlayableActionSpeeds() {
     for (const action of Object.values(this.actions ?? {})) {
       action?.setEffectiveTimeScale?.(1);
+    }
+  }
+
+  playPlayableMemeEmote() {
+    if (!this.playerControlled || this._playableMemeEmoteActive) return false;
+    const action = this.actions?.meme;
+    if (!action) return false;
+    this._playableMemeEmoteActive = true;
+    this._playableMemeEmoteTimer = this.roarDuration;
+    if (this.model) {
+      this.model.position.y = this._memeYOffset ?? this.model.position.y;
+    }
+    this._resetPlayableActionSpeeds();
+    this.playAnimation('meme', { fadeIn: 0.1, loop: false, clampWhenFinished: true });
+    this.actions?.meme?.setEffectiveTimeScale?.(1);
+    getAudioManager().playSoundAtPosition('meme', _humanSpatialSoundPos.copy(this.position));
+    return true;
+  }
+
+  cancelPlayableMemeEmote() {
+    if (!this._playableMemeEmoteActive) return;
+    this._playableMemeEmoteActive = false;
+    this._playableMemeEmoteTimer = 0;
+    if (this.model) {
+      this.model.position.y = this._groundedYOffset ?? this.model.position.y;
+    }
+    if (this.playerControlled) {
+      this._playableAnimState = '';
+      this._playableTurnAnim = null;
+      this._playableClipAge = PLAYABLE_MIN_CLIP_HOLD;
+      this.setPlayableAnimation('idle', { immediate: true });
     }
   }
 

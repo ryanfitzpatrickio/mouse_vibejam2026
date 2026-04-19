@@ -22,7 +22,11 @@ import { attachEdgeOutlines } from '../materials/index.js';
 import { createOutlinePipeline } from '../postprocessing/OutlinePipeline.js';
 import { NetworkClient } from '../net/NetworkClient.js';
 import { RemotePlayerManager } from '../net/RemotePlayerManager.js';
-import { EmoteManager } from '../emote/EmoteManager.js';
+import {
+  EmoteManager,
+  HUMAN_ADVERSARY_EMOTES,
+  HUMAN_ADVERSARY_RAT_EMOTE_ID,
+} from '../emote/EmoteManager.js';
 import { EmoteWheel } from '../emote/EmoteWheel.jsx';
 import { HeroPrompt } from '../hud/HeroPrompt.jsx';
 import { HeroAvatar } from '../entities/HeroAvatar.js';
@@ -525,6 +529,16 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     scene,
     getTargetObject: () => (predictionState?.isAdversary && human?.playerControlled ? human : mouse),
     getBubbleOffsetY: () => (predictionState?.isAdversary ? HUMAN_NAMEPLATE_OFFSET_Y : undefined),
+    onSpecialEmote: (def) => {
+      if (def.id !== HUMAN_ADVERSARY_RAT_EMOTE_ID) return;
+      if (!predictionState?.isAdversary || !human?.playerControlled) return;
+      human.playPlayableMemeEmote?.();
+    },
+    onSpecialEmoteCancel: (def) => {
+      if (def.id === HUMAN_ADVERSARY_RAT_EMOTE_ID) {
+        human?.cancelPlayableMemeEmote?.();
+      }
+    },
   });
   const heroPrompt = new HeroPrompt();
   let localHeroBrain = null;
@@ -551,6 +565,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     }
   }
   const emoteWheel = new EmoteWheel({
+    getEmotes: () => (predictionState?.isAdversary ? HUMAN_ADVERSARY_EMOTES : undefined),
     onSelect: (emoteId) => {
       emoteManager.play(emoteId);
     },
@@ -976,6 +991,16 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     );
     human.position.copy(_adversaryHumanPos);
     human.rotation.y = state.rotation ?? 0;
+    const memeEmoteActive = state.emote === HUMAN_ADVERSARY_RAT_EMOTE_ID
+      || (adversary.local && emoteManager.activeEmote?.id === HUMAN_ADVERSARY_RAT_EMOTE_ID);
+    if (memeEmoteActive) {
+      human.playPlayableMemeEmote?.();
+      _prevHumanControlRot = human.rotation.y;
+      _humanControlTurn = 0;
+      mouse.visible = !adversary.local;
+      return;
+    }
+    human.cancelPlayableMemeEmote?.();
     let rotDiff = _prevHumanControlRot == null ? 0 : human.rotation.y - _prevHumanControlRot;
     if (rotDiff > Math.PI) rotDiff -= Math.PI * 2;
     if (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
@@ -1076,6 +1101,25 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         crouch: !!keys[kb.crouch],
         rotation: mouse.rotation.y,
       };
+
+      const gameplayInterruptsHumanMeme = predictionState.isAdversary
+        && emoteManager.activeEmote?.id === HUMAN_ADVERSARY_RAT_EMOTE_ID
+        && (
+          inputDir.lengthSq() > 0.01
+          || jumpPressed
+          || jumpHeld
+          || !!keys[kb.sprint]
+          || !!keys[kb.crouch]
+          || !!keys[kb.grab]
+          || !!keys[kb.ropeGrab]
+          || !!keys[kb.interact]
+          || !!keys[kb.drop]
+          || !!keys[kb.heroActivate]
+          || !!keys[kb.adversaryToggle]
+        );
+      if (gameplayInterruptsHumanMeme) {
+        emoteManager.cancel();
+      }
 
       const colliders = getCollisionCollidersWithRoomba();
       const vyBeforeJump = predictionState.velocity.y;

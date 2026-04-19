@@ -11,16 +11,37 @@ const EMOTE_DEFS = [
   { id: 'scream',   label: 'Scream',    emoji: '😱', eyeRow: 'shocked',   sound: 'scream',   clip: 'Death',      duration: 1.4 },
 ];
 
+export const HUMAN_ADVERSARY_RAT_EMOTE_ID = 'human-rat-meme';
+export const HUMAN_ADVERSARY_RAT_EMOTE = Object.freeze({
+  id: HUMAN_ADVERSARY_RAT_EMOTE_ID,
+  label: 'Rat!',
+  emoji: '🐭',
+  duration: 30.0,
+  humanOnly: true,
+});
 export const EMOTES = Object.freeze(EMOTE_DEFS);
-export const EMOTE_MAP = Object.freeze(Object.fromEntries(EMOTE_DEFS.map((e) => [e.id, e])));
+export const HUMAN_ADVERSARY_EMOTES = Object.freeze([...EMOTE_DEFS, HUMAN_ADVERSARY_RAT_EMOTE]);
+export const EMOTE_MAP = Object.freeze(Object.fromEntries(
+  [...EMOTE_DEFS, HUMAN_ADVERSARY_RAT_EMOTE].map((e) => [e.id, e]),
+));
 
 export class EmoteManager {
-  constructor({ mouse, audioManager, scene = null, getTargetObject = null, getBubbleOffsetY = null }) {
+  constructor({
+    mouse,
+    audioManager,
+    scene = null,
+    getTargetObject = null,
+    getBubbleOffsetY = null,
+    onSpecialEmote = null,
+    onSpecialEmoteCancel = null,
+  }) {
     this.mouse = mouse;
     this.audioManager = audioManager;
     this.scene = scene;
     this.getTargetObject = typeof getTargetObject === 'function' ? getTargetObject : null;
     this.getBubbleOffsetY = typeof getBubbleOffsetY === 'function' ? getBubbleOffsetY : null;
+    this.onSpecialEmote = typeof onSpecialEmote === 'function' ? onSpecialEmote : null;
+    this.onSpecialEmoteCancel = typeof onSpecialEmoteCancel === 'function' ? onSpecialEmoteCancel : null;
     this.activeEmote = null;
     this.emoteTimer = 0;
     this._bubble = null;
@@ -34,12 +55,16 @@ export class EmoteManager {
     this.activeEmote = def;
     this.emoteTimer = def.duration;
 
-    this.mouse?.animationManager?.playEmoteClip(def.clip);
-    this.mouse?.eyeAnimator?.setExpressionOverride(def.eyeRow);
-
     const target = this.getTargetObject?.() ?? this.mouse;
 
-    if (this.audioManager && target?.position) {
+    if (def.id === HUMAN_ADVERSARY_RAT_EMOTE_ID) {
+      this.onSpecialEmote?.(def);
+    } else {
+      this.mouse?.animationManager?.playEmoteClip(def.clip);
+      this.mouse?.eyeAnimator?.setExpressionOverride(def.eyeRow);
+    }
+
+    if (def.id !== HUMAN_ADVERSARY_RAT_EMOTE_ID && this.audioManager && target?.position) {
       this.audioManager.playEmote(def.sound, target.position);
     }
 
@@ -54,8 +79,12 @@ export class EmoteManager {
 
   cancel() {
     if (!this.activeEmote) return;
+    const active = this.activeEmote;
     this.activeEmote = null;
     this.emoteTimer = 0;
+    if (active.id === HUMAN_ADVERSARY_RAT_EMOTE_ID) {
+      this.onSpecialEmoteCancel?.(active);
+    }
     this.mouse?.animationManager?.stopEmote();
     this.mouse?.eyeAnimator?.clearExpressionOverride();
   }
