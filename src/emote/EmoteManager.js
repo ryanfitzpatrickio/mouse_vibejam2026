@@ -1,14 +1,14 @@
 import { spawnEmoteBubble } from './EmoteBubble.js';
 
 const EMOTE_DEFS = [
-  { id: 'wave',     label: 'Wave',      emoji: '👋', eyeRow: 'surprised', sound: 'wave',     clip: 'Bite',       duration: 1.4 },
-  { id: 'dance',    label: 'Dance',     emoji: '💃', eyeRow: 'idle',      sound: 'dance',    clip: 'Run',        duration: 2.4 },
-  { id: 'laugh',    label: 'Laugh',     emoji: '😂', eyeRow: 'surprised', sound: 'laugh',    clip: 'Bite',       duration: 1.2 },
-  { id: 'cry',      label: 'Cry',       emoji: '😭', eyeRow: 'shocked',   sound: 'cry',      clip: 'Walk',       duration: 2.0 },
-  { id: 'angry',    label: 'Angry',     emoji: '😠', eyeRow: 'angry',     sound: 'angry',    clip: 'Bite',       duration: 1.0 },
-  { id: 'love',     label: 'Love',      emoji: '😍', eyeRow: 'surprised', sound: 'love',     clip: 'Idle Alert', duration: 1.8 },
-  { id: 'thumbsup', label: 'Thumbs Up', emoji: '👍', eyeRow: 'idle',      sound: 'thumbsup', clip: 'Idle Alert', duration: 1.2 },
-  { id: 'scream',   label: 'Scream',    emoji: '😱', eyeRow: 'shocked',   sound: 'scream',   clip: 'Death',      duration: 1.4 },
+  { id: 'wave',     label: 'Wave',      emoji: '👋', eyeOneShot: 'wink',          sound: 'wave',     clip: 'Bite',       duration: 1.4 },
+  { id: 'dance',    label: 'Dance',     emoji: '💃', eyeOneShot: 'victorySquint', sound: 'dance',    clip: 'Run',        duration: 2.4 },
+  { id: 'laugh',    label: 'Laugh',     emoji: '😂', eyeOneShot: 'happyClosed',   sound: 'laugh',    clip: 'Bite',       duration: 1.2 },
+  { id: 'cry',      label: 'Cry',       emoji: '😭', eyeOneShot: 'crying',        sound: 'cry',      clip: 'Walk',       duration: 2.0 },
+  { id: 'angry',    label: 'Angry',     emoji: '😠', eyeOneShot: 'furiousNarrow', sound: 'angry',    clip: 'Bite',       duration: 1.0 },
+  { id: 'love',     label: 'Love',      emoji: '😍', eyeOneShot: 'sparklingHappy', sound: 'love',    clip: 'Idle Alert', duration: 1.8 },
+  { id: 'thumbsup', label: 'Thumbs Up', emoji: '👍', eyeOneShot: 'brightWide',    sound: 'thumbsup', clip: 'Idle Alert', duration: 1.2 },
+  { id: 'scream',   label: 'Scream',    emoji: '😱', eyeOneShot: 'tinyPanic',     sound: 'scream',   clip: 'Death',      duration: 1.4 },
 ];
 
 export const HUMAN_ADVERSARY_RAT_EMOTE_ID = 'human-rat-meme';
@@ -63,7 +63,9 @@ export class EmoteManager {
       this.onSpecialEmote?.(def);
     } else {
       this.mouse?.animationManager?.playEmoteClip(def.clip);
-      this.mouse?.eyeAnimator?.setExpressionOverride(def.eyeRow);
+      this.mouse?.eyeAnimator?.setExpressionOverride(def.eyeOneShot ?? def.eyeRow, {
+        duration: def.eyeOneShot ? def.duration : 0,
+      });
     }
 
     if (def.id !== HUMAN_ADVERSARY_RAT_EMOTE_ID && this.audioManager && target?.position) {

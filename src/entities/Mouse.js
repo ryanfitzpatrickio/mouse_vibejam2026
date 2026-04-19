@@ -456,6 +456,10 @@ export class Mouse extends THREE.Group {
     return this.animationState;
   }
 
+  playEyeOneShot(expression, options) {
+    return this.eyeAnimator?.playOneShot?.(expression, options) ?? false;
+  }
+
   /**
    * Update animation based on state and time
    */

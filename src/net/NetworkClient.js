@@ -190,6 +190,20 @@ export class NetworkClient {
     }));
   }
 
+  sendUnlockPickup(itemId) {
+    if (this.ws?.readyState !== WebSocket.OPEN) return;
+    this.ws.send(JSON.stringify({ type: 'unlock-pickup', itemId }));
+  }
+
+  sendClaimHero({ heroKey, taskId }) {
+    if (this.ws?.readyState !== WebSocket.OPEN) return;
+    this.ws.send(JSON.stringify({
+      type: 'claim-hero',
+      heroKey,
+      taskId,
+    }));
+  }
+
   sendDisplayName(displayName) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({
@@ -275,6 +289,23 @@ export class NetworkClient {
         if (data.round) this.round = data.round;
         if (data.adversary) this.adversary = data.adversary;
         if (Array.isArray(data.extractionPortals)) this.extractionPortals = data.extractionPortals;
+        if (data.heroClaims) this.heroClaims = { ...data.heroClaims };
+        if (Array.isArray(data.unlockItems)) this.unlockItems = data.unlockItems;
+        break;
+
+      case 'unlock-reset':
+        if (Array.isArray(data.unlockItems)) this.unlockItems = data.unlockItems;
+        if (data.heroClaims) this.heroClaims = { ...data.heroClaims };
+        break;
+
+      case 'unlock-pickup-consumed':
+        if (Array.isArray(this.unlockItems)) {
+          this.unlockItems = this.unlockItems.filter((it) => it.id !== data.itemId);
+        }
+        break;
+
+      case 'hero-claimed':
+        this.heroClaims = { ...(this.heroClaims ?? {}), [data.heroKey]: data.playerId };
         break;
 
       case 'portal-spawn':

@@ -44,6 +44,24 @@
       "publicPath": "models/jerry.glb",
       "size": 0,
       "uploadedAt": "2026-04-18T00:00:00.000Z"
+    },
+    {
+      "id": "asset-gus-hero-001",
+      "name": "gus",
+      "filename": "gus.glb",
+      "sourcePath": "assets/source/custom/gus.glb",
+      "publicPath": "models/gus.glb",
+      "size": 0,
+      "uploadedAt": "2026-04-19T00:00:00.000Z"
+    },
+    {
+      "id": "asset-speedy-hero-001",
+      "name": "speedy",
+      "filename": "speedy.glb",
+      "sourcePath": "assets/source/custom/speedy.glb",
+      "publicPath": "models/speedy.glb",
+      "size": 0,
+      "uploadedAt": "2026-04-19T00:00:00.000Z"
     }
   ]
 }

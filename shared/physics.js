@@ -154,6 +154,9 @@ export function createPlayerState(id) {
     isHero: false,
     /** Hero system: which avatar model (key into client HERO_AVATARS) the server picked. */
     heroAvatar: null,
+    /** Session-persistent counts for collection-based hero unlocks. Do NOT reset per round. */
+    sewingCollected: 0,
+    speedTokensCollected: 0,
     /** True when this player has claimed the single adversary slot this round. */
     isAdversary: false,
     /** Adversary role key. For now only `human` is supported. */

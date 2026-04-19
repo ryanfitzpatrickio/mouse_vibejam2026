@@ -112,13 +112,20 @@ export class TaskController {
     const forwardY = player.rotation?.y ?? 0;
     aim.x -= Math.sin(forwardY) * 1.2;
     aim.z -= Math.cos(forwardY) * 1.2;
-    this.cheeseBurst.spawn(taskWorld, aim, Math.max(4, rewardAmount | 0));
-    this.net?.sendTaskComplete?.({
-      taskId: definition.id,
-      taskType: definition.taskType,
-      position: { x: aim.x, y: player.position.y, z: aim.z },
-      amount: rewardAmount,
-    });
+    if (runtime?.unlockHeroKey) {
+      this.net?.sendClaimHero?.({
+        heroKey: runtime.unlockHeroKey,
+        taskId: definition.id,
+      });
+    } else {
+      this.cheeseBurst.spawn(taskWorld, aim, Math.max(4, rewardAmount | 0));
+      this.net?.sendTaskComplete?.({
+        taskId: definition.id,
+        taskType: definition.taskType,
+        position: { x: aim.x, y: player.position.y, z: aim.z },
+        amount: rewardAmount,
+      });
+    }
 
     if (runtime?.onCompleteEffect && markerGroup && !this._completedEffects.has(definition.id)) {
       try {

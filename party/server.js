@@ -38,6 +38,8 @@ import {
   resetRoundStats,
 } from '../shared/roundState.js';
 import { collectExtractionPortalsFromLayout } from '../shared/extractionPortals.js';
+import { UNLOCK_HERO_DEFS } from '../shared/heroUnlocks.js';
+import { RAID_TASK_TYPES } from '../shared/raidLayout.js';
 
 /**
  * PartyKit env (dashboard / project .env for `partykit dev`):
@@ -254,9 +256,40 @@ export default class GameServer {
     this.cheeseWorld = new CheeseWorld();
     this._applyLayout(kitchenLayout, { resetPredators: true });
     this.round = createRoundState({ number: 1, now: Date.now() / 1000 });
+    /** Session-lifetime global first-to-claim for collection-unlock heroes. */
+    this.heroClaims = { gus: null, speedy: null };
+    this._claimHeroCooldown = new Map();
+    /** Scattered collectibles for hero unlocks; session-lifetime. */
+    this.unlockItems = this._scatterUnlockItems();
+    this._unlockPickupCooldown = new Map();
+  }
+
+  _scatterUnlockItems() {
+    const items = [];
+    const bounds = LEVEL_WORLD_BOUNDS_XZ;
+    const minX = bounds?.minX ?? -18;
+    const maxX = bounds?.maxX ?? 18;
+    const minZ = bounds?.minZ ?? -18;
+    const maxZ = bounds?.maxZ ?? 18;
+    const make = (kind, count) => {
+      for (let i = 0; i < count; i += 1) {
+        items.push({
+          id: `unlock-${kind}-${i}-${Math.random().toString(36).slice(2, 7)}`,
+          kind,
+          x: minX + Math.random() * (maxX - minX),
+          y: 0.2,
+          z: minZ + Math.random() * (maxZ - minZ),
+          consumed: false,
+        });
+      }
+    };
+    make('sewing', UNLOCK_HERO_DEFS.gus.scatterCount);
+    make('speed', UNLOCK_HERO_DEFS.speedy.scatterCount);
+    return items;
   }
 
   _applyLayout(layout, { resetPredators = false } = {}) {
+    this._layout = layout;
     this.levelColliders = buildRoomCollidersFromLayout(layout, { scaleFactor: 1 });
     this.spawnPoints = collectSpawnPointsFromLayout(layout);
     this.portalPlacements = collectVibePortalPlacementsFromLayout(layout);
@@ -497,6 +530,8 @@ export default class GameServer {
         safeRadius: ADVERSARY_SAFE_RADIUS,
       },
       extractionPortals: this.round.phase === 'extract' ? this.extractionPortalDefs : [],
+      heroClaims: { ...this.heroClaims },
+      unlockItems: this.unlockItems.filter((it) => !it.consumed),
     }));
 
     this.broadcast(JSON.stringify({
@@ -643,6 +678,16 @@ export default class GameServer {
       return;
     }
 
+    if (data.type === 'unlock-pickup') {
+      this._handleUnlockPickup(sender.id, data);
+      return;
+    }
+
+    if (data.type === 'claim-hero') {
+      this._handleClaimHero(sender.id, data);
+      return;
+    }
+
     if (data.type === 'dev-sync-layout') {
       if (!isDevLayoutSyncEnabled(this.room)) {
         return;
@@ -664,6 +709,8 @@ export default class GameServer {
     this._playerExtraBallSpawnCount.delete(conn.id);
     this._messageBuckets.delete(conn.id);
     this._taskCompleteCooldown.delete(conn.id);
+    this._claimHeroCooldown.delete(conn.id);
+    this._unlockPickupCooldown.delete(conn.id);
     this.portalArrivals.delete(conn.id);
     const leaving = this.players.get(conn.id);
     if (leaving?.isAdversary) this._recordAdversaryScore(conn.id, leaving);
@@ -748,6 +795,82 @@ export default class GameServer {
     if (leader) leader.heroAvailable = true;
   }
 
+  _findRaidTaskById(taskId) {
+    const tasks = this._layout?.raidTasks;
+    if (!Array.isArray(tasks)) return null;
+    for (const task of tasks) {
+      if (task?.id === taskId) return task;
+    }
+    return null;
+  }
+
+  _handleUnlockPickup(senderId, data) {
+    const player = this.players.get(senderId);
+    if (!player?.alive) return;
+    const itemId = typeof data?.itemId === 'string' ? data.itemId : null;
+    if (!itemId) return;
+    const now = Date.now();
+    const last = this._unlockPickupCooldown.get(senderId) ?? 0;
+    if (now - last < 120) return;
+    this._unlockPickupCooldown.set(senderId, now);
+    const item = this.unlockItems.find((it) => it.id === itemId && !it.consumed);
+    if (!item) return;
+    const dx = item.x - player.position.x;
+    const dz = item.z - player.position.z;
+    if (dx * dx + dz * dz > 4) return; // within ~2m
+    item.consumed = true;
+    if (item.kind === 'sewing') player.sewingCollected = (player.sewingCollected ?? 0) + 1;
+    else if (item.kind === 'speed') player.speedTokensCollected = (player.speedTokensCollected ?? 0) + 1;
+    this.broadcast(JSON.stringify({
+      type: 'unlock-pickup-consumed',
+      itemId,
+      playerId: senderId,
+      kind: item.kind,
+    }));
+  }
+
+  _handleClaimHero(senderId, data) {
+    const player = this.players.get(senderId);
+    if (!player?.alive || player.isAdversary || player.isHero) return;
+    const heroKey = typeof data?.heroKey === 'string' ? data.heroKey : null;
+    const def = UNLOCK_HERO_DEFS[heroKey];
+    if (!def) return;
+    const now = Date.now();
+    const last = this._claimHeroCooldown.get(senderId) ?? 0;
+    if (now - last < 600) return;
+    this._claimHeroCooldown.set(senderId, now);
+
+    if (this.heroClaims[heroKey]) return;
+
+    const counterField = heroKey === 'gus' ? 'sewingCollected' : 'speedTokensCollected';
+    const have = player[counterField] ?? 0;
+    const devBypass = isDevLayoutSyncEnabled(this.room);
+    if (!devBypass && have < def.requiredCount) return;
+
+    const expectedTaskType = heroKey === 'gus' ? RAID_TASK_TYPES.UNLOCK_GUS : RAID_TASK_TYPES.UNLOCK_SPEEDY;
+    const taskId = typeof data.taskId === 'string' ? data.taskId : null;
+    if (taskId) {
+      const task = this._findRaidTaskById(taskId);
+      if (!task || task.taskType !== expectedTaskType) return;
+      const dx = (task.position?.x ?? 0) - player.position.x;
+      const dz = (task.position?.z ?? 0) - player.position.z;
+      if (dx * dx + dz * dz > 9) return; // must be within ~3m of the marker
+    }
+
+    player[counterField] = Math.max(0, have - def.requiredCount);
+    this.heroClaims[heroKey] = senderId;
+    player.isHero = true;
+    player.heroAvailable = false;
+    player.heroAvatar = heroKey;
+
+    this.broadcast(JSON.stringify({
+      type: 'hero-claimed',
+      playerId: senderId,
+      heroKey,
+      taskId: taskId ?? null,
+    }));
+  }
+
   _finishRound() {
     const results = [];
     const adversaryResults = [];
@@ -800,6 +923,17 @@ export default class GameServer {
 
   _startNewRound() {
     this.cheeseWorld.seedScatter();
+    // Hero-unlock resets: clear claims, re-scatter collectibles, clear cooldowns.
+    // Player session counters (sewingCollected/speedTokensCollected) persist across rounds.
+    this.heroClaims = { gus: null, speedy: null };
+    this.unlockItems = this._scatterUnlockItems();
+    this._claimHeroCooldown.clear();
+    this._unlockPickupCooldown.clear();
+    this.broadcast(JSON.stringify({
+      type: 'unlock-reset',
+      heroClaims: { ...this.heroClaims },
+      unlockItems: this.unlockItems,
+    }));
     let idx = 0;
     for (const [id, state] of this.players) {
       if (!state.roundStats) state.roundStats = createRoundStats();

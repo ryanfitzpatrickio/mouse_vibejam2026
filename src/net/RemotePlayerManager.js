@@ -277,6 +277,11 @@ export class RemotePlayerManager {
     }
   }
 
+  playEyeOneShot(id, expression, options) {
+    const entry = this.players.get(id);
+    return entry?.mouse?.playEyeOneShot?.(expression, options) ?? false;
+  }
+
   dispose() {
     for (const entry of this.players.values()) {
       entry.nameplate.dispose();

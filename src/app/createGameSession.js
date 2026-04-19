@@ -30,6 +30,7 @@ import {
 import { EmoteWheel } from '../emote/EmoteWheel.jsx';
 import { HeroPrompt } from '../hud/HeroPrompt.jsx';
 import { TaskController } from '../tasks/TaskController.js';
+import { UnlockCollectibles } from '../tasks/UnlockCollectibles.js';
 import { HeroAvatar } from '../entities/HeroAvatar.js';
 import { getAudioManager } from '../audio/AudioManager.js';
 import { OcclusionFader } from '../utils/OcclusionFader.js';
@@ -623,6 +624,97 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     portalArrival: portalArrival.active ? portalArrival : null,
   });
   taskController.net = net;
+  const unlockCollectibles = new UnlockCollectibles({
+    scene,
+    net,
+    getPlayer: () => (predictionState?.isAdversary && human?.playerControlled ? human : mouse),
+  });
+  // Expose collection counters to the hero-unlock dialog (reads current
+  // server-authoritative counts for the local player).
+  window.__unlockCollected = (heroKey) => {
+    const ss = net.serverState;
+    if (!ss) return 0;
+    if (heroKey === 'gus') return ss.sewingCollected ?? 0;
+    if (heroKey === 'speedy') return ss.speedTokensCollected ?? 0;
+    return 0;
+  };
+
+  // Visuals for the unlock markers: default helper (pole + diamond) vs. a
+  // pile after the hero is claimed. Rebuilt on round reset.
+  function clearGroupChildren(g) {
+    while (g.children.length) {
+      const c = g.children[0];
+      g.remove(c);
+      c.traverse?.((n) => {
+        if (n.geometry) n.geometry.dispose?.();
+        if (n.material) {
+          const mats = Array.isArray(n.material) ? n.material : [n.material];
+          for (const m of mats) m.dispose?.();
+        }
+      });
+    }
+  }
+
+  function buildDefaultMarkerVisuals(group, id) {
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.06, 0.06, 1.1, 12),
+      new THREE.MeshBasicMaterial({ color: '#e8b84a', transparent: true, opacity: 0.92, depthWrite: false, toneMapped: false }),
+    );
+    pole.position.y = 0.55;
+    pole.userData.raidTaskId = id;
+    pole.userData.skipOutline = true;
+    group.add(pole);
+    const top = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.26, 0),
+      new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.95, depthWrite: false, toneMapped: false }),
+    );
+    top.position.y = 1.22;
+    top.userData.raidTaskId = id;
+    top.userData.skipOutline = true;
+    group.add(top);
+  }
+
+  function buildPileVisuals(group, heroKey) {
+    const color = heroKey === 'gus' ? 0xd486a8 : 0x6fb4ff;
+    for (let i = 0; i < 5; i += 1) {
+      const s = 0.13 + Math.random() * 0.08;
+      const mesh = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(s, 0),
+        new THREE.MeshStandardMaterial({ color, roughness: 0.6 }),
+      );
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.random() * 0.25;
+      mesh.position.set(Math.cos(a) * r, s, Math.sin(a) * r);
+      group.add(mesh);
+    }
+  }
+
+  function forEachUnlockMarker(fn) {
+    const entries = room?.editableRaidTaskObjects;
+    if (!entries) return;
+    for (const entry of entries.values()) {
+      const t = entry?.definition?.taskType;
+      if (t === 'unlock_gus' || t === 'unlock_speedy') fn(entry);
+    }
+  }
+
+  net.on((data) => {
+    if (data?.type === 'hero-claimed') {
+      const expectedType = data.heroKey === 'gus' ? 'unlock_gus' : 'unlock_speedy';
+      forEachUnlockMarker((entry) => {
+        if (entry.definition.taskType !== expectedType) return;
+        clearGroupChildren(entry.group);
+        buildPileVisuals(entry.group, data.heroKey);
+      });
+      return;
+    }
+    if (data?.type === 'unlock-reset') {
+      forEachUnlockMarker((entry) => {
+        clearGroupChildren(entry.group);
+        buildDefaultMarkerVisuals(entry.group, entry.definition.id);
+      });
+    }
+  });
   const remotePlayerManager = new RemotePlayerManager({ scene });
   // Per-mesh outlines on remote mice are redundant once the fullscreen outline
   // pass is active; leave the toggle available for comparison.
@@ -939,6 +1031,15 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
     if (data.type === 'round-end') {
       roundRaid.showRoundEnd(data);
+      const results = Array.isArray(data.results) ? data.results : [];
+      for (const row of results) {
+        const expression = row?.extracted ? 'victorySquint' : 'dizzy';
+        if (row?.id === net.localId) {
+          mouse.playEyeOneShot?.(expression, { duration: 4.0 });
+        } else if (row?.id) {
+          remotePlayerManager.playEyeOneShot(row.id, expression, { duration: 4.0 });
+        }
+      }
     }
   });
 
@@ -1313,6 +1414,11 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
           // Just got smacked — play slap sound at their position
           _spatialEventPos.set(pState.position.x, pState.position.y + 0.5, pState.position.z);
           audioManager.playSoundAtPosition('smack', _spatialEventPos);
+          if (pid === net.localId) {
+            mouse.playEyeOneShot?.('panicUp', { duration: 0.75 });
+          } else {
+            remotePlayerManager.playEyeOneShot(pid, 'panicUp', { duration: 0.75 });
+          }
         }
         _prevSmackStun.set(pid, curStun);
 
@@ -1563,6 +1669,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
     occlusionFader.update(deltaSeconds);
     taskController.update(deltaSeconds);
+    unlockCollectibles.update(deltaSeconds);
 
     localNameplate.setText(predictionState.displayName || getClientPreferredDisplayName());
     localNameplate.setAlive(predictionState.alive !== false);
@@ -1747,6 +1854,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     if (_humanWasPlayerControlled) human?.setPlayerControlled(false);
     scene.remove(localNameplateAnchor);
     taskController.dispose();
+    unlockCollectibles.dispose();
     taskPromptElement.remove();
     labelRenderer.domElement.remove();
     outlinePipeline.dispose();

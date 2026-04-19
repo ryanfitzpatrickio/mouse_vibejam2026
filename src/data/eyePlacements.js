@@ -9,7 +9,7 @@
 
 // Bump the suffix whenever you bake new defaults into DEFAULT_TARGETS so
 // stale localStorage overrides don't shadow them.
-const STORAGE_KEY = 'dressingRoom:eyePlacements:v6';
+const STORAGE_KEY = 'dressingRoom:eyePlacements:v8';
 
 /**
  * @typedef {Object} EyePlacement
@@ -75,6 +75,36 @@ const DEFAULT_TARGETS = Object.freeze({
     placement: {
       socket: 'mixamorigHead',
       position: v3(0.1099, 42.7039, 38.5184),
+      rotation: v3(0, 0, 0),
+      scale: v3(1.5, 1.5, 1.5),
+      eyeSize: 24,
+    },
+  },
+  gus: {
+    key: 'gus',
+    label: 'Gus (hero)',
+    kind: 'hero',
+    modelPath: 'models/gus.glb',
+    defaultSocket: 'Head',
+    previewWorldHeight: 0.6,
+    placement: {
+      socket: 'mixamorigHead',
+      position: v3(-1.1048945342778045, 30.272571524082284, 26.524565745154717),
+      rotation: v3(-0.6304103473295954, 0.030576893163649005, 0.03508419574589626),
+      scale: v3(1.5, 1.5, 1.5),
+      eyeSize: 24,
+    },
+  },
+  speedy: {
+    key: 'speedy',
+    label: 'Speedy (hero)',
+    kind: 'hero',
+    modelPath: 'models/speedy.glb',
+    defaultSocket: 'Head',
+    previewWorldHeight: 0.6,
+    placement: {
+      socket: 'mixamorigHead',
+      position: v3(0.7282319382734805, 29.676788650822736, 41.53705809640216),
       rotation: v3(0, 0, 0),
       scale: v3(1.5, 1.5, 1.5),
       eyeSize: 24,

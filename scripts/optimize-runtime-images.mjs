@@ -77,6 +77,22 @@ async function main() {
       nearLossless: false,
       label: 'eye atlas',
     },
+    {
+      input: path.join(SOURCE_DIR, 'eyesrandom1.jpg'),
+      output: path.join(ROOT, 'public', 'eyesrandom1.optimized.webp'),
+      width: 1920,
+      quality: 60,
+      nearLossless: false,
+      label: 'one-shot eye atlas 1',
+    },
+    {
+      input: path.join(SOURCE_DIR, 'eyesrandom2.jpg'),
+      output: path.join(ROOT, 'public', 'eyesrandom2.optimized.webp'),
+      width: 1920,
+      quality: 60,
+      nearLossless: false,
+      label: 'one-shot eye atlas 2',
+    },
   ];
 
   for (const entry of [...atlasSources, ...otherSources]) {

@@ -25,7 +25,14 @@ const STATE_TO_CLIP = Object.freeze({
 export const HERO_AVATARS = Object.freeze({
   brain: { modelPath: 'models/brain.glb', targetWorldHeight: 0.6 },
   jerry: { modelPath: 'models/jerry.glb', targetWorldHeight: 0.6 },
+  gus: { modelPath: 'models/gus.glb', targetWorldHeight: 0.6 },
+  speedy: { modelPath: 'models/speedy.glb', targetWorldHeight: 0.6 },
 });
+
+/** Score-based random hero pool — gus/speedy are earned via collection, not the random roll. */
+export const SCORE_HERO_AVATAR_KEYS = Object.freeze(['brain', 'jerry']);
+/** Collection-unlock heroes; claim is global first-come per session. */
+export const UNLOCK_HERO_AVATAR_KEYS = Object.freeze(['gus', 'speedy']);
 
 export const HERO_AVATAR_KEYS = Object.freeze(Object.keys(HERO_AVATARS));
 

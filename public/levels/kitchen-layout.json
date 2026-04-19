@@ -70,7 +70,7 @@
       },
       "texture": {
         "atlas": "textures2",
-        "cell": 37,
+        "cell": 17,
         "repeat": {
           "x": 6,
           "y": 0.5
@@ -4512,6 +4512,54 @@
       "rotation": {
         "x": 0,
         "y": 3.0229,
+        "z": 0
+      },
+      "deleted": false
+    },
+    {
+      "id": "raid-task-mo5hxebp-xql0x",
+      "name": "task-akz",
+      "taskType": "chew_wires",
+      "position": {
+        "x": -14,
+        "y": 0,
+        "z": -14
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0.852,
+        "z": 0
+      },
+      "deleted": false
+    },
+    {
+      "id": "raid-task-mo5jc2jm-aqqto",
+      "name": "task-ueh",
+      "taskType": "unlock_gus",
+      "position": {
+        "x": 20,
+        "y": 8,
+        "z": 14
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0.6705,
+        "z": 0
+      },
+      "deleted": false
+    },
+    {
+      "id": "raid-task-mo5je6kp-94bl1",
+      "name": "task-g2i",
+      "taskType": "unlock_speedy",
+      "position": {
+        "x": 23,
+        "y": 0,
+        "z": -22.5
+      },
+      "rotation": {
+        "x": 0,
+        "y": -3.1393,
         "z": 0
       },
       "deleted": false

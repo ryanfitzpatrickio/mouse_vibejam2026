@@ -1,5 +1,7 @@
 import { RAID_TASK_TYPES } from '../../shared/raidLayout.js';
+import { UNLOCK_HERO_DEFS } from '../../shared/heroUnlocks.js';
 import { openChewWiresTask } from './ChewWiresTask.jsx';
+import { openHeroUnlockTask } from './HeroUnlockTask.jsx';
 import { SmokeSparksEffect } from './SmokeSparksEffect.js';
 
 /**
@@ -16,6 +18,22 @@ export const TASK_RUNTIMES = Object.freeze({
     rewardAmount: 8,
     open: openChewWiresTask,
     onCompleteEffect: (scene, worldPos) => new SmokeSparksEffect(scene, worldPos),
+  },
+  [RAID_TASK_TYPES.UNLOCK_GUS]: {
+    id: RAID_TASK_TYPES.UNLOCK_GUS,
+    label: 'Unlock Gus',
+    promptVerb: `give 3 ${UNLOCK_HERO_DEFS.gus.itemShortPlural} to ${UNLOCK_HERO_DEFS.gus.label}`,
+    rewardAmount: 0,
+    unlockHeroKey: 'gus',
+    open: openHeroUnlockTask('gus'),
+  },
+  [RAID_TASK_TYPES.UNLOCK_SPEEDY]: {
+    id: RAID_TASK_TYPES.UNLOCK_SPEEDY,
+    label: 'Unlock Speedy',
+    promptVerb: `give 3 ${UNLOCK_HERO_DEFS.speedy.itemShortPlural} to ${UNLOCK_HERO_DEFS.speedy.label}`,
+    rewardAmount: 0,
+    unlockHeroKey: 'speedy',
+    open: openHeroUnlockTask('speedy'),
   },
 });
 
