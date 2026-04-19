@@ -16,6 +16,7 @@ import { GameToolbar } from '../hud/GameToolbar.jsx';
 import { CatLocatorOverlay } from '../hud/CatLocatorOverlay.jsx';
 import { ScoreboardOverlay } from '../hud/ScoreboardOverlay.jsx';
 import { ChaseAlertOverlay } from '../hud/ChaseAlertOverlay.jsx';
+import { AdversaryStatusOverlay } from '../hud/AdversaryStatusOverlay.jsx';
 import { WindStreakField } from '../world/WindStreakField.js';
 import { attachEdgeOutlines } from '../materials/index.js';
 import { createOutlinePipeline } from '../postprocessing/OutlinePipeline.js';
@@ -687,26 +688,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
   const scoreboard = new ScoreboardOverlay();
   const chaseAlert = new ChaseAlertOverlay();
-  const adversaryPrompt = document.createElement('div');
-  adversaryPrompt.textContent = 'Adversary role available - press J to become human';
-  Object.assign(adversaryPrompt.style, {
-    position: 'fixed',
-    top: '86px',
-    right: '14px',
-    zIndex: '121',
-    maxWidth: 'min(320px, calc(100vw - 28px))',
-    padding: '9px 12px',
-    borderRadius: '8px',
-    border: '2px solid rgba(255,255,255,0.28)',
-    background: 'linear-gradient(180deg, rgba(31,41,55,0.92), rgba(17,24,39,0.92))',
-    color: '#fde68a',
-    font: '700 14px "Fredoka", "Baloo", system-ui, sans-serif',
-    textShadow: '0 2px 0 rgba(0,0,0,0.55)',
-    pointerEvents: 'none',
-    display: 'none',
-    boxSizing: 'border-box',
-  });
-  document.body.appendChild(adversaryPrompt);
+  const adversaryStatus = new AdversaryStatusOverlay();
   const windStreaks = new WindStreakField({ camera });
   // The camera must be in the scene for its children (the wind streak LineSegments)
   // to render. Three.js skips children of objects not attached to the active scene.
@@ -925,6 +907,36 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       if (state?.isAdversary) return { id, state, local: false };
     }
     return null;
+  }
+
+  function getAdversaryStatusPatch(isAlive) {
+    const adversaryId = net.adversary?.playerId ?? null;
+    const localIsAdversary = !!net.serverState?.isAdversary;
+    const remoteAdversary = adversaryId && adversaryId !== net.localId
+      ? net.remotePlayers.get(adversaryId)
+      : null;
+    const fallbackRemote = remoteAdversary
+      ?? [...net.remotePlayers.values()].find((state) => state?.isAdversary);
+    const activeState = localIsAdversary ? net.serverState : fallbackRemote;
+
+    if (activeState?.isAdversary) {
+      const streakSeconds = Math.max(0, Number(activeState.adversarySafeStreakSeconds) || 0);
+      return {
+        mode: localIsAdversary ? 'local' : 'remote',
+        displayName: activeState.displayName || 'A player',
+        safeSeconds: activeState.adversarySafeSeconds ?? 0,
+        streakSeconds,
+        hiding: streakSeconds > 0.08,
+      };
+    }
+
+    const available = !!(
+      net.connected
+      && net.adversary?.available
+      && net.round?.phase !== 'intermission'
+      && isAlive
+    );
+    return { mode: available ? 'available' : 'off' };
   }
 
   function animationStateForHumanPlayer(state) {
@@ -1277,22 +1289,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       localHeroBrain.update(deltaSeconds);
     }
 
-    const adversaryAvailable = !!(
-      net.connected
-      && net.adversary?.available
-      && net.round?.phase !== 'intermission'
-      && !net.serverState?.isAdversary
-      && isAlive
-    );
-    adversaryPrompt.style.display = adversaryAvailable ? 'block' : 'none';
-    if (net.serverState?.isAdversary) {
-      const safe = Math.max(0, Number(net.serverState.adversarySafeSeconds) || 0);
-      const streak = Math.max(0, Number(net.serverState.adversarySafeStreakSeconds) || 0);
-      adversaryPrompt.textContent = `Human mode - ${safe.toFixed(1)}s clear (${streak.toFixed(1)}s streak). Press J to return.`;
-      adversaryPrompt.style.display = 'block';
-    } else {
-      adversaryPrompt.textContent = 'Adversary role available - press J to become human';
-    }
+    adversaryStatus.update(getAdversaryStatusPatch(isAlive));
 
     roundRaid.updatePhaseBanner(net.connected ? net.round : null, Date.now() / 1000, {
       subtitle: (net.round?.phase === 'extract' && (net.serverState?.extractProgress ?? 0) > 0.02)
@@ -1658,7 +1655,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     audioManager.stopAmbientBed();
     audioManager.stopMovementLoop();
     localNameplate.dispose();
-    adversaryPrompt.remove();
+    adversaryStatus.dispose();
     if (_humanWasPlayerControlled) human?.setPlayerControlled(false);
     scene.remove(localNameplateAnchor);
     labelRenderer.domElement.remove();
