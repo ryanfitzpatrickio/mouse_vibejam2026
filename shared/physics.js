@@ -131,6 +131,8 @@ export function createPlayerState(id) {
     grabbedBy: null,
     /** Player id this player is grabbing (null if not grabbing). */
     grabbedTarget: null,
+    /** Push-ball id this player is currently holding above their head (null if none). */
+    grabbedBallId: null,
     /** Seconds remaining of smack stun (plays death anim, recovers when 0). */
     smackStunTimer: 0,
     /** Cooldown before this player can grab again (seconds). */
@@ -578,6 +580,7 @@ export function respawnPlayer(state, spawnX, spawnZ, spawnY = 0) {
   state.ropeSwing = null;
   state.grabbedBy = null;
   state.grabbedTarget = null;
+  state.grabbedBallId = null;
   state.smackStunTimer = 0;
   state.grabCooldown = 0;
   state.smackCooldown = 0;

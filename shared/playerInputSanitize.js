@@ -54,6 +54,8 @@ export function sanitizePlayerInputMessage(data) {
     emote: sanitizeEmote(data.emote),
     grab: !!data.grab,
     smack: !!data.smack,
+    /** One-shot RB / G press to throw a held mouse or ball with physics. */
+    throw: !!data.throw,
     ropeGrab: !!data.ropeGrab,
     /** Hold E — extraction progress during extract phase. */
     interactHeld: !!data.interactHeld,

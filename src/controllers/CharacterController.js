@@ -100,6 +100,9 @@ export class CharacterController {
     this.jumpRequested = false;
     /** True while Q is held down */
     this.grabHeld = false;
+    /** Set true on G / RB keydown edge; cleared after the network reads it. */
+    this.throwPressed = false;
+    this._prevThrowDown = false;
     this.heroActivatePressed = false;
     this._heroKeyWasDown = false;
     this.adversaryTogglePressed = false;
@@ -449,10 +452,16 @@ export class CharacterController {
       this.mouseButtons.right = false;
       this.squeak();
     }
-    if (this.keys[this.keyBindings.drop]) {
-      this.keys[this.keyBindings.drop] = false;
-      this.dropItem();
+    // G (keyboard) / RB (gamepad) is now the throw key. We still drop a
+    // carried prop locally so the existing pickup system stays consistent,
+    // but we also flag throwPressed so the server can release / toss any
+    // held mouse or ball with physics.
+    const throwNow = !!this.keys[this.keyBindings.drop];
+    if (throwNow && !this._prevThrowDown) {
+      this.throwPressed = true;
+      if (this.carriedItem) this.dropItem();
     }
+    this._prevThrowDown = throwNow;
     const emoteKey = this.keyBindings.emote;
     const isEmotePressed = !!this.keys[emoteKey];
     if (isEmotePressed && !this._emoteKeyWasPressed) {

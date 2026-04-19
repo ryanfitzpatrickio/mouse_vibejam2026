@@ -313,6 +313,41 @@ export function createPushBallWorld({
     return hit;
   }
 
+  function getBallEntries() {
+    const list = [{ id: 'push-ball', body: ball, radius: BALL_RADIUS }];
+    for (const [id, { body, radius }] of extraBalls) {
+      list.push({ id, body, radius });
+    }
+    return list;
+  }
+
+  function getBallEntry(id) {
+    if (id === 'push-ball') return { id: 'push-ball', body: ball, radius: BALL_RADIUS };
+    const entry = extraBalls.get(id);
+    return entry ? { id, body: entry.body, radius: entry.radius } : null;
+  }
+
+  /** Pin a ball at (x,y,z) and zero its velocity — called every tick while held. */
+  function pinBall(id, x, y, z) {
+    const entry = getBallEntry(id);
+    if (!entry) return false;
+    entry.body.position.set(x, y, z);
+    entry.body.velocity.set(0, 0, 0);
+    entry.body.angularVelocity.set(0, 0, 0);
+    entry.body.wakeUp?.();
+    return true;
+  }
+
+  /** Toss a ball with a one-shot velocity (used by throw / release). */
+  function applyBallImpulse(id, vx, vy, vz, spin = 0) {
+    const entry = getBallEntry(id);
+    if (!entry) return false;
+    entry.body.wakeUp?.();
+    entry.body.velocity.set(vx, vy, vz);
+    if (spin) entry.body.angularVelocity.set(0, spin, 0);
+    return true;
+  }
+
   return {
     syncPlayers,
     step,
@@ -321,5 +356,9 @@ export function createPushBallWorld({
     smackBallsInFront,
     spawnExtraBallNear,
     setLevelColliders,
+    getBallEntries,
+    getBallEntry,
+    pinBall,
+    applyBallImpulse,
   };
 }

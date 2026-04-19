@@ -476,6 +476,7 @@ export default class GameServer {
     state.extracted = false;
     state.grabbedBy = null;
     state.grabbedTarget = null;
+    state.grabbedBallId = null;
     state.heroAvailable = false;
     state.isHero = false;
     state.heroAvatar = null;
@@ -1112,6 +1113,8 @@ export default class GameServer {
     /** Collect interaction requests from this tick's inputs. */
     const grabHeld = new Set();
     const smackRequests = [];
+    /** Player ids that pressed throw (RB / G) this tick. */
+    const throwRequests = new Set();
     for (const [id, state] of this.players) {
       const isHuman = this.inputQueues.has(id);
       state._interactHeld = false;
@@ -1309,6 +1312,7 @@ export default class GameServer {
           seqs[id] = this._lastSeq?.get(id) ?? 0;
         } else {
           let didSmack = false;
+          let didThrow = false;
           let lastGrab = false;
           let heroActivateReq = false;
           let adversaryToggleReq = false;
@@ -1333,6 +1337,7 @@ export default class GameServer {
             seqs[id] = input.seq;
             lastGrab = !!input.grab;
             if (input.smack) didSmack = true;
+            if (input.throw) didThrow = true;
             if (input.heroActivate) heroActivateReq = true;
             if (input.adversaryToggle) adversaryToggleReq = true;
             if (!lastRopeGrab && input.ropeGrab) ropeGrabPress = true;
@@ -1354,6 +1359,7 @@ export default class GameServer {
           }
           if (lastGrab) grabHeld.add(id);
           if (didSmack) smackRequests.push(id);
+          if (didThrow) throwRequests.add(id);
           if (adversaryToggleReq && this.round.phase !== 'intermission' && !state.spectator) {
             if (state.isAdversary) {
               this._setAdversary(state, false, id);
@@ -1503,22 +1509,36 @@ export default class GameServer {
           if (grabbed) grabbed.grabbedBy = null;
           target.grabbedTarget = null;
         }
+        if (target.grabbedBallId) {
+          target.grabbedBallId = null;
+        }
       }
     }
 
     // --- Process grab interactions (hold-based) ---
-    // Release grabs for anyone who stopped holding Q
+    // Release grabs for anyone who stopped holding Q (mice + balls).
     for (const [id, state] of this.players) {
       if (state.grabbedTarget && !grabHeld.has(id)) {
         const target = this.players.get(state.grabbedTarget);
         if (target) target.grabbedBy = null;
         state.grabbedTarget = null;
       }
+      if (state.grabbedBallId && !grabHeld.has(id)) {
+        // Drop the ball gently in front of the grabber so it doesn't snap
+        // back through the player capsule.
+        state.grabbedBallId = null;
+      }
     }
-    // Initiate new grabs for players holding Q without an active grab
+    // Track which balls are already claimed so we don't double-grab one.
+    const claimedBalls = new Set();
+    for (const [, state] of this.players) {
+      if (state.grabbedBallId) claimedBalls.add(state.grabbedBallId);
+    }
+    // Initiate new grabs for players holding Q without an active grab. Mice
+    // are preferred; balls are a fallback when no player is in range.
     for (const grabberId of grabHeld) {
       const grabber = this.players.get(grabberId);
-      if (!grabber?.alive || grabber.grabCooldown > 0 || grabber.grabbedTarget || grabber.extracted || grabber.spectator || grabber.isAdversary) continue;
+      if (!grabber?.alive || grabber.grabCooldown > 0 || grabber.grabbedTarget || grabber.grabbedBallId || grabber.extracted || grabber.spectator || grabber.isAdversary) continue;
       // Find nearest alive player in range
       let bestId = null;
       let bestDist = GRAB_RANGE;
@@ -1549,6 +1569,30 @@ export default class GameServer {
         if (grabber.roundStats) {
           grabber.roundStats.grabsInitiated = (grabber.roundStats.grabsInitiated ?? 0) + 1;
         }
+        continue;
+      }
+      // No mouse in range — try the nearest ball.
+      let bestBall = null;
+      let bestBallDist = GRAB_RANGE;
+      for (const entry of this.pushBallWorld.getBallEntries()) {
+        if (claimedBalls.has(entry.id)) continue;
+        const dx = entry.body.position.x - grabber.position.x;
+        const dz = entry.body.position.z - grabber.position.z;
+        const dy = entry.body.position.y - (grabber.position.y + 0.5);
+        const distXZ = Math.sqrt(dx * dx + dz * dz);
+        // Use ball radius as a small slack so we can scoop the bigger push-ball.
+        if (distXZ - entry.radius > bestBallDist) continue;
+        if (Math.abs(dy) > 1.4 + entry.radius) continue;
+        const effective = distXZ - entry.radius;
+        if (effective < bestBallDist) {
+          bestBallDist = effective;
+          bestBall = entry;
+        }
+      }
+      if (bestBall) {
+        grabber.grabbedBallId = bestBall.id;
+        grabber.grabAnimTimer = 0.6;
+        claimedBalls.add(bestBall.id);
       }
     }
 
@@ -1600,6 +1644,75 @@ export default class GameServer {
       if ((target.grabAnimTimer ?? 0) > 0) {
         target.grabAnimTimer = Math.max(0, target.grabAnimTimer - dt);
         target.animState = 'grab';
+      }
+    }
+
+    // --- Pin held balls above the grabber's head each tick ---
+    // Done before pushBallWorld.step so the proxy capsule doesn't immediately
+    // shove the ball away from its hold position.
+    const BALL_HOLD_FORWARD = 0.0;
+    const BALL_HOLD_UP = 1.05;
+    for (const [, state] of this.players) {
+      if (!state.grabbedBallId || !state.alive) {
+        if (state.grabbedBallId && !state.alive) state.grabbedBallId = null;
+        continue;
+      }
+      const entry = this.pushBallWorld.getBallEntry(state.grabbedBallId);
+      if (!entry) {
+        state.grabbedBallId = null;
+        continue;
+      }
+      const rot = state.rotation ?? 0;
+      const fx = Math.sin(rot);
+      const fz = Math.cos(rot);
+      const hx = state.position.x + fx * BALL_HOLD_FORWARD;
+      const hz = state.position.z + fz * BALL_HOLD_FORWARD;
+      const hy = state.position.y + BALL_HOLD_UP + entry.radius;
+      this.pushBallWorld.pinBall(state.grabbedBallId, hx, hy, hz);
+      if ((state.grabAnimTimer ?? 0) > 0) state.animState = 'grab';
+    }
+
+    // --- Throw: release any held mouse / ball with a forward + up impulse ---
+    // Mice are tossed via the same cannon-es flight world the roomba uses, so
+    // they actually arc through walls/floors instead of being short-circuited
+    // by the smack-stun gate that skips physics for downed players.
+    const THROW_BALL_SPEED = 14;
+    const THROW_BALL_UP = 5.5;
+    const THROW_BALL_SPIN = 8;
+    for (const throwerId of throwRequests) {
+      const thrower = this.players.get(throwerId);
+      if (!thrower?.alive || thrower.spectator || thrower.extracted) continue;
+      const rot = thrower.rotation ?? 0;
+      const fx = Math.sin(rot);
+      const fz = Math.cos(rot);
+      if (thrower.grabbedTarget) {
+        const target = this.players.get(thrower.grabbedTarget);
+        if (target) {
+          // Pop the target slightly forward of the thrower so the launch
+          // sphere doesn't spawn inside their capsule and immediately collide.
+          target.position.x = thrower.position.x + fx * 0.6;
+          target.position.z = thrower.position.z + fz * 0.6;
+          target.position.y = thrower.position.y + 0.9;
+          target.grabbedBy = null;
+          target.grabCooldown = GRAB_COOLDOWN;
+          this.mouseLaunchWorld.startFlight(target.id ?? thrower.grabbedTarget, target, fx, fz);
+          if (thrower.roundStats) {
+            thrower.roundStats.throwsLanded = (thrower.roundStats.throwsLanded ?? 0) + 1;
+          }
+        }
+        thrower.grabbedTarget = null;
+        thrower.grabCooldown = GRAB_COOLDOWN;
+      }
+      if (thrower.grabbedBallId) {
+        this.pushBallWorld.applyBallImpulse(
+          thrower.grabbedBallId,
+          fx * THROW_BALL_SPEED,
+          THROW_BALL_UP,
+          fz * THROW_BALL_SPEED,
+          THROW_BALL_SPIN,
+        );
+        thrower.grabbedBallId = null;
+        thrower.grabCooldown = GRAB_COOLDOWN;
       }
     }
 

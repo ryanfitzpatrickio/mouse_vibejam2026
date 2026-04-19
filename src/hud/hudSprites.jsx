@@ -213,6 +213,38 @@ export function CheeseItem(props) {
   );
 }
 
+export function HumanRoleIcon(props) {
+  return (
+    <IconSvg size={props.size}>
+      {/* Head */}
+      <circle
+        cx="50"
+        cy="28"
+        r="16"
+        fill="#f0c8a8"
+        stroke={OUTLINE}
+        stroke-width={OUTLINE_W}
+      />
+      {/* Body / shoulders */}
+      <path
+        d="M16 90 C 18 64, 34 52, 50 52 C 66 52, 82 64, 84 90 Z"
+        fill="#3b6fb5"
+        stroke={OUTLINE}
+        stroke-width={OUTLINE_W}
+        stroke-linejoin="round"
+      />
+      {/* Highlight */}
+      <path
+        d="M36 18 C 32 22, 32 28, 36 32"
+        fill="none"
+        stroke="rgba(255,255,255,0.55)"
+        stroke-width="4"
+        stroke-linecap="round"
+      />
+    </IconSvg>
+  );
+}
+
 /** Name-keyed icon registry — mirrors the old sprite-sheet lookup. */
 export const HUD_ICONS = Object.freeze({
   HEART_HEALTH_HAPPY: HeartHealthHappy,
@@ -221,4 +253,5 @@ export const HUD_ICONS = Object.freeze({
   STAMINA_BOLT: StaminaBolt,
   MOUSE_HEAD_TARGET: MouseHeadTarget,
   CHEESE_ITEM: CheeseItem,
+  HUMAN_ROLE: HumanRoleIcon,
 });

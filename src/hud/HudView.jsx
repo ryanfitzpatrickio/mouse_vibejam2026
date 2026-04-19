@@ -167,9 +167,102 @@ function Counter(props) {
   );
 }
 
+function formatSeconds(value) {
+  return `${Math.max(0, Number(value) || 0).toFixed(1)}s`;
+}
+
+function HumanRoleRow(props) {
+  const role = () => props.state.humanRole ?? { mode: 'off' };
+  const mode = () => role().mode;
+  const isAvailable = () => mode() === 'available';
+  const isLocal = () => mode() === 'local';
+  const hiding = () => !!role().hiding;
+  const statusText = () => {
+    if (isAvailable()) return 'OPEN';
+    return hiding() ? 'HIDING' : 'SEEN';
+  };
+  const statusColor = () => {
+    if (isAvailable()) return '#ffe08a';
+    return hiding() ? '#9dffb1' : '#ffcf8a';
+  };
+  const subtitle = () => {
+    if (isAvailable()) return 'Adversary available';
+    if (isLocal()) return 'You are the human';
+    const dn = role().displayName || 'A player';
+    return `${dn} is the human`;
+  };
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        'align-items': 'center',
+        gap: '10px',
+      }}
+    >
+      <Sprite name="HUMAN_ROLE" size={ICON_SIZE} />
+      <div
+        style={{
+          display: 'flex',
+          'flex-direction': 'column',
+          'line-height': '1.1',
+          flex: '1',
+          'min-width': '0',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            'align-items': 'baseline',
+            gap: '8px',
+          }}
+        >
+          <div
+            style={{
+              color: statusColor(),
+              font: LABEL_FONT,
+              'letter-spacing': '0.06em',
+              'text-shadow': LABEL_SHADOW,
+            }}
+          >
+            HUMAN: {statusText()}
+          </div>
+          <Show when={!isAvailable()}>
+            <div
+              style={{
+                color: '#fff',
+                font: VALUE_FONT,
+                'text-shadow': LABEL_SHADOW,
+              }}
+            >
+              {formatSeconds(role().streakSeconds)}
+              <span style={{ color: '#cdd6e8', opacity: '0.85' }}>
+                {' / '}{formatSeconds(role().safeSeconds)}
+              </span>
+            </div>
+          </Show>
+        </div>
+        <div
+          style={{
+            color: '#dce8ff',
+            font: LABEL_FONT,
+            'text-shadow': LABEL_SHADOW,
+            'white-space': 'nowrap',
+            overflow: 'hidden',
+            'text-overflow': 'ellipsis',
+          }}
+        >
+          {subtitle()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function HudView(props) {
   const healthPct = () => props.state.health;
   const staminaPct = () => props.state.stamina;
+  const humanRoleActive = () => (props.state.humanRole?.mode ?? 'off') !== 'off';
 
   const healthText = createMemo(() => {
     const v = Math.round((props.state.health ?? 0) * 100);
@@ -252,6 +345,10 @@ export function HudView(props) {
             valueText={playerText}
           />
         </div>
+
+        <Show when={humanRoleActive()}>
+          <HumanRoleRow state={props.state} />
+        </Show>
       </div>
 
       <Show when={props.state.hint}>

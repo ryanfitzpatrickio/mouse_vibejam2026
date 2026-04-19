@@ -40,6 +40,13 @@ export class HUD {
       alive: true,
       respawnCountdown: 0,
       hint: null,
+      humanRole: {
+        mode: 'off',
+        displayName: '',
+        safeSeconds: 0,
+        streakSeconds: 0,
+        hiding: false,
+      },
     });
     this._setState = setState;
     this._dispose = render(() => <HudView state={state} />, this._mount);
@@ -55,6 +62,16 @@ export class HUD {
     if (!Object.keys(part).length) return;
     batch(() => {
       this._setState(part);
+    });
+  }
+
+  updateHumanRole(patch = {}) {
+    this._setState('humanRole', {
+      mode: patch.mode ?? 'off',
+      displayName: patch.displayName ?? '',
+      safeSeconds: patch.safeSeconds ?? 0,
+      streakSeconds: patch.streakSeconds ?? 0,
+      hiding: !!patch.hiding,
     });
   }
 

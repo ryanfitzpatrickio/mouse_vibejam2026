@@ -17,7 +17,7 @@ const MOVE_RESPONSE_EXPO = 1.6;
  * Buttons (standard mapping indices):
  *   0 A  -> jump            1 B  -> grab
  *   2 X  -> interact        3 Y  -> emote
- *   4 LB -> hero (one-shot) 5 RB -> throw/drop when carrying; else squeak (right-click)
+ *   4 LB -> hero (one-shot) 5 RB -> throw (release held mouse / ball / item with physics)
  *   6 LT -> crouch          7 RT -> sprint
  *   8 View/Select/Share (hold) -> scoreboard
  *   9 Menu/Start (edge) -> adversary toggle (works even if stick/camera last used keyboard)
@@ -155,10 +155,10 @@ export class GamepadManager {
 
     if (edge(4)) keys[kb.heroActivate] = true;
 
-    if (edge(5)) {
-      if (controller.carriedItem) keys[kb.drop] = true;
-      else controller.mouseButtons.right = true;
-    }
+    // RB is the throw key. We piggyback on the same `drop` binding the
+    // CharacterController watches so KeyG / RB share a single edge path; the
+    // controller's _prevThrowDown latch turns the held bit into a one-shot.
+    keys[kb.drop] = !!pressed[5];
 
     if (this.thirdPersonCamera) {
       const [rx, ry] = applyRadialDeadzone(axes[2] ?? 0, axes[3] ?? 0, STICK_DEADZONE);

@@ -1391,6 +1391,10 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
           controller.smackPressed = false;
           _smackFiredThisFrame = true;
         }
+        if (controller.throwPressed) {
+          inputWithEmote.throw = true;
+          controller.throwPressed = false;
+        }
         if (controller.heroActivatePressed) {
           inputWithEmote.heroActivate = true;
           controller.heroActivatePressed = false;
@@ -1514,7 +1518,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       localHeroBrain.update(deltaSeconds);
     }
 
-    adversaryStatus.update(getAdversaryStatusPatch(isAlive));
+    const humanRolePatch = getAdversaryStatusPatch(isAlive);
+    adversaryStatus.update(humanRolePatch);
+    hud.updateHumanRole(humanRolePatch);
 
     roundRaid.updatePhaseBanner(net.connected ? net.round : null, Date.now() / 1000, {
       subtitle: (net.round?.phase === 'extract' && (net.serverState?.extractProgress ?? 0) > 0.02)

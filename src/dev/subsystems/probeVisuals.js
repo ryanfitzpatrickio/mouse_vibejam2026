@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+const COPLANAR_EDITABLE_EPSILON = 0.03;
+
 export function installProbeVisuals(editor) {
   const positions = new Float32Array(6);
   const geometry = new THREE.BufferGeometry();
@@ -61,18 +63,74 @@ export function editableIdFromObject(object) {
     ?? null;
 }
 
+function isBuiltInEditable(editor, object) {
+  const id = editableIdFromObject(object);
+  return !!id && editor.app.room.builtInEditableMeshes?.has(id) === true;
+}
+
+/**
+ * Raycast against the scene and return both the closest hit overall (for the
+ * pointer line / tooltip) and the closest hit that resolves to an editable
+ * primitive / light / portal / rope etc. The split is important: the raw
+ * first hit is often a non-editable floor or decoration mesh that shadows the
+ * plane the user is actually aiming at. Walking the full sorted list lets a
+ * click cut through those to the editable thing behind them.
+ */
+export function pickEditableHit(editor) {
+  editor.raycaster.setFromCamera(editor.pointerNdc, editor.app.camera);
+  const hits = editor.raycaster.intersectObjects(editor.app.scene.children, true)
+    .filter((hit) => {
+      const obj = hit.object;
+      if (!obj || obj.visible === false) return false;
+      if (obj.userData?.editorHelper === true) return false;
+      // Skip line / sprite helpers that have no real surface to grab.
+      if (obj.isLine || obj.isLineSegments || obj.isLine2 || obj.isSprite) return false;
+      return true;
+    });
+
+  let editableHit = null;
+  for (const candidate of hits) {
+    const editableObject = resolveEditableHitObject(candidate.object);
+    if (editableObject && editableIdFromObject(editableObject)) {
+      editableHit = candidate;
+      break;
+    }
+  }
+
+  if (editableHit) {
+    const editableObject = resolveEditableHitObject(editableHit.object);
+    if (isBuiltInEditable(editor, editableObject)) {
+      const customCoplanarHit = hits.find((candidate) => {
+        if (Math.abs(candidate.distance - editableHit.distance) > COPLANAR_EDITABLE_EPSILON) {
+          return false;
+        }
+        const candidateObject = resolveEditableHitObject(candidate.object);
+        return candidateObject
+          && editableIdFromObject(candidateObject)
+          && !isBuiltInEditable(editor, candidateObject);
+      });
+      if (customCoplanarHit) {
+        editableHit = customCoplanarHit;
+      }
+    }
+  }
+
+  return { closestHit: hits[0] ?? null, editableHit };
+}
+
 export function updateProbe(editor) {
   if (!editor.pointerInsideCanvas) {
     hideProbe(editor);
     return;
   }
 
-  editor.raycaster.setFromCamera(editor.pointerNdc, editor.app.camera);
-  const hits = editor.raycaster.intersectObjects(editor.app.scene.children, true)
-    .filter((hit) => hit.object?.visible !== false && hit.object?.userData?.editorHelper !== true);
-
-  const hit = hits[0] ?? null;
+  const { closestHit, editableHit } = pickEditableHit(editor);
+  // Prefer the editable hit for the highlight + click target; fall back to
+  // the closest raw hit so the tooltip still shows surface info on hovers
+  // over plain geometry.
+  const hit = editableHit ?? closestHit;
   editor.currentHit = hit;
+  editor.currentEditableHit = editableHit;
   if (!hit) {
     hideProbe(editor);
     return;

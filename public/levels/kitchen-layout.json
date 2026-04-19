@@ -4362,6 +4362,55 @@
       "castShadow": false,
       "receiveShadow": false,
       "deleted": false
+    },
+    {
+      "id": "primitive-mo63iwe3-obcjr",
+      "name": "plane-n1c",
+      "type": "plane",
+      "spawnType": null,
+      "position": {
+        "x": -7,
+        "y": 0,
+        "z": -39
+      },
+      "rotation": {
+        "x": -1.5707963267948966,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 98,
+        "y": 18,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "textures4",
+        "cell": 56,
+        "repeat": {
+          "x": 8,
+          "y": 2
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 0.88,
+        "metalness": 0.04
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": true,
+      "colliderClearance": 0,
+      "castShadow": true,
+      "receiveShadow": true,
+      "deleted": false,
+      "zIndex": 0
     }
   ],
   "lights": [
