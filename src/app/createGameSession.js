@@ -58,10 +58,29 @@ function createWebGLRenderer(canvas) {
   return renderer;
 }
 
+function dampValue(current, target, smoothing, dt) {
+  if (dt <= 0) return target;
+  const t = 1 - Math.exp(-smoothing * dt);
+  return current + (target - current) * t;
+}
+
+function directionBucketFromLateral(current, lateral, enter = 0.34, exit = 0.16) {
+  if (current === 'right') return lateral < exit ? 'straight' : 'right';
+  if (current === 'left') return lateral > -exit ? 'straight' : 'left';
+  if (lateral > enter) return 'right';
+  if (lateral < -enter) return 'left';
+  return 'straight';
+}
+
 const ENABLE_BUNNY_PREDATOR = false;
 const ENABLE_CAT_PREDATOR = true;
 const ENABLE_ROOMBA_PREDATOR = true;
 const ENABLE_HUMAN_PREDATOR = true;
+const MOUSE_CAMERA_ARM_LENGTH = 3.5;
+const HUMAN_CAMERA_ARM_LENGTH = 8.5;
+const MOUSE_CAMERA_SHOULDER_Y = 1.3;
+const HUMAN_CAMERA_SHOULDER_Y = 5.6;
+const HUMAN_NAMEPLATE_OFFSET_Y = 9.35;
 
 function pickRemoteRoombaSnapshot(remotePredators) {
   for (const p of remotePredators.values()) {
@@ -296,7 +315,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const thirdPersonCamera = new ThirdPersonCamera({
     camera,
     domElement: canvas,
-    armLength: 3.5,
+    armLength: MOUSE_CAMERA_ARM_LENGTH,
+    maxArmLength: 11,
     collisionQuery: getCollisionCollidersWithRoomba,
   });
 
@@ -531,7 +551,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const occlusionFader = new OcclusionFader({
     scene,
     camera,
-    getPlayer: () => mouse,
+    getPlayer: () => (predictionState?.isAdversary && human?.playerControlled ? human : mouse),
   });
 
   // --- Multiplayer ---
@@ -660,6 +680,26 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
   const scoreboard = new ScoreboardOverlay();
   const chaseAlert = new ChaseAlertOverlay();
+  const adversaryPrompt = document.createElement('div');
+  adversaryPrompt.textContent = 'Adversary role available - press J to become human';
+  Object.assign(adversaryPrompt.style, {
+    position: 'fixed',
+    top: '86px',
+    right: '14px',
+    zIndex: '121',
+    maxWidth: 'min(320px, calc(100vw - 28px))',
+    padding: '9px 12px',
+    borderRadius: '8px',
+    border: '2px solid rgba(255,255,255,0.28)',
+    background: 'linear-gradient(180deg, rgba(31,41,55,0.92), rgba(17,24,39,0.92))',
+    color: '#fde68a',
+    font: '700 14px "Fredoka", "Baloo", system-ui, sans-serif',
+    textShadow: '0 2px 0 rgba(0,0,0,0.55)',
+    pointerEvents: 'none',
+    display: 'none',
+    boxSizing: 'border-box',
+  });
+  document.body.appendChild(adversaryPrompt);
   const windStreaks = new WindStreakField({ camera });
   // The camera must be in the scene for its children (the wind streak LineSegments)
   // to render. Three.js skips children of objects not attached to the active scene.
@@ -711,6 +751,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       deaths: p.deaths ?? 0,
       chaseSec: playerChaseRecordSeconds(p),
       cheese: Math.max(0, Math.floor(p.cheeseCarried ?? 0)),
+      role: p.isAdversary ? 'Human' : 'Mouse',
+      adversarySafeSeconds: p.adversarySafeSeconds ?? 0,
     }));
     rows.sort(
       (a, b) => b.chaseSec - a.chaseSec
@@ -774,6 +816,10 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     predictionState.spectator = !!ss.spectator;
     predictionState.extracted = !!ss.extracted;
     predictionState.extractProgress = ss.extractProgress ?? 0;
+    predictionState.isAdversary = !!ss.isAdversary;
+    predictionState.adversaryRole = ss.adversaryRole ?? null;
+    predictionState.adversarySafeSeconds = ss.adversarySafeSeconds ?? 0;
+    predictionState.adversarySafeStreakSeconds = ss.adversarySafeStreakSeconds ?? 0;
     if (ss.roundStats && typeof ss.roundStats === 'object') {
       predictionState.roundStats = { ...predictionState.roundStats, ...ss.roundStats };
     }
@@ -857,6 +903,89 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     mobileControls = mc;
   }
 
+  const _adversaryHumanPos = new THREE.Vector3();
+  let _humanWasPlayerControlled = false;
+  let _prevHumanControlRot = null;
+  let _humanControlTurn = 0;
+  let _humanControlMoveDirection = 'straight';
+
+  function findAdversaryPlayerState() {
+    if (!net.connected) return null;
+    if (net.serverState?.isAdversary) {
+      return { id: net.localId, state: predictionState, local: true };
+    }
+    for (const [id, state] of net.remotePlayers) {
+      if (state?.isAdversary) return { id, state, local: false };
+    }
+    return null;
+  }
+
+  function animationStateForHumanPlayer(state) {
+    if (!state?.alive) return 'idle';
+    if (!state.grounded) return 'jump';
+    const vx = Number(state.velocity?.x) || 0;
+    const vz = Number(state.velocity?.z) || 0;
+    const speed = Math.hypot(vx, vz);
+    if (speed > 5) return 'run';
+    if (speed > 0.4) return 'walk';
+    return 'idle';
+  }
+
+  function syncPlayableHuman(deltaSeconds) {
+    if (!human) return;
+    const adversary = findAdversaryPlayerState();
+    if (!adversary?.state?.position) {
+      if (_humanWasPlayerControlled) {
+        human.setPlayerControlled(false);
+        _humanWasPlayerControlled = false;
+        _prevHumanControlRot = null;
+        _humanControlTurn = 0;
+        _humanControlMoveDirection = 'straight';
+      }
+      mouse.visible = true;
+      return;
+    }
+
+    const state = adversary.state;
+    _humanWasPlayerControlled = true;
+    human.setPlayerControlled(true);
+    human.visible = true;
+    _adversaryHumanPos.set(
+      state.position.x ?? 0,
+      state.position.y ?? 0,
+      state.position.z ?? 0,
+    );
+    human.position.copy(_adversaryHumanPos);
+    human.rotation.y = state.rotation ?? 0;
+    let rotDiff = _prevHumanControlRot == null ? 0 : human.rotation.y - _prevHumanControlRot;
+    if (rotDiff > Math.PI) rotDiff -= Math.PI * 2;
+    if (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
+    const turn = _prevHumanControlRot == null || deltaSeconds <= 0
+      ? 0
+      : THREE.MathUtils.clamp(rotDiff / Math.max(0.001, deltaSeconds) / 4.5, -1, 1);
+    _humanControlTurn = dampValue(_humanControlTurn, turn, 12, deltaSeconds);
+    _prevHumanControlRot = human.rotation.y;
+    const vx = Number(state.velocity?.x) || 0;
+    const vz = Number(state.velocity?.z) || 0;
+    const speed = Math.hypot(vx, vz);
+    const fx = Math.sin(human.rotation.y);
+    const fz = Math.cos(human.rotation.y);
+    const rx = Math.cos(human.rotation.y);
+    const rz = -Math.sin(human.rotation.y);
+    const localForward = vx * fx + vz * fz;
+    const localRight = vx * rx + vz * rz;
+    const backward = localForward < -0.2;
+    const lateral = speed > 0.001 && localForward > 0.15 ? localRight / speed : 0;
+    _humanControlMoveDirection = directionBucketFromLateral(_humanControlMoveDirection, lateral);
+    human.setPlayableAnimation(animationStateForHumanPlayer(state), {
+      turn: _humanControlTurn,
+      backward,
+      moveDirection: _humanControlMoveDirection,
+    });
+
+    mouse.visible = !adversary.local;
+  }
+
   function update(timeMs = 0, deltaSeconds = 1 / 60) {
     occlusionFrameIndex += 1;
 
@@ -936,6 +1065,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       if (
         jumpPressed
         && predictionState.alive
+        && !predictionState.isAdversary
         && predictionState.velocity.y > vyBeforeJump + 1.2
       ) {
         _physicsJumpSoundPos.set(
@@ -991,6 +1121,16 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       controller.alive = predictionState.alive;
       controller.grabLocked = net.serverState?.animState === 'grab';
       mouse.rotation.x = net.serverState?.grabbedBy ? Math.PI : 0;
+      const cameraHumanMode = !!predictionState.isAdversary;
+      const cameraArm = cameraHumanMode ? HUMAN_CAMERA_ARM_LENGTH : MOUSE_CAMERA_ARM_LENGTH;
+      const cameraShoulderY = cameraHumanMode ? HUMAN_CAMERA_SHOULDER_Y : MOUSE_CAMERA_SHOULDER_Y;
+      thirdPersonCamera.setArmLength(dampValue(thirdPersonCamera.armLength, cameraArm, 7, PHYSICS_STEP));
+      thirdPersonCamera.shoulderOffset.y = dampValue(
+        thirdPersonCamera.shoulderOffset.y,
+        cameraShoulderY,
+        9,
+        PHYSICS_STEP,
+      );
 
       controller._updateAnimation(PHYSICS_STEP);
       controller._updateCamera(PHYSICS_STEP);
@@ -1016,6 +1156,10 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         if (controller.heroActivatePressed) {
           inputWithEmote.heroActivate = true;
           controller.heroActivatePressed = false;
+        }
+        if (controller.adversaryTogglePressed) {
+          inputWithEmote.adversaryToggle = true;
+          controller.adversaryTogglePressed = false;
         }
         inputWithEmote.interactHeld = !!controller.interactHeld;
         net.sendInput(inputWithEmote);
@@ -1083,6 +1227,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         }
       }
     }
+    syncPlayableHuman(deltaSeconds);
 
     const isAlive = controller.alive;
     const deathTime = net.serverState?.deathTime ?? 0;
@@ -1109,7 +1254,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     heroPrompt.setVisible(
       !!(net.serverState?.heroAvailable && !net.serverState?.isHero && isAlive),
     );
-    const isHeroNow = !!net.serverState?.isHero && isAlive;
+    const isAdversaryNow = !!net.serverState?.isAdversary && isAlive;
+    const isHeroNow = !!net.serverState?.isHero && isAlive && !isAdversaryNow;
     ensureLocalHeroBrain(isHeroNow, net.serverState?.heroAvatar);
     if (isHeroNow !== _wasHero) {
       _wasHero = isHeroNow;
@@ -1122,6 +1268,23 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     if (localHeroBrain) {
       localHeroBrain.setState(controller._prevAnimState ?? 'idle');
       localHeroBrain.update(deltaSeconds);
+    }
+
+    const adversaryAvailable = !!(
+      net.connected
+      && net.adversary?.available
+      && net.round?.phase !== 'intermission'
+      && !net.serverState?.isAdversary
+      && isAlive
+    );
+    adversaryPrompt.style.display = adversaryAvailable ? 'block' : 'none';
+    if (net.serverState?.isAdversary) {
+      const safe = Math.max(0, Number(net.serverState.adversarySafeSeconds) || 0);
+      const streak = Math.max(0, Number(net.serverState.adversarySafeStreakSeconds) || 0);
+      adversaryPrompt.textContent = `Human mode - ${safe.toFixed(1)}s clear (${streak.toFixed(1)}s streak). Press J to return.`;
+      adversaryPrompt.style.display = 'block';
+    } else {
+      adversaryPrompt.textContent = 'Adversary role available - press J to become human';
     }
 
     roundRaid.updatePhaseBanner(net.connected ? net.round : null, Date.now() / 1000, {
@@ -1311,10 +1474,15 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
     localNameplate.setText(predictionState.displayName || getClientPreferredDisplayName());
     localNameplate.setAlive(predictionState.alive !== false);
-    syncNameplateWorldPosition(localNameplateAnchor, mouse);
+    const localNameplateTarget = predictionState.isAdversary && human?.playerControlled ? human : mouse;
+    syncNameplateWorldPosition(
+      localNameplateAnchor,
+      localNameplateTarget,
+      predictionState.isAdversary ? HUMAN_NAMEPLATE_OFFSET_Y : undefined,
+    );
     localNameplateAnchor.getWorldPosition(_localNameplateWorld);
     localNameplate.setOccluded(
-      isNameplateOccluded(scene, camera, _localNameplateWorld, mouse, occlusionFrameIndex),
+      isNameplateOccluded(scene, camera, _localNameplateWorld, localNameplateTarget, occlusionFrameIndex),
     );
 
     audioManager.setAmbientChaseTarget(isLocalPlayerCatHuntTarget());
@@ -1327,8 +1495,10 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       && (Math.abs(mobileControls.moveX) > 0.02 || Math.abs(mobileControls.moveZ) > 0.02);
     const movementIntent = keyboardMove || stickMove;
     const hSpeed = Math.hypot(predictionState.velocity.x, predictionState.velocity.z);
+    const suppressMouseMovementAudio = !!predictionState.isAdversary;
     const movementBed =
       predictionState.alive &&
+      !suppressMouseMovementAudio &&
       predictionState.grounded &&
       (movementIntent
         || predictionState.animState === 'walk'
@@ -1336,6 +1506,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         || hSpeed > 0.35);
     const wallRunBed =
       predictionState.alive &&
+      !suppressMouseMovementAudio &&
       predictionState.wallHolding &&
       !predictionState.grounded &&
       (movementIntent || hSpeed > 0.22);
@@ -1480,6 +1651,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     audioManager.stopAmbientBed();
     audioManager.stopMovementLoop();
     localNameplate.dispose();
+    adversaryPrompt.remove();
+    if (_humanWasPlayerControlled) human?.setPlayerControlled(false);
     scene.remove(localNameplateAnchor);
     labelRenderer.domElement.remove();
     outlinePipeline.dispose();

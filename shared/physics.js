@@ -58,6 +58,8 @@ export const PHYSICS = Object.freeze({
   bumpForce: 3.0,
   carrySpeedMult: 0.6,
   heavyCarrySpeedMult: 0.35,
+  /** Movement multiplier while piloting the human adversary role. */
+  adversaryHumanSpeedMult: 1.35,
 });
 
 /**
@@ -137,6 +139,14 @@ export function createPlayerState(id) {
     isHero: false,
     /** Hero system: which avatar model (key into client HERO_AVATARS) the server picked. */
     heroAvatar: null,
+    /** True when this player has claimed the single adversary slot this round. */
+    isAdversary: false,
+    /** Adversary role key. For now only `human` is supported. */
+    adversaryRole: null,
+    /** Seconds this round spent as adversary with no mice nearby. */
+    adversarySafeSeconds: 0,
+    /** Current uninterrupted safe streak while playing adversary. */
+    adversarySafeStreakSeconds: 0,
   };
 }
 
@@ -617,6 +627,9 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
   }
   // Hero movement boost: super-charged locomotion for the round leader.
   if (state.isHero) speed *= 1.45;
+  if (state.isAdversary && state.adversaryRole === 'human') {
+    speed *= PHYSICS.adversaryHumanSpeedMult;
+  }
 
   // --- Horizontal velocity (unless sliding) ---
   // Use an exponential-approach accel/decel model so ground movement feels snappy

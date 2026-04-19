@@ -12,8 +12,8 @@ const _headLocal = new THREE.Vector3(0, NAMEPLATE_HEAD_OFFSET_Y, 0);
  * @param {THREE.Object3D} anchor — parent of the CSS2DObject, direct child of scene
  * @param {THREE.Object3D} mouse
  */
-export function syncNameplateWorldPosition(anchor, mouse) {
-  _headLocal.set(0, NAMEPLATE_HEAD_OFFSET_Y, 0).applyMatrix4(mouse.matrixWorld);
+export function syncNameplateWorldPosition(anchor, mouse, offsetY = NAMEPLATE_HEAD_OFFSET_Y) {
+  _headLocal.set(0, offsetY, 0).applyMatrix4(mouse.matrixWorld);
   anchor.position.copy(_headLocal);
 }
 

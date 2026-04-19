@@ -53,6 +53,7 @@ function createPlayerStats(playerHash, displayName = 'Mouse') {
     playSeconds: 0,
     bestChaseSeconds: 0,
     bestCheeseHeld: 0,
+    bestAdversarySeconds: 0,
     chaosXp: 0,
     chaosRank: 1,
   };
@@ -75,6 +76,7 @@ function createPlayerDelta(playerHash) {
     displayName: null,
     bestChaseSeconds: null,
     bestCheeseHeld: null,
+    bestAdversarySeconds: null,
     delta: {
       sessions: 0,
       deaths: 0,
@@ -98,7 +100,8 @@ function hasPlayerDelta(playerDelta) {
 function hasPlayerUpdate(playerDelta) {
   return hasPlayerDelta(playerDelta)
     || playerDelta.bestChaseSeconds != null
-    || playerDelta.bestCheeseHeld != null;
+    || playerDelta.bestCheeseHeld != null
+    || playerDelta.bestAdversarySeconds != null;
 }
 
 function normalizeDisplayName(value) {
@@ -114,6 +117,7 @@ function createLeaderboards() {
     bestChase: [],
     bestCheeseHeld: [],
     bestExtractionRound: [],
+    bestAdversary: [],
   };
 }
 
@@ -124,6 +128,7 @@ function ensureLeaderboards(global) {
   if (!Array.isArray(global.leaderboards.bestChase)) global.leaderboards.bestChase = [];
   if (!Array.isArray(global.leaderboards.bestCheeseHeld)) global.leaderboards.bestCheeseHeld = [];
   if (!Array.isArray(global.leaderboards.bestExtractionRound)) global.leaderboards.bestExtractionRound = [];
+  if (!Array.isArray(global.leaderboards.bestAdversary)) global.leaderboards.bestAdversary = [];
   return global.leaderboards;
 }
 
@@ -142,6 +147,7 @@ function publicLeaderboards(global) {
     bestChase: cap(leaderboards.bestChase).map(publicLeaderboardEntry),
     bestCheeseHeld: cap(leaderboards.bestCheeseHeld).map(publicLeaderboardEntry),
     bestExtractionRound: cap(leaderboards.bestExtractionRound).map(publicLeaderboardEntry),
+    bestAdversary: cap(leaderboards.bestAdversary).map(publicLeaderboardEntry),
   };
 }
 
@@ -154,7 +160,7 @@ function upsertLeaderboardEntry(global, boardName, { playerHash, displayName, va
   const board = leaderboards[boardName];
   if (!Array.isArray(board)) return false;
 
-  const roundedValue = boardName === 'bestChase'
+  const roundedValue = boardName === 'bestChase' || boardName === 'bestAdversary'
     ? Math.round(numericValue * 10) / 10
     : Math.floor(numericValue);
   const name = normalizeDisplayName(displayName);
@@ -430,6 +436,31 @@ export class StatsTracker {
     }
   }
 
+  recordAdversaryScore(connectionId, { displayName = null, safeSeconds = 0 } = {}) {
+    const session = this.sessions.get(connectionId);
+    if (!session?.playerHash) return;
+    const name = normalizeDisplayName(displayName ?? session.displayName);
+    session.displayName = name;
+    const safe = Math.round(Math.max(0, Number(safeSeconds) || 0) * 10) / 10;
+    const player = this.players.get(session.playerHash);
+    if (!player || safe <= (Number(player.bestAdversarySeconds) || 0)) return;
+
+    const now = Date.now();
+    player.bestAdversarySeconds = safe;
+    player.displayName = name;
+    player.lastSeen = now;
+    this._recordPendingBest(session.playerHash, 'bestAdversarySeconds', safe, name, now);
+    if (upsertLeaderboardEntry(this.global, 'bestAdversary', {
+      playerHash: session.playerHash,
+      displayName: name,
+      value: safe,
+      updatedAt: now,
+    })) {
+      this._markGlobalDirty();
+    }
+    this._markPlayerDirty(session.playerHash);
+  }
+
   recordCatHit(connectionId) {
     this.global.totalCatHits += 1;
     this._addGlobalDelta('totalCatHits', 1);
@@ -544,6 +575,7 @@ export class StatsTracker {
         lastSeen: playerDelta.lastSeen,
         bestChaseSeconds: playerDelta.bestChaseSeconds,
         bestCheeseHeld: playerDelta.bestCheeseHeld,
+        bestAdversarySeconds: playerDelta.bestAdversarySeconds,
         delta: { ...playerDelta.delta },
       }));
 
@@ -585,6 +617,12 @@ export class StatsTracker {
         playerDelta.bestCheeseHeld = Math.max(
           Number(playerDelta.bestCheeseHeld) || 0,
           Number(incoming.bestCheeseHeld) || 0,
+        );
+      }
+      if (incoming.bestAdversarySeconds != null) {
+        playerDelta.bestAdversarySeconds = Math.max(
+          Number(playerDelta.bestAdversarySeconds) || 0,
+          Number(incoming.bestAdversarySeconds) || 0,
         );
       }
       for (const field of PLAYER_DELTA_FIELDS) {

@@ -552,6 +552,10 @@ function ToolbarView(props) {
     const boards = s.allTimeLeaderboards?.leaderboards ?? s.allTimeLeaderboards ?? {};
     return Array.isArray(boards.bestCheeseHeld) ? boards.bestCheeseHeld : [];
   });
+  const bestAdversary = createMemo(() => {
+    const boards = s.allTimeLeaderboards?.leaderboards ?? s.allTimeLeaderboards ?? {};
+    return Array.isArray(boards.bestAdversary) ? boards.bestAdversary : [];
+  });
 
   const panelBase = {
     position: 'fixed',
@@ -708,6 +712,11 @@ function ToolbarView(props) {
             title="Most cheese held"
             rows={bestCheese()}
             format={(v) => String(Math.max(0, Math.floor(v)))}
+          />
+          <LeaderboardSection
+            title="Best human avoidance"
+            rows={bestAdversary()}
+            format={(v) => `${v.toFixed(1)}s`}
           />
           <LiveRoomTable rows={s.leaderboardRows} />
         </div>

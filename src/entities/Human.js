@@ -29,6 +29,12 @@ const HUMAN_AI_TO_EXPRESSION = Object.freeze({
   cooldown: 'shifty',
 });
 
+const PLAYABLE_TURN_ENTER = 0.42;
+const PLAYABLE_TURN_EXIT = 0.18;
+const PLAYABLE_DIRECTION_ENTER = 0.36;
+const PLAYABLE_DIRECTION_EXIT = 0.16;
+const PLAYABLE_MIN_CLIP_HOLD = 0.18;
+
 /**
  * Human predator (cop). Wanders the kitchen and, upon spotting a rat,
  * plays a reaction animation (meme.fbx) in place rather than giving chase.
@@ -64,6 +70,12 @@ export class Human extends Predator {
     this._navRepathTimer = 0;
     this._navStuckTimer = 0;
     this._navLastPos = new THREE.Vector3();
+    this.playerControlled = false;
+    this._playableAnimState = 'idle';
+    this._playableTurnAnim = null;
+    this._playableMoveDirection = 'straight';
+    this._playableTurnDirection = null;
+    this._playableClipAge = 0;
     this.eyeAnimator = new MouseEyeAtlasAnimator({
       stateToExpression: HUMAN_AI_TO_EXPRESSION,
     });
@@ -74,7 +86,7 @@ export class Human extends Predator {
     const loader = new GLTFLoader();
     loader.setMeshoptDecoder(MeshoptDecoder);
     const gltf = await loader.loadAsync(assetUrl('models/cop.glb'));
-    this._attachModel(gltf, { height: 9.0, groundOffset: -1.2 });
+    this._attachModel(gltf, { height: 9.0, groundOffset: -0.8 });
     this._groundedYOffset = this.model.position.y;
     this._memeYOffset = this.model.position.y + 1.2; // cancel the -1.2 ground offset
     this._hipBone = null;
@@ -95,9 +107,170 @@ export class Human extends Predator {
   }
 
   update(dt, ...rest) {
+    if (this.playerControlled) {
+      this._playableClipAge += dt;
+      this.mixer?.update(dt);
+      this.eyeAnimator?.update(dt);
+      this.eyeAnimator?.setState('alert');
+      return;
+    }
     super.update?.(dt, ...rest);
     this.eyeAnimator?.update(dt);
     this.eyeAnimator?.setState(this.aiState);
+  }
+
+  setPlayerControlled(active) {
+    const next = !!active;
+    if (this.playerControlled === next) return;
+    this.playerControlled = next;
+    this.velocity.set(0, 0, 0);
+    if (next) {
+      this.aiState = AI_STATE.IDLE;
+      this.aiTimer = 0;
+      this._memeHipCaptureActive = false;
+      this._playableAnimState = '';
+      this._playableTurnAnim = null;
+      this._playableMoveDirection = 'straight';
+      this._playableTurnDirection = null;
+      this._playableClipAge = PLAYABLE_MIN_CLIP_HOLD;
+      if (this.model) {
+        this.model.position.y = this._groundedYOffset ?? this.model.position.y;
+      }
+      this.setPlayableAnimation('idle', { immediate: true });
+    } else {
+      this._playableAnimState = '';
+      this._playableTurnAnim = null;
+      this._playableMoveDirection = 'straight';
+      this._playableTurnDirection = null;
+      this._playableClipAge = PLAYABLE_MIN_CLIP_HOLD;
+      this.aiState = AI_STATE.IDLE;
+      this.aiTimer = 0.5;
+      this._animateForState('idle');
+      this._pickPatrolTarget();
+    }
+  }
+
+  setPlayableAnimation(
+    state,
+    {
+      immediate = false,
+      turn = 0,
+      backward = false,
+      moveDirection = 'straight',
+      turnDirection = null,
+    } = {},
+  ) {
+    const baseState = state === 'jump'
+      ? 'jump'
+      : state === 'run'
+        ? 'run'
+        : state === 'walk'
+          ? 'walk'
+          : 'idle';
+
+    if (baseState === 'idle') {
+      const nextTurnDirection = turnDirection
+        ?? (turn > PLAYABLE_TURN_ENTER
+          ? 'right'
+          : turn < -PLAYABLE_TURN_ENTER
+            ? 'left'
+            : Math.abs(turn) < PLAYABLE_TURN_EXIT
+              ? null
+              : this._playableTurnDirection);
+      this._playableTurnDirection = nextTurnDirection;
+    } else {
+      this._playableTurnDirection = null;
+    }
+
+    let nextMoveDirection = moveDirection === 'left' || moveDirection === 'right'
+      ? moveDirection
+      : 'straight';
+    if (Math.abs(turn) > PLAYABLE_DIRECTION_ENTER) {
+      nextMoveDirection = turn > 0 ? 'right' : 'left';
+    } else if (Math.abs(turn) < PLAYABLE_DIRECTION_EXIT && moveDirection === 'straight') {
+      nextMoveDirection = 'straight';
+    }
+    if (baseState === 'idle' || baseState === 'jump' || backward) {
+      nextMoveDirection = 'straight';
+    }
+    this._playableMoveDirection = nextMoveDirection;
+
+    const turnClip = baseState === 'idle' && this._playableTurnDirection
+      ? (this._playableTurnDirection === 'right' ? 'injured-turn-right' : 'injured-turn-left')
+      : baseState === 'run' && nextMoveDirection === 'right'
+        ? 'injured-run-right-turn'
+        : baseState === 'run' && nextMoveDirection === 'left'
+          ? 'injured-run-left-turn'
+          : baseState === 'walk' && nextMoveDirection === 'right'
+            ? 'injured-walk-right-turn'
+            : baseState === 'walk' && nextMoveDirection === 'left'
+              ? 'injured-walk-left-turn'
+              : null;
+    const clip = turnClip
+      ?? ({
+        idle: 'injured-hurting-idle',
+        walk: backward ? 'injured-walk-backwards' : 'injured-walk',
+        run: backward ? 'injured-run-backwards' : 'injured-run',
+        jump: 'injured-run-jump',
+      }[baseState] ?? 'injured-hurting-idle');
+    const fallback = {
+      'injured-hurting-idle': 'injured-stumble-idle',
+      'injured-stumble-idle': 'injured-wave-idle',
+      'injured-wave-idle': 'idle',
+      'injured-walk': 'walk',
+      'injured-run': 'walk',
+      'injured-run-jump': 'jump attack',
+      'injured-walk-left-turn': 'turn-left-45',
+      'injured-walk-right-turn': 'turn-right-45',
+      'injured-run-left-turn': 'turn-left-45',
+      'injured-run-right-turn': 'turn-right-45',
+      'injured-walk-backwards': 'walk',
+      'injured-run-backwards': 'walk',
+      'injured-backwards-turn-left': 'turn-left-45',
+      'injured-backwards-turn-right': 'turn-right-45',
+      'injured-run-backwards-left-turn': 'turn-left-45',
+      'injured-run-backwards-right-turn': 'turn-right-45',
+      'injured-turn-left': 'turn-left-45',
+      'injured-turn-right': 'turn-right-45',
+    }[clip] ?? 'idle';
+    const name = this.actions[clip] ? clip : fallback;
+    if (name === this._playableAnimState && turnClip === this._playableTurnAnim) return;
+    if (!immediate && this._playableClipAge < PLAYABLE_MIN_CLIP_HOLD && baseState !== 'jump') return;
+    this._playableAnimState = name;
+    this._playableTurnAnim = turnClip;
+    this._playableClipAge = 0;
+    this._playPlayableClip(name, {
+      fadeIn: immediate ? 0 : 0.24,
+      loop: baseState !== 'jump',
+      clampWhenFinished: baseState === 'jump',
+    });
+  }
+
+  _playPlayableClip(name, { fadeIn = 0.24, loop = true, clampWhenFinished = false } = {}) {
+    if (name === this.currentAnimName) return;
+    const next = this.actions[name];
+    if (!next) return;
+
+    const previous = this.currentAction;
+    next.enabled = true;
+    next.reset();
+    next.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce);
+    next.clampWhenFinished = clampWhenFinished;
+    next.setEffectiveTimeScale(1);
+    next.setEffectiveWeight(1);
+    next.play();
+
+    if (previous && previous !== next) {
+      if (fadeIn <= 0) {
+        previous.stop();
+      } else {
+        previous.fadeOut(fadeIn);
+        next.crossFadeFrom(previous, fadeIn, false);
+      }
+    }
+
+    this.currentAction = next;
+    this.currentAnimName = name;
   }
 
   dispose() {

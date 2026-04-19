@@ -30,6 +30,7 @@ Desktop:
 - `E`: smack another mouse
 - `G`: drop carried item
 - `F`: emote wheel
+- `J`: claim or release the adversary human role when available
 - `Tab`: hold scoreboard
 - `N`: spawn an extra push ball
 - `P`: performance panel

@@ -16,6 +16,7 @@ const DEFAULT_KEY_BINDINGS = Object.freeze({
   ropeGrab: 'KeyQ',
   emote: 'KeyF',
   heroActivate: 'KeyH',
+  adversaryToggle: 'KeyJ',
 });
 
 const CONFIG = Object.freeze({
@@ -101,6 +102,8 @@ export class CharacterController {
     this.grabHeld = false;
     this.heroActivatePressed = false;
     this._heroKeyWasDown = false;
+    this.adversaryTogglePressed = false;
+    this._adversaryKeyWasDown = false;
     /** Set to true on E keydown edge, cleared after network reads it */
     this.smackPressed = false;
     /** True while E is held (extract + UI). */
@@ -439,6 +442,9 @@ export class CharacterController {
     const heroKeyNow = !!this.keys[this.keyBindings.heroActivate];
     if (heroKeyNow && !this._heroKeyWasDown) this.heroActivatePressed = true;
     this._heroKeyWasDown = heroKeyNow;
+    const adversaryKeyNow = !!this.keys[this.keyBindings.adversaryToggle];
+    if (adversaryKeyNow && !this._adversaryKeyWasDown) this.adversaryTogglePressed = true;
+    this._adversaryKeyWasDown = adversaryKeyNow;
     if (this.mouseButtons.right) {
       this.mouseButtons.right = false;
       this.squeak();

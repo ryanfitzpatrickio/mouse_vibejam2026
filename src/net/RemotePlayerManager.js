@@ -56,6 +56,9 @@ export class RemotePlayerManager {
         entry.serverGrabbedBy = data.grabbedBy ?? null;
         entry.serverIsHero = !!data.isHero;
         entry.serverHeroAvatar = data.heroAvatar ?? null;
+        entry.serverIsAdversary = !!data.isAdversary;
+        entry.serverAdversaryRole = data.adversaryRole ?? null;
+        entry.mouse.visible = !entry.serverIsAdversary;
         entry.nameplate.setAlive(entry.serverAlive);
         if (typeof data.displayName === 'string' && data.displayName.trim()) {
           const next = data.displayName.trim();
@@ -139,6 +142,8 @@ export class RemotePlayerManager {
       entry.emoteManager.update(dt);
       entry.mouse.update(dt);
 
+      const isAdversary = !!entry.serverIsAdversary;
+
       // Hero avatar overlay: swap the mouse body for the chosen hero model.
       // If the server changed which hero model the player is riding, dispose
       // and re-spawn so visuals follow.
@@ -148,11 +153,11 @@ export class RemotePlayerManager {
         entry.heroBrain.dispose();
         entry.heroBrain = null;
       }
-      if (entry.serverIsHero && !entry.heroBrain) {
+      if (!isAdversary && entry.serverIsHero && !entry.heroBrain) {
         entry.heroBrain = new HeroAvatar(desiredHeroKey);
         entry.mouse.add(entry.heroBrain);
         if (entry.mouse.bodyPivot) entry.mouse.bodyPivot.visible = false;
-      } else if (!entry.serverIsHero && entry.heroBrain) {
+      } else if ((isAdversary || !entry.serverIsHero) && entry.heroBrain) {
         entry.mouse.remove(entry.heroBrain);
         entry.heroBrain.dispose();
         entry.heroBrain = null;
@@ -182,6 +187,7 @@ export class RemotePlayerManager {
       furColor: color,
     });
     mouse.name = `RemoteMouse_${id}`;
+    mouse.visible = !data.isAdversary;
 
     await mouse.ready;
 
@@ -247,6 +253,8 @@ export class RemotePlayerManager {
       serverGrabbedBy: data.grabbedBy ?? null,
       serverIsHero: !!data.isHero,
       serverHeroAvatar: data.heroAvatar ?? null,
+      serverIsAdversary: !!data.isAdversary,
+      serverAdversaryRole: data.adversaryRole ?? null,
       heroBrain: null,
     });
   }

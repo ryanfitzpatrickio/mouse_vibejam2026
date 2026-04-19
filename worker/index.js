@@ -100,6 +100,7 @@ function createLeaderboards() {
   return {
     bestChase: [],
     bestCheeseHeld: [],
+    bestAdversary: [],
   };
 }
 
@@ -109,6 +110,7 @@ function ensureLeaderboards(global) {
   }
   if (!Array.isArray(global.leaderboards.bestChase)) global.leaderboards.bestChase = [];
   if (!Array.isArray(global.leaderboards.bestCheeseHeld)) global.leaderboards.bestCheeseHeld = [];
+  if (!Array.isArray(global.leaderboards.bestAdversary)) global.leaderboards.bestAdversary = [];
   return global.leaderboards;
 }
 
@@ -126,6 +128,7 @@ function publicLeaderboards(global) {
   return {
     bestChase: cap(leaderboards.bestChase).map(publicLeaderboardEntry),
     bestCheeseHeld: cap(leaderboards.bestCheeseHeld).map(publicLeaderboardEntry),
+    bestAdversary: cap(leaderboards.bestAdversary).map(publicLeaderboardEntry),
   };
 }
 
@@ -138,7 +141,7 @@ function upsertLeaderboardEntry(global, boardName, { playerHash, displayName, va
   const board = leaderboards[boardName];
   if (!Array.isArray(board)) return false;
 
-  const roundedValue = boardName === 'bestChase'
+  const roundedValue = boardName === 'bestChase' || boardName === 'bestAdversary'
     ? Math.round(numericValue * 10) / 10
     : Math.floor(numericValue);
   const name = normalizeDisplayName(displayName);
@@ -308,6 +311,12 @@ async function handleStatsEvent(request, env) {
         playerHash: incoming.playerHash,
         displayName: incoming.displayName,
         value: incoming.bestCheeseHeld,
+        updatedAt: safePositiveInteger(incoming.lastSeen ?? now) || now,
+      });
+      upsertLeaderboardEntry(global, 'bestAdversary', {
+        playerHash: incoming.playerHash,
+        displayName: incoming.displayName,
+        value: incoming.bestAdversarySeconds,
         updatedAt: safePositiveInteger(incoming.lastSeen ?? now) || now,
       });
     }

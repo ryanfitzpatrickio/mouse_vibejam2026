@@ -25,6 +25,7 @@ const CONTROLS = [
   { keys: ['R'], label: 'Spawn ball' },
   { keys: ['F'], label: 'Emote' },
   { keys: ['H'], label: 'Hero' },
+  { keys: ['J'], label: 'Adversary' },
 ];
 
 function KeyCap(props) {

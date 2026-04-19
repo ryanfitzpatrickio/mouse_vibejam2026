@@ -73,6 +73,9 @@ export class NetworkClient {
   /** Active extraction portal markers when `round.phase === 'extract'` */
   extractionPortals = [];
 
+  /** Single playable adversary slot state from the server. */
+  adversary = { playerId: null, available: false, safeRadius: 0 };
+
   /** Sequence counter for inputs */
   seq = 0;
   /** Pending inputs not yet confirmed by server (for reconciliation) */
@@ -128,6 +131,7 @@ export class NetworkClient {
       this.cheesePickups = [];
       this.round = null;
       this.extractionPortals = [];
+      this.adversary = { playerId: null, available: false, safeRadius: 0 };
       console.log('[net] disconnected');
     });
   }
@@ -258,6 +262,7 @@ export class NetworkClient {
         this._applyRopesPayload(data);
         this._applyCheesePayload(data);
         if (data.round) this.round = data.round;
+        if (data.adversary) this.adversary = data.adversary;
         if (Array.isArray(data.extractionPortals)) this.extractionPortals = data.extractionPortals;
         break;
 
@@ -324,6 +329,7 @@ export class NetworkClient {
         this._applyRopesPayload(data);
         this._applyCheesePayload(data);
         if (data.round) this.round = data.round;
+        if (data.adversary) this.adversary = data.adversary;
         if (Array.isArray(data.extractionPortals)) this.extractionPortals = data.extractionPortals;
         break;
       }

@@ -67,6 +67,8 @@ const MAX_CONNECT_ATTEMPTS_PER_WINDOW = 30;
 const WS_MESSAGE_RATE_PER_SECOND = 90;
 const WS_MESSAGE_BURST = 180;
 const MAX_DROPPED_MESSAGES_BEFORE_CLOSE = 180;
+const ADVERSARY_SAFE_RADIUS = 7.5;
+const ADVERSARY_SAFE_RADIUS_SQ = ADVERSARY_SAFE_RADIUS * ADVERSARY_SAFE_RADIUS;
 
 const BOUNDS = LEVEL_WORLD_BOUNDS_XZ;
 
@@ -381,6 +383,65 @@ export default class GameServer {
     }
   }
 
+  _currentAdversaryId() {
+    for (const [id, state] of this.players) {
+      if (state?.isAdversary) return id;
+    }
+    return null;
+  }
+
+  _recordAdversaryScore(connectionId, state) {
+    if (!connectionId || !state) return;
+    const safeSeconds = Math.max(0, Number(state.adversarySafeSeconds) || 0);
+    if (safeSeconds <= 0) return;
+    this.stats?.recordAdversaryScore(connectionId, {
+      displayName: state.displayName,
+      safeSeconds,
+    });
+  }
+
+  _setAdversary(state, active, connectionId = null) {
+    if (!state) return;
+    if (state.isAdversary && !active) {
+      this._recordAdversaryScore(connectionId ?? state.id, state);
+    }
+    state.isAdversary = !!active;
+    state.adversaryRole = active ? 'human' : null;
+    state.cheeseCarried = 0;
+    state.extractProgress = 0;
+    state.extracted = false;
+    state.grabbedBy = null;
+    state.grabbedTarget = null;
+    state.heroAvailable = false;
+    state.isHero = false;
+    state.heroAvatar = null;
+    if (!active) state.adversarySafeStreakSeconds = 0;
+  }
+
+  _tickAdversaryScores(dt) {
+    for (const [, state] of this.players) {
+      if (!state?.isAdversary || !state.alive || state.spectator || this.round.phase === 'intermission') {
+        if (state?.isAdversary) state.adversarySafeStreakSeconds = 0;
+        continue;
+      }
+
+      let nearestMouseDistSq = Infinity;
+      for (const [, other] of this.players) {
+        if (!other || other === state || other.isAdversary || !other.alive || other.spectator || other.extracted) continue;
+        const dx = other.position.x - state.position.x;
+        const dz = other.position.z - state.position.z;
+        nearestMouseDistSq = Math.min(nearestMouseDistSq, dx * dx + dz * dz);
+      }
+
+      if (nearestMouseDistSq > ADVERSARY_SAFE_RADIUS_SQ) {
+        state.adversarySafeSeconds = (state.adversarySafeSeconds ?? 0) + dt;
+        state.adversarySafeStreakSeconds = (state.adversarySafeStreakSeconds ?? 0) + dt;
+      } else {
+        state.adversarySafeStreakSeconds = 0;
+      }
+    }
+  }
+
   async onStart() {
     await this.stats?.ready;
     this.tickInterval = setInterval(() => this.tick(), TICK_MS);
@@ -419,6 +480,11 @@ export default class GameServer {
       cheesePickups: this.cheeseWorld.serializePickups(),
       ropes: this.ropeWorld.getRopesSnapshot(),
       round: this.round,
+      adversary: {
+        playerId: this._currentAdversaryId(),
+        available: !this._currentAdversaryId() && this.round.phase !== 'intermission',
+        safeRadius: ADVERSARY_SAFE_RADIUS,
+      },
       extractionPortals: this.round.phase === 'extract' ? this.extractionPortalDefs : [],
     }));
 
@@ -555,6 +621,7 @@ export default class GameServer {
     this._messageBuckets.delete(conn.id);
     this.portalArrivals.delete(conn.id);
     const leaving = this.players.get(conn.id);
+    if (leaving?.isAdversary) this._recordAdversaryScore(conn.id, leaving);
     if (leaving) this.cheeseWorld.onDeathDropCarried(leaving);
     this.mouseLaunchWorld?.removePlayer?.(conn.id);
     this.ropeWorld?.removePlayer?.(conn.id);
@@ -620,7 +687,7 @@ export default class GameServer {
     let bestId = null;
     let bestScore = -1;
     for (const [id, state] of this.players) {
-      if (!state.alive || state.spectator || state.extracted) continue;
+      if (!state.alive || state.spectator || state.extracted || state.isAdversary) continue;
       const rs = state.roundStats ?? {};
       const liveScore = (state.cheeseCarried ?? 0)
         + (rs.smacksLanded ?? 0) * 3
@@ -638,6 +705,7 @@ export default class GameServer {
 
   _finishRound() {
     const results = [];
+    const adversaryResults = [];
     for (const [id, state] of this.players) {
       const br = computePlayerRoundScore(state);
       state.roundStats.finalScore = br.finalScore;
@@ -648,7 +716,23 @@ export default class GameServer {
         displayName: state.displayName,
         isBot: !!state.isBot,
         ...br,
+        adversarySafeSeconds: Math.round(Math.max(0, Number(state.adversarySafeSeconds) || 0) * 10) / 10,
       });
+      if (state.isAdversary || (state.adversarySafeSeconds ?? 0) > 0) {
+        const safeSeconds = Math.round(Math.max(0, Number(state.adversarySafeSeconds) || 0) * 10) / 10;
+        adversaryResults.push({
+          id,
+          displayName: state.displayName,
+          isBot: !!state.isBot,
+          safeSeconds,
+        });
+        if (this.inputQueues.has(id)) {
+          this.stats?.recordAdversaryScore(id, {
+            displayName: state.displayName,
+            safeSeconds,
+          });
+        }
+      }
       if (this.inputQueues.has(id)) {
         this.stats?.recordExtractionRaid(id, {
           xpGained: br.xpAwarded,
@@ -657,12 +741,15 @@ export default class GameServer {
           displayName: state.displayName,
         });
       }
+      if (state.isAdversary) this._setAdversary(state, false, id);
     }
     results.sort((a, b) => b.finalScore - a.finalScore);
+    adversaryResults.sort((a, b) => b.safeSeconds - a.safeSeconds);
     this.broadcast(JSON.stringify({
       type: 'round-end',
       roundNumber: this.round.number,
       results,
+      adversaryResults,
     }));
   }
 
@@ -677,6 +764,10 @@ export default class GameServer {
       state.extracted = false;
       state.extractProgress = 0;
       state.cheeseCarried = 0;
+      state.isAdversary = false;
+      state.adversaryRole = null;
+      state.adversarySafeSeconds = 0;
+      state.adversarySafeStreakSeconds = 0;
       state.health = PHYSICS.maxHealth;
       state.heroAvailable = false;
       state.isHero = false;
@@ -918,6 +1009,7 @@ export default class GameServer {
           let didSmack = false;
           let lastGrab = false;
           let heroActivateReq = false;
+          let adversaryToggleReq = false;
           let ropeGrabPress = false;
           const prevRopeGrab = this._lastRopeGrab.get(id) ?? false;
           let lastRopeGrab = prevRopeGrab;
@@ -940,6 +1032,7 @@ export default class GameServer {
             lastGrab = !!input.grab;
             if (input.smack) didSmack = true;
             if (input.heroActivate) heroActivateReq = true;
+            if (input.adversaryToggle) adversaryToggleReq = true;
             if (!lastRopeGrab && input.ropeGrab) ropeGrabPress = true;
             lastRopeGrab = !!input.ropeGrab;
             const jumpNow = !!(input.jumpPressed ?? input.jump);
@@ -959,6 +1052,13 @@ export default class GameServer {
           }
           if (lastGrab) grabHeld.add(id);
           if (didSmack) smackRequests.push(id);
+          if (adversaryToggleReq && this.round.phase !== 'intermission' && !state.spectator) {
+            if (state.isAdversary) {
+              this._setAdversary(state, false, id);
+            } else if (!this._currentAdversaryId()) {
+              this._setAdversary(state, true, id);
+            }
+          }
           // In dev (DEV_LAYOUT_SYNC_ENABLED), let H instantly toggle hero mode
           // for fast iteration. Production still requires election eligibility.
           const devHeroBypass = isDevLayoutSyncEnabled(this.room);
@@ -1043,7 +1143,7 @@ export default class GameServer {
     // --- Process smack interactions ---
     for (const attackerId of smackRequests) {
       const attacker = this.players.get(attackerId);
-      if (!attacker?.alive || attacker.smackCooldown > 0 || attacker.extracted || attacker.spectator) continue;
+      if (!attacker?.alive || attacker.smackCooldown > 0 || attacker.extracted || attacker.spectator || attacker.isAdversary) continue;
       // A smack also boots any ball in front of the attacker, regardless of whether it lands on a player.
       const smackRot = attacker.rotation ?? 0;
       const smackFx = Math.sin(smackRot);
@@ -1062,7 +1162,7 @@ export default class GameServer {
       let bestDist = SMACK_RANGE;
       for (const [otherId, other] of this.players) {
         if (otherId === attackerId || !other.alive || other.smackStunTimer > 0) continue;
-        if (other.extracted || other.spectator) continue;
+        if (other.extracted || other.spectator || other.isAdversary) continue;
         const dx = other.position.x - attacker.position.x;
         const dz = other.position.z - attacker.position.z;
         const dist = Math.sqrt(dx * dx + dz * dz);
@@ -1115,13 +1215,13 @@ export default class GameServer {
     // Initiate new grabs for players holding Q without an active grab
     for (const grabberId of grabHeld) {
       const grabber = this.players.get(grabberId);
-      if (!grabber?.alive || grabber.grabCooldown > 0 || grabber.grabbedTarget || grabber.extracted || grabber.spectator) continue;
+      if (!grabber?.alive || grabber.grabCooldown > 0 || grabber.grabbedTarget || grabber.extracted || grabber.spectator || grabber.isAdversary) continue;
       // Find nearest alive player in range
       let bestId = null;
       let bestDist = GRAB_RANGE;
       for (const [otherId, other] of this.players) {
         if (otherId === grabberId || !other.alive || other.smackStunTimer > 0) continue;
-        if (other.extracted || other.spectator) continue;
+        if (other.extracted || other.spectator || other.isAdversary) continue;
         const dx = other.position.x - grabber.position.x;
         const dz = other.position.z - grabber.position.z;
         const dist = Math.sqrt(dx * dx + dz * dz);
@@ -1204,12 +1304,15 @@ export default class GameServer {
     this.pushBallWorld.step(dt);
 
     const playersObj = Object.fromEntries(this.players);
+    const mousePlayersObj = Object.fromEntries(
+      [...this.players].filter(([, p]) => !p?.isAdversary),
+    );
     const catPredators = this.predators.filter((p) => p.type !== 'roomba');
     for (const pred of this.predators) {
       if (pred.type === 'roomba') {
         simulateRoombaTick(
           pred,
-          playersObj,
+          mousePlayersObj,
           catPredators,
           dt,
           this.levelColliders,
@@ -1221,7 +1324,7 @@ export default class GameServer {
       }
       const hit = simulatePredatorTick(
         pred,
-        playersObj,
+        mousePlayersObj,
         dt,
         this.levelColliders,
         this.levelNavMesh,
@@ -1257,13 +1360,13 @@ export default class GameServer {
     this.mouseLaunchWorld.step(dt, (pid) => this.players.get(pid));
     this.ropeWorld.step(dt, (pid) => this.players.get(pid));
 
-    tickPlayerChaseScores(this.players, this.predators, dt);
+    tickPlayerChaseScores(new Map([...this.players].filter(([, p]) => !p?.isAdversary)), this.predators, dt);
 
     const cheesePre = new Map();
     for (const [pid, st] of this.players) {
       cheesePre.set(pid, st.cheeseCarried ?? 0);
     }
-    this.cheeseWorld.collectFromPlayers(this.players);
+    this.cheeseWorld.collectFromPlayers(new Map([...this.players].filter(([, p]) => !p?.isAdversary)));
     for (const [pid, state] of this.players) {
       const prev = cheesePre.get(pid) ?? 0;
       const gained = (state.cheeseCarried ?? 0) - prev;
@@ -1281,7 +1384,7 @@ export default class GameServer {
 
     if (this.round.phase === 'extract') {
       for (const [, state] of this.players) {
-        if (!state.alive || state.spectator || state.extracted) {
+        if (!state.alive || state.spectator || state.extracted || state.isAdversary) {
           if (!state.extracted) state.extractProgress = 0;
           continue;
         }
@@ -1304,6 +1407,7 @@ export default class GameServer {
         if (!state.extracted) state.extractProgress = 0;
       }
     }
+    this._tickAdversaryScores(dt);
     for (const [id, state] of this.players) {
       if (!this.inputQueues.has(id)) continue;
       this.stats?.recordPlayerBests(id, {
@@ -1323,6 +1427,11 @@ export default class GameServer {
       cheesePickups: this.cheeseWorld.serializePickups(),
       ropes: this.ropeWorld.getRopesSnapshot(),
       round: this.round,
+      adversary: {
+        playerId: this._currentAdversaryId(),
+        available: !this._currentAdversaryId() && this.round.phase !== 'intermission',
+        safeRadius: ADVERSARY_SAFE_RADIUS,
+      },
       extractionPortals: this.round.phase === 'extract' ? this.extractionPortalDefs : [],
     };
     this.broadcast(JSON.stringify(snapshot));

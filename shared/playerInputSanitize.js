@@ -59,6 +59,8 @@ export function sanitizePlayerInputMessage(data) {
     interactHeld: !!data.interactHeld,
     /** One-shot H press to activate hero mode (server ignores if not offered). */
     heroActivate: !!data.heroActivate,
+    /** One-shot J press to claim/release the single adversary role. */
+    adversaryToggle: !!data.adversaryToggle,
     seq: clampSeq(data.seq),
   };
 }
