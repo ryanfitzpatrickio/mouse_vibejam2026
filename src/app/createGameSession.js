@@ -10,6 +10,8 @@ import { RopeSystem } from '../world/RopeSystem.js';
 import { VibePortalManager } from '../world/VibePortalManager.js';
 import { ThirdPersonCamera } from '../camera/ThirdPersonCamera.js';
 import { CharacterController } from '../controllers/CharacterController.js';
+import { GamepadManager } from '../input/GamepadManager.js';
+import { installInputSourceTracking, getInputSource, actionLabel } from '../input/inputSource.js';
 import { HUD } from '../hud/HUD.jsx';
 import { RoundRaidOverlay } from '../hud/RoundRaidOverlay.jsx';
 import { GameToolbar } from '../hud/GameToolbar.jsx';
@@ -333,6 +335,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     thirdPersonCamera,
     collisionQuery: getCollisionCollidersWithRoomba,
   });
+
+  installInputSourceTracking();
+  const gamepadManager = new GamepadManager({ controller, thirdPersonCamera });
 
   controller.onEmote = () => {
     emoteWheel.show();
@@ -1177,6 +1182,11 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   function update(timeMs = 0, deltaSeconds = 1 / 60) {
     occlusionFrameIndex += 1;
 
+    gamepadManager.update(deltaSeconds);
+    if (emoteWheel.isVisible() && getInputSource() === 'gamepad') {
+      emoteWheel.setStickCursor(gamepadManager.leftStick.x, gamepadManager.leftStick.y);
+    }
+
     if (roomba) {
       if (net.connected) {
         const serverRoomba = pickRemoteRoombaSnapshot(net.remotePredators);
@@ -1211,12 +1221,22 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
       let inputDir;
       const mc = mobileControls;
+      const analog = controller.analogMove;
       if (mc && (mc.moveX !== 0 || mc.moveZ !== 0)) {
         inputDir = _physicsInputDir;
         _physicsForward.set(Math.sin(thirdPersonCamera.yaw), 0, Math.cos(thirdPersonCamera.yaw));
         _physicsRight.crossVectors(_physicsForward, _physicsWorldUp).normalize().negate();
         inputDir.set(0, 0, 0).addScaledVector(_physicsForward, mc.moveZ).addScaledVector(_physicsRight, mc.moveX);
         if (inputDir.lengthSq() > 0.0001) inputDir.normalize();
+      } else if (analog) {
+        inputDir = _physicsInputDir;
+        _physicsForward.set(Math.sin(thirdPersonCamera.yaw), 0, Math.cos(thirdPersonCamera.yaw));
+        _physicsRight.crossVectors(_physicsForward, _physicsWorldUp).normalize().negate();
+        inputDir.set(0, 0, 0)
+          .addScaledVector(_physicsForward, analog.z)
+          .addScaledVector(_physicsRight, analog.x);
+        const lenSq = inputDir.lengthSq();
+        if (lenSq > 1) inputDir.multiplyScalar(1 / Math.sqrt(lenSq));
       } else {
         inputDir = thirdPersonCamera.getCameraRelativeMovement({
           forward: !!keys[kb.forward],
@@ -1465,6 +1485,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
 
     heroPrompt.setVisible(
       !!(net.serverState?.heroAvailable && !net.serverState?.isHero && isAlive),
+      net.serverState?.heroAvatarAvailable ?? null,
     );
     const isAdversaryNow = !!net.serverState?.isAdversary && isAlive;
     const isHeroNow = !!net.serverState?.isHero && isAlive && !isAdversaryNow;
@@ -1600,11 +1621,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
         if (dSq < nearestSq) nearestSq = dSq;
       }
       if (nearestSq < 2.5 * 2.5) {
-        nextHint = {
-          id: 'smackBall',
-          key: isCoarsePointer ? 'SMACK' : 'SPACE',
-          text: 'Smack the ball',
-        };
+        nextHint = isCoarsePointer
+          ? { id: 'smackBall', key: 'SMACK', text: 'Smack the ball' }
+          : { id: 'smackBall', action: 'smack', text: 'Smack the ball' };
         if (_smackFiredThisFrame) {
           smackBallHintDone = true;
           try { localStorage.setItem(HINT_DONE_KEY, '1'); } catch {}
@@ -1818,6 +1837,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       }
     });
     placementMode?.deactivate();
+    gamepadManager.dispose();
     net.disconnect();
     remotePlayerManager.dispose();
     predatorManager?.dispose();

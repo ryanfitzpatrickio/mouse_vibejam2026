@@ -4259,6 +4259,110 @@ export default {
       "receiveShadow": true,
       "deleted": false,
       "zIndex": 1111
+    },
+    {
+      "id": "primitive-mo5s8izk-camex",
+      "name": "prop-dhp",
+      "type": "prop",
+      "spawnType": null,
+      "position": {
+        "x": 18,
+        "y": 4.9,
+        "z": 21.1
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "props",
+        "cell": 0,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 1,
+        "metalness": 0
+      },
+      "chroma": {
+        "similarity": 0.4,
+        "feather": 0.06
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": false,
+      "colliderClearance": 0,
+      "castShadow": false,
+      "receiveShadow": false,
+      "deleted": false
+    },
+    {
+      "id": "primitive-mo5se1xq-cw6h6",
+      "name": "prop-1w0",
+      "type": "prop",
+      "spawnType": null,
+      "position": {
+        "x": 15.3,
+        "y": 4.8,
+        "z": 19.3
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "texture": {
+        "atlas": "props",
+        "cell": 4,
+        "repeat": {
+          "x": 1,
+          "y": 1
+        },
+        "rotation": 0
+      },
+      "faceTextures": {},
+      "material": {
+        "color": "#ffffff",
+        "roughness": 1,
+        "metalness": 0
+      },
+      "chroma": {
+        "similarity": 0.32,
+        "feather": 0.08
+      },
+      "glbAssetId": null,
+      "prefabId": null,
+      "navArea": "default",
+      "prefabInstanceId": null,
+      "prefabInstanceOrigin": null,
+      "prefabInstanceRotation": null,
+      "prefabInstanceScale": null,
+      "collider": false,
+      "colliderClearance": 0,
+      "castShadow": false,
+      "receiveShadow": false,
+      "deleted": false
     }
   ],
   "lights": [

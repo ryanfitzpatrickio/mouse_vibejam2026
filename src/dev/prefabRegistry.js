@@ -1,4 +1,4 @@
-import { DEFAULT_TEXTURE_ATLAS } from './textureAtlasRegistry.js';
+import { DEFAULT_TEXTURE_ATLAS, normalizeTextureAtlasId } from './textureAtlasRegistry.js';
 
 function cloneVectorLike(source, fallback) {
   return {
@@ -8,14 +8,11 @@ function cloneVectorLike(source, fallback) {
   };
 }
 
-function normalizeTextureAtlasId(value) {
-  return typeof value === 'string' && /^textures\d*$/i.test(value) ? value.toLowerCase() : DEFAULT_TEXTURE_ATLAS;
-}
-
 export const FACE_TEXTURE_SLOTS = Object.freeze({
   box: Object.freeze(['right', 'left', 'top', 'bottom', 'front', 'back']),
   cylinder: Object.freeze(['side', 'top', 'bottom']),
   plane: Object.freeze([]),
+  prop: Object.freeze([]),
 });
 
 function normalizeTextureRef(value, fallbackCell = 0) {
@@ -65,7 +62,7 @@ export function createPrefabPartId() {
 }
 
 export function normalizePrefabPrimitive(entry = {}) {
-  const type = entry.type === 'plane' || entry.type === 'cylinder' ? entry.type : 'box';
+  const type = entry.type === 'plane' || entry.type === 'cylinder' || entry.type === 'prop' ? entry.type : 'box';
   const texture = entry.texture ?? {};
   const textureRef = normalizeTextureRef(texture, 0);
 
@@ -91,12 +88,18 @@ export function normalizePrefabPrimitive(entry = {}) {
       roughness: entry.material?.roughness ?? 0.88,
       metalness: entry.material?.metalness ?? 0.04,
     },
+    ...(type === 'prop' ? {
+      chroma: {
+        similarity: Math.min(1, Math.max(0, Number(entry.chroma?.similarity ?? 0.32))),
+        feather: Math.min(1, Math.max(0, Number(entry.chroma?.feather ?? 0.08))),
+      },
+    } : {}),
     prefabInstanceOrigin: entry.prefabInstanceOrigin
       ? cloneVectorLike(entry.prefabInstanceOrigin, { x: 0, y: 0, z: 0 })
       : null,
-    collider: entry.collider !== false,
-    castShadow: entry.castShadow !== false,
-    receiveShadow: entry.receiveShadow !== false,
+    collider: type === 'prop' ? entry.collider === true : entry.collider !== false,
+    castShadow: type === 'prop' ? entry.castShadow === true : entry.castShadow !== false,
+    receiveShadow: type === 'prop' ? entry.receiveShadow === true : entry.receiveShadow !== false,
     ...(type === 'plane' ? {
       zIndex: Number.isFinite(entry.zIndex) ? Math.trunc(entry.zIndex) : 0,
     } : {}),

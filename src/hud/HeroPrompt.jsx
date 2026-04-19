@@ -6,8 +6,17 @@ import {
   HUD_LABEL_SHADOW,
   HUD_SMALL_LABEL_FONT,
 } from './hudStyle.js';
+import { actionLabel } from '../input/inputSource.js';
+
+const HERO_NAMES = { brain: 'The Brain', jerry: 'Jerry' };
+const HERO_SUBTITLES = {
+  brain: 'You led the cat chase',
+  jerry: 'You led in cheese',
+};
 
 function HeroPromptView(props) {
+  const heroName = () => HERO_NAMES[props.avatar?.()] ?? 'The Brain';
+  const subtitle = () => HERO_SUBTITLES[props.avatar?.()] ?? 'You are the round leader';
   return (
     <Show when={props.visible()}>
       <div
@@ -33,7 +42,7 @@ function HeroPromptView(props) {
             color: '#ffe08a',
           }}
         >
-          You are the round leader
+          {subtitle()}
         </div>
         <div
           style={{
@@ -43,7 +52,7 @@ function HeroPromptView(props) {
             color: '#fff',
           }}
         >
-          Press H to respawn as The Brain
+          Press {actionLabel('heroActivate')} to respawn as {heroName()}
         </div>
       </div>
     </Show>
@@ -53,12 +62,18 @@ function HeroPromptView(props) {
 export class HeroPrompt {
   constructor() {
     const [visible, setVisible] = createSignal(false);
+    const [avatar, setAvatar] = createSignal(null);
     this._setVisible = setVisible;
-    this._dispose = render(() => <HeroPromptView visible={visible} />, document.body);
+    this._setAvatar = setAvatar;
+    this._dispose = render(
+      () => <HeroPromptView visible={visible} avatar={avatar} />,
+      document.body,
+    );
   }
 
-  setVisible(v) {
+  setVisible(v, avatar = null) {
     this._setVisible(!!v);
+    this._setAvatar(avatar);
   }
 
   dispose() {

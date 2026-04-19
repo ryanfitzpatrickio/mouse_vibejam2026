@@ -231,6 +231,7 @@ class BuildModeEditor {
     this._addActionButton('Add Box', () => this._addPrimitive('box'));
     this._addActionButton('Add Plane', () => this._addPrimitive('plane'));
     this._addActionButton('Add Cyl', () => this._addPrimitive('cylinder'));
+    this._addActionButton('Add Prop', () => this._addPrimitive('prop'), '#284423');
     this._addActionButton('Player Spawn', () => this._addSpawnMarker(SPAWN_TYPES.PLAYER), '#1b4450');
     this._addActionButton('Enemy Spawn', () => this._addSpawnMarker(SPAWN_TYPES.ENEMY), '#5a2b1f');
     this._addActionButton('Point Light', () => this._addLight('point'), '#5a4120');
@@ -795,6 +796,7 @@ class BuildModeEditor {
     const entry = primitive ?? light ?? portal ?? rope ?? extraction ?? raidTask;
     const disabled = !entry;
     const primitiveDisabled = !primitive;
+    const propSelected = primitive?.type === 'prop';
     const lightDisabled = !light;
     const portalDisabled = !portal;
     const ropeDisabled = !rope;
@@ -818,9 +820,10 @@ class BuildModeEditor {
       this.colorInput,
       ...Object.values(this.repeatInputs),
       this.textureRotationInput,
+      this.chromaSimilarityInput,
+      this.chromaFeatherInput,
       this.roughnessInput,
       this.metalnessInput,
-      this.colliderToggle,
       this.receiveShadowToggle,
       this.clearanceInput,
       this.planeZIndexInput,
@@ -829,6 +832,9 @@ class BuildModeEditor {
     ].forEach((field) => {
       field.disabled = primitiveDisabled;
     });
+    this.colliderToggle.disabled = primitiveDisabled || propSelected;
+    this.castShadowToggle.disabled = (!primitive && !light) || propSelected;
+    this.receiveShadowToggle.disabled = primitiveDisabled || propSelected;
 
     [
       this.lightColorInput,
@@ -841,7 +847,6 @@ class BuildModeEditor {
     ].forEach((field) => {
       field.disabled = lightDisabled;
     });
-    this.castShadowToggle.disabled = !primitive && !light;
 
     [
       this.portalTypeSelect,
@@ -880,14 +885,16 @@ class BuildModeEditor {
     if (this.extractionSection) this.extractionSection.style.display = extraction ? 'block' : 'none';
     if (this.raidTaskSection) this.raidTaskSection.style.display = raidTask ? 'block' : 'none';
     this.scaleInputs._wrap.style.display = primitive ? 'block' : 'none';
-    this.colliderToggle._wrap.style.display = primitive ? 'flex' : 'none';
-    this.castShadowToggle._wrap.style.display = primitive || light ? 'flex' : 'none';
-    this.receiveShadowToggle._wrap.style.display = primitive ? 'flex' : 'none';
-    this.clearanceInput._wrap.style.display = primitive ? 'grid' : 'none';
+    this.colliderToggle._wrap.style.display = primitive && !propSelected ? 'flex' : 'none';
+    this.castShadowToggle._wrap.style.display = (primitive && !propSelected) || light ? 'flex' : 'none';
+    this.receiveShadowToggle._wrap.style.display = primitive && !propSelected ? 'flex' : 'none';
+    this.clearanceInput._wrap.style.display = primitive && !propSelected ? 'grid' : 'none';
+    this.chromaSimilarityInput._wrap.style.display = propSelected ? 'grid' : 'none';
+    this.chromaFeatherInput._wrap.style.display = propSelected ? 'grid' : 'none';
     if (this.planeZIndexInput?._wrap) {
       this.planeZIndexInput._wrap.style.display = primitive?.type === 'plane' ? 'grid' : 'none';
     }
-    this.navAreaSelect._wrap.style.display = primitive ? 'grid' : 'none';
+    this.navAreaSelect._wrap.style.display = primitive && !propSelected ? 'grid' : 'none';
     this.prefabSelect.disabled = primitiveDisabled;
 
     if (!entry) {
@@ -917,6 +924,14 @@ class BuildModeEditor {
       this.repeatInputs.x.value = primitive.texture.repeat.x;
       this.repeatInputs.y.value = primitive.texture.repeat.y;
       this.textureRotationInput.value = (primitive.texture.rotation * RAD_TO_DEG).toFixed(1);
+      if (primitive.type === 'prop') {
+        const similarity = Number(primitive.chroma?.similarity ?? 0.32);
+        const feather = Number(primitive.chroma?.feather ?? 0.08);
+        this.chromaSimilarityInput.value = similarity;
+        this.chromaSimilarityInput._output.textContent = similarity.toFixed(2);
+        this.chromaFeatherInput.value = feather;
+        this.chromaFeatherInput._output.textContent = feather.toFixed(2);
+      }
       this.roughnessInput.value = primitive.material.roughness;
       this.roughnessInput._output.textContent = Number(primitive.material.roughness).toFixed(2);
       this.metalnessInput.value = primitive.material.metalness;

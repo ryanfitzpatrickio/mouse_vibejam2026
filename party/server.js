@@ -459,6 +459,7 @@ export default class GameServer {
     state.heroAvailable = false;
     state.isHero = false;
     state.heroAvatar = null;
+    state.heroAvatarAvailable = null;
     if (!active) state.adversarySafeStreakSeconds = 0;
   }
 
@@ -767,8 +768,10 @@ export default class GameServer {
   }
 
   /**
-   * Two minutes into the forage phase, pick the current round leader (most
-   * cheese + smacks) and offer them the hero respawn. Runs once per round.
+   * Two minutes into the forage phase, pick two leaders:
+   *   - Cheese leader (most cheese collected) → Jerry
+   *   - Cat chase leader (longest time survived being chased) → Brain
+   * Each gets their own hero respawn offer. Runs once per round.
    */
   _maybeElectHero(wallNow) {
     if (this.round.phase !== 'forage') return;
@@ -776,23 +779,40 @@ export default class GameServer {
     const forageElapsed = ROUND_DURATIONS.forage - (this.round.phaseEndsAt - wallNow);
     if (forageElapsed < 120) return;
 
-    let bestId = null;
-    let bestScore = -1;
+    let cheeseId = null;
+    let cheeseScore = 0;
+    let chaseId = null;
+    let chaseScore = 0;
     for (const [id, state] of this.players) {
       if (!state.alive || state.spectator || state.extracted || state.isAdversary) continue;
       const rs = state.roundStats ?? {};
-      const liveScore = (state.cheeseCarried ?? 0)
-        + (rs.smacksLanded ?? 0) * 3
-        + (rs.grabsInitiated ?? 0) * 1;
-      if (liveScore > bestScore) {
-        bestScore = liveScore;
-        bestId = id;
+      const cheese = (rs.cheeseCollected ?? 0) + (state.cheeseCarried ?? 0);
+      if (cheese > cheeseScore) {
+        cheeseScore = cheese;
+        cheeseId = id;
+      }
+      const chase = playerChaseRecordSeconds(state);
+      if (chase > chaseScore) {
+        chaseScore = chase;
+        chaseId = id;
       }
     }
-    if (!bestId) return;
-    this.round = { ...this.round, heroCandidateId: bestId };
-    const leader = this.players.get(bestId);
-    if (leader) leader.heroAvailable = true;
+    if (!cheeseId && !chaseId) return;
+    this.round = { ...this.round, heroCandidateId: cheeseId ?? chaseId };
+    if (cheeseId) {
+      const leader = this.players.get(cheeseId);
+      if (leader) {
+        leader.heroAvailable = true;
+        leader.heroAvatarAvailable = 'jerry';
+      }
+    }
+    if (chaseId && chaseId !== cheeseId) {
+      const leader = this.players.get(chaseId);
+      if (leader) {
+        leader.heroAvailable = true;
+        leader.heroAvatarAvailable = 'brain';
+      }
+    }
   }
 
   _findRaidTaskById(taskId) {
@@ -951,6 +971,7 @@ export default class GameServer {
       state.heroAvailable = false;
       state.isHero = false;
       state.heroAvatar = null;
+      state.heroAvatarAvailable = null;
       state.deaths = 0;
       state.alive = true;
       state.deathTime = 0;
@@ -1256,7 +1277,8 @@ export default class GameServer {
             state.heroAvailable = false;
             state.health = PHYSICS.maxHealth;
             state.stamina = PHYSICS.maxStamina;
-            state.heroAvatar = pickHeroAvatar();
+            state.heroAvatar = state.heroAvatarAvailable ?? pickHeroAvatar();
+            state.heroAvatarAvailable = null;
           }
           if (!this._lastSeq) this._lastSeq = new Map();
           this._lastSeq.set(id, seqs[id]);

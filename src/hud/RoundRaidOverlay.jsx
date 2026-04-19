@@ -10,6 +10,7 @@ import {
   HUD_LABEL_SHADOW,
 } from './hudStyle.js';
 import { MouseHeadTarget, CheeseItem, StaminaBolt } from './hudSprites.jsx';
+import { actionLabel } from '../input/inputSource.js';
 
 function formatClock(seconds) {
   const s = Math.max(0, Math.floor(seconds));
@@ -207,7 +208,7 @@ function RoundRaidView(props) {
               'text-shadow': HUD_LABEL_SHADOW,
             }}
           >
-            Press Space / Enter or click to close
+            Press {actionLabel('dismiss')} or click to close
           </div>
         </div>
       </div>
@@ -253,6 +254,32 @@ export class RoundRaidOverlay {
       this._dismiss();
     };
     document.addEventListener('keydown', this._onKeyDown, true);
+
+    // Gamepad dismissal: A or B while the round-end summary is visible.
+    this._gamepadRaf = 0;
+    this._gamepadPrev = { a: false, b: false };
+    const pollGamepad = () => {
+      if (state.roundEndVisible) {
+        const pads = typeof navigator !== 'undefined' && navigator.getGamepads
+          ? navigator.getGamepads() : [];
+        for (const p of pads) {
+          if (!p || !p.connected) continue;
+          const a = !!p.buttons[0]?.pressed;
+          const b = !!p.buttons[1]?.pressed;
+          if ((a && !this._gamepadPrev.a) || (b && !this._gamepadPrev.b)) {
+            this._dismiss();
+          }
+          this._gamepadPrev.a = a;
+          this._gamepadPrev.b = b;
+          break;
+        }
+      } else {
+        this._gamepadPrev.a = false;
+        this._gamepadPrev.b = false;
+      }
+      this._gamepadRaf = requestAnimationFrame(pollGamepad);
+    };
+    this._gamepadRaf = requestAnimationFrame(pollGamepad);
   }
 
   updatePhaseBanner(round, nowSeconds = Date.now() / 1000, hints = {}) {
@@ -264,7 +291,7 @@ export class RoundRaidOverlay {
     const label = round.phase === 'forage'
       ? `FORAGE  ·  ${formatClock(remain)}`
       : round.phase === 'extract'
-        ? `EXTRACT  ·  ${formatClock(remain)}  ·  Hold E in a glowing hole`
+        ? `EXTRACT  ·  ${formatClock(remain)}  ·  Hold ${actionLabel('interact')} in a glowing hole`
         : `ROUND END  ·  ${formatClock(remain)}`;
     const sub = hints.subtitle ? `\n${hints.subtitle}` : '';
     const text = `${label}${sub}`;
@@ -303,6 +330,7 @@ export class RoundRaidOverlay {
 
   dispose() {
     document.removeEventListener('keydown', this._onKeyDown, true);
+    cancelAnimationFrame(this._gamepadRaf);
     this._dispose();
     this._mount.remove();
   }

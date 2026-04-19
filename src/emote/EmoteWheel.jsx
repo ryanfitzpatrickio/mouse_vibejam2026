@@ -314,6 +314,37 @@ export class EmoteWheel {
     this.confirm();
   }
 
+  /**
+   * Drive the selector with a normalized stick vector (-1..1 on each axis).
+   * Called every frame while a gamepad is connected and the wheel is visible.
+   */
+  setStickCursor(x, y) {
+    if (!this._state.visible) return;
+    const mag = Math.hypot(x, y);
+    if (mag < 0.01) {
+      this._cursorX = 0;
+      this._cursorY = 0;
+    } else {
+      const m = Math.min(1, mag);
+      const nx = x / mag;
+      const ny = y / mag;
+      const radius = SLOT_RADIUS * m;
+      this._cursorX = nx * radius;
+      this._cursorY = ny * radius;
+    }
+    batch(() => {
+      this._setState({
+        cursorLeft: this._centerX + this._cursorX,
+        cursorTop: this._centerY + this._cursorY,
+      });
+    });
+    this._updateSelectionFromCursor();
+  }
+
+  isVisible() {
+    return !!this._state.visible;
+  }
+
   confirm() {
     if (!this._state.visible) return;
     const idx = this._state.selectedIndex;

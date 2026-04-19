@@ -63,6 +63,20 @@ export function installMaterialSection(editor) {
     });
   });
 
+  editor.chromaSimilarityInput = createRangeField(section, 'Chroma Similarity', 0, 1, 0.01, (value) => {
+    editor._updateSelected((primitive) => {
+      primitive.chroma = primitive.chroma ?? {};
+      primitive.chroma.similarity = value;
+    });
+  });
+
+  editor.chromaFeatherInput = createRangeField(section, 'Chroma Feather', 0, 1, 0.01, (value) => {
+    editor._updateSelected((primitive) => {
+      primitive.chroma = primitive.chroma ?? {};
+      primitive.chroma.feather = value;
+    });
+  });
+
   editor.roughnessInput = createRangeField(section, 'Roughness', 0, 1, 0.01, (value) => {
     editor._updateSelected((primitive) => {
       primitive.material.roughness = value;

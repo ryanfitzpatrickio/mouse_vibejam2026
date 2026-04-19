@@ -1,7 +1,12 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { FACE_TEXTURE_SLOTS } from '../dev/prefabRegistry.js';
-import { DEFAULT_TEXTURE_ATLAS, TEXTURE_ATLASES } from '../dev/textureAtlasRegistry.js';
+import {
+  DEFAULT_TEXTURE_ATLAS,
+  PROP_TEXTURE_ATLAS,
+  TEXTURE_ATLASES,
+  normalizeTextureAtlasId,
+} from '../dev/textureAtlasRegistry.js';
 import { assetUrl } from '../utils/assetUrl.js';
 import { normalizeSpawnType } from '../../shared/spawnPoints.js';
 import { normalizeNavArea } from '../../shared/navConfig.js';
@@ -54,6 +59,9 @@ const EDITABLE_TYPE_DEFAULTS = Object.freeze({
     scale: { x: 1, y: 1, z: 1 },
   }),
   cylinder: Object.freeze({
+    scale: { x: 1, y: 1, z: 1 },
+  }),
+  prop: Object.freeze({
     scale: { x: 1, y: 1, z: 1 },
   }),
 });
@@ -109,6 +117,7 @@ function getCellBounds(index, size) {
 
 function createPrimitiveGeometry(type) {
   switch (type) {
+    case 'prop':
     case 'plane':
       return new THREE.PlaneGeometry(1, 1);
     case 'cylinder':
@@ -424,10 +433,6 @@ function worldToLocalPrefabPosition(position, origin, rotation, scale) {
   return roundVectorLike(local, { x: 0, y: 0, z: 0 });
 }
 
-function normalizeTextureAtlasId(value) {
-  return typeof value === 'string' && /^textures\d*$/i.test(value) ? value.toLowerCase() : DEFAULT_TEXTURE_ATLAS;
-}
-
 function cloneLayout(layout) {
   return JSON.parse(JSON.stringify(layout ?? DEFAULT_EDITABLE_LAYOUT));
 }
@@ -678,13 +683,18 @@ export class Room {
     return this.textureAtlasImage;
   }
 
-  _createAtlasTexture(cellIndex, atlas = DEFAULT_TEXTURE_ATLAS) {
+  _createAtlasTexture(cellIndex, atlas = DEFAULT_TEXTURE_ATLAS, chroma = null) {
     const atlasId = atlas ?? DEFAULT_TEXTURE_ATLAS;
     const image = this.textureAtlasImages.get(atlasId) ?? this.textureAtlasImage;
     if (!image) return null;
     // One base texture per (atlas, cell). Repeat/rotation is baked into mesh UVs,
     // so a single texture serves every variant.
-    const cacheKey = `${atlasId}:${cellIndex}`;
+    const similarity = THREE.MathUtils.clamp(Number(chroma?.similarity ?? 0.32), 0, 1);
+    const feather = THREE.MathUtils.clamp(Number(chroma?.feather ?? 0.08), 0, 1);
+    const chromaKey = atlasId === PROP_TEXTURE_ATLAS
+      ? `|ck=${similarity.toFixed(3)}:${feather.toFixed(3)}`
+      : '';
+    const cacheKey = `${atlasId}:${cellIndex}${chromaKey}`;
     const cached = this.textureCache.get(cacheKey);
     if (cached) return cached;
 
@@ -713,6 +723,21 @@ export class Room {
       xBounds.size,
       yBounds.size,
     );
+
+    if (atlasId === PROP_TEXTURE_ATLAS) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const { data } = imageData;
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i] / 255;
+        const g = data[i + 1] / 255;
+        const b = data[i + 2] / 255;
+        const greenDistance = Math.hypot(r, g - 1, b) / Math.sqrt(3);
+        const edge = Math.max(0.0001, feather);
+        const alpha = THREE.MathUtils.smoothstep(greenDistance, similarity, similarity + edge);
+        data[i + 3] = Math.round(data[i + 3] * alpha);
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -1051,7 +1076,7 @@ export class Room {
   }
 
   _normalizePrimitive(entry = {}) {
-    const type = entry.type === 'plane' || entry.type === 'cylinder' || entry.type === 'glb' ? entry.type : 'box';
+    const type = entry.type === 'plane' || entry.type === 'cylinder' || entry.type === 'glb' || entry.type === 'prop' ? entry.type : 'box';
     const defaults = EDITABLE_TYPE_DEFAULTS[type] ?? EDITABLE_TYPE_DEFAULTS.box;
     const texture = typeof entry.texture === 'number' ? { cell: entry.texture } : (entry.texture ?? {});
     const atlas = normalizeTextureAtlasId(texture.atlas);
@@ -1079,6 +1104,12 @@ export class Room {
         roughness: entry.material?.roughness ?? 0.88,
         metalness: entry.material?.metalness ?? 0.04,
       },
+      ...(type === 'prop' ? {
+        chroma: {
+          similarity: THREE.MathUtils.clamp(Number(entry.chroma?.similarity ?? 0.32), 0, 1),
+          feather: THREE.MathUtils.clamp(Number(entry.chroma?.feather ?? 0.08), 0, 1),
+        },
+      } : {}),
       glbAssetId: entry.glbAssetId ?? null,
       prefabId: entry.prefabId ?? null,
       navArea: normalizeNavArea(entry.navArea),
@@ -1086,10 +1117,10 @@ export class Room {
       prefabInstanceOrigin: entry.prefabInstanceOrigin ? cloneVectorLike(entry.prefabInstanceOrigin, { x: 0, y: 0, z: 0 }) : null,
       prefabInstanceRotation: entry.prefabInstanceRotation ? cloneVectorLike(entry.prefabInstanceRotation, { x: 0, y: 0, z: 0 }) : null,
       prefabInstanceScale: entry.prefabInstanceScale ? cloneVectorLike(entry.prefabInstanceScale, { x: 1, y: 1, z: 1 }) : null,
-      collider: entry.collider !== false,
+      collider: type === 'prop' ? entry.collider === true : entry.collider !== false,
       colliderClearance: entry.colliderClearance ?? 0,
-      castShadow: entry.castShadow !== false,
-      receiveShadow: entry.receiveShadow !== false,
+      castShadow: type === 'prop' ? entry.castShadow === true : entry.castShadow !== false,
+      receiveShadow: type === 'prop' ? entry.receiveShadow === true : entry.receiveShadow !== false,
       deleted: entry.deleted === true,
       ...(type === 'plane' ? {
         zIndex: Number.isFinite(entry.zIndex) ? Math.trunc(entry.zIndex) : 0,
@@ -1416,6 +1447,23 @@ export class Room {
   }
 
   _createEditablePrimitiveMaterial(definition) {
+    if (definition.type === 'prop') {
+      const texture = this._createAtlasTexture(
+        definition.texture.cell ?? 0,
+        definition.texture.atlas ?? PROP_TEXTURE_ATLAS,
+        definition.chroma,
+      );
+      return new THREE.SpriteMaterial({
+        map: texture ?? null,
+        color: new THREE.Color(definition.material.color ?? '#ffffff'),
+        transparent: true,
+        alphaTest: 0.12,
+        depthTest: true,
+        depthWrite: false,
+        sizeAttenuation: true,
+      });
+    }
+
     // Note: texture.repeat/rotation intentionally isn't passed to the material —
     // it's baked into the mesh's cloned-and-cached geometry via _getEditableGeometry,
     // which lets one material instance serve every repeat/rotation variant.
@@ -1768,6 +1816,27 @@ export class Room {
         continue;
       }
 
+      if (primitive.type === 'prop') {
+        const material = this._createEditablePrimitiveMaterial(primitive);
+        const sprite = new THREE.Sprite(material);
+        sprite.name = primitive.name;
+        sprite.position.set(primitive.position.x, primitive.position.y, primitive.position.z);
+        sprite.rotation.set(primitive.rotation.x, primitive.rotation.y, primitive.rotation.z);
+        sprite.scale.set(primitive.scale.x, primitive.scale.y, 1);
+        sprite.castShadow = false;
+        sprite.receiveShadow = false;
+        sprite.visible = this._isPrimitiveVisible(primitive);
+        sprite.userData.editablePrimitive = true;
+        sprite.userData.primitiveId = primitive.id;
+        sprite.userData.colliderEnabled = false;
+        sprite.userData.spawnType = primitive.spawnType;
+        sprite.userData.skipOutline = true;
+        this._syncCameraOccluderUserData(sprite, primitive);
+        this.editableGroup.add(sprite);
+        this.editableMeshes.set(primitive.id, sprite);
+        continue;
+      }
+
       const geometry = this._getEditableGeometry(primitive);
       const material = this._createEditablePrimitiveMaterial(primitive);
       const mesh = new THREE.Mesh(geometry, material);
@@ -1829,6 +1898,33 @@ export class Room {
       });
 
       primitives.forEach((primitive) => {
+        if (primitive.type === 'prop') {
+          const material = this._createEditablePrimitiveMaterial(primitive);
+          const sprite = new THREE.Sprite(material);
+          sprite.name = primitive.name;
+          sprite.position.set(
+            primitive.position.x,
+            primitive.position.y,
+            primitive.position.z,
+          );
+          sprite.rotation.set(primitive.rotation.x, primitive.rotation.y, primitive.rotation.z);
+          sprite.scale.set(primitive.scale.x, primitive.scale.y, 1);
+          sprite.castShadow = false;
+          sprite.receiveShadow = false;
+          sprite.visible = this._isPrimitiveVisible(primitive);
+          sprite.userData.editablePrimitive = true;
+          sprite.userData.primitiveId = primitive.id;
+          sprite.userData.prefabInstanceId = instanceId;
+          sprite.userData.spawnType = primitive.spawnType;
+          sprite.userData.skipOutline = true;
+          sprite.userData.colliderEnabled = false;
+          this._syncCameraOccluderUserData(sprite, primitive);
+          group.add(sprite);
+          this.editableMeshes.set(primitive.id, sprite);
+          this.prefabInstanceIdByPrimitiveId.set(primitive.id, instanceId);
+          return;
+        }
+
         const geometry = this._getEditableGeometry(primitive);
         const material = this._createEditablePrimitiveMaterial(primitive);
         const mesh = new THREE.Mesh(geometry, material);
@@ -2791,6 +2887,12 @@ export class Room {
         depth: Math.max(0.0001, primitive.scale.y),
       };
     }
+    if (primitive.type === 'prop') {
+      return {
+        width: Math.max(0.0001, primitive.scale.x),
+        depth: Math.max(0.0001, primitive.scale.x),
+      };
+    }
 
     return {
       width: Math.max(0.0001, primitive.scale.x),
@@ -2826,7 +2928,7 @@ export class Room {
     const grid = this.getBuildGridConfig();
 
     if (snapScale) {
-      if (primitive.type === 'plane') {
+      if (primitive.type === 'plane' || primitive.type === 'prop') {
         primitive.scale.x = this._snapGridScale(primitive.scale.x, grid.cellWidth);
         primitive.scale.y = this._snapGridScale(primitive.scale.y, grid.cellDepth);
       } else {

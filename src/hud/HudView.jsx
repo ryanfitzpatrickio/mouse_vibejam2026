@@ -1,6 +1,7 @@
 import { Show, createMemo, For } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { HUD_ICONS } from './hudSprites.jsx';
+import { actionLabel } from '../input/inputSource.js';
 import {
   HUD_PANEL_STYLE,
   HUD_LABEL_FONT as LABEL_FONT,
@@ -277,7 +278,7 @@ export function HudView(props) {
             'backdrop-filter': 'blur(4px)',
           }}
         >
-          <Show when={props.state.hint?.key}>
+          <Show when={props.state.hint?.action || props.state.hint?.key}>
             <span
               style={{
                 display: 'inline-block',
@@ -290,7 +291,7 @@ export function HudView(props) {
                 'font-size': '11px',
               }}
             >
-              {props.state.hint.key}
+              {props.state.hint?.action ? actionLabel(props.state.hint.action) : props.state.hint.key}
             </span>
           </Show>
           <span>{props.state.hint?.text}</span>

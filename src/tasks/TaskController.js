@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { getTaskRuntime } from './taskRegistry.js';
 import { CheeseBurst } from './CheeseBurst.js';
+import { actionLabel, subscribeInputSource } from '../input/inputSource.js';
 
 const INTERACT_RADIUS = 1.6;
 
@@ -27,6 +28,12 @@ export class TaskController {
     /** @type {Map<string, { effect: {update:(dt:number)=>void, dispose:()=>void}, group: THREE.Object3D }>} */
     this._completedEffects = new Map();
     this._lastRoundNumber = null;
+    this._promptVerb = null;
+    this._unsubInputSource = subscribeInputSource(() => {
+      if (this._promptTaskId && this._promptVerb && this.promptElement) {
+        this.promptElement.textContent = `Press ${actionLabel('interact')} to ${this._promptVerb}`;
+      }
+    });
   }
 
   /** Called each frame with elapsed seconds. */
@@ -174,12 +181,14 @@ export class TaskController {
     if (id === this._promptTaskId) return;
     this._promptTaskId = id;
     if (!nearby) {
+      this._promptVerb = null;
       this.promptElement.style.display = 'none';
       return;
     }
     const runtime = getTaskRuntime(nearby.definition.taskType);
     const verb = runtime?.promptVerb ?? 'start task';
-    this.promptElement.textContent = `Press E to ${verb}`;
+    this._promptVerb = verb;
+    this.promptElement.textContent = `Press ${actionLabel('interact')} to ${verb}`;
     this.promptElement.style.display = 'block';
   }
 
@@ -190,5 +199,6 @@ export class TaskController {
     }
     this._resetCompletedEffects();
     this.cheeseBurst.dispose();
+    this._unsubInputSource?.();
   }
 }

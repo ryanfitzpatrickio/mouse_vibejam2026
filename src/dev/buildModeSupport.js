@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { normalizePrefabPrimitive } from './prefabRegistry.js';
+import { PROP_TEXTURE_ATLAS } from './textureAtlasRegistry.js';
 import { SPAWN_TYPES } from '../../shared/spawnPoints.js';
 import { NAV_AREA_TYPES } from '../../shared/navConfig.js';
 import { VIBE_PORTAL_TYPES, normalizeVibePortalType } from '../../shared/vibePortal.js';
@@ -83,7 +84,7 @@ export function createDefaultPrimitive(type, app) {
     rotation: { x: 0, y: 0, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
     texture: {
-      atlas: 'textures',
+      atlas: type === 'prop' ? PROP_TEXTURE_ATLAS : 'textures',
       cell: 0,
       repeat: { x: 1, y: 1 },
       rotation: 0,
@@ -112,6 +113,17 @@ export function createDefaultPrimitive(type, app) {
 
   if (type === 'box') {
     primitive.scale = { x: 1, y: 1, z: 1 };
+  }
+
+  if (type === 'prop') {
+    primitive.scale = { x: 1, y: 1, z: 1 };
+    primitive.position.y = Number((spawn.y + 0.5).toFixed(3));
+    primitive.chroma = { similarity: 0.32, feather: 0.08 };
+    primitive.collider = false;
+    primitive.castShadow = false;
+    primitive.receiveShadow = false;
+    primitive.material.roughness = 1;
+    primitive.material.metalness = 0;
   }
 
   return normalizePrefabPrimitive(primitive);

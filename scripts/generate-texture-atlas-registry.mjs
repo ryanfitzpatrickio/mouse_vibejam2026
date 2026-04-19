@@ -9,6 +9,7 @@ const OUTPUT_FILE = path.join(ROOT, 'src', 'dev', 'textureAtlasRegistry.generate
 const CACHE_NAME = 'generate-texture-atlas-registry';
 
 function atlasIdFromFilename(filename) {
+  if (/^props\.(webp|jpg|jpeg|png)$/i.test(filename)) return 'props';
   const match = /^textures(?:(\d+))?\.(webp|jpg|jpeg|png)$/i.exec(filename);
   if (!match) return null;
   return match[1] ? `textures${match[1]}` : 'textures';
@@ -16,6 +17,13 @@ function atlasIdFromFilename(filename) {
 
 function atlasLabel(id) {
   return `${id}.webp`;
+}
+
+function atlasSortRank(id) {
+  if (id === 'textures') return 1;
+  if (id === 'props') return 1000;
+  const n = Number.parseInt(id.replace('textures', ''), 10);
+  return Number.isFinite(n) ? n : 999;
 }
 
 async function main() {
@@ -32,11 +40,7 @@ async function main() {
       };
     })
     .filter(Boolean)
-    .sort((a, b) => {
-      const aNum = a.id === 'textures' ? 1 : Number.parseInt(a.id.replace('textures', ''), 10);
-      const bNum = b.id === 'textures' ? 1 : Number.parseInt(b.id.replace('textures', ''), 10);
-      return aNum - bNum;
-    });
+    .sort((a, b) => atlasSortRank(a.id) - atlasSortRank(b.id));
 
   const inputs = [
     path.join(ROOT, 'scripts', 'generate-texture-atlas-registry.mjs'),

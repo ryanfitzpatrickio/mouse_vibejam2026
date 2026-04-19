@@ -8,9 +8,17 @@ const ROOT = process.cwd();
 const SOURCE_DIR = path.join(ROOT, 'assets', 'source');
 
 function atlasIdFromFilename(filename) {
+  if (/^props\.(webp|jpg|jpeg|png)$/i.test(filename)) return 'props';
   const match = /^textures(?:(\d+))?\.(webp|jpg|jpeg|png)$/i.exec(filename);
   if (!match) return null;
   return match[1] ? `textures${match[1]}` : 'textures';
+}
+
+function atlasSortRank(id) {
+  if (id === 'textures') return 1;
+  if (id === 'props') return 1000;
+  const n = Number.parseInt(id.replace('textures', ''), 10);
+  return Number.isFinite(n) ? n : 999;
 }
 
 async function optimizeImage({ input, output, width, quality, nearLossless, label }) {
@@ -62,11 +70,7 @@ async function main() {
       } : null;
     })
     .filter(Boolean)
-    .sort((a, b) => {
-      const aNum = a.id === 'textures' ? 1 : Number.parseInt(a.id.replace('textures', ''), 10);
-      const bNum = b.id === 'textures' ? 1 : Number.parseInt(b.id.replace('textures', ''), 10);
-      return aNum - bNum;
-    });
+    .sort((a, b) => atlasSortRank(a.id) - atlasSortRank(b.id));
 
   const otherSources = [
     {

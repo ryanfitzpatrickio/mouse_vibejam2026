@@ -9,6 +9,7 @@ import {
   HUD_LABEL_SHADOW,
   HUD_TRACK_STYLE,
 } from './hudStyle.js';
+import { actionLabel } from '../input/inputSource.js';
 
 function formatSeconds(value) {
   return `${Math.max(0, Number(value) || 0).toFixed(1)}s`;
@@ -205,9 +206,9 @@ function AdversaryStatusView(props) {
           }}
         >
           {isAvailable()
-            ? 'Press J to become human'
+            ? `Press ${actionLabel('adversaryToggle')} to become human`
             : isLocal()
-              ? 'Stay away from mice. Press J to return.'
+              ? `Stay away from mice. Press ${actionLabel('adversaryToggle')} to return.`
               : hiding()
                 ? 'No mice are close.'
                 : 'Mice are close.'}

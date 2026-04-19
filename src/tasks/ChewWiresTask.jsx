@@ -1,4 +1,4 @@
-import { createSignal, For, Show, onCleanup, onMount } from 'solid-js';
+import { createMemo, createSignal, For, Show, onCleanup, onMount } from 'solid-js';
 import { render } from 'solid-js/web';
 import {
   HUD_PANEL_STYLE,
@@ -6,6 +6,7 @@ import {
   HUD_LABEL_SHADOW,
   HUD_SMALL_LABEL_FONT,
 } from '../hud/hudStyle.js';
+import { actionLabel, setInputSource } from '../input/inputSource.js';
 
 const BOARD_W = 640;
 const BOARD_H = 420;
@@ -91,6 +92,7 @@ function WireView(props) {
   const wire = () => props.wire;
   const cut = () => wire().cut;
   const color = () => wire().color;
+  const selected = () => !!props.selected;
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -98,8 +100,26 @@ function WireView(props) {
     props.onCut(wire());
   };
 
+  const handleHover = () => {
+    if (!cut()) props.onHover?.(wire());
+  };
+
   return (
     <g>
+      <Show when={!cut() && selected()}>
+        <path
+          d={wire().path.d}
+          stroke="#ffffff"
+          stroke-width={wire().isTarget ? 22 : 18}
+          fill="none"
+          stroke-linecap="round"
+          style={{
+            opacity: 0.85,
+            filter: 'drop-shadow(0 0 6px #ffffff)',
+            'pointer-events': 'none',
+          }}
+        />
+      </Show>
       <Show when={!cut()}>
         <path
           d={wire().path.d}
@@ -138,6 +158,7 @@ function WireView(props) {
           }}
           onClick={handleClick}
           onPointerDown={handleClick}
+          onPointerEnter={handleHover}
         />
         <Show when={wire().isTarget}>
           <path
@@ -242,28 +263,155 @@ function ChewWiresView(props) {
   const [mistakes, setMistakes] = createSignal(0);
   const [done, setDone] = createSignal(false);
 
+  // Wire indices sorted top-to-bottom by vertical position. Selector moves
+  // through this order so up/down on keyboard or controller feels natural.
+  const visualOrder = createMemo(() => {
+    const arr = wires().map((w, i) => ({ i, y: w.path.startY }));
+    arr.sort((a, b) => a.y - b.y);
+    return arr.map((e) => e.i);
+  });
+
+  const [selectedId, setSelectedId] = createSignal(null);
+
+  // Start selector on the top-most dead (non-target) wire.
+  const initialSelectedId = (() => {
+    const order = visualOrder();
+    const ws = wires();
+    for (const idx of order) {
+      if (!ws[idx].isTarget) return ws[idx].id;
+    }
+    return ws[order[0]].id;
+  })();
+  setSelectedId(initialSelectedId);
+
   const targetsRemaining = () =>
     wires().filter((w) => w.isTarget && !w.cut).length;
+
+  const findSelectionIndex = () => {
+    const id = selectedId();
+    const order = visualOrder();
+    const ws = wires();
+    return order.findIndex((idx) => ws[idx].id === id);
+  };
+
+  const moveSelection = (delta) => {
+    const order = visualOrder();
+    const ws = wires();
+    if (!order.length) return;
+    const uncut = order.filter((idx) => !ws[idx].cut);
+    if (!uncut.length) return;
+    const currentId = selectedId();
+    let pos = uncut.findIndex((idx) => ws[idx].id === currentId);
+    if (pos < 0) pos = delta > 0 ? -1 : uncut.length;
+    const next = (pos + delta + uncut.length) % uncut.length;
+    setSelectedId(ws[uncut[next]].id);
+  };
 
   const onCutWire = (wire) => {
     if (done()) return;
     setWires((cur) => cur.map((w) => (w.id === wire.id ? { ...w, cut: true } : w)));
     if (!wire.isTarget) {
       setMistakes((m) => m + 1);
-      return;
-    }
-    if (targetsRemaining() === 0) {
+    } else if (targetsRemaining() === 0) {
       setDone(true);
       setTimeout(() => {
         props.onComplete?.();
       }, 550);
+      return;
     }
+    // Move selection to next uncut wire after a cut.
+    const order = visualOrder();
+    const ws = wires();
+    const uncut = order.filter((idx) => !ws[idx].cut);
+    if (uncut.length) setSelectedId(ws[uncut[0]].id);
+  };
+
+  const confirmSelection = () => {
+    const id = selectedId();
+    const w = wires().find((x) => x.id === id);
+    if (w && !w.cut) onCutWire(w);
   };
 
   const handleCancel = (e) => {
     e?.stopPropagation?.();
     props.onCancel?.();
   };
+
+  onMount(() => {
+    const onKey = (e) => {
+      if (done()) return;
+      if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        e.preventDefault();
+        setInputSource('keyboard');
+        moveSelection(-1);
+      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        setInputSource('keyboard');
+        moveSelection(1);
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        setInputSource('keyboard');
+        confirmSelection();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCancel();
+      }
+    };
+    document.addEventListener('keydown', onKey, true);
+
+    // Gamepad polling (dialog-local). Edge-detects D-pad / left-stick /
+    // A (confirm) / B (cancel).
+    const padState = {
+      up: false, down: false, a: false, b: false, stickY: 0, axisLatched: false,
+    };
+    let raf = 0;
+    const poll = () => {
+      const pads = typeof navigator !== 'undefined' && navigator.getGamepads
+        ? navigator.getGamepads() : [];
+      let pad = null;
+      for (const p of pads) { if (p && p.connected) { pad = p; break; } }
+      if (pad) {
+        const up = !!pad.buttons[12]?.pressed;
+        const down = !!pad.buttons[13]?.pressed;
+        const a = !!pad.buttons[0]?.pressed;
+        const b = !!pad.buttons[1]?.pressed;
+        const sy = pad.axes[1] ?? 0;
+        const anyActivity = up || down || a || b
+          || Math.abs(pad.axes[0] ?? 0) > 0.3 || Math.abs(sy) > 0.3;
+        if (anyActivity) setInputSource('gamepad');
+
+        if (up && !padState.up) moveSelection(-1);
+        if (down && !padState.down) moveSelection(1);
+        if (a && !padState.a) confirmSelection();
+        if (b && !padState.b) handleCancel();
+
+        // Stick: latch when past threshold, unlatch inside deadzone.
+        if (sy < -0.5 && !padState.axisLatched) {
+          moveSelection(-1);
+          padState.axisLatched = true;
+        } else if (sy > 0.5 && !padState.axisLatched) {
+          moveSelection(1);
+          padState.axisLatched = true;
+        } else if (Math.abs(sy) < 0.3) {
+          padState.axisLatched = false;
+        }
+
+        padState.up = up;
+        padState.down = down;
+        padState.a = a;
+        padState.b = b;
+        padState.stickY = sy;
+      }
+      raf = requestAnimationFrame(poll);
+    };
+    raf = requestAnimationFrame(poll);
+
+    onCleanup(() => {
+      document.removeEventListener('keydown', onKey, true);
+      cancelAnimationFrame(raf);
+    });
+  });
 
   return (
     <div
@@ -346,7 +494,14 @@ function ChewWiresView(props) {
             }}
           >
             <For each={wires()}>
-              {(wire) => <WireView wire={wire} onCut={onCutWire} />}
+              {(wire) => (
+                <WireView
+                  wire={wire}
+                  selected={selectedId() === wire.id}
+                  onCut={onCutWire}
+                  onHover={(w) => setSelectedId(w.id)}
+                />
+              )}
             </For>
             <Show when={done()}>
               <text
@@ -388,7 +543,7 @@ function ChewWiresView(props) {
               border: '2px solid rgba(180, 190, 210, 0.9)',
             }}
           >
-            Leave (Esc)
+            Leave ({actionLabel('cancel')})
           </button>
         </div>
       </div>
@@ -419,18 +574,7 @@ export function openChewWiresTask({ onComplete, onCancel } = {}) {
     />
   ), host);
 
-  const keyHandler = (e) => {
-    if (e.key === 'Escape') {
-      if (finished) return;
-      finished = true;
-      onCancel?.();
-      close();
-    }
-  };
-  document.addEventListener('keydown', keyHandler);
-
   function close() {
-    document.removeEventListener('keydown', keyHandler);
     try { dispose(); } catch { /* ignore */ }
     host.remove();
   }

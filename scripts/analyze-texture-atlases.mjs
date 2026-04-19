@@ -11,9 +11,17 @@ const OUTPUT_DIR = path.join(ROOT, 'public');
 const SHEET_DIR = path.join(ROOT, 'artifacts');
 
 function atlasIdFromFilename(filename) {
+  if (/^props\.(webp|jpg|jpeg|png)$/i.test(filename)) return 'props';
   const match = /^textures(?:(\d+))?\.(webp|jpg|jpeg|png)$/i.exec(filename);
   if (!match) return null;
   return match[1] ? `textures${match[1]}` : 'textures';
+}
+
+function atlasSortRank(id) {
+  if (id === 'textures') return 1;
+  if (id === 'props') return 1000;
+  const n = Number.parseInt(id.replace('textures', ''), 10);
+  return Number.isFinite(n) ? n : 999;
 }
 
 function run(command, args) {
@@ -35,11 +43,7 @@ async function main() {
       return id ? { id, input: path.join(SOURCE_DIR, filename) } : null;
     })
     .filter(Boolean)
-    .sort((a, b) => {
-      const aNum = a.id === 'textures' ? 1 : Number.parseInt(a.id.replace('textures', ''), 10);
-      const bNum = b.id === 'textures' ? 1 : Number.parseInt(b.id.replace('textures', ''), 10);
-      return aNum - bNum;
-    });
+    .sort((a, b) => atlasSortRank(a.id) - atlasSortRank(b.id));
 
   if (!atlases.length) {
     throw new Error(`No texture atlases found in ${SOURCE_DIR}`);

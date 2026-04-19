@@ -2,20 +2,39 @@ import { assetUrl } from '../utils/assetUrl.js';
 import { GENERATED_TEXTURE_ATLASES } from './textureAtlasRegistry.generated.js';
 
 export const DEFAULT_TEXTURE_ATLAS = 'textures';
+export const PROP_TEXTURE_ATLAS = 'props';
+
+const PROP_SOURCE_URL = new URL('../../assets/source/props.jpg', import.meta.url).href;
+
+const PROP_ATLAS = Object.freeze({
+  id: PROP_TEXTURE_ATLAS,
+  label: 'props.jpg',
+  imageUrl: PROP_SOURCE_URL,
+  manifestUrl: assetUrl('props.manifest.json'),
+  chromaKey: true,
+});
 
 export const TEXTURE_ATLASES = Object.freeze(
-  GENERATED_TEXTURE_ATLASES?.length ? GENERATED_TEXTURE_ATLASES : [
-    Object.freeze({
-      id: 'textures',
-      label: 'textures.webp',
-      imageUrl: assetUrl('textures.optimized.webp'),
-      manifestUrl: assetUrl('textures.manifest.json'),
-    }),
+  [
+    ...(GENERATED_TEXTURE_ATLASES?.length ? GENERATED_TEXTURE_ATLASES : [
+      Object.freeze({
+        id: 'textures',
+        label: 'textures.webp',
+        imageUrl: assetUrl('textures.optimized.webp'),
+        manifestUrl: assetUrl('textures.manifest.json'),
+      }),
+    ]),
+    ...(GENERATED_TEXTURE_ATLASES?.some((atlas) => atlas.id === PROP_TEXTURE_ATLAS) ? [] : [PROP_ATLAS]),
   ],
 );
 
 export function getTextureAtlasById(id) {
   return TEXTURE_ATLASES.find((atlas) => atlas.id === id) ?? TEXTURE_ATLASES[0];
+}
+
+export function normalizeTextureAtlasId(value) {
+  const id = typeof value === 'string' ? value.toLowerCase() : '';
+  return TEXTURE_ATLASES.some((atlas) => atlas.id === id) ? id : DEFAULT_TEXTURE_ATLAS;
 }
 
 async function loadManifest(manifestUrl) {
