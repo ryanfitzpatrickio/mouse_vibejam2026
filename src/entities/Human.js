@@ -21,6 +21,97 @@ const _navSampleScratch = createFindNearestPolyResult();
 const _tmpDir = new THREE.Vector3();
 const _humanSpatialSoundPos = new THREE.Vector3();
 
+// Foot IK scratch vectors/quats (reused each frame to avoid allocations).
+const _ikRootPos = new THREE.Vector3();
+const _ikMidPos = new THREE.Vector3();
+const _ikEndPos = new THREE.Vector3();
+const _ikTarget = new THREE.Vector3();
+const _ikPole = new THREE.Vector3();
+const _ikA = new THREE.Vector3();
+const _ikB = new THREE.Vector3();
+const _ikC = new THREE.Vector3();
+const _ikQuat = new THREE.Quaternion();
+const _ikQuat2 = new THREE.Quaternion();
+const _ikParentQuat = new THREE.Quaternion();
+const _ikNodeWorldQuat = new THREE.Quaternion();
+const _ikScaleScratch = new THREE.Vector3();
+const _ikForward = new THREE.Vector3();
+
+// Snap begins when the anim-driven ankle is below (rest + this), and ramps in
+// over a short distance so grounding feels like contact rather than a pop.
+const FOOT_IK_SNAP_ENTER = 0.08;
+const FOOT_IK_SNAP_BLEND = 0.12;
+
+function _applyWorldRotation(node, worldRotQuat) {
+  // Replace node's world rotation with (worldRotQuat * currentWorldRotation).
+  node.updateWorldMatrix(true, false);
+  node.matrixWorld.decompose(_ikA, _ikNodeWorldQuat, _ikScaleScratch);
+  _ikQuat2.copy(worldRotQuat).multiply(_ikNodeWorldQuat);
+  if (node.parent) {
+    node.parent.updateWorldMatrix(true, false);
+    node.parent.matrixWorld.decompose(_ikB, _ikParentQuat, _ikScaleScratch);
+    _ikParentQuat.invert();
+    node.quaternion.copy(_ikParentQuat).multiply(_ikQuat2);
+  } else {
+    node.quaternion.copy(_ikQuat2);
+  }
+  node.updateWorldMatrix(false, true);
+}
+
+function _twoBoneIK(root, mid, end, targetWorld, poleWorld) {
+  root.updateWorldMatrix(true, true);
+  _ikRootPos.setFromMatrixPosition(root.matrixWorld);
+  _ikMidPos.setFromMatrixPosition(mid.matrixWorld);
+  _ikEndPos.setFromMatrixPosition(end.matrixWorld);
+
+  const L1 = _ikRootPos.distanceTo(_ikMidPos);
+  const L2 = _ikMidPos.distanceTo(_ikEndPos);
+  if (L1 < 1e-4 || L2 < 1e-4) return;
+  const maxLen = L1 + L2 - 1e-3;
+  const minLen = Math.max(1e-3, Math.abs(L1 - L2) + 1e-3);
+  const rawDist = _ikA.subVectors(targetWorld, _ikRootPos).length();
+  const targetDist = Math.max(minLen, Math.min(maxLen, rawDist));
+
+  // Desired interior knee angle (law of cosines).
+  const cosK = (L1 * L1 + L2 * L2 - targetDist * targetDist) / (2 * L1 * L2);
+  const desiredKnee = Math.acos(Math.max(-1, Math.min(1, cosK)));
+
+  // Current interior knee angle.
+  _ikA.subVectors(_ikRootPos, _ikMidPos).normalize(); // mid→root
+  _ikB.subVectors(_ikEndPos, _ikMidPos).normalize();  // mid→end
+  const curKnee = Math.acos(Math.max(-1, Math.min(1, _ikA.dot(_ikB))));
+
+  // Bend axis perpendicular to leg plane, biased toward pole so bend direction
+  // matches the animator's intent (knee forward).
+  _ikA.subVectors(_ikMidPos, _ikRootPos);
+  _ikB.subVectors(_ikEndPos, _ikMidPos);
+  _ikC.crossVectors(_ikA, _ikB);
+  if (_ikC.lengthSq() < 1e-6) {
+    // Leg is nearly straight — fall back to a perpendicular biased by pole.
+    _ikA.subVectors(_ikEndPos, _ikRootPos).normalize();
+    _ikB.subVectors(poleWorld, _ikRootPos);
+    _ikB.addScaledVector(_ikA, -_ikB.dot(_ikA));
+    if (_ikB.lengthSq() < 1e-6) _ikB.set(0, 0, 1);
+    _ikB.normalize();
+    _ikC.crossVectors(_ikA, _ikB);
+  }
+  _ikC.normalize();
+  _ikA.subVectors(poleWorld, _ikMidPos);
+  if (_ikC.dot(_ikA) < 0) _ikC.negate();
+
+  const deltaKnee = desiredKnee - curKnee;
+  _ikQuat.setFromAxisAngle(_ikC, deltaKnee);
+  _applyWorldRotation(mid, _ikQuat);
+
+  // Re-align root so the end bone points at the target.
+  root.updateWorldMatrix(true, true);
+  _ikEndPos.setFromMatrixPosition(end.matrixWorld);
+  _ikA.subVectors(_ikEndPos, _ikRootPos).normalize();
+  _ikB.subVectors(targetWorld, _ikRootPos).normalize();
+  _ikQuat.setFromUnitVectors(_ikA, _ikB);
+  _applyWorldRotation(root, _ikQuat);
+}
+
 const HUMAN_AI_TO_EXPRESSION = Object.freeze({
   idle: 'idle',
   patrol: 'idle',
@@ -93,10 +184,42 @@ export class Human extends Predator {
     this._groundedYOffset = this.model.position.y;
     this._memeYOffset = this.model.position.y + 1.2; // cancel the -1.2 ground offset
     this._hipBone = null;
+    this._legBones = { left: null, right: null };
+    this._footRestY = null;
+    this.footIKEnabled = true;
     this.model.traverse((o) => {
-      if (!this._hipBone && o.isBone && /hips?$/i.test(o.name)) this._hipBone = o;
+      if (!o.isBone) return;
+      const n = o.name.toLowerCase();
+      if (!this._hipBone && /hips?$/.test(n)) this._hipBone = o;
+      else if (/leftupleg$/.test(n)) (this._legBones.left ??= {}).root = o;
+      else if (/leftleg$/.test(n)) (this._legBones.left ??= {}).mid = o;
+      else if (/leftfoot$/.test(n)) (this._legBones.left ??= {}).end = o;
+      else if (/rightupleg$/.test(n)) (this._legBones.right ??= {}).root = o;
+      else if (/rightleg$/.test(n)) (this._legBones.right ??= {}).mid = o;
+      else if (/rightfoot$/.test(n)) (this._legBones.right ??= {}).end = o;
     });
+    const lOK = this._legBones.left?.root && this._legBones.left?.mid && this._legBones.left?.end;
+    const rOK = this._legBones.right?.root && this._legBones.right?.mid && this._legBones.right?.end;
+    if (!lOK) this._legBones.left = null;
+    if (!rOK) this._legBones.right = null;
     this.playAnimation('idle', { fadeIn: 0, loop: true });
+    // Sample the bind-pose ankle Y (world) so we know where feet should rest
+    // when the character is planted on flat ground.
+    this.model.updateMatrixWorld(true);
+    const _restSample = new THREE.Vector3();
+    let restSum = 0;
+    let restCount = 0;
+    if (this._legBones.left) {
+      _restSample.setFromMatrixPosition(this._legBones.left.end.matrixWorld);
+      restSum += _restSample.y;
+      restCount += 1;
+    }
+    if (this._legBones.right) {
+      _restSample.setFromMatrixPosition(this._legBones.right.end.matrixWorld);
+      restSum += _restSample.y;
+      restCount += 1;
+    }
+    if (restCount > 0) this._footRestY = (restSum / restCount) - this.position.y;
 
     try {
       await this.eyeAnimator.load();
@@ -119,13 +242,52 @@ export class Human extends Predator {
         }
       }
       this.mixer?.update(dt);
+      this._applyFootIK();
       this.eyeAnimator?.update(dt);
       this.eyeAnimator?.setState('alert');
       return;
     }
     super.update?.(dt, ...rest);
+    this._applyFootIK();
     this.eyeAnimator?.update(dt);
     this.eyeAnimator?.setState(this.aiState);
+  }
+
+  _applyFootIK() {
+    if (!this.footIKEnabled || this._footRestY == null) return;
+    // Skip while lying on the floor for the meme reaction — the mocap is the
+    // pose we want, no need to fight it with IK.
+    if (this.aiState === AI_STATE.ROAR || this._playableMemeEmoteActive) return;
+    if (!this._legBones.left && !this._legBones.right) return;
+
+    this.updateMatrixWorld(true);
+
+    const groundAnkleY = this.position.y + this._footRestY;
+    _ikForward.set(Math.sin(this.rotation.y), 0, Math.cos(this.rotation.y));
+
+    for (const leg of [this._legBones.left, this._legBones.right]) {
+      if (!leg) continue;
+      leg.end.updateWorldMatrix(true, false);
+      _ikEndPos.setFromMatrixPosition(leg.end.matrixWorld);
+
+      // Only correct when the ankle is at or below rest height. Above that we
+      // assume the foot is mid-swing and leave the animation alone.
+      const dropBelow = groundAnkleY - _ikEndPos.y;
+      if (dropBelow <= -FOOT_IK_SNAP_ENTER) continue;
+
+      // Blend in over a small band so the snap ramps in instead of popping.
+      const blend = Math.max(0, Math.min(1, (dropBelow + FOOT_IK_SNAP_ENTER) / FOOT_IK_SNAP_BLEND));
+      if (blend <= 0) continue;
+
+      _ikTarget.set(_ikEndPos.x, _ikEndPos.y + (groundAnkleY - _ikEndPos.y) * blend, _ikEndPos.z);
+
+      // Pole in front of the knee so the leg bends forward.
+      leg.mid.updateWorldMatrix(true, false);
+      _ikPole.setFromMatrixPosition(leg.mid.matrixWorld);
+      _ikPole.addScaledVector(_ikForward, 2.0);
+
+      _twoBoneIK(leg.root, leg.mid, leg.end, _ikTarget, _ikPole);
+    }
   }
 
   setPlayerControlled(active) {

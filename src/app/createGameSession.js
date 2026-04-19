@@ -29,6 +29,7 @@ import {
 } from '../emote/EmoteManager.js';
 import { EmoteWheel } from '../emote/EmoteWheel.jsx';
 import { HeroPrompt } from '../hud/HeroPrompt.jsx';
+import { TaskController } from '../tasks/TaskController.js';
 import { HeroAvatar } from '../entities/HeroAvatar.js';
 import { getAudioManager } from '../audio/AudioManager.js';
 import { OcclusionFader } from '../utils/OcclusionFader.js';
@@ -571,6 +572,44 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     },
   });
 
+  const taskPromptElement = document.createElement('div');
+  taskPromptElement.id = 'task-interact-prompt';
+  Object.assign(taskPromptElement.style, {
+    position: 'fixed',
+    left: '50%',
+    bottom: '24%',
+    transform: 'translateX(-50%)',
+    padding: '10px 18px',
+    'border-radius': '14px',
+    background: 'linear-gradient(180deg, rgba(126,136,152,0.92) 0%, rgba(84,93,108,0.92) 100%)',
+    border: '2px solid rgba(180, 190, 210, 0.9)',
+    'box-shadow': 'inset 0 2px 0 rgba(255,255,255,0.25), 0 6px 14px rgba(0,0,0,0.45)',
+    color: '#ffe08a',
+    font: '700 16px "Fredoka", "Baloo", system-ui, sans-serif',
+    'letter-spacing': '0.04em',
+    'text-shadow': '-1.5px -1.5px 0 #0b1220, 1.5px -1.5px 0 #0b1220, -1.5px 1.5px 0 #0b1220, 1.5px 1.5px 0 #0b1220',
+    'z-index': '180',
+    'pointer-events': 'none',
+    display: 'none',
+  });
+  document.body.appendChild(taskPromptElement);
+
+  const taskController = new TaskController({
+    scene,
+    room,
+    controller,
+    getPlayer: () => (predictionState?.isAdversary && human?.playerControlled ? human : mouse),
+    promptElement: taskPromptElement,
+    setControlsEnabled: (enabled) => controller.setInputEnabled(enabled),
+  });
+  controller.onInteract = () => {
+    taskController.tryInteract();
+  };
+  // Task markers (poles with diamonds) stay visible in gameplay so players
+  // can spot interactable task points.
+  room.setRaidTaskHelpersVisible(true);
+  room.ready?.then?.(() => room.setRaidTaskHelpersVisible(true)).catch(() => {});
+
   const occlusionFader = new OcclusionFader({
     scene,
     camera,
@@ -582,6 +621,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
   const net = new NetworkClient(roomId, {
     portalArrival: portalArrival.active ? portalArrival : null,
   });
+  taskController.net = net;
   const remotePlayerManager = new RemotePlayerManager({ scene });
   // Per-mesh outlines on remote mice are redundant once the fullscreen outline
   // pass is active; leave the toggle available for comparison.
@@ -1519,6 +1559,7 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     }
 
     occlusionFader.update(deltaSeconds);
+    taskController.update(deltaSeconds);
 
     localNameplate.setText(predictionState.displayName || getClientPreferredDisplayName());
     localNameplate.setAlive(predictionState.alive !== false);
@@ -1702,6 +1743,8 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     adversaryStatus.dispose();
     if (_humanWasPlayerControlled) human?.setPlayerControlled(false);
     scene.remove(localNameplateAnchor);
+    taskController.dispose();
+    taskPromptElement.remove();
     labelRenderer.domElement.remove();
     outlinePipeline.dispose();
     renderer.dispose();

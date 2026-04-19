@@ -112,7 +112,8 @@ class BuildModeEditor {
     this.app.room.setLightHelpersVisible(this.visible);
     this.app.room.setPortalHelpersVisible(this.visible);
     this.app.room.setExtractionHelpersVisible?.(this.visible);
-    this.app.room.setRaidTaskHelpersVisible?.(this.visible);
+    // Raid task helpers double as gameplay markers — keep them on.
+    this.app.room.setRaidTaskHelpersVisible?.(true);
     this.app.room.setRopeHelpersVisible?.(this.visible);
     if (this.visible) {
       this.app.thirdPersonCamera?.setEnabled(false);

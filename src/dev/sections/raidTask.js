@@ -1,8 +1,8 @@
-import { RAID_TASK_TYPES } from '../../../shared/raidLayout.js';
+import { RAID_TASK_TYPES, RAID_TASK_TYPE_LABELS } from '../../../shared/raidLayout.js';
 import { createSection, styleField } from '../ui/fields.js';
 
 export function installRaidTaskSection(editor) {
-  const section = createSection(editor.panel, 'Raid task');
+  const section = createSection(editor.panel, 'Tasks');
   editor.raidTaskSection = section;
 
   const typeWrap = document.createElement('label');
@@ -14,12 +14,10 @@ export function installRaidTaskSection(editor) {
   });
   editor.raidTaskTypeSelect = document.createElement('select');
   styleField(editor.raidTaskTypeSelect);
-  [
-    [RAID_TASK_TYPES.PLACEHOLDER, 'Placeholder'],
-  ].forEach(([value, label]) => {
+  Object.values(RAID_TASK_TYPES).forEach((value) => {
     const option = document.createElement('option');
     option.value = value;
-    option.textContent = label;
+    option.textContent = RAID_TASK_TYPE_LABELS[value] ?? value;
     editor.raidTaskTypeSelect.appendChild(option);
   });
   editor.raidTaskTypeSelect.addEventListener('change', () => {

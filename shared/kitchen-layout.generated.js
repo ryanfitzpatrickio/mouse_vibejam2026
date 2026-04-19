@@ -4488,7 +4488,7 @@ export default {
     {
       "id": "raid-task-mo3avgvf-qaqml",
       "name": "task-cal",
-      "taskType": "placeholder",
+      "taskType": "chew_wires",
       "position": {
         "x": 18,
         "y": 0,

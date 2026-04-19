@@ -238,6 +238,8 @@ export default class GameServer {
   _playerExtraBallSpawnCount = new Map();
   /** @type {Map<string, {tokens: number, lastRefill: number, dropped: number}>} */
   _messageBuckets = new Map();
+  /** @type {Map<string, number>} last task-complete ms by connection id */
+  _taskCompleteCooldown = new Map();
 
   constructor(room) {
     this.room = room;
@@ -592,6 +594,39 @@ export default class GameServer {
       return;
     }
 
+    if (data.type === 'task-complete') {
+      const player = this.players.get(sender.id);
+      if (!player?.alive) return;
+      const now = Date.now();
+      const last = this._taskCompleteCooldown.get(sender.id) ?? 0;
+      if (now - last < 600) return;
+      const px = Number(data.position?.x);
+      const py = Number(data.position?.y);
+      const pz = Number(data.position?.z);
+      if (!Number.isFinite(px) || !Number.isFinite(py) || !Number.isFinite(pz)) return;
+      const dx = px - player.position.x;
+      const dz = pz - player.position.z;
+      if (dx * dx + dz * dz > 25) return; // must be within ~5m of the player
+      const amount = Math.max(1, Math.min(24, Math.floor(Number(data.amount) || 6)));
+      this._taskCompleteCooldown.set(sender.id, now);
+      // Scatter a few merged piles around the player so they feel like a reward.
+      const pieces = Math.min(amount, 6);
+      const per = Math.max(1, Math.floor(amount / pieces));
+      let remaining = amount;
+      for (let i = 0; i < pieces && remaining > 0; i += 1) {
+        const theta = (i / pieces) * Math.PI * 2 + Math.random() * 0.4;
+        const radius = 0.45 + Math.random() * 0.6;
+        const give = i === pieces - 1 ? remaining : per;
+        remaining -= give;
+        this.cheeseWorld.mergeOrAddDrop({
+          x: player.position.x + Math.cos(theta) * radius,
+          y: player.position.y,
+          z: player.position.z + Math.sin(theta) * radius,
+        }, give);
+      }
+      return;
+    }
+
     if (data.type === 'spawn-extra-ball') {
       const player = this.players.get(sender.id);
       if (!player?.alive) return;
@@ -628,6 +663,7 @@ export default class GameServer {
     this._spawnBallCooldown.delete(conn.id);
     this._playerExtraBallSpawnCount.delete(conn.id);
     this._messageBuckets.delete(conn.id);
+    this._taskCompleteCooldown.delete(conn.id);
     this.portalArrivals.delete(conn.id);
     const leaving = this.players.get(conn.id);
     if (leaving?.isAdversary) this._recordAdversaryScore(conn.id, leaving);

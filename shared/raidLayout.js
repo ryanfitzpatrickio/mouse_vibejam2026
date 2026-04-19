@@ -5,6 +5,12 @@
 
 export const RAID_TASK_TYPES = Object.freeze({
   PLACEHOLDER: 'placeholder',
+  CHEW_WIRES: 'chew_wires',
+});
+
+export const RAID_TASK_TYPE_LABELS = Object.freeze({
+  [RAID_TASK_TYPES.PLACEHOLDER]: 'Placeholder',
+  [RAID_TASK_TYPES.CHEW_WIRES]: 'Chew Wires',
 });
 
 /**

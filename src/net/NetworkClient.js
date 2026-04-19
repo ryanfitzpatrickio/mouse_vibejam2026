@@ -179,6 +179,17 @@ export class NetworkClient {
     }
   }
 
+  sendTaskComplete({ taskId, taskType, position, amount }) {
+    if (this.ws?.readyState !== WebSocket.OPEN) return;
+    this.ws.send(JSON.stringify({
+      type: 'task-complete',
+      taskId,
+      taskType,
+      position,
+      amount,
+    }));
+  }
+
   sendDisplayName(displayName) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({
