@@ -34,6 +34,7 @@ const PLAYABLE_TURN_EXIT = 0.18;
 const PLAYABLE_DIRECTION_ENTER = 0.36;
 const PLAYABLE_DIRECTION_EXIT = 0.16;
 const PLAYABLE_MIN_CLIP_HOLD = 0.18;
+const PLAYABLE_ACTION_TIME_SCALE = 0.5;
 
 /**
  * Human predator (cop). Wanders the kitchen and, upon spotting a rat,
@@ -143,6 +144,7 @@ export class Human extends Predator {
       this._playableMoveDirection = 'straight';
       this._playableTurnDirection = null;
       this._playableClipAge = PLAYABLE_MIN_CLIP_HOLD;
+      this._resetPlayableActionSpeeds();
       this.aiState = AI_STATE.IDLE;
       this.aiTimer = 0.5;
       this._animateForState('idle');
@@ -256,7 +258,7 @@ export class Human extends Predator {
     next.reset();
     next.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce);
     next.clampWhenFinished = clampWhenFinished;
-    next.setEffectiveTimeScale(1);
+    next.setEffectiveTimeScale(PLAYABLE_ACTION_TIME_SCALE);
     next.setEffectiveWeight(1);
     next.play();
 
@@ -271,6 +273,12 @@ export class Human extends Predator {
 
     this.currentAction = next;
     this.currentAnimName = name;
+  }
+
+  _resetPlayableActionSpeeds() {
+    for (const action of Object.values(this.actions ?? {})) {
+      action?.setEffectiveTimeScale?.(1);
+    }
   }
 
   dispose() {

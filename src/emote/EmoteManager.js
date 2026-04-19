@@ -15,10 +15,12 @@ export const EMOTES = Object.freeze(EMOTE_DEFS);
 export const EMOTE_MAP = Object.freeze(Object.fromEntries(EMOTE_DEFS.map((e) => [e.id, e])));
 
 export class EmoteManager {
-  constructor({ mouse, audioManager, scene = null }) {
+  constructor({ mouse, audioManager, scene = null, getTargetObject = null, getBubbleOffsetY = null }) {
     this.mouse = mouse;
     this.audioManager = audioManager;
     this.scene = scene;
+    this.getTargetObject = typeof getTargetObject === 'function' ? getTargetObject : null;
+    this.getBubbleOffsetY = typeof getBubbleOffsetY === 'function' ? getBubbleOffsetY : null;
     this.activeEmote = null;
     this.emoteTimer = 0;
     this._bubble = null;
@@ -35,13 +37,17 @@ export class EmoteManager {
     this.mouse?.animationManager?.playEmoteClip(def.clip);
     this.mouse?.eyeAnimator?.setExpressionOverride(def.eyeRow);
 
-    if (this.audioManager && this.mouse?.position) {
-      this.audioManager.playEmote(def.sound, this.mouse.position);
+    const target = this.getTargetObject?.() ?? this.mouse;
+
+    if (this.audioManager && target?.position) {
+      this.audioManager.playEmote(def.sound, target.position);
     }
 
-    if (this.scene && this.mouse && def.emoji) {
+    if (this.scene && target && def.emoji) {
       this._bubble?.dispose();
-      this._bubble = spawnEmoteBubble(this.scene, this.mouse, def.emoji);
+      this._bubble = spawnEmoteBubble(this.scene, target, def.emoji, {
+        offsetY: this.getBubbleOffsetY?.() ?? undefined,
+      });
     }
     return true;
   }

@@ -13,6 +13,7 @@ const ROOT = process.cwd();
 const CAT_OUTPUT = path.join(ROOT, 'shared', 'kitchen-navmesh.generated.js');
 const MOUSE_OUTPUT = path.join(ROOT, 'shared', 'kitchen-mouse-navmesh.generated.js');
 const ROOMBA_OUTPUT = path.join(ROOT, 'shared', 'kitchen-roomba-navmesh.generated.js');
+const ADVERSARY_HUMAN_OUTPUT = path.join(ROOT, 'shared', 'kitchen-adversary-human-navmesh.generated.js');
 const CACHE_NAME = 'generate-kitchen-navmesh-module';
 
 const SURFACE_THICKNESS = 0.05;
@@ -166,24 +167,26 @@ function createMeshForPrimitive(primitive, collider) {
 }
 
 function createNavMeshOptions(agentConfig) {
+  const cellSize = agentConfig.cellSize ?? CELL_SIZE;
+  const cellHeight = agentConfig.cellHeight ?? CELL_HEIGHT;
   return {
-    cellSize: CELL_SIZE,
-    cellHeight: CELL_HEIGHT,
+    cellSize,
+    cellHeight,
     walkableRadiusWorld: agentConfig.walkableRadiusWorld,
-    walkableRadiusVoxels: Math.ceil(agentConfig.walkableRadiusWorld / CELL_SIZE),
+    walkableRadiusVoxels: Math.ceil(agentConfig.walkableRadiusWorld / cellSize),
     walkableClimbWorld: agentConfig.walkableClimbWorld,
-    walkableClimbVoxels: Math.ceil(agentConfig.walkableClimbWorld / CELL_HEIGHT),
+    walkableClimbVoxels: Math.ceil(agentConfig.walkableClimbWorld / cellHeight),
     walkableHeightWorld: agentConfig.walkableHeightWorld,
-    walkableHeightVoxels: Math.ceil(agentConfig.walkableHeightWorld / CELL_HEIGHT),
+    walkableHeightVoxels: Math.ceil(agentConfig.walkableHeightWorld / cellHeight),
     walkableSlopeAngleDegrees: 45,
     borderSize: 0,
-    minRegionArea: 8,
-    mergeRegionArea: 20,
-    maxSimplificationError: 1.3,
-    maxEdgeLength: 12,
-    maxVerticesPerPoly: 5,
-    detailSampleDistance: DETAIL_SAMPLE_DISTANCE_VOXELS < 0.9 ? 0 : CELL_SIZE * DETAIL_SAMPLE_DISTANCE_VOXELS,
-    detailSampleMaxError: CELL_HEIGHT * DETAIL_SAMPLE_MAX_ERROR_VOXELS,
+    minRegionArea: agentConfig.minRegionArea ?? 8,
+    mergeRegionArea: agentConfig.mergeRegionArea ?? 20,
+    maxSimplificationError: agentConfig.maxSimplificationError ?? 1.3,
+    maxEdgeLength: agentConfig.maxEdgeLength ?? 12,
+    maxVerticesPerPoly: agentConfig.maxVerticesPerPoly ?? 5,
+    detailSampleDistance: DETAIL_SAMPLE_DISTANCE_VOXELS < 0.9 ? 0 : cellSize * DETAIL_SAMPLE_DISTANCE_VOXELS,
+    detailSampleMaxError: cellHeight * DETAIL_SAMPLE_MAX_ERROR_VOXELS,
   };
 }
 
@@ -310,9 +313,9 @@ const cacheInputs = [
 if (await isAssetBuildUpToDate({
   cacheName: CACHE_NAME,
   inputs: cacheInputs,
-  outputs: [CAT_OUTPUT, MOUSE_OUTPUT, ROOMBA_OUTPUT],
+  outputs: [CAT_OUTPUT, MOUSE_OUTPUT, ROOMBA_OUTPUT, ADVERSARY_HUMAN_OUTPUT],
 })) {
-  console.log(`Skipped ${path.relative(ROOT, CAT_OUTPUT)}, ${path.relative(ROOT, MOUSE_OUTPUT)}, ${path.relative(ROOT, ROOMBA_OUTPUT)} (up to date)`);
+  console.log(`Skipped ${path.relative(ROOT, CAT_OUTPUT)}, ${path.relative(ROOT, MOUSE_OUTPUT)}, ${path.relative(ROOT, ROOMBA_OUTPUT)}, ${path.relative(ROOT, ADVERSARY_HUMAN_OUTPUT)} (up to date)`);
   process.exit(0);
 }
 
@@ -341,6 +344,13 @@ const roombaResult = generateSoloNavMesh(
 applyAreaTags(roombaResult.navMesh, areaColliders);
 writeGeneratedModule(ROOMBA_OUTPUT, roombaResult.navMesh);
 
+const adversaryHumanResult = generateSoloNavMesh(
+  { positions, indices },
+  createNavMeshOptions(NAV_AGENT_CONFIGS.adversaryHuman),
+);
+applyAreaTags(adversaryHumanResult.navMesh, areaColliders);
+writeGeneratedModule(ADVERSARY_HUMAN_OUTPUT, adversaryHumanResult.navMesh);
+
 await markAssetBuildCurrent({
   cacheName: CACHE_NAME,
   inputs: cacheInputs,
@@ -349,5 +359,6 @@ await markAssetBuildCurrent({
 console.log(
   `Wrote ${path.relative(ROOT, CAT_OUTPUT)} (${catResult.navMesh.nodes.length} nodes), `
   + `${path.relative(ROOT, MOUSE_OUTPUT)} (${mouseResult.navMesh.nodes.length} nodes), `
-  + `${path.relative(ROOT, ROOMBA_OUTPUT)} (${roombaResult.navMesh.nodes.length} nodes)`,
+  + `${path.relative(ROOT, ROOMBA_OUTPUT)} (${roombaResult.navMesh.nodes.length} nodes), `
+  + `${path.relative(ROOT, ADVERSARY_HUMAN_OUTPUT)} (${adversaryHumanResult.navMesh.nodes.length} nodes)`,
 );

@@ -103,6 +103,7 @@ function vacuumPullForPrediction(net, predictionState) {
     predictionState,
   );
 }
+
 const AUDIO_PREFS_KEY = 'mouse-trouble-audio-prefs';
 const GITHUB_URL = 'https://github.com/ryanfitzpatrickio/vibejam2026';
 
@@ -517,7 +518,13 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
     displayName: getClientPreferredDisplayName(),
   });
 
-  const emoteManager = new EmoteManager({ mouse, audioManager, scene });
+  const emoteManager = new EmoteManager({
+    mouse,
+    audioManager,
+    scene,
+    getTargetObject: () => (predictionState?.isAdversary && human?.playerControlled ? human : mouse),
+    getBubbleOffsetY: () => (predictionState?.isAdversary ? HUMAN_NAMEPLATE_OFFSET_Y : undefined),
+  });
   const heroPrompt = new HeroPrompt();
   let localHeroBrain = null;
   let localHeroModelKey = null;

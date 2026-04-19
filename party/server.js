@@ -1,4 +1,5 @@
 import { createPlayerState, simulateTick, respawnPlayer, PHYSICS } from '../shared/physics.js';
+import { constrainAdversaryHumanToNavMesh } from '../shared/adversaryHumanNav.js';
 import { createMouseBotBrain, buildMouseBotInput, resetMouseBotBrain } from '../shared/mouseBot.js';
 import { createPredatorState, simulatePredatorTick, serializePredatorState } from '../shared/predator.js';
 import {
@@ -12,6 +13,7 @@ import kitchenLayout from '../shared/kitchen-layout.generated.js';
 import kitchenNavMesh from '../shared/kitchen-navmesh.generated.js';
 import kitchenMouseNavMesh from '../shared/kitchen-mouse-navmesh.generated.js';
 import kitchenRoombaNavMesh from '../shared/kitchen-roomba-navmesh.generated.js';
+import kitchenAdversaryHumanNavMesh from '../shared/kitchen-adversary-human-navmesh.generated.js';
 import { collectSpawnPointsFromLayout } from '../shared/spawnPoints.js';
 import { applyPortalArrivalToPlayerState, collectVibePortalPlacementsFromLayout, sanitizePortalArrivalPayload } from '../shared/vibePortal.js';
 import { isValidDevSyncLayout } from '../shared/devLayoutValidation.js';
@@ -71,6 +73,13 @@ const ADVERSARY_SAFE_RADIUS = 7.5;
 const ADVERSARY_SAFE_RADIUS_SQ = ADVERSARY_SAFE_RADIUS * ADVERSARY_SAFE_RADIUS;
 
 const BOUNDS = LEVEL_WORLD_BOUNDS_XZ;
+function simulatePlayerTick(state, input, dt, bounds, colliders, vacuumPull) {
+  const previousPosition = state?.position
+    ? { x: state.position.x, y: state.position.y, z: state.position.z }
+    : null;
+  simulateTick(state, input, dt, bounds, colliders, vacuumPull);
+  constrainAdversaryHumanToNavMesh(state, kitchenAdversaryHumanNavMesh, previousPosition);
+}
 
 function isNearExtractionPortal(px, pz, portals) {
   if (!Array.isArray(portals)) return false;
@@ -993,7 +1002,7 @@ export default class GameServer {
           const vacuumPull = roombaForVacuum?.phase === 'vacuuming'
             ? getRoombaVacuumPullAcceleration(roombaForVacuum, state)
             : null;
-          simulateTick(state, {
+          simulatePlayerTick(state, {
             moveX: 0,
             moveZ: 0,
             sprint: false,
@@ -1026,7 +1035,7 @@ export default class GameServer {
             const vacuumPull = roombaForVacuum?.phase === 'vacuuming'
               ? getRoombaVacuumPullAcceleration(roombaForVacuum, state)
               : null;
-            simulateTick(state, input, dt, BOUNDS, this.levelColliders, vacuumPull);
+            simulatePlayerTick(state, input, dt, BOUNDS, this.levelColliders, vacuumPull);
             state.emote = input.emote ?? null;
             seqs[id] = input.seq;
             lastGrab = !!input.grab;
@@ -1133,7 +1142,7 @@ export default class GameServer {
         const vacuumPull = roombaForVacuum?.phase === 'vacuuming'
           ? getRoombaVacuumPullAcceleration(roombaForVacuum, state)
           : null;
-        simulateTick(state, input, dt, BOUNDS, this.levelColliders, vacuumPull);
+        simulatePlayerTick(state, input, dt, BOUNDS, this.levelColliders, vacuumPull);
         state.emote = input.emote ?? null;
         state._interactHeld = !!input.interactHeld;
         seqs[id] = 0;

@@ -7,7 +7,7 @@ const HOLD = 0.1;
 const TOTAL = 1.9;
 const FLOAT_UP_PX = 48;
 
-export function spawnEmoteBubble(scene, mouse, emoji) {
+export function spawnEmoteBubble(scene, mouse, emoji, { offsetY = HEAD_OFFSET_Y } = {}) {
   if (!scene || !mouse || !emoji) return { dispose() {} };
 
   const anchor = new THREE.Object3D();
@@ -38,7 +38,7 @@ export function spawnEmoteBubble(scene, mouse, emoji) {
     if (disposed) return;
     anchor.position.set(
       mouse.position.x,
-      mouse.position.y + HEAD_OFFSET_Y,
+      mouse.position.y + offsetY,
       mouse.position.z,
     );
     const t = (now - start) / 1000;

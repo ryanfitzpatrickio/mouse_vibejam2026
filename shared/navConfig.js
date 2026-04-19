@@ -40,6 +40,20 @@ export const NAV_AGENT_CONFIGS = Object.freeze({
       Math.max(2.2, ROOMBA_RADIUS_XZ + 0.45),
     ]),
   }),
+  /** Coarse, extra-clearance map for player-controlled human adversary locomotion. */
+  adversaryHuman: Object.freeze({
+    walkableRadiusWorld: 0.95,
+    walkableClimbWorld: 0.28,
+    walkableHeightWorld: 2.4,
+    cellSize: 0.45,
+    cellHeight: 0.15,
+    minRegionArea: 5,
+    mergeRegionArea: 14,
+    maxSimplificationError: 1.8,
+    maxEdgeLength: 8,
+    queryHalfExtents: Object.freeze([2.0, 3.0, 2.0]),
+    maxSnapDistance: 1.15,
+  }),
 });
 
 export function normalizeNavArea(value) {

@@ -22,6 +22,8 @@ export const PHYSICS = Object.freeze({
   playerHeightOffset: -0.035,
   playerRadius: 0.22,
   playerHeight: 0.78,
+  adversaryHumanRadius: 0.82,
+  adversaryHumanHeight: 2.2,
   groundSnapDistance: 0.18,
   /** Max vertical rise (m) when walking onto a short ledge while grounded. */
   maxStepHeight: 0.35,
@@ -61,6 +63,19 @@ export const PHYSICS = Object.freeze({
   /** Movement multiplier while piloting the human adversary role. */
   adversaryHumanSpeedMult: 1.35,
 });
+
+function getPlayerCollisionConfig(state) {
+  if (state?.isAdversary && state.adversaryRole === 'human') {
+    return {
+      radius: PHYSICS.adversaryHumanRadius,
+      height: PHYSICS.adversaryHumanHeight,
+    };
+  }
+  return {
+    radius: PHYSICS.playerRadius,
+    height: PHYSICS.playerHeight,
+  };
+}
 
 /**
  * Create a fresh player physics state.
@@ -599,6 +614,7 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
   }
 
   const { position: pos, velocity: vel } = state;
+  const collisionConfig = getPlayerCollisionConfig(state);
   const jumpHeld = !!(input.jumpHeld ?? input.jump);
   const jumpPressed = !!(input.jumpPressed ?? input.jump);
   const previousPosition = {
@@ -733,8 +749,8 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
   // --- Room collisions / ground support ---
   if (colliders?.length) {
     resolvePlayerCollisions(state, colliders, {
-      radius: PHYSICS.playerRadius,
-      height: PHYSICS.playerHeight,
+      radius: collisionConfig.radius,
+      height: collisionConfig.height,
       groundSnapDistance: PHYSICS.groundSnapDistance,
       baseGroundY: 0,
       previousPosition,
@@ -760,8 +776,8 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
     const wallContact = findNearbyWallContact(
       state,
       colliders,
-      PHYSICS.playerRadius,
-      PHYSICS.playerHeight,
+      collisionConfig.radius,
+      collisionConfig.height,
       PHYSICS.wallProbeDistance,
     );
     if (wallContact) {
@@ -783,7 +799,7 @@ export function simulateTick(state, input, dt, bounds, colliders = [], vacuumPul
 
   // --- World bounds ---
   if (bounds) {
-    const r = PHYSICS.playerRadius;
+    const r = collisionConfig.radius;
     if (pos.x < bounds.minX + r) { pos.x = bounds.minX + r; vel.x = Math.max(vel.x, 0); }
     if (pos.x > bounds.maxX - r) { pos.x = bounds.maxX - r; vel.x = Math.min(vel.x, 0); }
     if (pos.z < bounds.minZ + r) { pos.z = bounds.minZ + r; vel.z = Math.max(vel.z, 0); }
