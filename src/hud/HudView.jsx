@@ -1,7 +1,8 @@
-import { Show, createMemo, For } from 'solid-js';
+import { Show, createEffect, createMemo, createSignal, For, onCleanup } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { HUD_ICONS } from './hudSprites.jsx';
 import { actionLabel } from '../input/inputSource.js';
+import { getAvatarPortrait, subscribeAvatarPortrait } from '../data/avatarPortraits.js';
 import {
   HUD_PANEL_STYLE,
   HUD_LABEL_FONT as LABEL_FONT,
@@ -171,6 +172,20 @@ function formatSeconds(value) {
   return `${Math.max(0, Number(value) || 0).toFixed(1)}s`;
 }
 
+const HERO_NAMES = Object.freeze({
+  brain: 'The Brain',
+  jerry: 'Jerry',
+  gus: 'Gus',
+  speedy: 'Speedy',
+});
+
+const HERO_ICON_NAMES = Object.freeze({
+  brain: 'HERO_BRAIN',
+  jerry: 'HERO_JERRY',
+  gus: 'HERO_GUS',
+  speedy: 'HERO_SPEEDY',
+});
+
 function HumanRoleRow(props) {
   const role = () => props.state.humanRole ?? { mode: 'off' };
   const mode = () => role().mode;
@@ -259,6 +274,113 @@ function HumanRoleRow(props) {
   );
 }
 
+function HeroPortrait(props) {
+  const [version, setVersion] = createSignal(0);
+  createEffect(() => {
+    const key = props.heroKey;
+    if (!key) return undefined;
+    const unsubscribe = subscribeAvatarPortrait(key, () => setVersion((count) => count + 1));
+    onCleanup(unsubscribe);
+    return undefined;
+  });
+  const meta = () => {
+    version();
+    return props.heroKey ? getAvatarPortrait(props.heroKey) : null;
+  };
+
+  return (
+    <div
+      style={{
+        width: `${ICON_SIZE}px`,
+        height: `${ICON_SIZE}px`,
+        'border-radius': '999px',
+        overflow: 'hidden',
+        border: '2px solid rgba(210, 220, 236, 0.9)',
+        'box-shadow': 'inset 0 1px 0 rgba(255,255,255,0.28), 0 2px 6px rgba(0,0,0,0.35)',
+        background: 'radial-gradient(circle at 35% 30%, rgba(140,150,170,0.95) 0%, rgba(72,80,96,0.98) 100%)',
+        display: 'grid',
+        'place-items': 'center',
+        'flex-shrink': '0',
+      }}
+    >
+      <Show
+        when={meta()}
+        fallback={<Sprite name={props.fallbackIconName} size={ICON_SIZE - 4} />}
+      >
+        {(resolved) => (
+          <img
+            src={resolved().resolvedSrc}
+            alt=""
+            aria-hidden="true"
+            draggable="false"
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'block',
+              'object-fit': 'contain',
+              'object-position': `${resolved().basePositionX}% ${resolved().basePositionY}%`,
+              'transform-origin': 'center center',
+              transform: `translate(${resolved().translateX ?? 0}%, ${resolved().translateY ?? 0}%) scale(${resolved().scale ?? 1.02})`,
+            }}
+          />
+        )}
+      </Show>
+    </div>
+  );
+}
+
+function HeroStatusRow(props) {
+  const heroKey = () => props.state.heroAvatar ?? null;
+  const heroName = () => HERO_NAMES[heroKey()] ?? 'Hero';
+  const heroIconName = () => HERO_ICON_NAMES[heroKey()] ?? 'HERO_BRAIN';
+  const timerText = () => formatSeconds(props.state.heroTimeRemaining);
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        'align-items': 'center',
+        gap: '10px',
+        'justify-self': 'end',
+        'min-width': '0',
+      }}
+    >
+      <HeroPortrait heroKey={heroKey()} fallbackIconName={heroIconName()} />
+      <div
+        style={{
+          display: 'flex',
+          'flex-direction': 'column',
+          'align-items': 'flex-end',
+          'line-height': '1.1',
+          'min-width': '0',
+        }}
+      >
+        <div
+          style={{
+            color: '#ffe08a',
+            font: LABEL_FONT,
+            'letter-spacing': '0.06em',
+            'text-shadow': LABEL_SHADOW,
+            'white-space': 'nowrap',
+          }}
+        >
+          HERO: {heroName()}
+        </div>
+        <div
+          style={{
+            color: '#dce8ff',
+            font: VALUE_FONT,
+            'text-shadow': LABEL_SHADOW,
+            'white-space': 'nowrap',
+          }}
+        >
+          {timerText()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function HudView(props) {
   const healthPct = () => props.state.health;
   const staminaPct = () => props.state.stamina;
@@ -284,10 +406,7 @@ export function HudView(props) {
     return `${n} / ${playerMax()}`;
   });
   const heroTimeActive = () => Math.max(0, Number(props.state.heroTimeRemaining) || 0) > 0;
-  const heroTimeText = createMemo(() => {
-    const seconds = Math.ceil(Math.max(0, Number(props.state.heroTimeRemaining) || 0));
-    return `HERO ${seconds}s`;
-  });
+  const heroStatusActive = () => heroTimeActive() && !!props.state.heroAvatar;
 
   return (
     <>
@@ -348,7 +467,6 @@ export function HudView(props) {
               display: 'flex',
               'flex-direction': 'column',
               'align-items': 'flex-start',
-              gap: '2px',
               'min-width': '112px',
             }}
           >
@@ -358,25 +476,25 @@ export function HudView(props) {
               labelColor="#d8e2ff"
               valueText={playerText}
             />
-            <Show when={heroTimeActive()}>
-              <div
-                style={{
-                  'margin-left': '56px',
-                  color: '#ffe08a',
-                  font: LABEL_FONT,
-                  'letter-spacing': '0.05em',
-                  'text-shadow': LABEL_SHADOW,
-                  'white-space': 'nowrap',
-                }}
-              >
-                {heroTimeText()}
-              </div>
-            </Show>
           </div>
         </div>
 
-        <Show when={humanRoleActive()}>
-          <HumanRoleRow state={props.state} />
+        <Show when={humanRoleActive() || heroStatusActive()}>
+          <div
+            style={{
+              display: 'grid',
+              'grid-template-columns': humanRoleActive() && heroStatusActive() ? '1fr 1fr' : '1fr',
+              gap: '10px',
+              'align-items': 'center',
+            }}
+          >
+            <Show when={humanRoleActive()}>
+              <HumanRoleRow state={props.state} />
+            </Show>
+            <Show when={heroStatusActive()}>
+              <HeroStatusRow state={props.state} />
+            </Show>
+          </div>
         </Show>
       </div>
 

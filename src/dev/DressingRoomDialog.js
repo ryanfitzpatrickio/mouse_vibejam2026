@@ -4,6 +4,12 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { MouseEyeAtlasAnimator } from '../animation/MouseEyeAtlasAnimator.js';
 import {
+  getAvatarPortrait,
+  hasAvatarPortrait,
+  resetAvatarPortrait,
+  setAvatarPortrait,
+} from '../data/avatarPortraits.js';
+import {
   exportEyePlacements,
   getEyePlacement,
   getEyeTargetDef,
@@ -16,6 +22,10 @@ import { assetUrl } from '../utils/assetUrl.js';
 
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = Math.PI / 180;
+const PORTRAIT_CAPTURE_WIDTH = 768;
+const PORTRAIT_CAPTURE_HEIGHT = 1024;
+const HUD_AVATAR_SIZE = 36;
+const PORTRAIT_PREVIEW_SIZE = 84;
 
 /**
  * Dev-only "Dressing Room" dialog. Loads any registered eye-placement target
@@ -36,8 +46,10 @@ export class DressingRoomDialog {
     this._gltfCache = new Map();
     this._previewModel = null;
     this._eyeAnimator = null;
+    this._activeDef = null;
     this._lastTime = 0;
     this._suppressInputSync = false;
+    this._suppressPortraitSync = false;
 
     this._buildUI();
     this._buildScene();
@@ -103,7 +115,7 @@ export class DressingRoomDialog {
     viewportWrap.appendChild(this.canvas);
 
     const hint = document.createElement('div');
-    hint.textContent = 'Dressing Room — orbit to inspect, drag gizmo to nudge eyes, then Save.';
+    hint.textContent = 'Dressing Room — orbit to inspect, drag gizmo to nudge eyes, then Save. Use Capture portrait for a clean PNG.';
     Object.assign(hint.style, {
       position: 'absolute',
       left: '32px',
@@ -166,6 +178,15 @@ export class DressingRoomDialog {
     actions.appendChild(this._makeButton('Copy JSON', () => this._copyJson()));
     this.panel.appendChild(actions);
 
+    const portraitBtn = this._makeButton('Capture portrait PNG', () => {
+      this._capturePortrait().catch((err) => this._setStatus(`portrait failed: ${err.message}`, true));
+    }, '#2c3454');
+    portraitBtn.style.marginTop = '8px';
+    portraitBtn.style.width = '100%';
+    this.panel.appendChild(portraitBtn);
+
+    this._buildPortraitEditor();
+
     this.status = document.createElement('div');
     Object.assign(this.status.style, { marginTop: '10px', minHeight: '18px', color: '#9ee8b2', whiteSpace: 'pre-wrap' });
     this.panel.appendChild(this.status);
@@ -175,6 +196,147 @@ export class DressingRoomDialog {
     this.panel.appendChild(closeBtn);
 
     document.body.appendChild(this.overlay);
+  }
+
+  _buildPortraitEditor() {
+    this.portraitSection = document.createElement('section');
+    Object.assign(this.portraitSection.style, {
+      marginTop: '12px',
+      paddingTop: '12px',
+      borderTop: '1px solid rgba(255,255,255,0.08)',
+    });
+    this.panel.appendChild(this.portraitSection);
+
+    const title = document.createElement('div');
+    title.textContent = 'AVATAR PORTRAIT';
+    Object.assign(title.style, {
+      fontWeight: '700',
+      letterSpacing: '0.08em',
+      color: '#ffd7a4',
+      marginBottom: '10px',
+    });
+    this.portraitSection.appendChild(title);
+
+    const subtitle = document.createElement('div');
+    subtitle.textContent = 'Upload a portrait image for the selected hero and position it inside the circular HUD avatar.';
+    Object.assign(subtitle.style, {
+      color: '#cbb89a',
+      fontSize: '11px',
+      lineHeight: '1.35',
+      marginBottom: '10px',
+    });
+    this.portraitSection.appendChild(subtitle);
+
+    const previewRow = document.createElement('div');
+    Object.assign(previewRow.style, {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      marginBottom: '10px',
+    });
+    this.portraitSection.appendChild(previewRow);
+
+    const previews = document.createElement('div');
+    Object.assign(previews.style, {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      flexShrink: '0',
+    });
+    previewRow.appendChild(previews);
+
+    const hudPreviewWrap = document.createElement('div');
+    Object.assign(hudPreviewWrap.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '4px',
+    });
+    previews.appendChild(hudPreviewWrap);
+
+    this.portraitHudPreview = this._createPortraitFrame(HUD_AVATAR_SIZE);
+    hudPreviewWrap.appendChild(this.portraitHudPreview.frame);
+
+    const hudPreviewLabel = document.createElement('div');
+    hudPreviewLabel.textContent = 'HUD';
+    Object.assign(hudPreviewLabel.style, {
+      color: '#cbb89a',
+      fontSize: '10px',
+      letterSpacing: '0.06em',
+    });
+    hudPreviewWrap.appendChild(hudPreviewLabel);
+
+    const editPreviewWrap = document.createElement('div');
+    Object.assign(editPreviewWrap.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '4px',
+    });
+    previews.appendChild(editPreviewWrap);
+
+    this.portraitPreview = this._createPortraitFrame(PORTRAIT_PREVIEW_SIZE);
+    editPreviewWrap.appendChild(this.portraitPreview.frame);
+
+    const editPreviewLabel = document.createElement('div');
+    editPreviewLabel.textContent = 'Edit';
+    Object.assign(editPreviewLabel.style, {
+      color: '#cbb89a',
+      fontSize: '10px',
+      letterSpacing: '0.06em',
+    });
+    editPreviewWrap.appendChild(editPreviewLabel);
+
+    this.portraitMeta = document.createElement('div');
+    Object.assign(this.portraitMeta.style, {
+      minWidth: '0',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '4px',
+    });
+    previewRow.appendChild(this.portraitMeta);
+
+    this.portraitName = document.createElement('div');
+    Object.assign(this.portraitName.style, {
+      color: '#ffe08a',
+      fontWeight: '700',
+      letterSpacing: '0.06em',
+    });
+    this.portraitMeta.appendChild(this.portraitName);
+
+    this.portraitSource = document.createElement('div');
+    Object.assign(this.portraitSource.style, {
+      color: '#dce8ff',
+      fontSize: '11px',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '220px',
+    });
+    this.portraitMeta.appendChild(this.portraitSource);
+
+    const uploadLabel = this._makeLabelSpan('Portrait image');
+    this.portraitSection.appendChild(uploadLabel);
+    this.portraitUploadInput = document.createElement('input');
+    this.portraitUploadInput.type = 'file';
+    this.portraitUploadInput.accept = 'image/*';
+    Object.assign(this.portraitUploadInput.style, this._inputStyle(), { marginBottom: '8px' });
+    this.portraitUploadInput.addEventListener('change', () => {
+      this._onPortraitFileSelected().catch((err) => this._setStatus(`portrait upload failed: ${err.message}`, true));
+    });
+    this.portraitSection.appendChild(this.portraitUploadInput);
+
+    this.portraitXInput = this._addPortraitSlider('Horizontal position', -50, 150, 1);
+    this.portraitYInput = this._addPortraitSlider('Vertical position', -50, 150, 1);
+    this.portraitScaleInput = this._addPortraitSlider('Zoom', 0.25, 3, 0.01);
+
+    const actions = document.createElement('div');
+    Object.assign(actions.style, { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', marginTop: '10px' });
+    actions.appendChild(this._makeButton('Reset portrait', () => this._resetPortrait(), '#5d221f'));
+    actions.appendChild(this._makeButton('Use defaults', () => this._restoreDefaultPortraitImage(), '#2c3454'));
+    this.portraitSection.appendChild(actions);
+
+    this._refreshPortraitEditor();
   }
 
   _addSelect(label, options, value, onChange) {
@@ -235,6 +397,93 @@ export class DressingRoomDialog {
     return input;
   }
 
+  _addPortraitSlider(label, min, max, step) {
+    const wrap = document.createElement('div');
+    Object.assign(wrap.style, { marginBottom: '8px' });
+    wrap.appendChild(this._makeLabelSpan(label));
+
+    const row = document.createElement('div');
+    Object.assign(row.style, {
+      display: 'grid',
+      gridTemplateColumns: '1fr 72px',
+      gap: '6px',
+      alignItems: 'center',
+    });
+
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.min = String(min);
+    input.max = String(max);
+    input.step = String(step);
+    Object.assign(input.style, {
+      width: '100%',
+      accentColor: '#ffd7a4',
+    });
+    input.addEventListener('input', () => this._onPortraitInputChanged());
+    row.appendChild(input);
+
+    const value = document.createElement('input');
+    value.type = 'number';
+    value.min = String(min);
+    value.max = String(max);
+    value.step = String(step);
+    Object.assign(value.style, this._inputStyle());
+    value.addEventListener('input', () => {
+      input.value = value.value;
+      this._onPortraitInputChanged();
+    });
+    input.addEventListener('input', () => {
+      value.value = input.value;
+    });
+    row.appendChild(value);
+
+    wrap.appendChild(row);
+    this.portraitSection.appendChild(wrap);
+    return { input, value };
+  }
+
+  _createPortraitFrame(size) {
+    const frame = document.createElement('div');
+    Object.assign(frame.style, {
+      width: `${size}px`,
+      height: `${size}px`,
+      borderRadius: '999px',
+      overflow: 'hidden',
+      border: '2px solid rgba(210, 220, 236, 0.9)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.28), 0 2px 6px rgba(0,0,0,0.35)',
+      background: 'radial-gradient(circle at 35% 30%, rgba(140,150,170,0.95) 0%, rgba(72,80,96,0.98) 100%)',
+      flexShrink: '0',
+      display: 'grid',
+      placeItems: 'center',
+    });
+
+    const image = document.createElement('img');
+    Object.assign(image.style, {
+      width: '100%',
+      height: '100%',
+      display: 'none',
+      objectFit: 'contain',
+      transformOrigin: 'center center',
+    });
+    frame.appendChild(image);
+
+    const fallback = document.createElement('div');
+    fallback.textContent = size <= HUD_AVATAR_SIZE ? '' : 'No image';
+    Object.assign(fallback.style, {
+      width: '100%',
+      height: '100%',
+      display: 'grid',
+      placeItems: 'center',
+      color: '#f7efe5',
+      fontSize: size <= HUD_AVATAR_SIZE ? '0px' : '11px',
+      textTransform: 'uppercase',
+      letterSpacing: '0.06em',
+    });
+    frame.appendChild(fallback);
+
+    return { frame, image, fallback };
+  }
+
   _makeLabelSpan(text) {
     const span = document.createElement('div');
     span.textContent = text;
@@ -274,6 +523,13 @@ export class DressingRoomDialog {
     return btn;
   }
 
+  _setPortraitSliderValue(control, rawValue, digits = 2) {
+    const numericValue = Number(rawValue);
+    const value = digits === 0 ? String(Math.round(numericValue)) : numericValue.toFixed(digits);
+    control.input.value = value;
+    control.value.value = value;
+  }
+
   _buildScene() {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color('#2e333a');
@@ -281,17 +537,23 @@ export class DressingRoomDialog {
     this.camera = new THREE.PerspectiveCamera(50, 1, 0.01, 200);
     this.camera.position.set(2.2, 1.6, 2.6);
 
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
+      antialias: true,
+      alpha: true,
+      preserveDrawingBuffer: true,
+    });
     this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    this.renderer.setClearColor('#2e333a', 1);
 
     this.scene.add(new THREE.HemisphereLight('#dfe8f1', '#3b2f26', 1.2));
     const sun = new THREE.DirectionalLight('#ffdcb3', 1.6);
     sun.position.set(4, 6, 3);
     this.scene.add(sun);
 
-    const grid = new THREE.GridHelper(8, 8, 0x556677, 0x222a33);
-    grid.position.y = 0;
-    this.scene.add(grid);
+    this._gridHelper = new THREE.GridHelper(8, 8, 0x556677, 0x222a33);
+    this._gridHelper.position.y = 0;
+    this.scene.add(this._gridHelper);
 
     this.modelRoot = new THREE.Group();
     this.scene.add(this.modelRoot);
@@ -310,8 +572,8 @@ export class DressingRoomDialog {
         if (this._orbit) this._orbit.enabled = !event.value;
       });
       this._transformControls.addEventListener('objectChange', () => this._onGizmoChanged());
-      const helper = this._transformControls.getHelper?.() ?? this._transformControls;
-      this.scene.add(helper);
+      this._transformControlsHelper = this._transformControls.getHelper?.() ?? this._transformControls;
+      this.scene.add(this._transformControlsHelper);
     }
 
     window.addEventListener('resize', () => {
@@ -335,6 +597,8 @@ export class DressingRoomDialog {
   async _loadActiveTarget() {
     const def = getEyeTargetDef(this.activeKey);
     if (!def) return;
+    this._activeDef = def;
+    this._refreshPortraitEditor();
     this._setStatus(`Loading ${def.label}…`);
 
     if (this._previewModel) {
@@ -385,20 +649,7 @@ export class DressingRoomDialog {
     // because some skinned skeletons have stray empties at extreme positions
     // that poison setFromObject. Pick per `kind`.
     model.updateMatrixWorld(true);
-    let box;
-    if (def.kind === 'predator') {
-      box = new THREE.Box3().setFromObject(model);
-    } else {
-      box = new THREE.Box3();
-      const meshBox = new THREE.Box3();
-      model.traverse((child) => {
-        if (!child.isMesh || !child.geometry) return;
-        if (!child.geometry.boundingBox) child.geometry.computeBoundingBox();
-        meshBox.copy(child.geometry.boundingBox).applyMatrix4(child.matrixWorld);
-        box.union(meshBox);
-      });
-      if (box.isEmpty()) box.setFromObject(model);
-    }
+    let box = this._measureModelBounds(model, def.kind);
     const size = new THREE.Vector3();
     box.getSize(size);
     const targetH = def.previewWorldHeight ?? 1.6;
@@ -406,14 +657,13 @@ export class DressingRoomDialog {
     const fit = targetH / measuredH;
     model.scale.setScalar(fit);
     model.position.y = -box.min.y * fit;
+    model.updateMatrixWorld(true);
+    box = this._measureModelBounds(model, def.kind);
 
     // Frame the camera to the model's visible height so a 0.6m brain is just
     // as inspectable as a 9m human (with eyes still visibly large enough).
     if (this._orbit) {
-      const center = targetH * 0.55;
-      const dist = Math.max(0.6, targetH * 1.8);
-      this._orbit.target.set(0, center, 0);
-      this.camera.position.set(dist * 0.7, center + dist * 0.4, dist);
+      this._frameDefaultCamera(box, targetH);
       this.camera.near = Math.max(0.001, targetH * 0.005);
       this.camera.far = Math.max(50, targetH * 30);
       this.camera.updateProjectionMatrix();
@@ -442,7 +692,17 @@ export class DressingRoomDialog {
     }
 
     this._reflectPlacementToInputs(placement);
+    this._refreshPortraitEditor();
     this._setStatus(`Editing ${def.label}.`);
+  }
+
+  _refreshPortraitEditor() {
+    if (!this.portraitSection) return;
+    const enabled = hasAvatarPortrait(this.activeKey);
+    this.portraitSection.style.display = enabled ? 'block' : 'none';
+    if (!enabled) return;
+    this.portraitName.textContent = `${this.activeKey.toUpperCase()} PORTRAIT`;
+    this._reflectPortraitToInputs();
   }
 
   _loadGltf(path) {
@@ -452,6 +712,64 @@ export class DressingRoomDialog {
       this._gltfCache.set(path, loader.loadAsync(assetUrl(path)));
     }
     return this._gltfCache.get(path);
+  }
+
+  _measureModelBounds(model, kind) {
+    if (kind === 'predator') return new THREE.Box3().setFromObject(model);
+    const box = new THREE.Box3();
+    const meshBox = new THREE.Box3();
+    model.updateMatrixWorld(true);
+    model.traverse((child) => {
+      if (!child.isMesh || !child.geometry) return;
+      if (!child.geometry.boundingBox) child.geometry.computeBoundingBox();
+      meshBox.copy(child.geometry.boundingBox).applyMatrix4(child.matrixWorld);
+      box.union(meshBox);
+    });
+    if (box.isEmpty()) box.setFromObject(model);
+    return box;
+  }
+
+  _frameDefaultCamera(box, targetH) {
+    if (!this._orbit) return;
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+    const focusY = box.min.y + size.y * 0.55;
+    const dist = Math.max(0.6, targetH * 1.8);
+    this._orbit.target.set(center.x, focusY, center.z);
+    this.camera.position.set(center.x + dist * 0.7, focusY + dist * 0.4, center.z + dist);
+  }
+
+  _framePortraitCamera(width, height) {
+    const def = this._activeDef;
+    const model = this._previewModel;
+    if (!def || !model) return;
+    const box = this._measureModelBounds(model, def.kind);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+
+    const isTall = def.kind === 'predator';
+    const focusY = box.min.y + size.y * (isTall ? 0.72 : 0.76);
+    const portraitSpan = Math.max(
+      size.y * (isTall ? 0.78 : 0.72),
+      (def.previewWorldHeight ?? 1) * (isTall ? 0.52 : 0.46),
+    );
+    const vFov = THREE.MathUtils.degToRad(this.camera.fov);
+    const fitDist = (portraitSpan * 0.5) / Math.tan(vFov * 0.5);
+    const offset = new THREE.Vector3(0.26, isTall ? 0.05 : 0.08, 1).normalize().multiplyScalar(fitDist * 1.18);
+    const target = new THREE.Vector3(center.x, focusY, center.z);
+
+    this.camera.aspect = width / height;
+    this.camera.position.copy(target).add(offset);
+    this.camera.lookAt(target);
+    this.camera.updateProjectionMatrix();
+    if (this._orbit) {
+      this._orbit.target.copy(target);
+      this._orbit.update();
+    }
   }
 
   _refillSocketOptions(model) {
@@ -499,6 +817,110 @@ export class DressingRoomDialog {
       scale: placement.scale,
       eyeSize: placement.eyeSize,
     });
+  }
+
+  _reflectPortraitToInputs() {
+    const portrait = getAvatarPortrait(this.activeKey);
+    if (!portrait) return;
+    this._suppressPortraitSync = true;
+    try {
+      this._setPortraitSliderValue(this.portraitXInput, portrait.positionX, 0);
+      this._setPortraitSliderValue(this.portraitYInput, portrait.positionY, 0);
+      this._setPortraitSliderValue(this.portraitScaleInput, portrait.scale, 2);
+      this._syncPortraitPreview(portrait);
+    } finally {
+      this._suppressPortraitSync = false;
+    }
+  }
+
+  _syncPortraitPreview(portrait = getAvatarPortrait(this.activeKey)) {
+    const activeLabel = this._activeDef?.label ?? this.activeKey;
+    this.portraitName.textContent = `${activeLabel} portrait`;
+    if (!portrait?.resolvedSrc) {
+      for (const preview of [this.portraitHudPreview, this.portraitPreview]) {
+        preview.image.style.display = 'none';
+        preview.fallback.style.display = 'grid';
+      }
+      this.portraitSource.textContent = 'No image selected';
+      return;
+    }
+    for (const preview of [this.portraitHudPreview, this.portraitPreview]) {
+      preview.image.src = portrait.resolvedSrc;
+      preview.image.style.display = 'block';
+      preview.image.style.objectPosition = `${portrait.basePositionX}% ${portrait.basePositionY}%`;
+      preview.image.style.transform = `translate(${portrait.translateX}%, ${portrait.translateY}%) scale(${portrait.scale})`;
+      preview.fallback.style.display = 'none';
+    }
+    if (portrait.src?.startsWith('data:')) {
+      this.portraitSource.textContent = 'Uploaded image';
+    } else {
+      this.portraitSource.textContent = portrait.src;
+    }
+  }
+
+  _onPortraitInputChanged() {
+    if (this._suppressPortraitSync || !hasAvatarPortrait(this.activeKey)) return;
+    const num = (control, fallback = 0) => {
+      const number = Number(control.input.value);
+      return Number.isFinite(number) ? number : fallback;
+    };
+    const success = setAvatarPortrait(this.activeKey, {
+      positionX: num(this.portraitXInput, 50),
+      positionY: num(this.portraitYInput, 100),
+      scale: num(this.portraitScaleInput, 1),
+    });
+    if (!success) {
+      this._setStatus('portrait save failed: local storage quota exceeded', true);
+      return;
+    }
+    this._syncPortraitPreview();
+  }
+
+  async _onPortraitFileSelected() {
+    const file = this.portraitUploadInput.files?.[0];
+    if (!file || !hasAvatarPortrait(this.activeKey)) return;
+    const dataUrl = await this._readFileAsDataUrl(file);
+    const success = setAvatarPortrait(this.activeKey, { src: dataUrl });
+    this.portraitUploadInput.value = '';
+    if (!success) {
+      this._setStatus('portrait upload failed: local storage quota exceeded', true);
+      return;
+    }
+    this._reflectPortraitToInputs();
+    this._setStatus(`Using uploaded portrait for ${this.activeKey}.`);
+  }
+
+  _readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error ?? new Error('file read failed'));
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  _resetPortrait() {
+    if (!hasAvatarPortrait(this.activeKey)) return;
+    const success = resetAvatarPortrait(this.activeKey);
+    if (!success) {
+      this._setStatus('portrait reset failed: local storage quota exceeded', true);
+      return;
+    }
+    this.portraitUploadInput.value = '';
+    this._reflectPortraitToInputs();
+    this._setStatus(`Reset portrait crop for ${this.activeKey}.`);
+  }
+
+  _restoreDefaultPortraitImage() {
+    if (!hasAvatarPortrait(this.activeKey)) return;
+    const success = setAvatarPortrait(this.activeKey, { src: null });
+    if (!success) {
+      this._setStatus('portrait image restore failed: local storage quota exceeded', true);
+      return;
+    }
+    this.portraitUploadInput.value = '';
+    this._reflectPortraitToInputs();
+    this._setStatus(`Restored default portrait image for ${this.activeKey}.`);
   }
 
   _onInputsChanged() {
@@ -555,6 +977,67 @@ export class DressingRoomDialog {
   _setStatus(text, isError = false) {
     this.status.textContent = text;
     this.status.style.color = isError ? '#ff8b8b' : '#9ee8b2';
+  }
+
+  async _capturePortrait() {
+    if (!this._previewModel || !this._activeDef) {
+      this._setStatus('Load a character before capturing a portrait.', true);
+      return;
+    }
+
+    const prevSize = new THREE.Vector2();
+    this.renderer.getSize(prevSize);
+    const prevAspect = this.camera.aspect;
+    const prevPos = this.camera.position.clone();
+    const prevQuat = this.camera.quaternion.clone();
+    const prevTarget = this._orbit?.target.clone() ?? null;
+    const prevBackground = this.scene.background;
+    const prevClearAlpha = this.renderer.getClearAlpha();
+    const prevGridVisible = this._gridHelper?.visible ?? false;
+    const prevGizmoVisible = this._transformControlsHelper?.visible ?? false;
+
+    try {
+      if (this._gridHelper) this._gridHelper.visible = false;
+      if (this._transformControlsHelper) this._transformControlsHelper.visible = false;
+      this.scene.background = null;
+      this.renderer.setClearColor('#000000', 0);
+      this.renderer.setSize(PORTRAIT_CAPTURE_WIDTH, PORTRAIT_CAPTURE_HEIGHT, false);
+      this._framePortraitCamera(PORTRAIT_CAPTURE_WIDTH, PORTRAIT_CAPTURE_HEIGHT);
+      this._orbit?.update();
+      this._mixer?.update(0);
+      this._eyeAnimator?.update(0);
+      this.renderer.render(this.scene, this.camera);
+
+      const blob = await new Promise((resolve, reject) => {
+        this.canvas.toBlob((value) => {
+          if (value) resolve(value);
+          else reject(new Error('canvas export returned empty data'));
+        }, 'image/png');
+      });
+      const safeKey = String(this.activeKey || 'portrait').replace(/[^a-z0-9_-]/gi, '-').toLowerCase();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${safeKey}-portrait.png`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      this._setStatus(`Saved ${safeKey}-portrait.png`);
+    } finally {
+      if (this._gridHelper) this._gridHelper.visible = prevGridVisible;
+      if (this._transformControlsHelper) this._transformControlsHelper.visible = prevGizmoVisible;
+      this.scene.background = prevBackground;
+      this.renderer.setClearColor('#2e333a', prevClearAlpha);
+      this.renderer.setSize(prevSize.x, prevSize.y, false);
+      this.camera.aspect = prevAspect;
+      this.camera.position.copy(prevPos);
+      this.camera.quaternion.copy(prevQuat);
+      this.camera.updateProjectionMatrix();
+      if (this._orbit && prevTarget) {
+        this._orbit.target.copy(prevTarget);
+        this._orbit.update();
+      }
+      this.renderer.render(this.scene, this.camera);
+    }
   }
 
   _startLoop() {

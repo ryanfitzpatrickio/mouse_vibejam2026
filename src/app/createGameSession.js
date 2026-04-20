@@ -1510,6 +1510,9 @@ export async function createGameSession({ canvas, roomId = 'default' } = {}) {
       lives: net.connected
         ? (net.serverState?.livesRemaining ?? 2)
         : (predictionState.livesRemaining ?? 2),
+      heroAvatar: net.connected
+        ? (net.serverState?.heroAvatar ?? null)
+        : (predictionState.heroAvatar ?? null),
       heroTimeRemaining: net.connected
         ? (net.serverState?.heroTimeRemaining ?? 0)
         : (predictionState.heroTimeRemaining ?? 0),

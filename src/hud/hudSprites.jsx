@@ -245,6 +245,144 @@ export function HumanRoleIcon(props) {
   );
 }
 
+function PortraitFrame(props) {
+  return (
+    <g>
+      <circle
+        cx="50"
+        cy="50"
+        r="42"
+        fill={props.ringFill ?? '#dbe4f3'}
+        stroke={OUTLINE}
+        stroke-width={OUTLINE_W}
+      />
+      <circle
+        cx="50"
+        cy="50"
+        r="33"
+        fill={props.innerFill ?? '#7c8798'}
+      />
+      <path
+        d="M28 26 C 24 32, 24 40, 28 46"
+        fill="none"
+        stroke="rgba(255,255,255,0.48)"
+        stroke-width="4"
+        stroke-linecap="round"
+      />
+    </g>
+  );
+}
+
+export function HeroBrainPortrait(props) {
+  return (
+    <IconSvg size={props.size}>
+      <PortraitFrame ringFill="#d9c4ff" innerFill="#6d5a97" />
+      <path
+        d="M30 58 C 30 36, 70 36, 70 58 C 70 74, 30 74, 30 58 Z"
+        fill="#ffb84c"
+        stroke={OUTLINE}
+        stroke-width="6"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M38 52 C 40 36, 60 36, 62 52"
+        fill="none"
+        stroke="#ffe39b"
+        stroke-width="6"
+        stroke-linecap="round"
+      />
+      <circle cx="42" cy="58" r="4" fill={OUTLINE} />
+      <circle cx="58" cy="58" r="4" fill={OUTLINE} />
+      <path d="M42 68 Q 50 73 58 68" fill="none" stroke={OUTLINE} stroke-width="4" stroke-linecap="round" />
+      <path
+        d="M24 52 C 26 30, 40 16, 50 16 C 60 16, 74 30, 76 52"
+        fill="#f4a1b4"
+        stroke={OUTLINE}
+        stroke-width="6"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M33 44 C 33 30, 41 22, 50 22 C 59 22, 67 30, 67 44"
+        fill="none"
+        stroke="#ffd2dd"
+        stroke-width="4"
+        stroke-linecap="round"
+      />
+    </IconSvg>
+  );
+}
+
+export function HeroJerryPortrait(props) {
+  return (
+    <IconSvg size={props.size}>
+      <PortraitFrame ringFill="#ffe39f" innerFill="#8f7750" />
+      <ellipse cx="34" cy="32" rx="11" ry="12" fill="#d3c3b8" stroke={OUTLINE} stroke-width="6" />
+      <ellipse cx="66" cy="32" rx="11" ry="12" fill="#d3c3b8" stroke={OUTLINE} stroke-width="6" />
+      <circle cx="34" cy="32" r="5" fill="#f3a9b8" />
+      <circle cx="66" cy="32" r="5" fill="#f3a9b8" />
+      <ellipse cx="50" cy="56" rx="24" ry="22" fill="#b9b1aa" stroke={OUTLINE} stroke-width="6" />
+      <circle cx="41" cy="56" r="3.8" fill={OUTLINE} />
+      <circle cx="59" cy="56" r="3.8" fill={OUTLINE} />
+      <ellipse cx="50" cy="66" rx="5.5" ry="4.2" fill="#f3a9b8" stroke={OUTLINE} stroke-width="3" />
+      <path d="M24 52 C 28 46, 33 46, 37 52" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="4" stroke-linecap="round" />
+    </IconSvg>
+  );
+}
+
+export function HeroGusPortrait(props) {
+  return (
+    <IconSvg size={props.size}>
+      <PortraitFrame ringFill="#ffd0e3" innerFill="#8e5d74" />
+      <ellipse cx="34" cy="34" rx="10" ry="11" fill="#d7c6d1" stroke={OUTLINE} stroke-width="6" />
+      <ellipse cx="66" cy="34" rx="10" ry="11" fill="#d7c6d1" stroke={OUTLINE} stroke-width="6" />
+      <circle cx="34" cy="34" r="4.5" fill="#f3aac6" />
+      <circle cx="66" cy="34" r="4.5" fill="#f3aac6" />
+      <ellipse cx="50" cy="58" rx="23" ry="21" fill="#c8b5c2" stroke={OUTLINE} stroke-width="6" />
+      <circle cx="41" cy="58" r="3.8" fill={OUTLINE} />
+      <circle cx="59" cy="58" r="3.8" fill={OUTLINE} />
+      <ellipse cx="50" cy="68" rx="5.5" ry="4.2" fill="#f7c3d7" stroke={OUTLINE} stroke-width="3" />
+      <path
+        d="M31 42 C 38 24, 63 24, 69 42"
+        fill="none"
+        stroke="#ffddea"
+        stroke-width="6"
+        stroke-linecap="round"
+      />
+      <path
+        d="M44 28 C 47 22, 53 22, 56 28"
+        fill="none"
+        stroke="#ffeef5"
+        stroke-width="4"
+        stroke-linecap="round"
+      />
+    </IconSvg>
+  );
+}
+
+export function HeroSpeedyPortrait(props) {
+  return (
+    <IconSvg size={props.size}>
+      <PortraitFrame ringFill="#b9deff" innerFill="#45688d" />
+      <ellipse cx="34" cy="33" rx="10" ry="11" fill="#d0d6df" stroke={OUTLINE} stroke-width="6" />
+      <ellipse cx="66" cy="33" rx="10" ry="11" fill="#d0d6df" stroke={OUTLINE} stroke-width="6" />
+      <circle cx="34" cy="33" r="4.5" fill="#f0b0be" />
+      <circle cx="66" cy="33" r="4.5" fill="#f0b0be" />
+      <ellipse cx="50" cy="58" rx="23" ry="21" fill="#bcc7d4" stroke={OUTLINE} stroke-width="6" />
+      <circle cx="41" cy="58" r="3.8" fill={OUTLINE} />
+      <circle cx="59" cy="58" r="3.8" fill={OUTLINE} />
+      <ellipse cx="50" cy="68" rx="5.5" ry="4.2" fill="#f6c0cf" stroke={OUTLINE} stroke-width="3" />
+      <path
+        d="M28 46 L 44 28 L 49 42 L 60 24 L 55 40 L 72 40"
+        fill="none"
+        stroke="#fff1a6"
+        stroke-width="6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </IconSvg>
+  );
+}
+
 /** Name-keyed icon registry — mirrors the old sprite-sheet lookup. */
 export const HUD_ICONS = Object.freeze({
   HEART_HEALTH_HAPPY: HeartHealthHappy,
@@ -254,4 +392,8 @@ export const HUD_ICONS = Object.freeze({
   MOUSE_HEAD_TARGET: MouseHeadTarget,
   CHEESE_ITEM: CheeseItem,
   HUMAN_ROLE: HumanRoleIcon,
+  HERO_BRAIN: HeroBrainPortrait,
+  HERO_JERRY: HeroJerryPortrait,
+  HERO_GUS: HeroGusPortrait,
+  HERO_SPEEDY: HeroSpeedyPortrait,
 });
